@@ -1,6 +1,6 @@
 /* Service worker — caches the app for full offline use.
    Bump CACHE when you change app files or content so phones update. */
-var CACHE = "ncoboard-v1";
+var CACHE = "ncoboard-v2";
 var ASSETS = [
   "./",
   "./index.html",
@@ -8,12 +8,15 @@ var ASSETS = [
   "./css/styles.css",
   "./data/content.js",
   "./js/storage.js",
+  "./js/audio.js",
   "./js/flashcards.js",
   "./js/quiz.js",
+  "./js/mockboard.js",
   "./js/app.js",
   "./icons/icon-192.png",
   "./icons/icon-512.png",
-  "./icons/icon-maskable-512.png"
+  "./icons/icon-maskable-512.png",
+  "./icons/qr.png"
 ];
 
 self.addEventListener("install", function (e) {

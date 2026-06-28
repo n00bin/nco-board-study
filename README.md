@@ -1,23 +1,28 @@
 # NCO Board Study Guide
 
-A phone study app (flashcards + quizzes) for the **E-5 / E-6 Army promotion board**, built from the
-publications in this folder. It installs to your Android home screen, runs **fully offline**, and keeps
-your progress on your phone — no account, no app store, nothing to sign up for.
+A phone study app for the **E-5 / E-6 Army promotion board**, built from the 18 reference publications.
+It installs to your Android home screen, runs **fully offline**, and keeps your progress on your phone —
+no account, no app store, nothing to sign up for.
+
+**Live app:** https://n00bin.github.io/nco-board-study/
 
 ---
 
 ## What's inside
 
-- **Flashcards** — flip a card to see the answer, then tap **"I knew it"** or **"Need review."** The app
-  shows cards you don't know yet first.
+- **Flashcards with spaced repetition** — grade each card **Again / Good / Easy**; the app reschedules
+  it automatically (miss it → comes back soon, know it → comes back later) and surfaces what's *due*.
 - **Quiz** — multiple-choice, scored, with instant right/wrong feedback. Pick 10, 20, or all questions.
-- **Browse** — every publication, broken out by subject, with its own progress bar.
-- **Search** — type any word to find a card.
-- **Stats** — overall mastery, known/review counts, and your recent quiz scores.
+- **Mock Board** — a timed oral-board simulation: mixed questions across subjects, answer out loud,
+  self-grade, and get a score plus your **weakest subjects** at the end.
+- **Read-aloud** — the phone speaks the question and answer so you can practice answering hands-free.
+- **My Cards** — add your unit's smart-book questions (chain of command, command policy, local SOPs).
+- **Daily goal & streak**, **Browse** by publication, full-text **Search**, and **Backup/restore**
+  (export your progress to a file and move it to a new phone).
 
-Content currently covers **all 18 publications** with **124 high-yield cards** (the kind of facts a board
-asks: the Army Values, the Code of Conduct, MDMP/TLP steps, which AR covers what, SHARP reporting, the
-General Orders, the Soldier's & NCO Creeds, and more).
+Content covers **all 18 publications** with **~1,600 cards** — most fact-checked page-by-page against the
+source PDFs, with a page citation on each card (the Army Values, Code of Conduct, MDMP/TLP, warfighting
+functions, SHARP reporting, ACFT, the General Orders, the Soldier's & NCO Creeds, and much more).
 
 ---
 

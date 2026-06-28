@@ -65,7 +65,8 @@
       var picked = shuffle(usable).slice(0, length);
       // Distractors are drawn from ALL cards (same-publication preferred),
       // so even small topics get plausible wrong answers.
-      var distractorPool = (window.STUDY && window.STUDY.cards) ? window.STUDY.cards : cards;
+      var distractorPool = (window.App && App.allCards) ? App.allCards()
+        : ((window.STUDY && window.STUDY.cards) ? window.STUDY.cards : cards);
       var questions = picked.map(function (c) { return buildQuestion(c, distractorPool); });
 
       var i = 0, score = 0;

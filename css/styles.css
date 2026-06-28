@@ -287,3 +287,44 @@ h2.section { font-size: 1.05rem; color: var(--text-dim); text-transform: upperca
   box-shadow: 0 4px 16px rgba(0,0,0,0.4);
 }
 hr.div { border: none; border-top: 1px solid var(--line); margin: 18px 0; }
+
+/* ---------- new feature UI ---------- */
+.flash-toprow { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 12px; }
+.mini {
+  min-width: 38px; min-height: 38px;
+  border: none; background: var(--surface-2); color: var(--text);
+  border-radius: 9px; font-size: 1rem; cursor: pointer;
+}
+.mini:active { background: var(--line); }
+.mini.big { min-width: 46px; min-height: 46px; font-size: 1.4rem; }
+
+/* SRS grade buttons */
+.grade-row { display: flex; gap: 8px; }
+.grade-row .btn { flex: 1; }
+.grade-again { background: var(--bad); }
+.grade-good  { background: var(--green); }
+.grade-easy  { background: var(--gold); color: #1a1a0e; }
+
+.board-btn { background: var(--green-lt); }
+
+/* mock board timer */
+.timer-bar { height: 8px; margin-bottom: 4px; }
+.timer-bar > span { background: var(--gold); }
+
+/* settings: chips + switch + stepper */
+.chip-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip {
+  min-height: 44px; padding: 0 16px;
+  border: 1px solid var(--line); background: var(--surface);
+  color: var(--text); border-radius: 999px; font-size: 0.95rem; cursor: pointer;
+}
+.chip.on { background: var(--gold); color: #1a1a0e; border-color: var(--gold); font-weight: 700; }
+.switch { display: flex; align-items: center; gap: 12px; cursor: pointer; }
+.switch input { width: 22px; height: 22px; accent-color: var(--gold); }
+.stepper { display: flex; align-items: center; gap: 14px; font-size: 1.3rem; font-weight: 700; }
+
+/* forms */
+.lbl { display: block; margin: 16px 4px 6px; font-size: 0.85rem; color: var(--text-dim); }
+textarea.input { resize: vertical; font-family: inherit; }
+select.input { appearance: none; -webkit-appearance: none; }
+label.btn { cursor: pointer; }
