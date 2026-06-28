@@ -1,0 +1,289 @@
+/* ===========================================================
+   NCO Board Study Guide — styles
+   Mobile-first, dark "Army" theme. One-handed friendly.
+   =========================================================== */
+
+:root {
+  --green:      #4a5d23;   /* Army OD green */
+  --green-dk:   #2e3a23;
+  --green-lt:   #6b8e23;
+  --gold:       #ffcc33;   /* Army gold */
+  --gold-dk:    #c9a227;
+  --bg:         #14160f;
+  --surface:    #1f2418;
+  --surface-2:  #2a3120;
+  --text:       #f1f3e8;
+  --text-dim:   #aab199;
+  --line:       #3a4230;
+  --good:       #5cb85c;
+  --bad:        #d9534f;
+  --radius:     14px;
+  --tap:        48px;      /* minimum touch target */
+  --maxw:       640px;     /* keep readable on tablets */
+}
+
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, system-ui, sans-serif;
+  font-size: 17px;
+  line-height: 1.45;
+  overscroll-behavior-y: none;
+}
+
+body {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ---------- App bar ---------- */
+.appbar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: max(8px, env(safe-area-inset-top)) 12px 8px;
+  background: var(--green-dk);
+  border-bottom: 1px solid var(--line);
+}
+.appbar h1 {
+  flex: 1;
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: var(--gold);
+  text-align: center;
+}
+.iconbtn {
+  min-width: var(--tap);
+  min-height: var(--tap);
+  border: none;
+  background: transparent;
+  color: var(--text);
+  font-size: 1.4rem;
+  border-radius: 10px;
+  cursor: pointer;
+}
+.iconbtn:active { background: rgba(255,255,255,0.08); }
+
+/* ---------- Screen / main scroll area ---------- */
+.screen {
+  flex: 1;
+  width: 100%;
+  max-width: var(--maxw);
+  margin: 0 auto;
+  padding: 16px 16px 96px;
+  animation: fade .18s ease;
+}
+@keyframes fade { from { opacity: 0; transform: translateY(4px);} to {opacity:1;transform:none;} }
+
+h2.section { font-size: 1.05rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; margin: 22px 4px 10px; }
+
+/* ---------- Bottom tab bar ---------- */
+.tabbar {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  z-index: 10;
+  display: flex;
+  background: var(--green-dk);
+  border-top: 1px solid var(--line);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.tab {
+  flex: 1;
+  min-height: 60px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  text-decoration: none;
+  color: var(--text-dim);
+  font-size: 0.72rem;
+}
+.tab .ico { font-size: 1.15rem; }
+.tab.active { color: var(--gold); }
+
+/* ---------- Buttons ---------- */
+.btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  min-height: var(--tap);
+  padding: 14px 18px;
+  border: none;
+  border-radius: var(--radius);
+  background: var(--green);
+  color: var(--text);
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+}
+.btn:active { transform: scale(0.985); }
+.btn.gold { background: var(--gold); color: #1a1a0e; }
+.btn.ghost { background: var(--surface-2); }
+.btn.lg { min-height: 64px; font-size: 1.1rem; }
+.btn-row { display: flex; gap: 10px; }
+.btn-row .btn { flex: 1; }
+
+/* ---------- Cards / list rows ---------- */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 16px;
+  margin-bottom: 12px;
+}
+
+.hero {
+  background: linear-gradient(135deg, var(--green) 0%, var(--green-dk) 100%);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 18px;
+  margin-bottom: 16px;
+}
+.hero .big { font-size: 2.2rem; font-weight: 800; color: var(--gold); line-height: 1; }
+.hero .sub { color: var(--text); opacity: 0.85; margin-top: 4px; }
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  margin-bottom: 10px;
+  text-decoration: none;
+  color: var(--text);
+  cursor: pointer;
+  text-align: left;
+}
+.row:active { background: var(--surface-2); }
+.row .grow { flex: 1; min-width: 0; }
+.row .code { font-weight: 700; color: var(--gold); font-size: 0.95rem; }
+.row .ttl { color: var(--text); font-size: 0.95rem; }
+.row .meta { color: var(--text-dim); font-size: 0.8rem; margin-top: 2px; }
+.row .chev { color: var(--text-dim); font-size: 1.2rem; }
+.pill {
+  font-size: 0.7rem;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+
+/* progress bar */
+.bar { height: 7px; background: var(--surface-2); border-radius: 999px; overflow: hidden; margin-top: 8px; }
+.bar > span { display: block; height: 100%; background: var(--gold); border-radius: 999px; transition: width .3s; }
+
+/* ---------- Flashcard ---------- */
+.flash-wrap { display: flex; flex-direction: column; min-height: 60vh; }
+.flash-progress { color: var(--text-dim); font-size: 0.85rem; text-align: center; margin-bottom: 10px; }
+.flashcard {
+  flex: 1;
+  perspective: 1400px;
+  cursor: pointer;
+  margin-bottom: 16px;
+  min-height: 320px;
+}
+.flash-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 320px;
+  transition: transform .5s;
+  transform-style: preserve-3d;
+}
+.flashcard.flipped .flash-inner { transform: rotateY(180deg); }
+.flash-face {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 24px;
+  border-radius: var(--radius);
+  border: 1px solid var(--line);
+  overflow-y: auto;
+}
+.flash-front { background: var(--surface); }
+.flash-back { background: var(--surface-2); transform: rotateY(180deg); }
+.flash-tag { font-size: 0.72rem; color: var(--gold); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; }
+.flash-q { font-size: 1.35rem; font-weight: 600; }
+.flash-a { font-size: 1.2rem; }
+.flash-ref { margin-top: 14px; font-size: 0.78rem; color: var(--text-dim); }
+.flash-hint { text-align: center; color: var(--text-dim); font-size: 0.8rem; margin-bottom: 14px; }
+
+/* ---------- Quiz ---------- */
+.choice {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 16px;
+  margin-bottom: 10px;
+  color: var(--text);
+  font-size: 1rem;
+  cursor: pointer;
+}
+.choice:active { background: var(--surface-2); }
+.choice.correct { background: rgba(92,184,92,0.18); border-color: var(--good); }
+.choice.wrong { background: rgba(217,83,79,0.18); border-color: var(--bad); }
+.choice:disabled { cursor: default; opacity: 1; }
+.q-text { font-size: 1.25rem; font-weight: 600; margin: 8px 4px 18px; }
+.q-count { color: var(--text-dim); font-size: 0.85rem; text-align: center; }
+
+/* score ring */
+.ring-wrap { text-align: center; padding: 20px 0; }
+.ring { font-size: 3.4rem; font-weight: 800; color: var(--gold); }
+.ring small { display: block; font-size: 1rem; color: var(--text-dim); font-weight: 400; }
+
+/* ---------- Misc ---------- */
+.muted { color: var(--text-dim); }
+.center { text-align: center; }
+.spacer { height: 12px; }
+.input {
+  width: 100%;
+  min-height: var(--tap);
+  padding: 12px 14px;
+  border-radius: var(--radius);
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 1rem;
+}
+.empty { text-align: center; color: var(--text-dim); padding: 40px 20px; }
+.badge-good { color: var(--good); }
+.badge-bad { color: var(--bad); }
+.toast {
+  position: fixed;
+  left: 50%; bottom: 86px;
+  transform: translateX(-50%);
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  color: var(--text);
+  padding: 10px 16px;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  z-index: 50;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+}
+hr.div { border: none; border-top: 1px solid var(--line); margin: 18px 0; }

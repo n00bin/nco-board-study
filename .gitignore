@@ -1,0 +1,7 @@
+# OS / editor noise
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# local backup of the seed deck (kept on disk, not published)
+data/content.seed.js
