@@ -71,40 +71,51 @@
 
       var i = 0, score = 0;
 
+      var selected = null;
+
       function paintQuestion() {
         var item = questions[i];
-        var html =
+        selected = null;
+        container.innerHTML =
           '<div class="q-count">Question ' + (i + 1) + " of " + questions.length +
             " • Score " + score + '</div>' +
           '<div class="q-text">' + esc(item.q) + '</div>' +
-          '<div id="choices"></div>';
-        container.innerHTML = html;
+          '<div id="choices"></div>' +
+          '<button class="btn gold lg" id="submitBtn" disabled>Submit answer</button>';
         var box = container.querySelector("#choices");
         item.options.forEach(function (opt) {
           var b = document.createElement("button");
           b.className = "choice";
           b.innerHTML = esc(opt.text).replace(/\n/g, "<br>");
-          b.addEventListener("click", function () { answer(b, opt, item); });
+          b.addEventListener("click", function () { select(b, opt); });
           box.appendChild(b);
+        });
+        container.querySelector("#submitBtn").addEventListener("click", function () {
+          if (selected) submit(selected.btn, selected.opt, item);
         });
       }
 
-      function answer(btn, opt, item) {
+      // First tap only HIGHLIGHTS the choice — you can change it until you press Submit.
+      function select(btn, opt) {
+        container.querySelectorAll(".choice").forEach(function (x) { x.classList.remove("selected"); });
+        btn.classList.add("selected");
+        selected = { btn: btn, opt: opt };
+        var sb = container.querySelector("#submitBtn");
+        if (sb) sb.disabled = false;
+      }
+
+      function submit(btn, opt, item) {
         var all = container.querySelectorAll(".choice");
-        all.forEach(function (b) { b.disabled = true; });
+        all.forEach(function (b) { b.disabled = true; b.classList.remove("selected"); });
         Store.recordAnswer(item.card.id, opt.correct);
         if (opt.correct) {
           btn.classList.add("correct");
           score++;
         } else {
           btn.classList.add("wrong");
-          all.forEach(function (b) {
-            // reveal the right one
-            var match = item.options.filter(function (o) { return o.correct; })[0];
-            if (b.textContent === match.text) b.classList.add("correct");
-          });
+          var match = item.options.filter(function (o) { return o.correct; })[0];
+          all.forEach(function (b) { if (b.textContent === match.text) b.classList.add("correct"); });
         }
-        // "Next" button
         var nav = document.createElement("button");
         nav.className = "btn gold";
         nav.style.marginTop = "12px";
@@ -113,13 +124,14 @@
           if (i + 1 >= questions.length) return showResults();
           i++; paintQuestion();
         });
+        var sb = container.querySelector("#submitBtn");
         if (item.card.ref) {
           var ref = document.createElement("div");
           ref.className = "flash-ref";
           ref.textContent = "Reference: " + item.card.ref;
-          container.appendChild(ref);
+          if (sb) container.insertBefore(ref, sb); else container.appendChild(ref);
         }
-        container.appendChild(nav);
+        if (sb) sb.replaceWith(nav); else container.appendChild(nav);
       }
 
       function showResults() {
