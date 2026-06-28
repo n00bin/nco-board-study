@@ -8,9 +8,12 @@
 
   function esc(s) { return String(s).replace(/[&<>]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]; }); }
 
+  function normA(s) { return String(s).toLowerCase().replace(/\b(a|an|the|and)\b/g, "").replace(/[^a-z0-9]/g, ""); }
+
   var Flashcards = {
     // cards = the deck for this session (already filtered by caller)
-    render: function (container, cards, title) {
+    render: function (container, cards, title, opts) {
+      if (opts && opts.typed) return Flashcards.renderTyped(container, cards, title);
       if (!cards.length) { container.innerHTML = '<div class="empty">No cards to study here yet.</div>'; return; }
 
       var queue = Store.buildQueue(cards).slice();      // due first, then new
@@ -97,6 +100,69 @@
       container.querySelector("#gEasy").addEventListener("click", function (e) { e.stopPropagation(); grade("easy"); });
 
       paint();
+    },
+
+    // typed / fill-in-the-blank recall: type the answer, then self-grade
+    renderTyped: function (container, cards, title) {
+      if (!cards.length) { container.innerHTML = '<div class="empty">No cards to study here yet.</div>'; return; }
+      var queue = Store.buildQueue(cards).slice();
+      if (!queue.length) queue = cards.slice();
+      var i = 0, reviewed = 0;
+
+      function pubCode(c) { var p = STUDY.pubsById[c.pub]; return p ? p.code : ""; }
+
+      function ask() {
+        var c = queue[i];
+        container.innerHTML =
+          '<div class="flash-progress">Reviewed ' + reviewed + '  •  Left ' + (queue.length - i) + '</div>' +
+          '<div class="card"><div class="flash-toprow"><span class="flash-tag">' + esc(pubCode(c)) + (c.topic ? " • " + esc(c.topic) : "") + '</span></div>' +
+            '<div class="flash-q" style="margin-bottom:14px;">' + esc(c.q) + '</div>' +
+            '<textarea class="input" id="tIn" rows="2" placeholder="Type your answer…"></textarea></div>' +
+          '<button class="btn gold lg" id="tShow">Check answer</button>';
+        var inp = container.querySelector("#tIn");
+        inp.focus();
+        inp.addEventListener("keydown", function (e) { if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) reveal(); });
+        container.querySelector("#tShow").addEventListener("click", reveal);
+      }
+
+      function reveal() {
+        var c = queue[i];
+        var typed = (container.querySelector("#tIn").value || "").trim();
+        var nt = normA(typed), na = normA(c.a);
+        var close = nt.length >= 2 && (nt === na || (na.length >= 3 && na.indexOf(nt) >= 0) || (nt.length >= 3 && nt.indexOf(na) >= 0));
+        var verdict = !typed ? "" : close ? '<div class="badge-good" style="font-weight:700;">&#10003; Looks right</div>' : '<div class="badge-bad" style="font-weight:700;">&#10007; Compare carefully</div>';
+        container.innerHTML =
+          '<div class="flash-progress">Reviewed ' + reviewed + '  •  Left ' + (queue.length - i) + '</div>' +
+          '<div class="card"><div class="flash-tag">' + esc(pubCode(c)) + '</div>' +
+            '<div class="flash-q" style="margin:6px 0 10px;">' + esc(c.q) + '</div>' +
+            (typed ? '<div class="muted">You wrote: ' + esc(typed) + '</div>' + verdict + '<hr class="div">' : '') +
+            '<div class="flash-tag">Answer</div><div class="flash-a">' + esc(c.a).replace(/\n/g, "<br>") + '</div>' +
+            (c.ref ? '<div class="flash-ref">Reference: ' + esc(c.ref) + '</div>' : '') + '</div>' +
+          '<div class="grade-row"><button class="btn grade-again" id="gAgain">Again</button>' +
+            '<button class="btn grade-good" id="gGood">Good</button>' +
+            '<button class="btn grade-easy" id="gEasy">Easy</button></div>';
+        container.querySelector("#gAgain").addEventListener("click", function () { grade("again"); });
+        container.querySelector("#gGood").addEventListener("click", function () { grade("good"); });
+        container.querySelector("#gEasy").addEventListener("click", function () { grade("easy"); });
+      }
+
+      function grade(g) {
+        var c = queue[i];
+        Store.grade(c.id, g); reviewed++;
+        if (g === "again") queue.push(c);
+        i++;
+        if (i >= queue.length) {
+          container.innerHTML = '<div class="ring-wrap"><div class="ring">&#10003;<small>' + reviewed + ' cards reviewed</small></div></div>' +
+            '<p class="center muted">Session complete.</p><div class="spacer"></div>' +
+            '<button class="btn gold lg" id="again">Study more</button><div class="spacer"></div><button class="btn ghost" id="home">Home</button>';
+          container.querySelector("#again").addEventListener("click", function () { Flashcards.renderTyped(container, cards, title); });
+          container.querySelector("#home").addEventListener("click", function () { App.go("#/"); });
+          return;
+        }
+        ask();
+      }
+
+      ask();
     }
   };
 

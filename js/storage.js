@@ -14,11 +14,14 @@
     cards: {},      // id -> { reps, lapses, ease, interval, due, status, seen, correct, wrong }
     quizzes: [],    // { deck, total, score, date }
     userCards: [],  // user-authored cards
+    chain: {},      // chain-of-command roster: roleKey -> "RANK Name"
+    checks: {},     // board-day checklist: itemId -> bool
+    statement: "",  // opening-statement draft
     daily: { date: "", count: 0 },
     goal: 20,
     streak: 0,
     lastStudyDate: "",
-    settings: { autoRead: false, timer: 30 }
+    settings: { autoRead: false, timer: 30, driveGap: 6 }
   };
 
   function clone(o) { return JSON.parse(JSON.stringify(o)); }
@@ -30,6 +33,7 @@
       var d = JSON.parse(raw);
       for (var k in DEFAULT) if (!(k in d)) d[k] = clone(DEFAULT[k]);
       if (!d.settings) d.settings = clone(DEFAULT.settings);
+      for (var sk in DEFAULT.settings) if (d.settings[sk] == null) d.settings[sk] = DEFAULT.settings[sk];
       return d;
     } catch (e) { return clone(DEFAULT); }
   }
@@ -176,6 +180,21 @@
       state.userCards = state.userCards.filter(function (x) { return x.id !== id; });
       save();
     },
+
+    // ---- leeches (cards you keep missing) ----
+    leeches: function (ids) {
+      var out = [];
+      for (var i = 0; i < ids.length; i++) { var r = state.cards[ids[i]]; if (r && r.lapses >= 3) out.push(ids[i]); }
+      return out;
+    },
+
+    // ---- board day: chain of command, checklist, opening statement ----
+    chain: function () { return state.chain; },
+    setChainRole: function (role, val) { if (val) state.chain[role] = val; else delete state.chain[role]; save(); },
+    checks: function () { return state.checks; },
+    toggleCheck: function (id) { state.checks[id] = !state.checks[id]; save(); return state.checks[id]; },
+    statement: function () { return state.statement || ""; },
+    setStatement: function (t) { state.statement = String(t || ""); save(); },
 
     // ---- backup ----
     exportData: function () { return JSON.stringify(state); },

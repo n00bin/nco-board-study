@@ -15,8 +15,14 @@ no account, no app store, nothing to sign up for.
 - **Quiz** — multiple-choice, scored, with instant right/wrong feedback. Pick 10, 20, or all questions.
 - **Mock Board** — a timed oral-board simulation: mixed questions across subjects, answer out loud,
   self-grade, and get a score plus your **weakest subjects** at the end.
-- **Read-aloud** — the phone speaks the question and answer so you can practice answering hands-free.
-- **My Cards** — add your unit's smart-book questions (chain of command, command policy, local SOPs).
+- **Drive Mode** — hands-free auto-play audio: reads the question, pauses for you to answer aloud, reads
+  the answer, advances. Keeps the screen awake. Study during PT or the drive in.
+- **Type answers** — fill-in-the-blank recall (toggle on the flashcard screen), plus **Leech focus**
+  (cards you keep missing) and a **Night-before cram**.
+- **Read-aloud** — the phone speaks the question and answer.
+- **Board Day Prep** — a fill-in **chain-of-command roster** (becomes quiz questions), an **AR 670-1
+  uniform inspection checklist**, a **how-to-report-to-the-board** guide, and an **opening-statement** draft.
+- **My Cards** — add your unit's smart-book questions (command policy, local SOPs).
 - **Daily goal & streak**, **Browse** by publication, full-text **Search**, and **Backup/restore**
   (export your progress to a file and move it to a new phone).
 

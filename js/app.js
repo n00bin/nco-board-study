@@ -11,26 +11,79 @@
   var titleEl = document.getElementById("appTitle");
   var backBtn = document.getElementById("backBtn");
 
-  // index publications by id; add a synthetic "My Cards" publication for user content
+  // index publications by id; add synthetic publications for user + chain-of-command content
   if (!STUDY.pubs.some(function (p) { return p.id === "mine"; }))
     STUDY.pubs.push({ id: "mine", code: "My Cards", title: "My Smart Book (your own cards)", cat: "My Cards" });
+  if (!STUDY.pubs.some(function (p) { return p.id === "chain"; }))
+    STUDY.pubs.push({ id: "chain", code: "Chain of Command", title: "Your leaders (board day)", cat: "Board Day" });
   STUDY.pubsById = {};
   STUDY.pubs.forEach(function (p) { STUDY.pubsById[p.id] = p; });
 
-  function allCards() { return STUDY.cards.concat(Store.userCards()); }
+  function shuffle(a) { a = a.slice(); for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)); var t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
+
+  // chain-of-command roster: roles the board commonly asks about
+  var CHAIN_ROLES = [
+    { k: "teamleader", label: "Team Leader", your: true },
+    { k: "squadleader", label: "Squad Leader", your: true },
+    { k: "pltsgt", label: "Platoon Sergeant", your: true },
+    { k: "pltldr", label: "Platoon Leader", your: true },
+    { k: "firstsgt", label: "First Sergeant", your: true },
+    { k: "cocdr", label: "Company Commander", your: true },
+    { k: "bncsm", label: "Battalion CSM", your: true },
+    { k: "bncdr", label: "Battalion Commander", your: true },
+    { k: "bdecsm", label: "Brigade CSM", your: true },
+    { k: "bdecdr", label: "Brigade Commander", your: true },
+    { k: "divcsm", label: "Division CSM", your: true },
+    { k: "divcdr", label: "Division Commander", your: true },
+    { k: "sma", label: "Sergeant Major of the Army", your: false },
+    { k: "csa", label: "Chief of Staff of the Army", your: false },
+    { k: "secarmy", label: "Secretary of the Army", your: false },
+    { k: "secdef", label: "Secretary of Defense", your: false },
+    { k: "cjcs", label: "Chairman of the Joint Chiefs of Staff", your: false },
+    { k: "potus", label: "Commander in Chief (the President)", your: false }
+  ];
+
+  // turn the filled-in roster into study cards (with sensible quiz distractors)
+  function chainCards() {
+    var chain = Store.chain();
+    var filled = CHAIN_ROLES.filter(function (r) { return chain[r.k]; });
+    var names = filled.map(function (r) { return chain[r.k]; });
+    return filled.map(function (r) {
+      var card = { id: "chain-" + r.k, pub: "chain", topic: "Chain of Command", custom: true,
+        q: (r.your ? "Who is your " : "Who is the ") + r.label + "?", a: chain[r.k] };
+      var others = names.filter(function (n) { return n !== chain[r.k]; });
+      if (others.length >= 3) { card.choices = [chain[r.k]].concat(shuffle(others).slice(0, 3)); card.answer = 0; }
+      else card.flashOnly = true;
+      return card;
+    });
+  }
+
+  function allCards() { return STUDY.cards.concat(Store.userCards()).concat(chainCards()); }
   function cardsForDeck(deck) {
     var all = allCards();
     if (deck === "all") return all;
-    if (deck === "mine") return all.filter(function (c) { return c.custom; });
-    if (deck === "due") {
-      var now = Date.now();
-      return all.filter(function (c) { var r = Store.recOf(c.id); return r && r.reps > 0 && r.due <= now; });
-    }
+    if (deck === "due") { var now = Date.now(); return all.filter(function (c) { var r = Store.recOf(c.id); return r && r.reps > 0 && r.due <= now; }); }
+    if (deck === "leeches") { var set = {}; Store.leeches(all.map(function (c) { return c.id; })).forEach(function (id) { set[id] = 1; }); return all.filter(function (c) { return set[c.id]; }); }
+    if (deck === "cram") return cramDeck(all);
     return all.filter(function (c) { return c.pub === deck; });
+  }
+  function cramDeck(all) {
+    var now = Date.now(), weak = [], fresh = [];
+    all.forEach(function (c) {
+      var r = Store.recOf(c.id), s = Store.statusOf(c.id);
+      if (r && (s === "review" || r.lapses > 0 || (r.reps > 0 && r.due <= now))) weak.push(c);
+      else if (!r || r.reps === 0) fresh.push(c);
+    });
+    weak.sort(function (a, b) { return (Store.recOf(b.id).lapses || 0) - (Store.recOf(a.id).lapses || 0); });
+    var out = weak.slice(0, 60);
+    if (out.length < 20) out = out.concat(shuffle(fresh).slice(0, 40 - out.length));
+    return out;
   }
   function deckTitle(deck) {
     if (deck === "all") return "All Publications";
     if (deck === "due") return "Due Review";
+    if (deck === "leeches") return "Leeches (kept missing)";
+    if (deck === "cram") return "Night-before Cram";
     var p = STUDY.pubsById[deck];
     return p ? p.code : deck;
   }
@@ -61,14 +114,22 @@
         '<a class="btn green lg" href="#/pick/quiz">Quiz</a>' +
       '</div>' +
       '<div class="spacer"></div>' +
-      '<a class="btn lg board-btn" href="#/pick/board">&#127894; Mock Board</a>';
-    if (dueN > 0)
-      html += '<div class="spacer"></div><a class="btn ghost" href="#/flash/due">&#8635; Review ' + dueN + ' due now</a>';
+      '<div class="btn-row">' +
+        '<a class="btn lg board-btn" href="#/pick/board">&#127894; Mock Board</a>' +
+        '<a class="btn lg drive-btn" href="#/pick/drive">&#128663; Drive Mode</a>' +
+      '</div>';
+    var extras = [];
+    if (dueN > 0) extras.push('<a class="btn ghost" href="#/flash/due">&#8635; Review ' + dueN + ' due now</a>');
+    var leechN = Store.leeches(ids).length;
+    if (leechN > 0) extras.push('<a class="btn ghost" href="#/flash/leeches">&#9888;&#65039; Focus ' + leechN + ' leech' + (leechN > 1 ? "es" : "") + ' you keep missing</a>');
+    extras.push('<a class="btn ghost" href="#/flash/cram">&#128367;&#65039; Night-before cram</a>');
+    extras.forEach(function (e) { html += '<div class="spacer"></div>' + e; });
+    html += '<div class="spacer"></div><a class="row board-row" href="#/boardday"><div class="grow"><div class="code">&#127894; Board Day Prep</div><div class="ttl">Chain of command, uniform check, how to report</div></div><div class="chev">&#8250;</div></a>';
 
     html += '<h2 class="section">Subjects</h2>';
     var cats = {};
     STUDY.pubs.forEach(function (p) {
-      if (p.id === "mine" && !cardsForDeck("mine").length) return; // hide empty My Cards
+      if ((p.id === "mine" || p.id === "chain") && !cardsForDeck(p.id).length) return; // hide if empty
       (cats[p.cat] = cats[p.cat] || []).push(p);
     });
     Object.keys(cats).forEach(function (cat) {
@@ -90,7 +151,7 @@
     setTitle("Browse", true);
     var html = "", cats = {};
     STUDY.pubs.forEach(function (p) {
-      if (p.id === "mine" && !cardsForDeck("mine").length) return;
+      if ((p.id === "mine" || p.id === "chain") && !cardsForDeck(p.id).length) return;
       (cats[p.cat] = cats[p.cat] || []).push(p);
     });
     Object.keys(cats).forEach(function (cat) {
@@ -124,21 +185,40 @@
   }
 
   function screenPick(mode) {
-    var titles = { flash: "Pick a deck", quiz: "Pick a quiz", board: "Pick a board" };
-    var routes = { flash: "#/flash/", quiz: "#/quiz/", board: "#/board/" };
+    var titles = { flash: "Pick a deck", quiz: "Pick a quiz", board: "Pick a board", drive: "Drive Mode" };
+    var routes = { flash: "#/flash/", quiz: "#/quiz/", board: "#/board/", drive: "#/drive/" };
     setTitle(titles[mode] || "Pick", true);
     var route = routes[mode] || "#/flash/";
-    var html = '<a class="row" href="' + route + 'all"><div class="grow"><div class="code">All Publications</div>' +
+    var html = "";
+    if (mode === "flash")
+      html += '<div class="chip-row" id="modeToggle" style="margin-bottom:12px;">' +
+        '<button class="chip on" data-r="#/flash/">&#128196; Flip cards</button>' +
+        '<button class="chip" data-r="#/type/">&#9000;&#65039; Type answers</button></div>';
+    if (mode === "drive")
+      html += '<div class="card"><div class="muted">Hands-free: the app reads each question, pauses for you to answer aloud, then reads the answer. Great for PT or the drive in — keep the screen on.</div></div>';
+    html += '<a class="row deck" data-deck="all" href="' + route + 'all"><div class="grow"><div class="code">All Publications</div>' +
       '<div class="ttl">Everything mixed together</div></div><div class="pill">' + allCards().length + '</div><div class="chev">&#8250;</div></a>' +
       '<h2 class="section">Or pick a subject</h2>';
     STUDY.pubs.forEach(function (p) {
       var n = cardsForDeck(p.id).length;
-      if (p.id === "mine" && !n) return;
-      html += '<a class="row" href="' + route + p.id + '"><div class="grow"><div class="code">' + esc(p.code) +
+      if ((p.id === "mine" || p.id === "chain") && !n) return;
+      html += '<a class="row deck" data-deck="' + p.id + '" href="' + route + p.id + '"><div class="grow"><div class="code">' + esc(p.code) +
         '</div><div class="ttl">' + esc(p.title) + '</div></div><div class="pill">' + n + '</div><div class="chev">&#8250;</div></a>';
     });
     mount.innerHTML = html;
+    if (mode === "flash")
+      mount.querySelectorAll("#modeToggle .chip").forEach(function (b) {
+        b.addEventListener("click", function () {
+          mount.querySelectorAll("#modeToggle .chip").forEach(function (x) { x.classList.remove("on"); });
+          b.classList.add("on");
+          var pre = b.getAttribute("data-r");
+          mount.querySelectorAll(".deck").forEach(function (r) { r.setAttribute("href", pre + r.getAttribute("data-deck")); });
+        });
+      });
   }
+
+  function screenDrive(deck) { setTitle("Drive Mode", true); Drive.render(mount, cardsForDeck(deck), deckTitle(deck)); }
+  function screenType(deck) { setTitle("Type answers", true); Flashcards.render(mount, cardsForDeck(deck), deckTitle(deck), { typed: true }); }
 
   function screenFlash(deck) {
     setTitle("Flashcards", true);
@@ -204,6 +284,7 @@
     var html =
       '<div class="hero"><div class="big">' + m + '%</div><div class="sub">overall mastery • ' + counts.known + ' known, ' + counts.review + ' to review, ' + counts.new + ' new</div></div>' +
       '<a class="row" href="#/pick/board"><div class="grow"><div class="code">&#127894; Mock Board</div><div class="ttl">Simulate the oral board</div></div><div class="chev">&#8250;</div></a>' +
+      '<a class="row" href="#/boardday"><div class="grow"><div class="code">&#128203; Board Day Prep</div><div class="ttl">Chain of command, uniform, reporting</div></div><div class="chev">&#8250;</div></a>' +
       '<a class="row" href="#/mycards"><div class="grow"><div class="code">&#128221; My Cards</div><div class="ttl">Add your unit\'s smart-book questions</div></div><div class="chev">&#8250;</div></a>' +
       '<a class="row" href="#/share"><div class="grow"><div class="code">&#128279; Share &amp; QR code</div><div class="ttl">Send the app to other Soldiers</div></div><div class="chev">&#8250;</div></a>' +
       '<a class="row" href="#/settings"><div class="grow"><div class="code">&#9881;&#65039; Settings</div><div class="ttl">Daily goal, board timer, read-aloud</div></div><div class="chev">&#8250;</div></a>' +
@@ -228,6 +309,9 @@
         '<span class="muted" style="margin-left:8px;">cards / day</span></div></div>' +
       '<h2 class="section">Mock Board timer</h2><div class="chip-row" id="timerChips">' +
         timers.map(function (t) { return '<button class="chip' + (t === s.timer ? ' on' : '') + '" data-t="' + t + '">' + (t === 0 ? 'Off' : t + 's') + '</button>'; }).join("") +
+      '</div>' +
+      '<h2 class="section">Drive Mode answer pause</h2><div class="chip-row" id="gapChips">' +
+        [3, 5, 8, 12].map(function (t) { return '<button class="chip' + (t === s.driveGap ? ' on' : '') + '" data-g="' + t + '">' + t + 's</button>'; }).join("") +
       '</div>';
     if (Speech.supported())
       html += '<h2 class="section">Read-aloud</h2><div class="card"><label class="switch"><input type="checkbox" id="autoRead"' + (s.autoRead ? ' checked' : '') + '> <span>Automatically read questions &amp; answers aloud</span></label></div>';
@@ -240,6 +324,13 @@
       b.addEventListener("click", function () {
         Store.setSetting("timer", parseInt(b.getAttribute("data-t"), 10));
         mount.querySelectorAll("#timerChips .chip").forEach(function (x) { x.classList.remove("on"); });
+        b.classList.add("on");
+      });
+    });
+    mount.querySelectorAll("#gapChips .chip").forEach(function (b) {
+      b.addEventListener("click", function () {
+        Store.setSetting("driveGap", parseInt(b.getAttribute("data-g"), 10));
+        mount.querySelectorAll("#gapChips .chip").forEach(function (x) { x.classList.remove("on"); });
         b.classList.add("on");
       });
     });
@@ -360,9 +451,102 @@
     });
   }
 
+  // ---- Board Day content ----
+  var UNIFORM_CHECKS = [
+    { id: "u1", t: "Haircut neat & tapered within AR 670-1; clean-shaven (or authorized, groomed beard waiver)" },
+    { id: "u2", t: "Headgear (patrol cap / beret) shaped and worn correctly; rank centered on the cap" },
+    { id: "u3", t: "Nametapes (US ARMY / last name) correct, even, and properly placed" },
+    { id: "u4", t: "Rank / grade insignia centered and correct" },
+    { id: "u5", t: "Skill badges, tabs, and patches placed per regulation; not faded or frayed" },
+    { id: "u6", t: "Boots clean and serviceable; no excessive wear" },
+    { id: "u7", t: "Uniform clean, serviceable, correct size; no fraying, stains, or missing buttons" },
+    { id: "u8", t: "ID tags worn; ID card and any required documents on hand" },
+    { id: "u9", t: "Jewelry / eyewear / cosmetics within standards; nothing unauthorized" },
+    { id: "u10", t: "Pockets flat; nothing bulky or visible (pens, phone, etc.)" },
+    { id: "u11", t: "ASU (if worn): brass aligned, ribbons/medals in correct order of precedence, nameplate placed correctly" },
+    { id: "u12", t: "Pressed with sharp creases; gig line straight (ASU)" }
+  ];
+  var REPORTING_STEPS = [
+    "Arrive early. Know each board member's name, rank, and position.",
+    "Wait to be called. When directed, approach the door and knock if your SOP requires it.",
+    "Enter when told. Move to a position centered in front of the board president and halt about two steps away.",
+    "Render the hand salute and report — e.g. \"Sergeant Major, Sergeant (Last Name) reports.\" Hold the salute until it is returned.",
+    "Take your seat only when directed. Sit at attention: back straight, feet flat, hands on thighs, eyes on the questioner.",
+    "Answer the board member who asked. If you don't know: \"I do not know, Sergeant Major, but I will find out.\" Never guess.",
+    "Keep your bearing and eye contact. Speak clearly and with confidence; address members by rank.",
+    "When dismissed, stand at attention, render the hand salute, hold until returned, face about, and march out."
+  ];
+  function menuRow(href, code, ttl) { return '<a class="row" href="' + href + '"><div class="grow"><div class="code">' + code + '</div><div class="ttl">' + ttl + '</div></div><div class="chev">&#8250;</div></a>'; }
+
+  function screenBoardDay() {
+    setTitle("Board Day Prep", true);
+    mount.innerHTML =
+      '<div class="card"><div class="muted">Everything beyond the flashcards. Protocols vary by board and installation — always follow your local board SOP and appointment memo.</div></div>' +
+      menuRow("#/chain", "&#129333; Chain of Command", "Fill in your leaders — then quiz yourself") +
+      menuRow("#/uniform", "&#129509; Uniform Inspection", "Check your uniform before you walk in") +
+      menuRow("#/reporting", "&#127894; How to Report to the Board", "Reporting sequence & bearing") +
+      menuRow("#/statement", "&#128221; Opening Statement", "Draft and save your self-introduction");
+  }
+
+  function screenChain() {
+    setTitle("Chain of Command", true);
+    var chain = Store.chain();
+    var filledN = CHAIN_ROLES.filter(function (r) { return chain[r.k]; }).length;
+    var html = '<div class="card"><div class="muted">Fill in your leaders. Saved entries become flashcards &amp; quiz questions automatically — boards almost always ask these.</div></div>';
+    [["Your unit", true], ["Army & national", false]].forEach(function (g) {
+      html += '<h2 class="section">' + g[0] + '</h2>';
+      CHAIN_ROLES.filter(function (r) { return r.your === g[1]; }).forEach(function (r) {
+        html += '<label class="lbl">' + esc(r.label) + '</label><input class="input chainin" data-k="' + r.k + '" placeholder="RANK Last Name" value="' + (chain[r.k] ? escAttr(chain[r.k]) : "") + '">';
+      });
+    });
+    html += '<div class="spacer"></div><button class="btn gold lg" id="saveChain">Save roster</button>';
+    if (filledN) html += '<div class="spacer"></div><a class="btn green" href="#/flash/chain">Study these ' + filledN + ' as flashcards</a>';
+    mount.innerHTML = html;
+    mount.querySelector("#saveChain").addEventListener("click", function () {
+      mount.querySelectorAll(".chainin").forEach(function (inp) { Store.setChainRole(inp.getAttribute("data-k"), inp.value.trim()); });
+      App.toast("Roster saved"); screenChain();
+    });
+  }
+
+  function screenUniform() {
+    setTitle("Uniform Inspection", true);
+    var checks = Store.checks();
+    var html = '<div class="card"><div class="muted">Tap each item once you\'ve verified it. Standards summarized from AR 670-1 / DA PAM 670-1 — verify exact measurements there and follow local guidance.</div></div>';
+    UNIFORM_CHECKS.forEach(function (u) {
+      var on = !!checks[u.id];
+      html += '<button class="row check' + (on ? " checked" : "") + '" data-id="' + u.id + '"><div class="checkbox">' + (on ? "&#10003;" : "") + '</div><div class="grow"><div class="ttl">' + esc(u.t) + '</div></div></button>';
+    });
+    html += '<div class="spacer"></div><button class="btn ghost" id="clear">Reset checklist</button>';
+    mount.innerHTML = html;
+    mount.querySelectorAll(".check").forEach(function (b) { b.addEventListener("click", function () { Store.toggleCheck(b.getAttribute("data-id")); screenUniform(); }); });
+    mount.querySelector("#clear").addEventListener("click", function () { UNIFORM_CHECKS.forEach(function (u) { if (Store.checks()[u.id]) Store.toggleCheck(u.id); }); screenUniform(); });
+  }
+
+  function screenReporting() {
+    setTitle("Report to the Board", true);
+    var html = '<div class="card"><div class="muted">A general sequence — boards differ. Follow your local board SOP and appointment memo exactly.</div></div>';
+    REPORTING_STEPS.forEach(function (s, i) { html += '<div class="row"><div class="numbubble">' + (i + 1) + '</div><div class="grow"><div class="ttl">' + esc(s) + '</div></div></div>'; });
+    html += '<h2 class="section">Bearing tips</h2><div class="card"><div class="muted">Stand and sit at attention. Make eye contact. Speak loudly and clearly. Don\'t fidget. If you don\'t know an answer, say so honestly — never bluff.</div></div>';
+    mount.innerHTML = html;
+  }
+
+  function screenStatement() {
+    setTitle("Opening Statement", true);
+    var skeleton = "Good (morning/afternoon), Sergeant Major and members of the board.\nI am (Rank Last Name), serving as (duty position) in (unit).\nI have (X) years in service and (Y) time in grade.\nSome of my accomplishments include ...\nI am prepared for promotion because ...\nMy goals as an NCO are ...\nThank you.";
+    var cur = Store.statement();
+    mount.innerHTML =
+      '<div class="card"><div class="muted">Some boards ask for a brief self-introduction. Draft yours here — it saves on this device.</div></div>' +
+      '<label class="lbl">Your opening statement</label>' +
+      '<textarea class="input" id="stmt" rows="12" placeholder="Write your statement...">' + (cur ? esc(cur) : "") + '</textarea>' +
+      '<div class="btn-row" style="margin-top:10px;"><button class="btn gold" id="save">Save</button><button class="btn ghost" id="tmpl">Insert template</button></div>';
+    mount.querySelector("#save").addEventListener("click", function () { Store.setStatement(mount.querySelector("#stmt").value); App.toast("Saved"); });
+    mount.querySelector("#tmpl").addEventListener("click", function () { var t = mount.querySelector("#stmt"); if (!t.value.trim() || confirm("Replace current text with the template?")) t.value = skeleton; });
+  }
+
   // ---------------- router ----------------
   function route() {
     if (window.MockBoard) MockBoard.stop();
+    if (window.Drive) Drive.stop();
     if (window.Speech) Speech.stop();
     var hash = location.hash || "#/";
     var parts = hash.replace(/^#\//, "").split("/");
@@ -381,11 +565,18 @@
       if (parts[1] === "edit") return screenMyCardForm(parts.slice(2).join("/")), tab("more");
       return screenMyCards(), tab("more");
     }
+    if (head === "boardday") return screenBoardDay(), tab("home");
+    if (head === "chain") return screenChain(), tab("home");
+    if (head === "uniform") return screenUniform(), tab("home");
+    if (head === "reporting") return screenReporting(), tab("home");
+    if (head === "statement") return screenStatement(), tab("home");
     if (head === "pub") return screenPub(parts[1]), tab("browse");
     if (head === "pick") return screenPick(parts[1]), tab("home");
     if (head === "flash") return screenFlash(parts[1]), tab("home");
+    if (head === "type") return screenType(parts[1]), tab("home");
     if (head === "quiz") return screenQuiz(parts[1]), tab("home");
     if (head === "board") return screenBoard(parts[1]), tab("home");
+    if (head === "drive") return screenDrive(parts[1]), tab("home");
     return screenHome(), tab("home");
   }
   function tab(name) { document.querySelectorAll(".tab").forEach(function (t) { t.classList.toggle("active", t.getAttribute("data-tab") === name); }); }

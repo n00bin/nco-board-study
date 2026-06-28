@@ -328,3 +328,24 @@ hr.div { border: none; border-top: 1px solid var(--line); margin: 18px 0; }
 textarea.input { resize: vertical; font-family: inherit; }
 select.input { appearance: none; -webkit-appearance: none; }
 label.btn { cursor: pointer; }
+
+/* drive mode */
+.drive-btn { background: #3f5d7a; }
+.drive-card { min-height: 220px; }
+.phase { font-size: 0.85rem; color: var(--gold); letter-spacing: 0.5px; }
+
+/* board day */
+.board-row { border-color: var(--gold); }
+.numbubble {
+  flex-shrink: 0; width: 28px; height: 28px; border-radius: 50%;
+  background: var(--green); color: var(--text);
+  display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.9rem;
+}
+.check { align-items: center; }
+.check.checked { border-color: var(--good); background: rgba(92,184,92,0.10); }
+.checkbox {
+  flex-shrink: 0; width: 26px; height: 26px; border-radius: 7px;
+  border: 2px solid var(--line); color: var(--good);
+  display: flex; align-items: center; justify-content: center; font-weight: 700;
+}
+.check.checked .checkbox { border-color: var(--good); }

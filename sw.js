@@ -1,6 +1,6 @@
 /* Service worker — caches the app for full offline use.
    Bump CACHE when you change app files or content so phones update. */
-var CACHE = "ncoboard-v2";
+var CACHE = "ncoboard-v3";
 var ASSETS = [
   "./",
   "./index.html",
@@ -12,6 +12,7 @@ var ASSETS = [
   "./js/flashcards.js",
   "./js/quiz.js",
   "./js/mockboard.js",
+  "./js/drive.js",
   "./js/app.js",
   "./icons/icon-192.png",
   "./icons/icon-512.png",
