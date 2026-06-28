@@ -48,8 +48,8 @@
   }
 
   var Quiz = {
-    // cards = candidate pool, length = how many questions
-    render: function (container, cards, title, length) {
+    // cards = candidate pool, length = how many questions, opts.onDone(score,total) for lesson practice
+    render: function (container, cards, title, length, opts) {
       // Only quiz on discrete answers: curated multiple-choice, or short answers.
       // Long prose (creeds, the Code of Conduct, etc.) stays flashcard-only.
       var usable = cards.filter(function (c) {
@@ -124,6 +124,7 @@
 
       function showResults() {
         Store.recordQuiz(title, score, questions.length);
+        if (opts && opts.onDone) return opts.onDone(score, questions.length);
         var pct = Math.round((score / questions.length) * 100);
         var msg = pct >= 90 ? "Outstanding." : pct >= 75 ? "Solid — keep drilling." :
                   pct >= 60 ? "Passing, but review the misses." : "Needs work. Run it again.";

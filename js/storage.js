@@ -14,6 +14,7 @@
     cards: {},      // id -> { reps, lapses, ease, interval, due, status, seen, correct, wrong }
     quizzes: [],    // { deck, total, score, date }
     userCards: [],  // user-authored cards
+    lessons: {},    // Learn-mode progress: lessonId -> { done, score, date }
     chain: {},      // chain-of-command roster: roleKey -> "RANK Name"
     checks: {},     // board-day checklist: itemId -> bool
     statement: "",  // opening-statement draft
@@ -180,6 +181,11 @@
       state.userCards = state.userCards.filter(function (x) { return x.id !== id; });
       save();
     },
+
+    // ---- Learn mode lesson progress ----
+    markLessonDone: function (id, score) { state.lessons[id] = { done: true, score: score == null ? null : score, date: Date.now() }; save(); },
+    lessonDone: function (id) { return !!(state.lessons[id] && state.lessons[id].done); },
+    lessonsDoneCount: function (ids) { var n = 0; for (var i = 0; i < ids.length; i++) if (this.lessonDone(ids[i])) n++; return n; },
 
     // ---- leeches (cards you keep missing) ----
     leeches: function (ids) {

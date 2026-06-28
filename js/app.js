@@ -109,6 +109,8 @@
         '<div class="bar"><span style="width:' + m + '%"></span></div>' +
         '<div class="sub" style="margin-top:8px;">Today: ' + daily.count + ' / ' + daily.goal + ' cards' + (daily.count >= daily.goal ? ' &#10003;' : '') + '</div>' +
       '</div>' +
+      '<a class="btn lg learn-cta" href="#/learn">&#128214; Learn Mode — start from scratch</a>' +
+      '<div class="muted center" style="font-size:.8rem;margin:6px 0 12px;">New to this? Learn Mode teaches you first. Already know it? Drill below.</div>' +
       '<div class="btn-row">' +
         '<a class="btn gold lg" href="#/pick/flash">Flashcards</a>' +
         '<a class="btn green lg" href="#/pick/quiz">Quiz</a>' +
@@ -220,6 +222,10 @@
   function screenDrive(deck) { setTitle("Drive Mode", true); Drive.render(mount, cardsForDeck(deck), deckTitle(deck)); }
   function screenType(deck) { setTitle("Type answers", true); Flashcards.render(mount, cardsForDeck(deck), deckTitle(deck), { typed: true }); }
 
+  function screenLearn() { setTitle("Learn", false); Learn.hub(mount); }
+  function screenTrack(id) { setTitle("Learn", true); Learn.track(mount, id); }
+  function screenLesson(id) { setTitle("Lesson", true); Learn.lesson(mount, id); }
+
   function screenFlash(deck) {
     setTitle("Flashcards", true);
     Flashcards.render(mount, cardsForDeck(deck), deckTitle(deck));
@@ -283,6 +289,7 @@
     var quizzes = Store.quizzes();
     var html =
       '<div class="hero"><div class="big">' + m + '%</div><div class="sub">overall mastery • ' + counts.known + ' known, ' + counts.review + ' to review, ' + counts.new + ' new</div></div>' +
+      '<a class="row" href="#/learn"><div class="grow"><div class="code">&#128214; Learn Mode</div><div class="ttl">Guided lessons — learn it from scratch</div></div><div class="chev">&#8250;</div></a>' +
       '<a class="row" href="#/pick/board"><div class="grow"><div class="code">&#127894; Mock Board</div><div class="ttl">Simulate the oral board</div></div><div class="chev">&#8250;</div></a>' +
       '<a class="row" href="#/boardday"><div class="grow"><div class="code">&#128203; Board Day Prep</div><div class="ttl">Chain of command, uniform, reporting</div></div><div class="chev">&#8250;</div></a>' +
       '<a class="row" href="#/mycards"><div class="grow"><div class="code">&#128221; My Cards</div><div class="ttl">Add your unit\'s smart-book questions</div></div><div class="chev">&#8250;</div></a>' +
@@ -554,6 +561,9 @@
     window.scrollTo(0, 0);
 
     if (head === "") return screenHome(), tab("home");
+    if (head === "learn") return screenLearn(), tab("learn");
+    if (head === "track") return screenTrack(parts[1]), tab("learn");
+    if (head === "lesson") return screenLesson(parts.slice(1).join("/")), tab("learn");
     if (head === "browse") return screenBrowse(), tab("browse");
     if (head === "search") return screenSearch(), tab("search");
     if (head === "more") return screenMore(), tab("more");

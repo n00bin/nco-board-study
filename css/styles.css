@@ -349,3 +349,9 @@ label.btn { cursor: pointer; }
   display: flex; align-items: center; justify-content: center; font-weight: 700;
 }
 .check.checked .checkbox { border-color: var(--good); }
+
+/* learn mode */
+.learn-cta { background: linear-gradient(135deg, #3aa07f, #236b55); color: #fff; font-weight: 700; }
+.learn-card { min-height: 200px; }
+.learn-q { font-size: 1rem; color: var(--gold); font-weight: 600; margin: 4px 0 12px; }
+.learn-a { font-size: 1.3rem; font-weight: 600; line-height: 1.4; }

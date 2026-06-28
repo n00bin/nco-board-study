@@ -10,6 +10,10 @@ no account, no app store, nothing to sign up for.
 
 ## What's inside
 
+- **Learn Mode (start from scratch)** — a guided path of bite-sized lessons that **teach** the material
+  first (with a plain-English overview of each publication), then **practice** it. Begins with the
+  fundamentals (Army Values, ranks, chain of command, creeds, Code of Conduct), then each publication.
+  Tracks which lessons you've completed. *Use this if you're new; use the drills below once you know it.*
 - **Flashcards with spaced repetition** — grade each card **Again / Good / Easy**; the app reschedules
   it automatically (miss it → comes back soon, know it → comes back later) and surfaces what's *due*.
 - **Quiz** — multiple-choice, scored, with instant right/wrong feedback. Pick 10, 20, or all questions.

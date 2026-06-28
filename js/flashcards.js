@@ -81,6 +81,7 @@
 
       function done() {
         Speech.stop();
+        if (opts && opts.onDone) return opts.onDone(reviewed);
         container.innerHTML =
           '<div class="ring-wrap"><div class="ring">&#10003;<small>' + reviewed + ' cards reviewed</small></div></div>' +
           '<p class="center muted">Session complete — nicely done.</p><div class="spacer"></div>' +
