@@ -477,6 +477,7 @@
   // ---- Board Day content ----
   var UNIFORM_CHECKS = [
     { id: "u1", t: "Haircut neat & tapered within AR 670-1; clean-shaven (mustache OK). Beard only with a signed medical ETP or approved religious accommodation, and carry the signed copy (AD 2025-13)" },
+    { id: "u1b", t: "Grooming per AD 2025-18: men's hair at most 2 in on top and 1 in on the sides; buns at most 3 in; nails square or rounded (women at most 1/4 in, men not past the fingertip); no lipstick; men wear no earrings, women plain matched studs only" },
     { id: "u0", t: "Confirm WHICH uniform your board memo calls for (often the AGSU) and inspect that one" },
     { id: "u2", t: "Headgear (beret, garrison cap, or patrol cap, per the memo) shaped and worn correctly" },
     { id: "u3", t: "Nametapes (US ARMY / last name) correct, even, and properly placed" },

@@ -117,6 +117,6 @@ cards cite the page they came from. Army publications change, so a few things to
   (AR 350-1, June 2025; TC 7-21.13, September 2025).
 - Two source PDFs are old editions: **ADP 3-0 (2011)** and **STP 21-24 (2008)**. Cards that taught
   replaced doctrine from them were rewritten from current publications or removed.
-- Grooming rules changed by Army Directives in 2025 after the AR 670-1 PDF used here — check the
-  current directives for beards/shaving and hair.
+- Grooming cards include the 2025 Army Directives that changed AR 670-1: **AD 2025-13** (facial hair) and
+  **AD 2025-18** (hair, cosmetics, nails, earrings, AGSU wear, body composition). Each card cites its directive.
 - Always follow your board's appointment memo and local SOP. Spot an error? Use the flag on any card.
