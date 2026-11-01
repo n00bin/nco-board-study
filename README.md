@@ -103,7 +103,8 @@ Each card looks like this:
 
 - Add `core:true` to a card to put it in **Board Core** (the default Mock Board / cram / Learn set).
 
-After editing, raise the number in the `CACHE` name in **`sw.js`** (e.g. `ncoboard-v7` → `ncoboard-v8`)
+Bump `meta.version` at the top of `data/content.js` when you publish (it shows on the launch screen and under
+More). After editing, raise the number in the `CACHE` name in **`sw.js`** (e.g. `ncoboard-v7` → `ncoboard-v8`)
 so phones pick up the new content next time they're online, then re-upload the folder.
 
 ---

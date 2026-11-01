@@ -89,6 +89,18 @@ body {
 }
 .iconbtn:active { background: rgba(255,255,255,0.08); }
 
+/* ---------- Launch screen ---------- */
+#splash {
+  position: fixed; inset: 0; z-index: 100;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
+  background: var(--bg); transition: opacity .35s ease;
+}
+#splash img { border-radius: 22px; margin-bottom: 8px; }
+#splash.hide { opacity: 0; pointer-events: none; }
+.splash-title { font-size: 1.6rem; font-weight: 800; color: var(--gold); }
+.splash-sub { color: var(--text-dim); font-size: .9rem; }
+.splash-ver { color: var(--text-dim); font-size: .8rem; margin-top: 18px; min-height: 1em; }
+
 /* ---------- Screen / main scroll area ---------- */
 .screen {
   flex: 1;

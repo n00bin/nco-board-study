@@ -13,6 +13,13 @@
   <link rel="stylesheet" href="./css/styles.css" />
 </head>
 <body>
+  <!-- Launch screen: shown instantly, filled in + faded out by app.js -->
+  <div id="splash" aria-hidden="true">
+    <img src="./icons/icon-192.png" alt="" width="96" height="96" />
+    <div class="splash-title">NCO Board</div>
+    <div class="splash-sub">E-5 / E-6 Promotion Board Study Guide</div>
+    <div class="splash-ver" id="splashVer"></div>
+  </div>
   <!-- Top app bar -->
   <header class="appbar">
     <button id="backBtn" class="iconbtn" aria-label="Back" hidden>&#8592;</button>

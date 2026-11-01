@@ -2,7 +2,7 @@
    1556 cards across 18 publications.
    Generated/merged 2026-06-28. Edit freely; see README. */
 window.STUDY = {
-  meta: {"title":"NCO Board Study Guide","subtitle":"E-5 / E-6 Promotion Board","version":"2.0.0","updated":"2026-10-31","cards":1556},
+  meta: {"title":"NCO Board Study Guide","subtitle":"E-5 / E-6 Promotion Board","version":"3.0.0","updated":"2026-10-31","cards":1556},
   pubs: [
     {"id":"adp6-22","code":"ADP 6-22","title":"Army Leadership and the Profession","cat":"Leadership & Doctrine"},
     {"id":"atp6-22-1","code":"ATP 6-22.1","title":"Providing Feedback: Counseling/Coaching/Mentoring","cat":"Leadership & Doctrine"},

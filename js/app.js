@@ -9,7 +9,15 @@
 
   var mount = document.getElementById("app");
   var titleEl = document.getElementById("appTitle");
+  var splash = document.getElementById("splash");
+  // test/screenshot helper: ?nosplash skips the launch screen (timers are frozen in headless frames)
+  if (splash && /[?&]nosplash/.test(location.search)) { splash.remove(); splash = null; }
+  function hideSplash(delay) {
+    if (!splash) return;
+    setTimeout(function () { splash.classList.add("hide"); setTimeout(function () { if (splash) { splash.remove(); splash = null; } }, 400); }, delay || 0);
+  }
   if (!window.STUDY || !window.STUDY.cards) {
+    hideSplash(0);
     mount.innerHTML = '<div class="empty">The study cards did not load. Check your connection, then close and reopen the app.</div>';
     return;
   }
@@ -20,6 +28,16 @@
     STUDY.pubs.push({ id: "mine", code: "My Cards", title: "My Smart Book (your own cards)", cat: "My Cards" });
   if (!STUDY.pubs.some(function (p) { return p.id === "chain"; }))
     STUDY.pubs.push({ id: "chain", code: "Chain of Command", title: "Your leaders (board day)", cat: "Board Day" });
+  // "Version 3.0.0 · Updated 31 Oct 2026 · 1,556 cards" (from data/content.js meta)
+  var MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  function versionLine() {
+    var m = STUDY.meta || {}, d = String(m.updated || "").split("-"), out = "Version " + (m.version || "?");
+    if (d.length === 3) out += " \u00b7 Updated " + parseInt(d[2], 10) + " " + MON[parseInt(d[1], 10) - 1] + " " + d[0];
+    return out + " \u00b7 " + STUDY.cards.length.toLocaleString() + " cards";
+  }
+  var splashVer = document.getElementById("splashVer");
+  if (splashVer) splashVer.textContent = versionLine();
+
   STUDY.pubsById = {};
   STUDY.pubs.forEach(function (p) { STUDY.pubsById[p.id] = p; });
 
@@ -308,7 +326,8 @@
       '<a class="row" href="#/mycards"><div class="grow"><div class="code">&#128221; My Cards</div><div class="ttl">Add your unit\'s smart-book questions</div></div><div class="chev">&#8250;</div></a>' +
       '<a class="row" href="#/share"><div class="grow"><div class="code">&#128279; Share &amp; QR code</div><div class="ttl">Send the app to other Soldiers</div></div><div class="chev">&#8250;</div></a>' +
       '<a class="row" href="#/settings"><div class="grow"><div class="code">&#9881;&#65039; Settings</div><div class="ttl">Daily goal, board timer, read-aloud</div></div><div class="chev">&#8250;</div></a>' +
-      '<a class="row" href="#/backup"><div class="grow"><div class="code">&#128190; Backup &amp; restore</div><div class="ttl">Save or move your progress</div></div><div class="chev">&#8250;</div></a>';
+      '<a class="row" href="#/backup"><div class="grow"><div class="code">&#128190; Backup &amp; restore</div><div class="ttl">Save or move your progress</div></div><div class="chev">&#8250;</div></a>' +
+      '<div class="muted center" style="font-size:.8rem;margin-top:18px;">NCO Board Study Guide<br>' + esc(versionLine()) + '</div>';
     html += '<h2 class="section">Recent quizzes &amp; boards</h2>';
     html += quizzes.length ? quizzes.slice(0, 10).map(function (q) {
       var pct = Math.round((q.score / q.total) * 100), cls = pct >= 75 ? "badge-good" : "badge-bad";
@@ -658,4 +677,5 @@
   // ---------------- go ----------------
   window.addEventListener("hashchange", route);
   route();
+  hideSplash(900);   // long enough to read the version, short enough not to annoy
 })();
