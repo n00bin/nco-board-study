@@ -62,9 +62,11 @@
   function cardsForDeck(deck) {
     var all = allCards();
     if (deck === "all") return all;
+    // Board Core: the tagged must-know cards, plus your own cards and chain-of-command roster
+    if (deck === "core") return all.filter(function (c) { return c.core || c.custom; });
     if (deck === "due") { var now = Date.now(); return all.filter(function (c) { return Store.isDue(c.id, now); }); }
     if (deck === "leeches") { var set = {}; Store.leeches(all.map(function (c) { return c.id; })).forEach(function (id) { set[id] = 1; }); return all.filter(function (c) { return set[c.id]; }); }
-    if (deck === "cram") return cramDeck(all);
+    if (deck === "cram") return cramDeck(all.filter(function (c) { return c.core || c.custom || Store.recOf(c.id); }));
     return all.filter(function (c) { return c.pub === deck; });
   }
   function cramDeck(all) {
@@ -81,6 +83,7 @@
   }
   function deckTitle(deck) {
     if (deck === "all") return "All Publications";
+    if (deck === "core") return "Board Core";
     if (deck === "due") return "Due Review";
     if (deck === "leeches") return "Leeches (kept missing)";
     if (deck === "cram") return "Night-before Cram";
@@ -117,7 +120,7 @@
       '</div>' +
       '<div class="spacer"></div>' +
       '<div class="btn-row">' +
-        '<a class="btn lg board-btn" href="#/pick/board">&#127894; Mock Board</a>' +
+        '<a class="btn lg board-btn" href="#/board/core">&#127894; Mock Board</a>' +
         '<a class="btn lg drive-btn" href="#/pick/drive">&#128663; Drive Mode</a>' +
       '</div>';
     var extras = [];
@@ -198,8 +201,10 @@
         '<button class="chip" data-r="#/type/">&#9000;&#65039; Type answers</button></div>';
     if (mode === "drive")
       html += '<div class="card"><div class="muted">Hands-free: the app reads each question, pauses for you to answer aloud, then reads the answer. Great for PT or the drive in — keep the screen on.</div></div>';
-    html += '<a class="row deck" data-deck="all" href="' + route + 'all"><div class="grow"><div class="code">All Publications</div>' +
-      '<div class="ttl">Everything mixed together</div></div><div class="pill">' + allCards().length + '</div><div class="chev">&#8250;</div></a>' +
+    html += '<a class="row deck board-row" data-deck="core" href="' + route + 'core"><div class="grow"><div class="code">&#11088; Board Core (recommended)</div>' +
+      '<div class="ttl">The must-know questions boards ask most</div></div><div class="pill">' + cardsForDeck("core").length + '</div><div class="chev">&#8250;</div></a>' +
+      '<a class="row deck" data-deck="all" href="' + route + 'all"><div class="grow"><div class="code">All Publications</div>' +
+      '<div class="ttl">Everything, including deep reference detail</div></div><div class="pill">' + allCards().length + '</div><div class="chev">&#8250;</div></a>' +
       '<h2 class="section">Or pick a subject</h2>';
     STUDY.pubs.forEach(function (p) {
       var n = cardsForDeck(p.id).length;
