@@ -23,7 +23,7 @@
     goal: 20,
     streak: 0,
     lastStudyDate: "",
-    settings: { autoRead: false, timer: 30, driveGap: 5, boardDate: "" }   // boardDate: "YYYY-MM-DD" or ""
+    settings: { autoRead: false, timer: 30, driveGap: 5, boardDate: "", fullBoard: true }   // boardDate: "YYYY-MM-DD" or ""
   };
 
   function clone(o) { return JSON.parse(JSON.stringify(o)); }
@@ -78,6 +78,7 @@
       s.settings.timer = num(d.settings.timer, DEFAULT.settings.timer);
       s.settings.driveGap = num(d.settings.driveGap, DEFAULT.settings.driveGap);
       s.settings.boardDate = /^\d{4}-\d{2}-\d{2}$/.test(d.settings.boardDate) ? d.settings.boardDate : "";
+      s.settings.fullBoard = d.settings.fullBoard !== false;
     }
     return s;
   }
@@ -141,6 +142,13 @@
     state.daily.count++;
   }
 
+  // the board date (local midnight, ms) or 0 if none is set
+  function boardDayMs() {
+    var b = state.settings && state.settings.boardDate;
+    if (!b || !/^\d{4}-\d{2}-\d{2}$/.test(b)) return 0;
+    var p = b.split("-"); return new Date(+p[0], +p[1] - 1, +p[2]).getTime();
+  }
+
   // ---- spaced repetition (SM-2-lite). grade: "again" | "good" | "easy" ----
   function applyGrade(id, grade, now) {
     now = now || Date.now();
@@ -160,6 +168,13 @@
       r.reps++;
       r.due = now + r.interval * DAY;
       r.status = (r.interval >= 7) ? "known" : "review";
+      // Board-date-aware spacing: if the next review would land after the board, pull it in so every studied card
+      // gets one last review in the final days before the board (about 3 days out, never sooner than tomorrow).
+      var bd = boardDayMs();
+      if (bd && now < bd) {
+        var latest = bd - 3 * DAY;
+        if (r.due > bd - DAY) r.due = Math.max(now + DAY, latest);
+      }
     }
     touchDay(now);
     save();

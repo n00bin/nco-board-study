@@ -164,6 +164,7 @@ h2.section { font-size: 1.05rem; color: var(--text-dim); text-transform: upperca
 .btn.ghost { background: var(--surface-2); }
 .btn.lg { min-height: 64px; font-size: 1.1rem; }
 .btn-row { display: flex; gap: 10px; }
+.btn.plan-item { justify-content: flex-start; text-align: left; font-weight: 600; min-height: 48px; padding: 10px 14px; }
 .btn-row .btn { flex: 1; }
 
 /* ---------- Cards / list rows ---------- */

@@ -35,7 +35,7 @@
 
   var CORE_OVERVIEW = "Next stop after Fundamentals. These are the questions boards ask most, pulled from every publication and ordered so the most-asked subjects come first. Finish this track and you've covered the core of the board. The publication tracks below go deeper.";
   var CORE_ORDER = ["tc7-21-13", "ar600-8-19", "sit", "personal", "adp6-22", "ar600-20", "atp6-22-1", "ar600-52", "ar27-10", "ar670-1", "pam670-1", "ar600-25", "tc3-21-5", "tc7-22-7", "ar623-3", "ar600-8-22", "ar840-10", "fm7-22",
-    "ar350-1", "stp21-1", "weapons", "ar735-5", "adp7-0", "adp5-0", "ar600-85", "atp3-50-20", "ar608-1", "ar930-4", "stp21-24", "adp3-0"];
+    "ar350-1", "stp21-1", "weapons", "ar735-5", "adp7-0", "fm7-0", "adp5-0", "atp5-19", "ar530-1", "ar600-85", "atp3-50-20", "ar608-1", "ar930-4", "stp21-24", "adp3-0"];
 
   // Board 101: what a promotion board is and how it works, from AR 600-8-19 (6 Mar 2026). First track in Learn.
   var B101_OVERVIEW = "Never been to a board? Start here. How you become eligible, who sits on the board, what they look for, how they vote, and how promotion points and cutoff scores turn a \"yes\" into stripes.";
@@ -125,7 +125,10 @@
         '<div class="card"><div class="muted">Learn Mode teaches you the material first, then practices it, a few facts at a time. <b>For your board, finish the first three tracks: Board 101, Fundamentals, and Board Core.</b> The publication tracks below them are extra depth if you have time.</div></div>';
       if (next) html += '<a class="btn gold lg" href="#/lesson/' + next.id + '">' + (doneN ? "&#9654; Continue learning" : "&#9654; Start learning") + '</a><div class="spacer"></div>';
 
+      var BOARD_PATH = { board101: 1, fundamentals: 1, core: 1 }, shownExtra = false;
+      html += '<h2 class="section">Your board path</h2>';
       tracks.forEach(function (t) {
+        if (!BOARD_PATH[t.id] && !shownExtra) { shownExtra = true; html += '<h2 class="section">Extra depth (optional)</h2>'; }
         var td = doneCount(t.lessons);
         var tp = t.lessons.length ? Math.round((td / t.lessons.length) * 100) : 0;
         html += '<a class="row" href="#/track/' + t.id + '"><div class="grow"><div class="code">' + esc(t.title) + '</div>' +
@@ -133,6 +136,14 @@
           '<div class="bar"><span style="width:' + tp + '%"></span></div></div><div class="chev">&#8250;</div></a>';
       });
       container.innerHTML = html;
+    },
+
+    // next unfinished lesson on the board path (Board 101 -> Fundamentals -> Board Core), for Home's daily plan
+    nextBoardLesson: function () {
+      var tracks = buildTracks().filter(function (t) { return t.id === "board101" || t.id === "fundamentals" || t.id === "core"; });
+      var total = 0, done = 0, next = null;
+      tracks.forEach(function (t) { t.lessons.forEach(function (l) { total++; if (isDone(l)) done++; else if (!next) next = { id: l.id, title: t.title.replace(/^\W+\s*/, "") + ": " + l.title }; }); });
+      return { next: next, done: done, total: total };
     },
 
     // ---- one track's lessons ----

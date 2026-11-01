@@ -34,9 +34,27 @@
 
       // The board as a queue of steps. Follow-ups are inserted right after their question once it's graded.
       var steps = [];
-      if (opts.full) steps.push({ kind: "reportIn" }, { kind: "intro" });
-      deck.forEach(function (c) { steps.push({ kind: "q", c: c }); });
-      if (opts.full) steps.push({ kind: "reportOut" });
+      if (opts.full) {
+        // Real boards split subjects among members. Group questions by subject, then hand each member a share,
+        // with the Board President asking last (scenarios stay mixed in with each member's questions).
+        var bySub = {}, subOrder = [];
+        deck.forEach(function (c) { var k = c.pub === "sit" ? "~sit" : c.pub; if (!bySub[k]) { bySub[k] = []; subOrder.push(k); } bySub[k].push(c); });
+        var sits = bySub["~sit"] || []; delete bySub["~sit"]; subOrder = subOrder.filter(function (k) { return k !== "~sit"; });
+        var ordered = []; subOrder.forEach(function (k) { ordered = ordered.concat(bySub[k]); });
+        var M = deck.length >= 8 ? 4 : 3, per = Math.ceil(ordered.length / M), chunks = [];
+        for (var m = 0; m < M; m++) chunks.push(ordered.slice(m * per, (m + 1) * per));
+        sits.forEach(function (c, k) { chunks[k % M].push(c); });
+        steps.push({ kind: "reportIn" }, { kind: "intro" });
+        chunks.forEach(function (ch, m) {
+          if (!ch.length) return;
+          var last = m === chunks.length - 1;
+          var subs = []; ch.forEach(function (c) { var pt = STUDY.pubsById[c.pub]; var nm = c.pub === "sit" ? "a situation" : (pt ? pt.title : c.pub); if (subs.indexOf(nm) < 0) subs.push(nm); });
+          steps.push({ kind: "member", label: last ? "The Board President" : "Board member " + (m + 1), subs: subs });
+          ch.forEach(function (c) { steps.push({ kind: "q", c: c }); });
+        });
+        steps.push({ kind: "reportOut" });
+        deck = [].concat.apply([], chunks);
+      } else deck.forEach(function (c) { steps.push({ kind: "q", c: c }); });
 
       var sponsor = !!opts.sponsor;   // the sponsor holds the phone: answer shown with the question, sponsor grades
 
@@ -99,7 +117,7 @@
       }
       function header() {
         var totalQ = deck.length;
-        return '<div class="q-count">' + (qNum ? "Question " + qNum + " of " + totalQ + "  \u2022  " : "") + "Board score " + fmt(got) + (asked ? "/" + asked : "") + '</div>';
+        return '<div class="q-count">' + (qNum ? "Question " + qNum + " of " + totalQ : "") + (asked ? (qNum ? "  •  " : "") + "Score so far " + Math.round(100 * got / asked) + "%" : "") + '</div>';
       }
       function timerHtml(t) {
         return t > 0 ? '<div class="bar timer-bar"><span id="tBar" style="width:100%"></span></div><div class="center muted" id="tNum"></div>'
@@ -151,6 +169,7 @@
         if (st.kind === "reportIn") return reportIn();
         if (st.kind === "intro") return intro();
         if (st.kind === "reportOut") return reportOut();
+        if (st.kind === "member") return member(st);
       }
 
       // ---- full-board rehearsal steps ----
@@ -176,7 +195,8 @@
         container.innerHTML = header() + timerHtml(t) +
           '<div class="card"><div class="flash-tag">The board president</div>' +
             '<div class="q-text" style="margin-top:8px;">"Tell the board a little about yourself."</div></div>' +
-          '<p class="center muted">Answer out loud. Aim for about a minute, eyes on the president.</p>' +
+          '<div class="card"><div class="muted" style="font-size:.9rem;">Answer out loud in about a minute, eyes on the president: who you are, your job and unit, time in service, a real accomplishment or two, and your goals as an NCO. Say it, don\'t read it.' +
+            (stmt ? '' : ' <a href="#/statement">Draft your opening statement first</a> (there\'s an example), then come back.') + '</div></div>' +
           recButton() + '<button class="btn gold lg" id="reveal">I\'m done</button>';
         if (autoRead) Speech.speak("Tell the board a little about yourself.");
         var done = function () {
@@ -202,6 +222,15 @@
           '<p class="center muted">Do it now: stand at attention, salute and hold until it\'s returned, face about, and march out.</p>' +
           (all.length ? stepsList([all[all.length - 1]]) : '') + gradeButtons("Needs work", "Reported out clean");
         onGrade(function (ok) { bearing.push({ label: "Reporting out", ok: ok }); next(); });
+      }
+
+      function member(st) {
+        container.innerHTML = header() +
+          '<div class="card" style="border-color:var(--gold);"><div class="flash-tag">' + esc(st.label) + '</div>' +
+            '<div class="q-text" style="margin-top:8px;">' + esc(st.label) + ' will ask you about ' + esc(st.subs.join(", ")) + '.</div>' +
+            '<div class="muted">Turn to face this member, keep your bearing, and answer to them.</div></div>' +
+          '<button class="btn gold lg" id="ready">Ready</button>';
+        container.querySelector("#ready").addEventListener("click", next);
       }
 
       // ---- questions ----
@@ -261,6 +290,7 @@
         var f = st.f, c = st.parent, t = secs;
         container.innerHTML = header() + timerHtml(t) +
           '<div class="card" style="border-color:var(--gold);"><div class="flash-tag">The board follows up</div>' +
+            '<div class="muted" style="font-size:.85rem;margin-top:6px;">About: ' + esc(String(c.q).length > 110 ? String(c.q).slice(0, 107) + "\u2026" : c.q) + '</div>' +
             '<div class="q-text" style="margin-top:8px;">' + esc(f.q) + '</div></div>' +
           (sponsor ? sponsorBox(f.a, f.ref, "") + '<p class="center muted">Ask the follow-up, listen, then grade.</p>' + gradeButtons()
                    : '<p class="center muted">Answer out loud, then reveal.</p>' + recButton() + '<button class="btn gold lg" id="reveal">Reveal answer</button>');
@@ -299,7 +329,7 @@
           .sort(function (a, b) { return b.miss - a.miss; }).slice(0, 5);
         var msg = pct >= 90 ? "Board-ready." : pct >= 75 ? "Strong — tighten the misses." : pct >= 60 ? "Passing. Keep drilling." : "Needs work — run it again.";
         var html =
-          '<div class="ring-wrap"><div class="ring">' + pct + '%<small>' + fmt(got) + " of " + asked + ' points (incl. follow-ups and partial credit)</small></div></div>' +
+          '<div class="ring-wrap"><div class="ring">' + pct + '%<small>' + asked + ' questions and follow-ups (partial credit counted)</small></div></div>' +
           '<p class="center muted">' + msg + '</p>';
         if (bearing.length) {
           html += '<h2 class="section">Bearing &amp; delivery</h2>';

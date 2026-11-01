@@ -99,7 +99,7 @@
               if (!playing || myGen !== gen) return;
               timer = setTimeout(function () { if (playing && myGen === gen) advance(); }, 1200);
             } });
-          }, gap * 1000);
+          }, gap * 1000 * ((c.pub === "sit" || c.pub === "personal" || String(c.a).length > 200) ? 3 : 1));   // scenarios need time to answer
         } });
       }
 

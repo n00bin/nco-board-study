@@ -74,11 +74,17 @@
         container.querySelector("#fQ").textContent = c.q;
         // Wait for the flip-back animation before swapping in the next answer, so it never flashes.
         var fill = function () {
-          container.querySelector("#fA").innerHTML = esc(c.a).replace(/\n/g, "<br>") +
+          // the question stays visible on the back, and the card grows to fit long answers instead of clipping them
+          container.querySelector("#fA").innerHTML = '<div class="muted" style="font-size:.85rem;margin-bottom:8px;">' + esc(c.q) + '</div>' +
+            esc(c.a).replace(/\n/g, "<br>") +
             (c.why ? '<div class="flash-ref" style="color:var(--text);margin-top:12px;"><b>Why it matters:</b> ' + esc(c.why) + '</div>' : "") +
             (c.follow && c.follow.length ? '<div class="flash-ref" style="margin-top:12px;"><b>Board follow-ups:</b>' +
               c.follow.map(function (f) { return '<div style="margin-top:6px;">&#8226; ' + esc(f.q) + '<br><span class="muted">' + esc(f.a) + '</span></div>'; }).join("") + '</div>' : "");
           container.querySelector("#fRef").textContent = c.ref ? "Reference: " + c.ref : "";
+          var inner = cardEl.querySelector(".flash-inner");
+          inner.style.minHeight = ""; cardEl.style.minHeight = "";
+          var h = Math.max(320, back.scrollHeight + 6, front.scrollHeight + 6);
+          inner.style.minHeight = h + "px"; cardEl.style.minHeight = h + "px";
         };
         if (wasFlipped) { container.querySelector("#fA").textContent = ""; setTimeout(function () { if (queue[i] === c) fill(); }, 300); }
         else fill();
