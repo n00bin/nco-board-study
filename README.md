@@ -29,8 +29,9 @@ no account, no app store, nothing to sign up for.
 - **Flashcards with spaced repetition** — grade each card **Again / Good / Easy**; the app reschedules
   it automatically (miss it → comes back soon, know it → comes back later) and surfaces what's *due*.
 - **Quiz** — multiple-choice, scored, with instant right/wrong feedback. Pick 10, 20, or all questions.
-- **Mock Board** — a timed oral-board simulation: mixed questions across subjects, answer out loud,
-  self-grade, and get a score plus your **weakest subjects** at the end.
+- **Mock Board** — a timed oral-board simulation. **Full board** mode rehearses the whole thing: report in, "tell the
+  board about yourself," the questions (with the board's **follow-up questions sprung on you** after you answer),
+  then report out. Answer out loud, self-grade, and get a score, a bearing & delivery check, and your **weakest subjects**.
 - **Drive Mode** — hands-free auto-play audio: reads the question, pauses for you to answer aloud, reads
   the answer, advances. Keeps the screen awake. Study during PT or the drive in.
 - **Type answers** — fill-in-the-blank recall (toggle on the flashcard screen), plus **Leech focus**

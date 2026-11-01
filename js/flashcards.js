@@ -40,7 +40,7 @@
               '<div class="flash-q" id="fQ"></div>' +
             '</div>' +
             '<div class="flash-face flash-back" id="fBack" aria-hidden="true">' +
-              '<div class="flash-tag">Answer</div>' +
+              '<div class="flash-tag" id="fTagB">Answer</div>' +
               '<div class="flash-a" id="fA"></div>' +
               '<div class="flash-ref" id="fRef"></div>' +
             '</div>' +
@@ -69,7 +69,8 @@
         cardEl.classList.remove("flipped");
         setFaces(false);
         container.querySelector("#fProg").textContent = "Reviewed " + reviewed + "  •  Left " + (queue.length - i);
-        container.querySelector("#fTagF").textContent = pubCode(c) + (c.topic ? " • " + c.topic : "");
+        container.querySelector("#fTagF").textContent = pubCode(c);   // topic only on the back: it can give the answer away
+        container.querySelector("#fTagB").textContent = "Answer" + (c.topic ? " • " + c.topic : "");
         container.querySelector("#fQ").textContent = c.q;
         // Wait for the flip-back animation before swapping in the next answer, so it never flashes.
         var fill = function () {
@@ -139,7 +140,7 @@
         var c = queue[i];
         container.innerHTML =
           '<div class="flash-progress">Reviewed ' + reviewed + '  •  Left ' + (queue.length - i) + '</div>' +
-          '<div class="card"><div class="flash-toprow"><span class="flash-tag">' + esc(pubCode(c)) + (c.topic ? " • " + esc(c.topic) : "") + '</span></div>' +
+          '<div class="card"><div class="flash-toprow"><span class="flash-tag">' + esc(pubCode(c)) + '</span></div>' +
             '<div class="flash-q" style="margin-bottom:14px;">' + esc(c.q) + '</div>' +
             '<textarea class="input" id="tIn" rows="2" placeholder="Type your answer…"></textarea></div>' +
           '<button class="btn gold lg" id="tShow">Check answer</button>';

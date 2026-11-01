@@ -8,6 +8,7 @@
 
   var KEY = "ncoboard.v1";
   var DAY = 86400000;
+  var MC_CAP = 3;   // days: the longest interval a multiple-choice win alone can earn
 
   var DEFAULT = {
     v: 2,
@@ -201,10 +202,18 @@
     },
 
     // ---- quiz ----
+    // Quiz (multiple-choice) answers. Recognizing an answer isn't recalling it, so a quiz win schedules a short
+    // review (at most MC_CAP days) and can never make a card "known" by itself; that takes flashcard recall.
+    // A card already mastered on flashcards is left alone. A miss counts like "Again".
     recordAnswer: function (id, correct) {
-      var r = rec(id);
-      if (correct) r.correct++; else r.wrong++;
-      applyGrade(id, correct ? "good" : "again");
+      var r = rec(id), now = Date.now();
+      if (!correct) { r.wrong++; applyGrade(id, "again", now); return; }
+      r.correct++;
+      if (r.status === "known") { r.seen++; touchDay(now); save(); return; }
+      applyGrade(id, "good", now);
+      if (r.interval > MC_CAP) { r.interval = MC_CAP; r.due = now + MC_CAP * DAY; }
+      r.status = "review";
+      save();
     },
     recordQuiz: function (deck, score, total) {
       state.quizzes.unshift({ deck: deck, score: score, total: total, date: Date.now() });

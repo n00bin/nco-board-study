@@ -2,7 +2,7 @@
    1811 cards across 18 publications.
    Generated/merged 2026-06-28. Edit freely; see README. */
 window.STUDY = {
-  meta: {"title":"NCO Board Study Guide","subtitle":"E-5 / E-6 Promotion Board","version":"3.2.1","updated":"2026-10-31","cards":1811},
+  meta: {"title":"NCO Board Study Guide","subtitle":"E-5 / E-6 Promotion Board","version":"3.3.0","updated":"2026-10-31","cards":1811},
   pubs: [
     {"id":"sit","code":"What Would You Do?","title":"Situational Leadership Scenarios","cat":"Board Skills"},
     {"id":"adp6-22","code":"ADP 6-22","title":"Army Leadership and the Profession","cat":"Leadership & Doctrine"},

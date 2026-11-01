@@ -308,12 +308,16 @@
     mount.innerHTML =
       '<div class="card center"><div class="code" style="font-size:1.1rem;">&#127894; ' + esc(title) + '</div>' +
         '<div class="muted">Answer out loud, like the real board. Timer: ' + (timer > 0 ? timer + 's/question' : 'off') + ' (change in Settings)</div></div>' +
+      '<div class="card"><label class="switch"><input type="checkbox" id="fullBoard" checked> <span><b>Full board</b>: report in, "tell us about yourself," the questions, then report out</span></label></div>' +
       '<h2 class="section">How many questions?</h2>' +
       '<button class="btn gold lg" data-n="10">10 questions</button><div class="spacer"></div>' +
       '<button class="btn green lg" data-n="15">15 questions</button><div class="spacer"></div>' +
       '<button class="btn ghost" data-n="25">25 questions</button>';
     mount.querySelectorAll("[data-n]").forEach(function (b) {
-      b.addEventListener("click", function () { MockBoard.render(mount, cards, parseInt(b.getAttribute("data-n"), 10)); });
+      b.addEventListener("click", function () {
+        var full = mount.querySelector("#fullBoard").checked;
+        MockBoard.render(mount, cards, parseInt(b.getAttribute("data-n"), 10), { full: full });
+      });
     });
   }
 
@@ -676,6 +680,7 @@
   var App = {
     go: function (h) { location.hash = h; },
     allCards: allCards,
+    reportingSteps: REPORTING_STEPS,
     toast: function (msg, ms) {
       var t = document.createElement("div"); t.className = "toast"; t.textContent = msg;
       t.setAttribute("role", "status"); t.setAttribute("aria-live", "polite");
