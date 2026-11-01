@@ -22,7 +22,7 @@
     goal: 20,
     streak: 0,
     lastStudyDate: "",
-    settings: { autoRead: false, timer: 30, driveGap: 5 }
+    settings: { autoRead: false, timer: 30, driveGap: 5, boardDate: "" }   // boardDate: "YYYY-MM-DD" or ""
   };
 
   function clone(o) { return JSON.parse(JSON.stringify(o)); }
@@ -76,6 +76,7 @@
       s.settings.autoRead = !!d.settings.autoRead;
       s.settings.timer = num(d.settings.timer, DEFAULT.settings.timer);
       s.settings.driveGap = num(d.settings.driveGap, DEFAULT.settings.driveGap);
+      s.settings.boardDate = /^\d{4}-\d{2}-\d{2}$/.test(d.settings.boardDate) ? d.settings.boardDate : "";
     }
     return s;
   }

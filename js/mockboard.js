@@ -19,21 +19,36 @@
       var pool = cards.filter(function (c) { return c.q && c.a; });
       if (pool.length < 3) { container.innerHTML = '<div class="empty">Need a few more cards to run a board.</div>'; return; }
       length = Math.min(length || 15, pool.length);
-      var deck = shuffle(pool).slice(0, length);
+      // A real board mixes "what would you do?" scenarios in with knowledge questions: about 20% (at least 2).
+      var sit = shuffle(pool.filter(function (c) { return c.pub === "sit"; }));
+      var rest = shuffle(pool.filter(function (c) { return c.pub !== "sit"; }));
+      var deck;
+      if (sit.length && rest.length) {
+        var nSit = Math.min(sit.length, Math.max(2, Math.round(length * 0.2)));
+        deck = shuffle(sit.slice(0, nSit).concat(rest.slice(0, length - nSit)));
+      } else deck = shuffle(pool).slice(0, length);
       var i = 0, got = 0, missed = [];
       var perPub = {}; // pub -> {n, miss}
       var secs = (Store.settings().timer | 0);
       var autoRead = Store.settings().autoRead;
 
       function pubCode(c) { var p = STUDY.pubsById[c.pub]; return p ? p.code : c.pub; }
+      // Recite-length answers (creeds, Code of Conduct) get no timer; long answers and scenarios get double time.
+      function timeFor(c) {
+        if (!secs) return 0;
+        var L = String(c.a || "").length;
+        if (L > 600) return 0;
+        return (L > 200 || c.follow) ? secs * 2 : secs;
+      }
 
       function question() {
         clearTimer();
         var c = deck[i];
-        var timed = secs > 0;
+        var cs = timeFor(c), timed = cs > 0;
         container.innerHTML =
           '<div class="q-count">Question ' + (i + 1) + " of " + deck.length + "  •  Board score " + got + '</div>' +
-          (timed ? '<div class="bar timer-bar"><span id="tBar" style="width:100%"></span></div><div class="center muted" id="tNum"></div>' : '') +
+          (timed ? '<div class="bar timer-bar"><span id="tBar" style="width:100%"></span></div><div class="center muted" id="tNum"></div>'
+                 : (secs ? '<div class="center muted" style="font-size:.85rem;">No timer on this one: recite it at your own pace.</div>' : '')) +
           '<div class="card"><div class="flash-toprow"><span class="flash-tag">' + esc(pubCode(c)) + (c.topic ? " • " + esc(c.topic) : "") + '</span>' +
             '<span><button class="mini" id="mSpeak" aria-label="Read aloud">&#128266;</button>' +
             '<button class="mini" id="mReport" aria-label="Report card">&#9873;</button></span></div>' +
@@ -46,12 +61,12 @@
         if (autoRead) Speech.speak(c.q);
 
         if (timed) {
-          var left = secs, bar = container.querySelector("#tBar"), num = container.querySelector("#tNum");
+          var left = cs, bar = container.querySelector("#tBar"), num = container.querySelector("#tNum");
           num.textContent = left + "s";
           timer = setInterval(function () {
             left--;
             if (!container.querySelector("#tBar")) { clearTimer(); return; } // navigated away
-            bar.style.width = Math.max(0, (left / secs) * 100) + "%";
+            bar.style.width = Math.max(0, (left / cs) * 100) + "%";
             num.textContent = Math.max(0, left) + "s";
             if (left <= 0) { clearTimer(); reveal(); }
           }, 1000);
@@ -68,11 +83,30 @@
             '<div class="q-text" style="margin:6px 0 12px;">' + esc(c.q) + '</div>' +
             '<div class="flash-tag">Answer</div><div class="flash-a">' + esc(c.a).replace(/\n/g, "<br>") + '</div>' +
             (c.ref ? '<div class="flash-ref">Reference: ' + esc(c.ref) + '</div>' : '') + '</div>' +
+          followHtml(c) +
           '<p class="center muted">How did you do?</p>' +
           '<div class="grade-row"><button class="btn grade-again" id="miss">Missed it</button>' +
             '<button class="btn grade-good" id="got">Got it</button></div>';
+        container.querySelectorAll("[data-fu]").forEach(function (b) {
+          b.addEventListener("click", function () {
+            var box = container.querySelector("#fu" + b.getAttribute("data-fu"));
+            box.hidden = !box.hidden; b.textContent = box.hidden ? "Show answer" : "Hide answer";
+          });
+        });
         container.querySelector("#got").addEventListener("click", function () { mark(true); });
         container.querySelector("#miss").addEventListener("click", function () { mark(false); });
+      }
+
+      // Board follow-up questions (situational cards): answer out loud first, then check.
+      function followHtml(c) {
+        if (!c.follow || !c.follow.length) return "";
+        return '<div class="card" style="border-color:var(--gold);"><div class="flash-tag">The board follows up</div>' +
+          c.follow.map(function (f, k) {
+            return '<div style="margin-top:10px;"><div style="font-weight:600;">' + esc(f.q) + '</div>' +
+              '<button class="chip" data-fu="' + k + '" style="margin-top:6px;">Show answer</button>' +
+              '<div id="fu' + k + '" hidden style="margin-top:6px;">' + esc(f.a) +
+              (f.ref ? '<div class="flash-ref">Reference: ' + esc(f.ref) + '</div>' : '') + '</div></div>';
+          }).join("") + '</div>';
       }
 
       function mark(ok) {

@@ -34,8 +34,15 @@
   var FUND_OVERVIEW = "New to all of this? Start here. These lessons cover the bedrock every board expects you to know cold — the Army Values, the ranks and chain of command, the creeds, the general orders, and the Code of Conduct. Learn these first, then work through each publication.";
 
   var CORE_OVERVIEW = "Next stop after Fundamentals. These are the questions boards ask most, pulled from every publication and ordered so the most-asked subjects come first. Finish this track and you've covered the core of the board. The publication tracks below go deeper.";
-  var CORE_ORDER = ["tc7-21-13", "adp6-22", "ar600-20", "atp6-22-1", "ar600-52", "ar27-10", "ar670-1", "fm7-22",
+  var CORE_ORDER = ["tc7-21-13", "ar600-8-19", "sit", "adp6-22", "ar600-20", "atp6-22-1", "ar600-52", "ar27-10", "ar670-1", "fm7-22",
     "ar350-1", "stp21-1", "adp7-0", "adp5-0", "ar600-85", "atp3-50-20", "ar608-1", "ar930-4", "stp21-24", "adp3-0"];
+
+  // Board 101: what a promotion board is and how it works, from AR 600-8-19 (6 Mar 2026). First track in Learn.
+  var B101_OVERVIEW = "Never been to a board? Start here. How you become eligible, who sits on the board, what they look for, how they vote, and how promotion points and cutoff scores turn a \"yes\" into stripes.";
+  var BOARD101 = [
+    { title: "Getting to the board", ids: ["ar600-8-19-05", "ar600-8-19-06", "ar600-8-19-15", "ar600-8-19-16", "ar600-8-19-08"] },
+    { title: "Board day, points, and promotion", ids: ["ar600-8-19-24", "ar600-8-19-25", "ar600-8-19-28", "ar600-8-19-30", "ar600-8-19-32", "ar600-8-19-37", "ar600-8-19-40"] }
+  ];
 
   var FUNDAMENTALS = [
     { title: "Leadership & the Army Values", ids: ["adp6-22-01", "adp6-22-02", "adp6-22-07", "adp6-22-08", "adp6-22-03", "adp6-22-04", "adp6-22-05", "adp6-22-12", "adp6-22-11"] },
@@ -69,12 +76,16 @@
     var fLessons = FUNDAMENTALS.map(function (f, n) {
       return { id: "fundamentals-L" + (n + 1), title: f.title, cards: f.ids.map(function (id) { return byId[id]; }).filter(Boolean) };
     }).filter(function (l) { return l.cards.length; });
-    tracks.push({ id: "fundamentals", title: "Fundamentals — Start Here", overview: FUND_OVERVIEW, lessons: fLessons });
+    var bLessons = BOARD101.map(function (f, n) {
+      return { id: "board101-L" + (n + 1), title: f.title, cards: f.ids.map(function (id) { return byId[id]; }).filter(Boolean) };
+    }).filter(function (l) { return l.cards.length; });
+    if (bLessons.length) tracks.push({ id: "board101", title: "Board 101 — What to Expect", overview: B101_OVERVIEW, lessons: bLessons });
+    tracks.push({ id: "fundamentals", title: "Fundamentals — The Bedrock", overview: FUND_OVERVIEW, lessons: fLessons });
 
     // Board Core track: the tagged must-know cards (minus what Fundamentals already teaches),
     // ordered high-yield first. Lesson ids are "core-<pub>-L<n>", so older saved progress is untouched.
     var inFund = {};
-    FUNDAMENTALS.forEach(function (f) { f.ids.forEach(function (id) { inFund[id] = 1; }); });
+    FUNDAMENTALS.concat(BOARD101).forEach(function (f) { f.ids.forEach(function (id) { inFund[id] = 1; }); });
     var coreLessons = [];
     CORE_ORDER.forEach(function (pubId) {
       var p = STUDY.pubsById[pubId];

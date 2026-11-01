@@ -10,6 +10,12 @@ no account, no app store, nothing to sign up for.
 
 ## What's inside
 
+- **Board 101** — what a promotion board is: eligibility, who sits on the board, what they look for, how they
+  vote, promotion points and cutoff scores (AR 600-8-19, March 2026). First track in Learn Mode.
+- **What Would You Do?** — 43 situational leadership scenarios (SHARP, suicide prevention, substance abuse, EO,
+  hazing, Article 31, illegal orders, casualty care, ...) with a model answer, the governing regulation, and
+  the board's follow-up questions. Mock Board mixes them into every board.
+- **Board date countdown** — set your board date in Settings; Home shows days left and a daily Board Core pace.
 - **Board Core (start here)** — about 250 must-know questions boards ask most, pulled from every
   publication. Mock Board, the night-before cram, and Learn Mode's Board Core track use it by default;
   "All Publications" keeps the full deep set (~1,600 cards) for when you want detail.

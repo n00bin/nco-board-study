@@ -117,23 +117,49 @@
 
   // ---------------- screens ----------------
 
+  // Board-date countdown + a simple daily pace for Board Core (set the date under More > Settings).
+  function boardCountdown(coreIds) {
+    var bd = Store.settings().boardDate;
+    if (!bd) return '<a class="row" href="#/settings"><div class="grow"><div class="code">&#128197; Set your board date</div>' +
+      '<div class="ttl">Get a countdown and a daily study pace</div></div><div class="chev">&#8250;</div></a>';
+    var p = bd.split("-"), t = new Date(), today = new Date(t.getFullYear(), t.getMonth(), t.getDate());
+    var days = Math.round((new Date(+p[0], +p[1] - 1, +p[2]) - today) / 86400000);
+    var unseen = coreIds.filter(function (id) { var r = Store.recOf(id); return !r || !(r.seen > 0); }).length;
+    var head, tip;
+    if (days < 0) { head = "Your board date has passed"; tip = "How did it go? Set a new date in Settings if you have another board."; }
+    else if (days === 0) { head = "Board day"; tip = "Check your uniform, review your opening statement, and report in with confidence. You've put in the work."; }
+    else if (days <= 7) { head = "Board in " + days + " day" + (days > 1 ? "s" : ""); tip = "Board week: run a Mock Board every day and use the night-before cram on your misses."; }
+    else {
+      head = "Board in " + days + " days";
+      var perDay = Math.ceil(unseen / Math.max(1, days - 7));   // leave the final week for review + mock boards
+      tip = unseen ? "Learn about " + perDay + " new Board Core card" + (perDay > 1 ? "s" : "") + " a day to see all " + coreIds.length + " with a week to spare." :
+        "You've seen every Board Core card. Keep up your reviews and run Mock Boards.";
+    }
+    return '<a class="row board-row" href="#/settings"><div class="grow"><div class="code">&#128197; ' + esc(head) + '</div>' +
+      '<div class="ttl">' + esc(tip) + '</div></div><div class="chev">&#8250;</div></a>';
+  }
+
   function screenHome() {
     setTitle("NCO Board", false);
     var all = allCards();
     var ids = all.map(function (c) { return c.id; });
-    var m = Math.round(Store.mastery(ids) * 100);
     var counts = Store.counts(ids);
     var daily = Store.daily(), streak = Store.streak(), dueN = Store.dueCount(ids);
+    // Lead with Board Core (what the board asks most), not the whole 1,500-card library.
+    var coreIds = STUDY.cards.filter(function (c) { return c.core; }).map(function (c) { return c.id; });
+    var cc = Store.counts(coreIds), cm = Math.round(Store.mastery(coreIds) * 100);
 
     var html =
       '<div class="hero">' +
         '<div style="display:flex;justify-content:space-between;align-items:flex-end;">' +
-          '<div><div class="big">' + m + '%</div><div class="sub">mastered • ' + counts.known + '/' + all.length + ' cards</div></div>' +
-          '<div style="text-align:right;"><div style="font-size:1.5rem;font-weight:800;">&#128293; ' + streak + '</div><div class="sub">day streak</div></div>' +
+          '<div><div class="big">' + cm + '%</div><div class="sub">Board Core • ' + cc.known + '/' + coreIds.length + ' mastered</div></div>' +
+          '<div style="text-align:right;white-space:nowrap;"><div style="font-size:1.5rem;font-weight:800;">&#128293; ' + streak + '</div><div class="sub">day streak</div></div>' +
         '</div>' +
-        '<div class="bar"><span style="width:' + m + '%"></span></div>' +
+        '<div class="bar"><span style="width:' + cm + '%"></span></div>' +
+        '<div class="sub" style="margin-top:6px;font-size:.8rem;">All cards: ' + counts.known + ' of ' + all.length + ' mastered</div>' +
         '<div class="sub" style="margin-top:8px;">Today: ' + daily.count + ' / ' + daily.goal + ' cards' + (daily.count >= daily.goal ? ' &#10003;' : '') + '</div>' +
       '</div>' +
+      boardCountdown(coreIds) +
       '<a class="btn lg learn-cta" href="#/learn">&#128214; Learn Mode — start from scratch</a>' +
       '<div class="muted center" style="font-size:.8rem;margin:6px 0 12px;">New to this? Learn Mode teaches you first. Already know it? Drill below.</div>' +
       '<div class="btn-row">' +
@@ -342,6 +368,11 @@
     var s = Store.settings(), daily = Store.daily();
     var timers = [0, 20, 30, 45, 60];
     var html =
+      '<h2 class="section">Board date</h2>' +
+      '<div class="card"><label class="lbl" for="bDate" style="margin-top:0;">When is your board? (from your board memo)</label>' +
+        '<input class="input" type="date" id="bDate" value="' + escAttr(s.boardDate || "") + '" />' +
+        '<div class="muted" style="font-size:.85rem;margin-top:8px;">Home shows a countdown and how many new Board Core cards to learn each day.</div>' +
+        (s.boardDate ? '<button class="btn ghost" id="bClear" style="margin-top:10px;">Clear board date</button>' : '') + '</div>' +
       '<h2 class="section">Daily goal</h2>' +
       '<div class="card"><div class="stepper"><button class="mini big" id="gMinus">&#8722;</button>' +
         '<span id="goalVal">' + daily.goal + '</span><button class="mini big" id="gPlus">+</button>' +
@@ -358,6 +389,12 @@
     html += '<div class="spacer"></div><button class="btn ghost" id="speakTest">&#128266; Test the voice</button>';
     mount.innerHTML = html;
 
+    mount.querySelector("#bDate").addEventListener("change", function (e) {
+      var v = e.target.value;
+      if (/^\d{4}-\d{2}-\d{2}$/.test(v)) { Store.setSetting("boardDate", v); App.toast("Board date saved"); screenSettings(); }
+    });
+    var bc = mount.querySelector("#bClear");
+    if (bc) bc.addEventListener("click", function () { Store.setSetting("boardDate", ""); App.toast("Board date cleared"); screenSettings(); });
     mount.querySelector("#gMinus").addEventListener("click", function () { Store.setGoal(Store.daily().goal - 5); mount.querySelector("#goalVal").textContent = Store.daily().goal; });
     mount.querySelector("#gPlus").addEventListener("click", function () { Store.setGoal(Store.daily().goal + 5); mount.querySelector("#goalVal").textContent = Store.daily().goal; });
     mount.querySelectorAll("#timerChips .chip").forEach(function (b) {
