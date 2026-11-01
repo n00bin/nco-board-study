@@ -34,7 +34,7 @@
   var FUND_OVERVIEW = "New to all of this? Start here. These lessons cover the bedrock every board expects you to know cold — the Army Values, the ranks and chain of command, the creeds, the general orders, and the Code of Conduct. Learn these first, then work through each publication.";
 
   var CORE_OVERVIEW = "Next stop after Fundamentals. These are the questions boards ask most, pulled from every publication and ordered so the most-asked subjects come first. Finish this track and you've covered the core of the board. The publication tracks below go deeper.";
-  var CORE_ORDER = ["tc7-21-13", "ar600-8-19", "sit", "adp6-22", "ar600-20", "atp6-22-1", "ar600-52", "ar27-10", "ar670-1", "fm7-22",
+  var CORE_ORDER = ["tc7-21-13", "ar600-8-19", "sit", "adp6-22", "ar600-20", "atp6-22-1", "ar600-52", "ar27-10", "ar670-1", "ar600-25", "tc3-21-5", "tc7-22-7", "ar623-3", "ar600-8-22", "ar840-10", "fm7-22",
     "ar350-1", "stp21-1", "adp7-0", "adp5-0", "ar600-85", "atp3-50-20", "ar608-1", "ar930-4", "stp21-24", "adp3-0"];
 
   // Board 101: what a promotion board is and how it works, from AR 600-8-19 (6 Mar 2026). First track in Learn.

@@ -16,6 +16,9 @@ no account, no app store, nothing to sign up for.
   hazing, Article 31, illegal orders, casualty care, ...) with a model answer, the governing regulation, and
   the board's follow-up questions. Mock Board mixes them into every board.
 - **Board date countdown** — set your board date in Settings; Home shows days left and a daily Board Core pace.
+- **Staple board subjects** — customs & courtesies (AR 600-25, 2026), flags & streamers (AR 840-10, 2025),
+  drill & ceremony (TC 3-21.5), awards (AR 600-8-22, 2026), the NCOER (AR 623-3, 2025), and NCO history &
+  duties (TC 7-22.7, 2025 + The Army Blue Book).
 - **Board Core (start here)** — about 250 must-know questions boards ask most, pulled from every
   publication. Mock Board, the night-before cram, and Learn Mode's Board Core track use it by default;
   "All Publications" keeps the full deep set (~1,600 cards) for when you want detail.
