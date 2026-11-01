@@ -514,7 +514,7 @@
     "Arrive early. Know each board member's name, rank, and position.",
     "Wait to be called. When directed, approach the door and knock if your SOP requires it.",
     "Enter when told. Move to a position centered in front of the board president and halt about two steps away.",
-    "Render the hand salute and report — e.g. \"Sergeant Major, Sergeant (Last Name) reports.\" Hold the salute until it is returned.",
+    "Render the hand salute and report — e.g. \"Sergeant Major, Specialist (Last Name) reports to the President of the Board.\" Use YOUR current rank (a Specialist says Specialist), and follow the exact wording in your board memo/SOP. Hold the salute until it is returned.",
     "Take your seat only when directed. Sit at attention: back straight, feet flat, hands on thighs, eyes on the questioner.",
     "Answer the board member who asked. If you don't know: \"I do not know, Sergeant Major, but I will find out.\" Never guess.",
     "Keep your bearing and eye contact. Speak clearly and with confidence; address members by rank.",
