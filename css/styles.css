@@ -3,6 +3,10 @@
    Mobile-first, dark "Army" theme. One-handed friendly.
    =========================================================== */
 
+/* The `hidden` attribute must always win over class rules like
+   `.grade-row { display:flex }` (otherwise grade buttons show before the flip). */
+[hidden] { display: none !important; }
+
 :root {
   --green:      #4a5d23;   /* Army OD green */
   --green-dk:   #2e3a23;

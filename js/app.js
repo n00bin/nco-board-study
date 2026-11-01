@@ -62,7 +62,7 @@
   function cardsForDeck(deck) {
     var all = allCards();
     if (deck === "all") return all;
-    if (deck === "due") { var now = Date.now(); return all.filter(function (c) { var r = Store.recOf(c.id); return r && r.reps > 0 && r.due <= now; }); }
+    if (deck === "due") { var now = Date.now(); return all.filter(function (c) { return Store.isDue(c.id, now); }); }
     if (deck === "leeches") { var set = {}; Store.leeches(all.map(function (c) { return c.id; })).forEach(function (id) { set[id] = 1; }); return all.filter(function (c) { return set[c.id]; }); }
     if (deck === "cram") return cramDeck(all);
     return all.filter(function (c) { return c.pub === deck; });
@@ -410,8 +410,8 @@
       html += '<h2 class="section">' + cards.length + ' custom card' + (cards.length > 1 ? "s" : "") + '</h2>';
       cards.forEach(function (c) {
         var p = STUDY.pubsById[c.pub];
-        html += '<div class="row" data-edit="' + c.id + '"><div class="grow"><div class="code">' + esc(p ? p.code : "My Cards") + '</div>' +
-          '<div class="ttl">' + esc(c.q) + '</div></div><button class="mini" data-del="' + c.id + '" aria-label="Delete">&#128465;</button><div class="chev">&#8250;</div></div>';
+        html += '<div class="row" data-edit="' + escAttr(c.id) + '"><div class="grow"><div class="code">' + esc(p ? p.code : "My Cards") + '</div>' +
+          '<div class="ttl">' + esc(c.q) + '</div></div><button class="mini" data-del="' + escAttr(c.id) + '" aria-label="Delete">&#128465;</button><div class="chev">&#8250;</div></div>';
       });
     } else html += '<div class="empty">No custom cards yet.</div>';
     mount.innerHTML = html;

@@ -27,16 +27,72 @@
 
   function clone(o) { return JSON.parse(JSON.stringify(o)); }
 
+  // ---- type-safe cleanup: used on every load AND every backup import, so a
+  // damaged or hand-edited file can never leave the app in a state that crashes. ----
+  function isObj(v) { return v !== null && typeof v === "object" && !Array.isArray(v); }
+  function num(v, dflt) { return (typeof v === "number" && isFinite(v)) ? v : dflt; }
+  function str(v, dflt) { return typeof v === "string" ? v : dflt; }
+  var SAFE_ID = /^[\w-]{1,80}$/;
+  function okKey(k) { return k !== "__proto__" && k !== "constructor" && k !== "prototype"; }
+  var STATUSES = { "new": 1, review: 1, known: 1 };
+
+  function cleanRec(r) {
+    return {
+      reps: num(r.reps, 0), lapses: num(r.lapses, 0), ease: num(r.ease, 2.3), interval: num(r.interval, 0),
+      due: num(r.due, 0), status: Object.prototype.hasOwnProperty.call(STATUSES, r.status) ? r.status : "new",
+      seen: num(r.seen, 0), correct: num(r.correct, 0), wrong: num(r.wrong, 0)
+    };
+  }
+  function cleanUserCard(c, i) {
+    if (!isObj(c) || typeof c.q !== "string" || typeof c.a !== "string") return null;
+    var out = { id: (SAFE_ID.test(c.id) && okKey(c.id)) ? c.id : "u-" + Date.now() + "-" + i, q: c.q, a: c.a, custom: true };
+    if (typeof c.pub === "string") out.pub = c.pub;
+    if (typeof c.topic === "string") out.topic = c.topic;
+    if (typeof c.ref === "string") out.ref = c.ref;
+    if (c.flashOnly) out.flashOnly = true;
+    if (Array.isArray(c.choices) && c.choices.every(function (x) { return typeof x === "string"; }) &&
+        typeof c.answer === "number" && c.answer >= 0 && c.answer < c.choices.length) {
+      out.choices = c.choices.slice(); out.answer = c.answer;
+    }
+    return out;
+  }
+  function sanitize(d) {
+    var s = clone(DEFAULT), k;
+    if (isObj(d.cards)) for (k in d.cards) if (okKey(k) && SAFE_ID.test(k) && isObj(d.cards[k])) s.cards[k] = cleanRec(d.cards[k]);
+    if (Array.isArray(d.quizzes)) s.quizzes = d.quizzes.filter(isObj).slice(0, 50).map(function (q) {
+      return { deck: str(q.deck, ""), score: num(q.score, 0), total: num(q.total, 0), date: num(q.date, 0) };
+    });
+    if (Array.isArray(d.userCards)) s.userCards = d.userCards.map(cleanUserCard).filter(Boolean);
+    if (isObj(d.lessons)) for (k in d.lessons) if (okKey(k) && isObj(d.lessons[k]))
+      s.lessons[k] = { done: !!d.lessons[k].done, score: num(d.lessons[k].score, null), date: num(d.lessons[k].date, 0) };
+    if (isObj(d.chain)) for (k in d.chain) if (okKey(k) && typeof d.chain[k] === "string") s.chain[k] = d.chain[k];
+    if (isObj(d.checks)) for (k in d.checks) if (okKey(k)) s.checks[k] = !!d.checks[k];
+    s.statement = str(d.statement, "");
+    if (isObj(d.daily)) s.daily = { date: str(d.daily.date, ""), count: num(d.daily.count, 0) };
+    s.goal = Math.max(5, num(d.goal, DEFAULT.goal) | 0);
+    s.streak = num(d.streak, 0);
+    s.lastStudyDate = str(d.lastStudyDate, "");
+    if (isObj(d.settings)) {
+      s.settings.autoRead = !!d.settings.autoRead;
+      s.settings.timer = num(d.settings.timer, DEFAULT.settings.timer);
+      s.settings.driveGap = num(d.settings.driveGap, DEFAULT.settings.driveGap);
+    }
+    return s;
+  }
+
   function load() {
+    var raw = null;
     try {
-      var raw = localStorage.getItem(KEY);
+      raw = localStorage.getItem(KEY);
       if (!raw) return clone(DEFAULT);
       var d = JSON.parse(raw);
-      for (var k in DEFAULT) if (!(k in d)) d[k] = clone(DEFAULT[k]);
-      if (!d.settings) d.settings = clone(DEFAULT.settings);
-      for (var sk in DEFAULT.settings) if (d.settings[sk] == null) d.settings[sk] = DEFAULT.settings[sk];
-      return d;
-    } catch (e) { return clone(DEFAULT); }
+      if (!isObj(d)) throw new Error("bad save");
+      return sanitize(d);
+    } catch (e) {
+      // Keep the damaged copy instead of silently overwriting it on the next save.
+      try { if (raw) localStorage.setItem(KEY + ".corrupt", raw); } catch (x) {}
+      return clone(DEFAULT);
+    }
   }
 
   var state = load();
@@ -98,13 +154,16 @@
     statusOf: function (id) { return state.cards[id] ? state.cards[id].status : "new"; },
     recOf: function (id) { return state.cards[id] || null; },
 
-    // cards due for review right now (have been studied and are scheduled)
+    // A card is "due" once it has been studied at least once and its review time has
+    // arrived. Uses `seen`, not `reps`: a missed ("Again") card resets reps to 0 but
+    // must still come back as due — those are the cards you most need.
+    isDue: function (id, now) {
+      var r = state.cards[id];
+      return !!(r && r.seen > 0 && r.due <= (now || Date.now()));
+    },
     dueCount: function (cardIds) {
       var now = Date.now(), n = 0;
-      for (var i = 0; i < cardIds.length; i++) {
-        var r = state.cards[cardIds[i]];
-        if (r && r.reps > 0 && r.due <= now) n++;
-      }
+      for (var i = 0; i < cardIds.length; i++) if (Store.isDue(cardIds[i], now)) n++;
       return n;
     },
     // build a study session: due reviews (oldest first) + up to newLimit fresh cards
@@ -113,7 +172,7 @@
       var due = [], fresh = [], rest = [];
       cards.forEach(function (c) {
         var r = state.cards[c.id];
-        if (!r || r.reps === 0) fresh.push(c);
+        if (!r || !(r.seen > 0)) fresh.push(c);
         else if (r.due <= now) due.push(c);
         else rest.push(c);
       });
@@ -206,9 +265,8 @@
     exportData: function () { return JSON.stringify(state); },
     importData: function (json) {
       var d = JSON.parse(json);            // throws on bad JSON -> caller catches
-      if (!d || typeof d !== "object" || !("cards" in d)) throw new Error("Not a valid backup file.");
-      for (var k in DEFAULT) if (!(k in d)) d[k] = clone(DEFAULT[k]);
-      state = d; save();
+      if (!isObj(d) || !isObj(d.cards)) throw new Error("Not a valid backup file.");
+      state = sanitize(d); save();
     },
 
     resetAll: function () { state = clone(DEFAULT); save(); },
