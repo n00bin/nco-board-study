@@ -1,6 +1,6 @@
 /* Service worker — caches the app for full offline use.
    Bump CACHE when you change app files or content so phones update. */
-var CACHE = "ncoboard-v7";
+var CACHE = "ncoboard-v8";
 var ASSETS = [
   "./",
   "./index.html",
@@ -23,7 +23,15 @@ var ASSETS = [
 
 self.addEventListener("install", function (e) {
   e.waitUntil(
-    caches.open(CACHE).then(function (c) { return c.addAll(ASSETS); }).then(function () {
+    caches.open(CACHE).then(function (c) {
+      // cache:"reload" bypasses the browser HTTP cache so we never precache stale files.
+      return Promise.all(ASSETS.map(function (url) {
+        return fetch(new Request(url, { cache: "reload" })).then(function (res) {
+          if (!res.ok) throw new Error("Precache failed: " + url + " " + res.status);
+          return c.put(url, res);
+        });
+      }));
+    }).then(function () {
       return self.skipWaiting();
     })
   );
@@ -42,12 +50,22 @@ self.addEventListener("fetch", function (e) {
   if (e.request.method !== "GET") return;
   e.respondWith(
     caches.match(e.request).then(function (hit) {
-      return hit || fetch(e.request).then(function (res) {
-        return caches.open(CACHE).then(function (c) {
-          try { c.put(e.request, res.clone()); } catch (x) {}
-          return res;
-        });
-      }).catch(function () { return caches.match("./index.html"); });
+      if (hit) return hit;
+      return fetch(e.request).then(function (res) {
+        if (res && res.ok && res.type === "basic") {
+          var copy = res.clone();
+          e.waitUntil(
+            caches.open(CACHE).then(function (c) { return c.put(e.request, copy); }).catch(function () {})
+          );
+        }
+        return res;
+      }).catch(function () {
+        // Offline: only page navigations get the app shell; other requests just fail.
+        if (e.request.mode === "navigate") {
+          return caches.match("./index.html").then(function (shell) { return shell || Response.error(); });
+        }
+        return Response.error();
+      });
     })
   );
 });

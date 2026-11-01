@@ -58,7 +58,7 @@
         return !c.flashOnly && (curated || shortAns);
       });
       if (usable.length < 4) {
-        container.innerHTML = '<div class="empty">Need at least 4 cards to build a quiz. Add more content for this topic.</div>';
+        container.innerHTML = '<div class="empty">Not enough quiz questions here yet. Try Flashcards for this subject, or pick a bigger deck like Board Core.</div>';
         return;
       }
       length = Math.min(length || 10, usable.length);
@@ -81,12 +81,14 @@
             " • Score " + score + '</div>' +
           '<div class="q-text">' + esc(item.q) + '</div>' +
           '<div id="choices"></div>' +
+          '<div id="verdict" class="verdict" role="status" aria-live="polite"></div>' +
           '<button class="btn gold lg" id="submitBtn" disabled>Submit answer</button>';
         var box = container.querySelector("#choices");
         item.options.forEach(function (opt) {
           var b = document.createElement("button");
           b.className = "choice";
           b.innerHTML = esc(opt.text).replace(/\n/g, "<br>");
+          b._opt = opt;   // compare by option, not by text (safe for multi-line / duplicate text)
           b.addEventListener("click", function () { select(b, opt); });
           box.appendChild(b);
         });
@@ -108,13 +110,20 @@
         var all = container.querySelectorAll(".choice");
         all.forEach(function (b) { b.disabled = true; b.classList.remove("selected"); });
         Store.recordAnswer(item.card.id, opt.correct);
+        // Right/wrong is shown by a mark and words, not color alone (colorblind + screen-reader friendly).
+        function mark(b, ok) {
+          var m = document.createElement("span"); m.className = "mark"; m.setAttribute("aria-hidden", "true");
+          m.textContent = ok ? "✓" : "✗"; b.insertBefore(m, b.firstChild);
+        }
+        var verdict = container.querySelector("#verdict");
         if (opt.correct) {
-          btn.classList.add("correct");
+          btn.classList.add("correct"); mark(btn, true);
           score++;
+          if (verdict) { verdict.className = "verdict ok"; verdict.textContent = "✓ Correct"; }
         } else {
-          btn.classList.add("wrong");
-          var match = item.options.filter(function (o) { return o.correct; })[0];
-          all.forEach(function (b) { if (b.textContent === match.text) b.classList.add("correct"); });
+          btn.classList.add("wrong"); mark(btn, false);
+          all.forEach(function (b) { if (b._opt && b._opt.correct) { b.classList.add("correct"); mark(b, true); } });
+          if (verdict) { verdict.className = "verdict no"; verdict.textContent = "✗ Incorrect. The right answer is marked ✓."; }
         }
         var nav = document.createElement("button");
         nav.className = "btn gold";
@@ -135,7 +144,7 @@
       }
 
       function showResults() {
-        Store.recordQuiz(title, score, questions.length);
+        if (!(opts && opts.onDone)) Store.recordQuiz(title, score, questions.length);   // lesson practice is not a "quiz"
         if (opts && opts.onDone) return opts.onDone(score, questions.length);
         var pct = Math.round((score / questions.length) * 100);
         var msg = pct >= 90 ? "Outstanding." : pct >= 75 ? "Solid — keep drilling." :

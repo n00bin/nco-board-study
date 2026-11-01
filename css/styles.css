@@ -7,6 +7,17 @@
    `.grade-row { display:flex }` (otherwise grade buttons show before the flip). */
 [hidden] { display: none !important; }
 
+/* Form controls don't inherit the page font by default (they fell back to Arial). */
+button, input, select, textarea { font: inherit; }
+
+/* Visible keyboard / switch-access focus everywhere. */
+:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+
+/* Respect "reduce motion" (the card flip is a 0.5s 3D spin). */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+
 :root {
   --green:      #4a5d23;   /* Army OD green */
   --green-dk:   #2e3a23;
@@ -111,9 +122,10 @@ h2.section { font-size: 1.05rem; color: var(--text-dim); text-transform: upperca
   gap: 3px;
   text-decoration: none;
   color: var(--text-dim);
-  font-size: 0.72rem;
+  font-size: 0.78rem;
 }
-.tab .ico { font-size: 1.15rem; }
+.tab .ico { font-size: 1.15rem; display: flex; }
+.tab .ico svg { width: 24px; height: 24px; fill: currentColor; }
 .tab.active { color: var(--gold); }
 
 /* ---------- Buttons ---------- */
@@ -182,7 +194,7 @@ h2.section { font-size: 1.05rem; color: var(--text-dim); text-transform: upperca
 .row .meta { color: var(--text-dim); font-size: 0.8rem; margin-top: 2px; }
 .row .chev { color: var(--text-dim); font-size: 1.2rem; }
 .pill {
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   padding: 2px 8px;
   border-radius: 999px;
   background: var(--surface-2);
@@ -250,8 +262,12 @@ h2.section { font-size: 1.05rem; color: var(--text-dim); text-transform: upperca
 }
 .choice:active { background: var(--surface-2); }
 .choice.selected { border-color: var(--gold); background: rgba(255,204,51,0.14); box-shadow: inset 0 0 0 1px var(--gold); }
-.choice.correct { background: rgba(92,184,92,0.18); border-color: var(--good); }
-.choice.wrong { background: rgba(217,83,79,0.18); border-color: var(--bad); }
+.choice.correct { background: rgba(92,184,92,0.18); border: 2px solid var(--good); }
+.choice.wrong { background: rgba(217,83,79,0.18); border: 2px solid var(--bad); }
+.choice .mark { font-weight: 800; margin-right: 6px; }
+.verdict { text-align: center; font-weight: 700; margin: 4px 0 12px; }
+.verdict.ok { color: var(--good); }
+.verdict.no { color: #e5726e; }
 .choice:disabled { cursor: default; opacity: 1; }
 .q-text { font-size: 1.25rem; font-weight: 600; margin: 8px 4px 18px; }
 .q-count { color: var(--text-dim); font-size: 0.85rem; text-align: center; }
@@ -277,10 +293,11 @@ h2.section { font-size: 1.05rem; color: var(--text-dim); text-transform: upperca
 }
 .empty { text-align: center; color: var(--text-dim); padding: 40px 20px; }
 .badge-good { color: var(--good); }
-.badge-bad { color: var(--bad); }
+.badge-bad { color: #e5726e; }
 .toast {
   position: fixed;
-  left: 50%; bottom: 86px;
+  left: 50%; bottom: calc(76px + env(safe-area-inset-bottom));
+  max-width: calc(100% - 32px); text-align: center;
   transform: translateX(-50%);
   background: var(--surface-2);
   border: 1px solid var(--line);
@@ -296,21 +313,24 @@ hr.div { border: none; border-top: 1px solid var(--line); margin: 18px 0; }
 /* ---------- new feature UI ---------- */
 .flash-toprow { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 12px; }
 .mini {
-  min-width: 38px; min-height: 38px;
+  min-width: 48px; min-height: 48px;
   border: none; background: var(--surface-2); color: var(--text);
   border-radius: 9px; font-size: 1rem; cursor: pointer;
 }
 .mini:active { background: var(--line); }
+.flash-toprow > span:last-child { display: flex; gap: 8px; }
 .mini.big { min-width: 46px; min-height: 46px; font-size: 1.4rem; }
 
 /* SRS grade buttons */
 .grade-row { display: flex; gap: 8px; }
 .grade-row .btn { flex: 1; }
-.grade-again { background: var(--bad); }
+.grade-again { background: #b3322e; }
 .grade-good  { background: var(--green); }
 .grade-easy  { background: var(--gold); color: #1a1a0e; }
 
-.board-btn { background: var(--green-lt); }
+.board-btn { background: #4a6b1c; }
+/* Danger zone buttons: clearly not ordinary buttons */
+.btn.danger { background: transparent; border: 2px solid var(--bad); color: #ff8a85; }
 
 /* mock board timer */
 .timer-bar { height: 8px; margin-bottom: 4px; }
@@ -356,7 +376,7 @@ label.btn { cursor: pointer; }
 .check.checked .checkbox { border-color: var(--good); }
 
 /* learn mode */
-.learn-cta { background: linear-gradient(135deg, #3aa07f, #236b55); color: #fff; font-weight: 700; }
+.learn-cta { background: linear-gradient(135deg, #26775c, #1d5c47); color: #fff; font-weight: 700; }
 .learn-card { min-height: 200px; }
 .learn-q { font-size: 1rem; color: var(--gold); font-weight: 600; margin: 4px 0 12px; }
 .learn-a { font-size: 1.3rem; font-weight: 600; line-height: 1.4; }

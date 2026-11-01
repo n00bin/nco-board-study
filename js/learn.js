@@ -58,7 +58,7 @@
     if (chunk.length) { if (chunk.length < 4 && groups.length) groups[groups.length - 1] = groups[groups.length - 1].concat(chunk); else groups.push(chunk); }
     return groups.map(function (cs, n) {
       var topic = dominantTopic(cs);
-      return { id: trackId + "-L" + (n + 1), title: "Lesson " + (n + 1) + (topic ? ": " + topic : ""), cards: cs };
+      return { id: trackId + "-" + cs[0].id, alt: trackId + "-L" + (n + 1), title: "Lesson " + (n + 1) + (topic ? ": " + topic : ""), cards: cs };
     });
   }
 
@@ -93,17 +93,20 @@
     return tracks;
   }
 
+  // done under its stable id, or under the old positional id (progress saved before 2026-10-31)
+  function isDone(l) { return Store.lessonDone(l.id) || (!!l.alt && Store.lessonDone(l.alt)); }
+  function doneCount(ls) { return ls.filter(isDone).length; }
   function flatLessons(tracks) { var out = []; tracks.forEach(function (t) { t.lessons.forEach(function (l) { out.push(l); }); }); return out; }
-  function findLesson(tracks, id) { var f = flatLessons(tracks).filter(function (l) { return l.id === id; }); return f[0] || null; }
+  function findLesson(tracks, id) { var f = flatLessons(tracks).filter(function (l) { return l.id === id || l.alt === id; }); return f[0] || null; }
 
   var Learn = {
     // ---- the path / hub ----
     hub: function (container) {
       var tracks = buildTracks();
       var flat = flatLessons(tracks);
-      var doneN = Store.lessonsDoneCount(flat.map(function (l) { return l.id; }));
+      var doneN = doneCount(flat);
       var pct = flat.length ? Math.round((doneN / flat.length) * 100) : 0;
-      var next = flat.filter(function (l) { return !Store.lessonDone(l.id); })[0];
+      var next = flat.filter(function (l) { return !isDone(l); })[0];
 
       var html =
         '<div class="hero"><div class="big">' + pct + '%</div><div class="sub">of the learning path complete • ' + doneN + ' / ' + flat.length + ' lessons</div>' +
@@ -112,7 +115,7 @@
       if (next) html += '<a class="btn gold lg" href="#/lesson/' + next.id + '">' + (doneN ? "&#9654; Continue learning" : "&#9654; Start learning") + '</a><div class="spacer"></div>';
 
       tracks.forEach(function (t) {
-        var td = Store.lessonsDoneCount(t.lessons.map(function (l) { return l.id; }));
+        var td = doneCount(t.lessons);
         var tp = t.lessons.length ? Math.round((td / t.lessons.length) * 100) : 0;
         html += '<a class="row" href="#/track/' + t.id + '"><div class="grow"><div class="code">' + esc(t.title) + '</div>' +
           '<div class="meta">' + td + ' / ' + t.lessons.length + ' lessons</div>' +
@@ -128,7 +131,7 @@
       if (!t) return Learn.hub(container);
       var html = '<div class="card"><div class="muted">' + esc(t.overview || "") + '</div></div>';
       t.lessons.forEach(function (l) {
-        var done = Store.lessonDone(l.id);
+        var done = isDone(l);
         html += '<a class="row" href="#/lesson/' + l.id + '"><div class="checkbox' + (done ? " checked" : "") + '" style="' + (done ? "border-color:var(--good);" : "") + '">' + (done ? "&#10003;" : "") + '</div>' +
           '<div class="grow"><div class="ttl">' + esc(l.title) + '</div><div class="meta">' + l.cards.length + ' facts</div></div><div class="chev">&#8250;</div></a>';
       });
@@ -142,7 +145,7 @@
       var lesson = findLesson(tracks, lessonId);
       if (!lesson) return Learn.hub(container);
       var flat = flatLessons(tracks);
-      var idx = flat.map(function (l) { return l.id; }).indexOf(lessonId);
+      var idx = flat.indexOf(lesson);
       var nextLesson = flat[idx + 1] || null;
       var autoRead = Store.settings().autoRead;
       var i = 0;
@@ -178,7 +181,7 @@
       }
 
       function complete(score, total) {
-        Store.markLessonDone(lessonId, score == null ? null : Math.round((score / total) * 100));
+        Store.markLessonDone(lesson.id, score == null ? null : Math.round((score / total) * 100));
         var line = (score == null) ? "Lesson complete." : "You scored " + score + " / " + total + ".";
         container.innerHTML =
           '<div class="ring-wrap"><div class="ring">&#10003;<small>Lesson complete</small></div></div>' +

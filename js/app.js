@@ -9,6 +9,10 @@
 
   var mount = document.getElementById("app");
   var titleEl = document.getElementById("appTitle");
+  if (!window.STUDY || !window.STUDY.cards) {
+    mount.innerHTML = '<div class="empty">The study cards did not load. Check your connection, then close and reopen the app.</div>';
+    return;
+  }
   var backBtn = document.getElementById("backBtn");
 
   // index publications by id; add synthetic publications for user + chain-of-command content
@@ -51,7 +55,7 @@
     return filled.map(function (r) {
       var card = { id: "chain-" + r.k, pub: "chain", topic: "Chain of Command", custom: true,
         q: (r.your ? "Who is your " : "Who is the ") + r.label + "?", a: chain[r.k] };
-      var others = names.filter(function (n) { return n !== chain[r.k]; });
+      var others = names.filter(function (n, i) { return n !== chain[r.k] && names.indexOf(n) === i; });
       if (others.length >= 3) { card.choices = [chain[r.k]].concat(shuffle(others).slice(0, 3)); card.answer = 0; }
       else card.flashOnly = true;
       return card;
@@ -84,8 +88,8 @@
   function deckTitle(deck) {
     if (deck === "all") return "All Publications";
     if (deck === "core") return "Board Core";
-    if (deck === "due") return "Due Review";
-    if (deck === "leeches") return "Leeches (kept missing)";
+    if (deck === "due") return "Ready to Repeat";
+    if (deck === "leeches") return "Cards You Keep Missing";
     if (deck === "cram") return "Night-before Cram";
     var p = STUDY.pubsById[deck];
     return p ? p.code : deck;
@@ -124,9 +128,9 @@
         '<a class="btn lg drive-btn" href="#/pick/drive">&#128663; Drive Mode</a>' +
       '</div>';
     var extras = [];
-    if (dueN > 0) extras.push('<a class="btn ghost" href="#/flash/due">&#8635; Review ' + dueN + ' due now</a>');
+    if (dueN > 0) extras.push('<a class="btn ghost" href="#/flash/due">&#8635; Review ' + dueN + ' card' + (dueN > 1 ? "s" : "") + ' ready to repeat</a>');
     var leechN = Store.leeches(ids).length;
-    if (leechN > 0) extras.push('<a class="btn ghost" href="#/flash/leeches">&#9888;&#65039; Focus ' + leechN + ' leech' + (leechN > 1 ? "es" : "") + ' you keep missing</a>');
+    if (leechN > 0) extras.push('<a class="btn ghost" href="#/flash/leeches">&#9888;&#65039; Practice ' + leechN + ' card' + (leechN > 1 ? "s" : "") + ' you keep missing</a>');
     extras.push('<a class="btn ghost" href="#/flash/cram">&#128367;&#65039; Night-before cram</a>');
     extras.forEach(function (e) { html += '<div class="spacer"></div>' + e; });
     html += '<div class="spacer"></div><a class="row board-row" href="#/boardday"><div class="grow"><div class="code">&#127894; Board Day Prep</div><div class="ttl">Chain of command, uniform check, how to report</div></div><div class="chev">&#8250;</div></a>';
@@ -190,7 +194,7 @@
   }
 
   function screenPick(mode) {
-    var titles = { flash: "Pick a deck", quiz: "Pick a quiz", board: "Pick a board", drive: "Drive Mode" };
+    var titles = { flash: "Pick a subject", quiz: "Pick a quiz", board: "Pick a board", drive: "Drive Mode" };
     var routes = { flash: "#/flash/", quiz: "#/quiz/", board: "#/board/", drive: "#/drive/" };
     setTitle(titles[mode] || "Pick", true);
     var route = routes[mode] || "#/flash/";
@@ -239,13 +243,15 @@
   function screenQuiz(deck) {
     setTitle("Quiz", true);
     var cards = cardsForDeck(deck), title = deckTitle(deck);
+    // same rule quiz.js uses: long-answer and flash-only cards are not quizzed
+    var quizN = cards.filter(function (c) { return !c.flashOnly && ((c.choices && c.choices.length >= 2) || (c.a && String(c.a).length <= 90)); }).length;
     mount.innerHTML =
       '<div class="card center"><div class="code" style="font-size:1.1rem;">' + esc(title) + '</div>' +
-      '<div class="muted">' + cards.length + ' cards available</div></div>' +
+      '<div class="muted">' + quizN + ' quiz questions available</div></div>' +
       '<h2 class="section">How many questions?</h2>' +
       '<button class="btn gold lg" data-n="10">10 questions</button><div class="spacer"></div>' +
       '<button class="btn green lg" data-n="20">20 questions</button><div class="spacer"></div>' +
-      '<button class="btn ghost" data-n="999">All ' + cards.length + ' questions</button>';
+      '<button class="btn ghost" data-n="999">All ' + quizN + ' questions</button>';
     mount.querySelectorAll("[data-n]").forEach(function (b) {
       b.addEventListener("click", function () { Quiz.render(mount, cards, title, parseInt(b.getAttribute("data-n"), 10)); });
     });
@@ -269,19 +275,21 @@
 
   function screenSearch() {
     setTitle("Search", true);
-    mount.innerHTML = '<input class="input" id="q" placeholder="Search questions & answers..." autocomplete="off" /><div id="results" class="spacer"></div>';
+    mount.innerHTML = '<input class="input" id="q" type="search" aria-label="Search questions and answers" placeholder="Search questions & answers..." autocomplete="off" /><div id="results" class="spacer" aria-live="polite"></div>';
     var input = mount.querySelector("#q"), results = mount.querySelector("#results");
     function run() {
       var term = input.value.trim().toLowerCase();
       if (term.length < 2) { results.innerHTML = '<div class="empty">Type at least 2 letters.</div>'; return; }
-      var hits = allCards().filter(function (c) {
+      var all = allCards().filter(function (c) {
         return (c.q + " " + c.a + " " + (c.topic || "")).toLowerCase().indexOf(term) >= 0;
-      }).slice(0, 80);
-      results.innerHTML = hits.length ? hits.map(function (c) {
+      });
+      var hits = all.slice(0, 80);
+      var note = all.length > hits.length ? '<div class="muted center" style="margin-bottom:8px;">Showing the first 80 of ' + all.length + ' matches. Type more to narrow it down.</div>' : '';
+      results.innerHTML = hits.length ? note + hits.map(function (c) {
         var p = STUDY.pubsById[c.pub];
-        return '<div class="card"><div class="flash-tag">' + esc(p ? p.code : "") + (c.topic ? " • " + esc(c.topic) : "") + '</div>' +
-          '<div style="font-weight:600;margin-bottom:6px;">' + esc(c.q) + '</div><div class="muted">' + esc(c.a) + '</div></div>';
-      }).join("") : '<div class="empty">No matches.</div>';
+        return '<a class="card" style="display:block;text-decoration:none;color:inherit;" href="#/pub/' + escAttr(c.pub) + '"><div class="flash-tag">' + esc(p ? p.code : "") + (c.topic ? " • " + esc(c.topic) : "") + (c.core ? " • &#11088; core" : "") + '</div>' +
+          '<div style="font-weight:600;margin-bottom:6px;">' + esc(c.q) + '</div><div class="muted">' + esc(c.a) + '</div></a>';
+      }).join("") : '<div class="empty">No matches. Try a shorter word, like "counsel" or "SHARP".</div>';
     }
     input.addEventListener("input", run); input.focus();
   }
@@ -318,11 +326,12 @@
       '<h2 class="section">Daily goal</h2>' +
       '<div class="card"><div class="stepper"><button class="mini big" id="gMinus">&#8722;</button>' +
         '<span id="goalVal">' + daily.goal + '</span><button class="mini big" id="gPlus">+</button>' +
-        '<span class="muted" style="margin-left:8px;">cards / day</span></div></div>' +
-      '<h2 class="section">Mock Board timer</h2><div class="chip-row" id="timerChips">' +
+        '<span class="muted" style="margin-left:8px;">cards / day</span></div>' +
+        '<div class="muted" style="font-size:.85rem;margin-top:8px;">Every card you grade or answer counts toward today. Hit it each day to build your streak.</div></div>' +
+      '<h2 class="section">Mock Board timer</h2><div class="muted" style="font-size:.85rem;margin:0 4px 8px;">Seconds you get to answer out loud before the answer is shown.</div><div class="chip-row" id="timerChips">' +
         timers.map(function (t) { return '<button class="chip' + (t === s.timer ? ' on' : '') + '" data-t="' + t + '">' + (t === 0 ? 'Off' : t + 's') + '</button>'; }).join("") +
       '</div>' +
-      '<h2 class="section">Drive Mode answer pause</h2><div class="chip-row" id="gapChips">' +
+      '<h2 class="section">Drive Mode answer pause</h2><div class="muted" style="font-size:.85rem;margin:0 4px 8px;">How long Drive Mode waits for you to answer before it reads the answer.</div><div class="chip-row" id="gapChips">' +
         [3, 5, 8, 12].map(function (t) { return '<button class="chip' + (t === s.driveGap ? ' on' : '') + '" data-g="' + t + '">' + t + 's</button>'; }).join("") +
       '</div>';
     if (Speech.supported())
@@ -363,24 +372,25 @@
       '<label class="btn green lg" for="impFile">&#11014; Import a backup</label>' +
       '<input type="file" id="impFile" accept="application/json,.json" hidden>' +
       '<h2 class="section">Danger zone</h2>' +
-      '<button class="btn ghost" id="resetCards">Reset card progress only</button><div class="spacer"></div>' +
-      '<button class="btn ghost" id="resetAll">Erase everything (progress + my cards)</button>';
+      '<button class="btn danger" id="resetCards">Reset card progress only</button><div class="spacer"></div>' +
+      '<button class="btn danger" id="resetAll">Erase everything (progress + my cards)</button>';
     mount.querySelector("#exp").addEventListener("click", function () {
       var d = new Date(), name = "nco-board-progress-" + d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0") + ".json";
       download(name, Store.exportData()); App.toast("Backup downloaded");
     });
     mount.querySelector("#impFile").addEventListener("change", function (e) {
-      var f = e.target.files[0]; if (!f) return;
+      var input = e.target, f = input.files[0]; if (!f) return;
       var r = new FileReader();
       r.onload = function () {
+        input.value = "";   // so picking the same file again still triggers a restore
         if (!confirm("Import this backup? It replaces your current progress and cards.")) return;
         try { Store.importData(r.result); App.toast("Progress restored"); App.go("#/"); }
-        catch (err) { App.toast("That file isn't a valid backup."); }
+        catch (err) { App.toast("That file isn't a valid backup from this app.", 4000); }
       };
       r.readAsText(f);
     });
-    mount.querySelector("#resetCards").addEventListener("click", function () { if (confirm("Reset all card progress (keeps your custom cards)?")) { Store.resetCards(); App.toast("Card progress reset"); } });
-    mount.querySelector("#resetAll").addEventListener("click", function () { if (confirm("Erase ALL progress AND your custom cards? This cannot be undone.")) { Store.resetAll(); App.toast("Everything reset"); App.go("#/"); } });
+    mount.querySelector("#resetCards").addEventListener("click", function () { if (confirm("Reset all card progress? Your custom cards stay, but every card goes back to new. Tip: tap Export first so you can undo this.")) { Store.resetCards(); App.toast("Card progress reset"); } });
+    mount.querySelector("#resetAll").addEventListener("click", function () { if (confirm("Erase ALL progress AND your custom cards? This cannot be undone. Tip: tap Export first to keep a backup.")) { Store.resetAll(); App.toast("Everything reset"); App.go("#/"); } });
   }
 
   // ---- Share + QR ----
@@ -393,7 +403,8 @@
       '<button class="btn gold lg" id="share">&#128279; Share link</button>' +
       '<div class="spacer"></div><button class="btn ghost" id="copy">Copy link</button>' +
       '<h2 class="section">Spot an error?</h2>' +
-      '<a class="btn ghost" href="https://github.com/' + REPO + '/issues/new" target="_blank" rel="noopener">&#9873; Report a problem with a card</a>';
+      '<a class="btn ghost" href="https://github.com/' + REPO + '/issues/new" target="_blank" rel="noopener">&#9873; Report a problem with a card (opens GitHub)</a>' +
+      '<div class="muted center" style="font-size:.8rem;margin-top:6px;">Reporting needs a free GitHub account.</div>';
     mount.querySelector("#share").addEventListener("click", function () {
       if (navigator.share) navigator.share({ title: "NCO Board Study Guide", text: "Study for the E-5/E-6 board:", url: APP_URL }).catch(function () {});
       else copyLink();
@@ -466,7 +477,8 @@
   // ---- Board Day content ----
   var UNIFORM_CHECKS = [
     { id: "u1", t: "Haircut neat & tapered within AR 670-1; clean-shaven (or authorized, groomed beard waiver)" },
-    { id: "u2", t: "Headgear (patrol cap / beret) shaped and worn correctly; rank centered on the cap" },
+    { id: "u0", t: "Confirm WHICH uniform your board memo calls for (often the AGSU) and inspect that one" },
+    { id: "u2", t: "Headgear (beret, garrison cap, or patrol cap, per the memo) shaped and worn correctly" },
     { id: "u3", t: "Nametapes (US ARMY / last name) correct, even, and properly placed" },
     { id: "u4", t: "Rank / grade insignia centered and correct" },
     { id: "u5", t: "Skill badges, tabs, and patches placed per regulation; not faded or frayed" },
@@ -594,7 +606,7 @@
     if (head === "drive") return screenDrive(parts[1]), tab("home");
     return screenHome(), tab("home");
   }
-  function tab(name) { document.querySelectorAll(".tab").forEach(function (t) { t.classList.toggle("active", t.getAttribute("data-tab") === name); }); }
+  function tab(name) { document.querySelectorAll(".tab").forEach(function (t) { var on = t.getAttribute("data-tab") === name; t.classList.toggle("active", on); if (on) t.setAttribute("aria-current", "page"); else t.removeAttribute("aria-current"); }); }
   function setTitle(t, showBack) { titleEl.textContent = t; backBtn.hidden = !showBack; }
 
   function download(filename, text) {
@@ -607,18 +619,25 @@
   var App = {
     go: function (h) { location.hash = h; },
     allCards: allCards,
-    toast: function (msg) {
+    toast: function (msg, ms) {
       var t = document.createElement("div"); t.className = "toast"; t.textContent = msg;
-      document.body.appendChild(t); setTimeout(function () { t.remove(); }, 1800);
+      t.setAttribute("role", "status"); t.setAttribute("aria-live", "polite");
+      document.body.appendChild(t); setTimeout(function () { t.remove(); }, ms || 2500);
     },
     reportCard: function (card) {
       if (card.custom) { App.toast("That's your own card — edit it under My Cards."); return; }
       var title = encodeURIComponent("Card issue: " + String(card.q || "").slice(0, 60));
       var body = encodeURIComponent("Card ID: " + card.id + "\nPublication: " + (card.pub || "") + "\nQuestion: " + card.q + "\nListed answer: " + card.a + "\n\nWhat's wrong / the correct answer:\n");
+      App.toast("Opening GitHub to report it (needs a free account)", 2500);
       window.open("https://github.com/" + REPO + "/issues/new?title=" + title + "&body=" + body, "_blank");
     }
   };
   window.App = App;
+
+  // storage.js emits this when the phone refuses to save (storage full / blocked)
+  window.addEventListener("ncoboard:savefailed", function () {
+    App.toast("Could not save your progress: phone storage may be full. Export a backup from More.", 5000);
+  });
 
   backBtn.addEventListener("click", function () { if (history.length > 1) history.back(); else App.go("#/"); });
 
@@ -637,6 +656,5 @@
 
   // ---------------- go ----------------
   window.addEventListener("hashchange", route);
-  if (!STUDY || !STUDY.cards) mount.innerHTML = '<div class="empty">Content failed to load.</div>';
-  else route();
+  route();
 })();

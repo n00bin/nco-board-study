@@ -10,6 +10,9 @@ no account, no app store, nothing to sign up for.
 
 ## What's inside
 
+- **Board Core (start here)** — about 250 must-know questions boards ask most, pulled from every
+  publication. Mock Board, the night-before cram, and Learn Mode's Board Core track use it by default;
+  "All Publications" keeps the full deep set (~1,600 cards) for when you want detail.
 - **Learn Mode (start from scratch)** — a guided path of bite-sized lessons that **teach** the material
   first (with a plain-English overview of each publication), then **practice** it. Begins with the
   fundamentals (Army Values, ranks, chain of command, creeds, Code of Conduct), then each publication.
@@ -70,10 +73,12 @@ so test offline behavior on the phone after installing.)
 
 ## How to study
 
-- Tap **Flashcards** → pick **All Publications** or one subject → tap a card to flip → mark it.
+- Tap **Flashcards** → pick **Board Core** (recommended), All Publications, or one subject → tap the
+  card to flip → grade it **Missed it / Got it / Easy**. Missed cards come back soon; easy ones much later.
 - Tap **Quiz** → pick a subject → choose how many questions → answer.
-- The home screen and each subject show a **mastery bar** that fills as you mark cards "known."
-- **Stats → Reset** lets you wipe progress and start fresh.
+- The home screen and each subject show a **mastery bar**. A card counts as "mastered" once you've
+  gotten it right enough times that it's scheduled a week or more out.
+- **More → Backup & restore → Danger zone** lets you reset progress (export a backup first).
 
 ---
 
@@ -96,15 +101,22 @@ Each card looks like this:
   choices automatically.
 - Add `flashOnly:true` to long passages (creeds, etc.) so they only appear as flashcards, not quizzes.
 
-After editing, bump the cache name in **`sw.js`** (change `ncoboard-v1` to `ncoboard-v2`) so your phone
-picks up the new content next time it's online, then re-upload the folder.
+- Add `core:true` to a card to put it in **Board Core** (the default Mock Board / cram / Learn set).
+
+After editing, raise the number in the `CACHE` name in **`sw.js`** (e.g. `ncoboard-v7` → `ncoboard-v8`)
+so phones pick up the new content next time they're online, then re-upload the folder.
 
 ---
 
 ## A note on accuracy
 
-These cards were written from established, board-standard Army knowledge. A few details (for example exact
-fitness-test events, specific measurements, or time limits) change between editions — those are flagged in
-the cards and should be **double-checked against the actual PDFs** in the parent folder before your board.
-A deeper, page-by-page extraction of every publication can be added later to expand each subject from a
-handful of cards to comprehensive coverage.
+Cards were written from the 18 source publications and checked page by page against the PDFs; most
+cards cite the page they came from. Army publications change, so a few things to know:
+
+- The fitness-test cards follow the **Army Fitness Test (AFT)**, the test of record since 1 June 2025
+  (AR 350-1, June 2025; TC 7-21.13, September 2025).
+- Two source PDFs are old editions: **ADP 3-0 (2011)** and **STP 21-24 (2008)**. Cards that taught
+  replaced doctrine from them were rewritten from current publications or removed.
+- Grooming rules changed by Army Directives in 2025 after the AR 670-1 PDF used here — check the
+  current directives for beards/shaving and hair.
+- Always follow your board's appointment memo and local SOP. Spot an error? Use the flag on any card.

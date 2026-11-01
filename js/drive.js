@@ -8,16 +8,39 @@
 
   function esc(s) { return String(s).replace(/[&<>]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]; }); }
 
-  var timer = null, gen = 0, playing = false, wakeLock = null;
+  var timer = null, gen = 0, playing = false;
+  var wakeLock = null, wakeWanted = false, wakeGen = 0, visHooked = false;
   function clearTimer() { if (timer) { clearTimeout(timer); timer = null; } }
 
-  function requestWake() {
-    try {
-      if (navigator.wakeLock && navigator.wakeLock.request)
-        navigator.wakeLock.request("screen").then(function (w) { wakeLock = w; }).catch(function () {});
-    } catch (e) {}
+  function dropLock() {
+    var w = wakeLock; wakeLock = null;
+    try { if (w) { var r = w.release(); if (r && r.catch) r.catch(function () {}); } } catch (e) {}
   }
-  function releaseWake() { try { if (wakeLock) { wakeLock.release(); wakeLock = null; } } catch (e) {} }
+  function requestWake() {
+    wakeWanted = true;
+    dropLock(); // never overwrite (and leak) a lock we already hold
+    var myWake = ++wakeGen;
+    try {
+      if (navigator.wakeLock && navigator.wakeLock.request) {
+        navigator.wakeLock.request("screen").then(function (w) {
+          // Resolved late (Drive stopped, or a newer request superseded this one): let it go.
+          if (!wakeWanted || !playing || myWake !== wakeGen) {
+            try { var r = w.release(); if (r && r.catch) r.catch(function () {}); } catch (e) {}
+            return;
+          }
+          wakeLock = w;
+        }).catch(function () {});
+      }
+    } catch (e) {}
+    if (!visHooked && typeof document !== "undefined" && document.addEventListener) {
+      visHooked = true;
+      // The browser drops the lock when the app is backgrounded; take it back on return.
+      document.addEventListener("visibilitychange", function () {
+        if (document.visibilityState === "visible" && playing && wakeWanted) requestWake();
+      });
+    }
+  }
+  function releaseWake() { wakeWanted = false; wakeGen++; dropLock(); }
 
   var Drive = {
     stop: function () { playing = false; gen++; clearTimer(); if (window.Speech) Speech.stop(); releaseWake(); },
@@ -27,7 +50,7 @@
       if (!deck.length) deck = cards.slice();
       if (!deck.length) { container.innerHTML = '<div class="empty">No cards to play here.</div>'; return; }
       var i = 0, loop = false;
-      var gap = (Store.settings().driveGap | 0) || 6;
+      var gap = (Store.settings().driveGap | 0) || 5;
 
       if (!Speech.supported()) {
         container.innerHTML = '<div class="empty">Read-aloud isn\'t available in this browser, so Drive Mode can\'t run. Try Chrome on Android.</div>';
@@ -37,20 +60,20 @@
       function paint(phase) {
         var c = deck[i];
         var p = STUDY.pubsById[c.pub];
-        var phaseLabel = phase === "q" ? "&#128266; Question…" : phase === "listen" ? "&#127908; Your turn — answer aloud" : "&#9989; Answer";
+        var phaseLabel = !playing ? "&#10073;&#10073; Paused" : phase === "q" ? "&#128266; Question…" : phase === "listen" ? "&#127908; Your turn — answer aloud" : "&#9989; Answer";
         container.innerHTML =
           '<div class="flash-progress">Drive Mode • ' + esc(title) + ' • ' + (i + 1) + ' / ' + deck.length + '</div>' +
           '<div class="card drive-card"><div class="flash-tag">' + esc(p ? p.code : "") + (c.topic ? " • " + esc(c.topic) : "") + '</div>' +
             '<div class="phase" id="phase">' + phaseLabel + '</div>' +
-            '<div class="flash-q" style="margin:10px 0;">' + esc(c.q) + '</div>' +
-            (phase === "a" ? '<hr class="div"><div class="flash-a">' + esc(c.a).replace(/\n/g, "<br>") + '</div>' : '') +
+            '<div class="flash-q" style="margin:10px 0;font-size:1.3em;line-height:1.4;">' + esc(c.q) + '</div>' +
+            (phase === "a" ? '<hr class="div"><div class="flash-a" style="font-size:1.2em;line-height:1.4;">' + esc(c.a).replace(/\n/g, "<br>") + '</div>' : '') +
           '</div>' +
           '<div class="btn-row">' +
-            '<button class="btn ghost" id="dPause">' + (playing ? "&#10073;&#10073; Pause" : "&#9658; Resume") + '</button>' +
-            '<button class="btn ghost" id="dNext">Next &#9197;</button>' +
+            '<button class="btn lg" id="dPause">' + (playing ? "&#10073;&#10073; Pause" : "&#9658; Resume") + '</button>' +
+            '<button class="btn lg" id="dNext">Next &#9197;</button>' +
           '</div><div class="spacer"></div>' +
           '<button class="btn green" id="dLoop">' + (loop ? "&#128257; Loop: ON" : "&#128257; Loop: off") + '</button>' +
-          '<div class="spacer"></div><button class="btn gold" id="dStop">&#9209; Stop Drive Mode</button>';
+          '<div class="spacer"></div><button class="btn ghost" id="dStop">&#9209; Stop Drive Mode</button>';
         container.querySelector("#dPause").addEventListener("click", function () { playing ? pause() : resume(); });
         container.querySelector("#dNext").addEventListener("click", function () { skip(); });
         container.querySelector("#dLoop").addEventListener("click", function () { loop = !loop; container.querySelector("#dLoop").innerHTML = loop ? "&#128257; Loop: ON" : "&#128257; Loop: off"; });

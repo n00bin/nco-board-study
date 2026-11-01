@@ -22,7 +22,7 @@
     goal: 20,
     streak: 0,
     lastStudyDate: "",
-    settings: { autoRead: false, timer: 30, driveGap: 6 }
+    settings: { autoRead: false, timer: 30, driveGap: 5 }
   };
 
   function clone(o) { return JSON.parse(JSON.stringify(o)); }
@@ -96,7 +96,25 @@
   }
 
   var state = load();
-  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+  var lastFailWarn = 0;
+  function save() {
+    try { localStorage.setItem(KEY, JSON.stringify(state)); return true; }
+    catch (e) {
+      // Tell the app (at most every 30 s) so it can warn that progress isn't being saved.
+      var now = Date.now();
+      if (now - lastFailWarn >= 30000) {
+        lastFailWarn = now;
+        try { window.dispatchEvent(new CustomEvent("ncoboard:savefailed")); } catch (x) {}
+      }
+      return false;
+    }
+  }
+
+  // Local calendar date of the day before `ts` (calendar math, safe across DST changes).
+  function localYesterday(ts) {
+    var d = new Date(ts);
+    return localDay(new Date(d.getFullYear(), d.getMonth(), d.getDate() - 1).getTime());
+  }
 
   function localDay(ts) {
     var d = new Date(ts);
@@ -113,7 +131,7 @@
   function touchDay(now) {
     var today = localDay(now);
     if (state.lastStudyDate !== today) {
-      var yest = localDay(now - DAY);
+      var yest = localYesterday(now);
       state.streak = (state.lastStudyDate === yest) ? (state.streak + 1) : 1;
       state.lastStudyDate = today;
     }
@@ -212,7 +230,7 @@
     streak: function () {
       // streak is 0 if the last study day was before yesterday
       if (!state.lastStudyDate) return 0;
-      var t = localDay(Date.now()), y = localDay(Date.now() - DAY);
+      var t = localDay(Date.now()), y = localYesterday(Date.now());
       if (state.lastStudyDate === t || state.lastStudyDate === y) return state.streak;
       return 0;
     },
@@ -233,7 +251,11 @@
     },
     updateUserCard: function (id, patch) {
       var c = state.userCards.filter(function (x) { return x.id === id; })[0];
-      if (c) { for (var k in patch) c[k] = patch[k]; save(); }
+      if (c) {
+        for (var k in patch) c[k] = patch[k];
+        if (!patch || !patch.choices) { delete c.choices; delete c.answer; } // don't keep stale quiz options
+        save();
+      }
       return c;
     },
     deleteUserCard: function (id) {

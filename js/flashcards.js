@@ -10,63 +10,81 @@
 
   function normA(s) { return String(s).toLowerCase().replace(/\b(a|an|the|and)\b/g, "").replace(/[^a-z0-9]/g, ""); }
 
+  var EMPTY = "Nothing to study in this deck right now. Try Board Core, or pick a subject.";
+  var GRADE_HINT = "How well did you know it? Missed it = see it again soon · Got it = knew it · Easy = see it much later";
+  var GRADE_BTNS =
+    '<button class="btn grade-again" id="gAgain">Missed it</button>' +
+    '<button class="btn grade-good" id="gGood">Got it</button>' +
+    '<button class="btn grade-easy" id="gEasy">Easy</button>';
+
   var Flashcards = {
     // cards = the deck for this session (already filtered by caller)
     render: function (container, cards, title, opts) {
       if (opts && opts.typed) return Flashcards.renderTyped(container, cards, title);
-      if (!cards.length) { container.innerHTML = '<div class="empty">No cards to study here yet.</div>'; return; }
+      if (!cards.length) { container.innerHTML = '<div class="empty">' + EMPTY + '</div>'; return; }
 
-      var queue = Store.buildQueue(cards).slice();      // due first, then new
+      // due first, then new; big decks only feed in 30 new cards per session so it stays doable
+      var queue = Store.buildQueue(cards, cards.length > 60 ? 30 : undefined).slice();
       if (!queue.length) queue = cards.slice();           // (deck with nothing due) study all
       var i = 0, reviewed = 0;
       var autoRead = Store.settings().autoRead;
 
       container.innerHTML =
         '<div class="flash-wrap">' +
-          '<div class="flash-progress" id="fProg"></div>' +
-          '<div class="flashcard" id="fCard"><div class="flash-inner">' +
-            '<div class="flash-face flash-front">' +
+          '<div class="flash-progress" id="fProg" aria-live="polite"></div>' +
+          '<div class="flashcard" id="fCard" role="button" tabindex="0" aria-label="Flashcard. Tap or press Enter to flip."><div class="flash-inner">' +
+            '<div class="flash-face flash-front" id="fFront">' +
               '<div class="flash-toprow"><span class="flash-tag" id="fTagF"></span>' +
                 '<span><button class="mini" id="fSpeak" aria-label="Read aloud">&#128266;</button>' +
                 '<button class="mini" id="fReport" aria-label="Report card">&#9873;</button></span></div>' +
               '<div class="flash-q" id="fQ"></div>' +
             '</div>' +
-            '<div class="flash-face flash-back">' +
+            '<div class="flash-face flash-back" id="fBack" aria-hidden="true">' +
               '<div class="flash-tag">Answer</div>' +
               '<div class="flash-a" id="fA"></div>' +
               '<div class="flash-ref" id="fRef"></div>' +
             '</div>' +
           '</div></div>' +
           '<div class="flash-hint" id="fHint">Tap card to flip</div>' +
-          '<div class="grade-row" id="fGrades" hidden>' +
-            '<button class="btn grade-again" id="gAgain">Again</button>' +
-            '<button class="btn grade-good" id="gGood">Good</button>' +
-            '<button class="btn grade-easy" id="gEasy">Easy</button>' +
-          '</div>' +
+          '<div class="grade-row" id="fGrades" hidden>' + GRADE_BTNS + '</div>' +
         '</div>';
 
       var cardEl = container.querySelector("#fCard");
       var grades = container.querySelector("#fGrades");
       var hint = container.querySelector("#fHint");
+      var front = container.querySelector("#fFront"), back = container.querySelector("#fBack");
 
       function pubCode(c) { var p = STUDY.pubsById[c.pub]; return p ? p.code : ""; }
 
+      function setFaces(flipped) {
+        front.setAttribute("aria-hidden", flipped ? "true" : "false");
+        back.setAttribute("aria-hidden", flipped ? "false" : "true");
+        grades.hidden = !flipped;
+        hint.textContent = flipped ? GRADE_HINT : "Tap card to flip";
+      }
+
       function paint() {
         var c = queue[i];
+        var wasFlipped = cardEl.classList.contains("flipped");
         cardEl.classList.remove("flipped");
-        grades.hidden = true; hint.style.visibility = "visible";
+        setFaces(false);
         container.querySelector("#fProg").textContent = "Reviewed " + reviewed + "  •  Left " + (queue.length - i);
         container.querySelector("#fTagF").textContent = pubCode(c) + (c.topic ? " • " + c.topic : "");
         container.querySelector("#fQ").textContent = c.q;
-        container.querySelector("#fA").innerHTML = esc(c.a).replace(/\n/g, "<br>");
-        container.querySelector("#fRef").textContent = c.ref ? "Reference: " + c.ref : "";
+        // Wait for the flip-back animation before swapping in the next answer, so it never flashes.
+        var fill = function () {
+          container.querySelector("#fA").innerHTML = esc(c.a).replace(/\n/g, "<br>");
+          container.querySelector("#fRef").textContent = c.ref ? "Reference: " + c.ref : "";
+        };
+        if (wasFlipped) { container.querySelector("#fA").textContent = ""; setTimeout(function () { if (queue[i] === c) fill(); }, 300); }
+        else fill();
         if (autoRead) Speech.speak(c.q);
       }
 
       function flip() {
         var flipped = cardEl.classList.toggle("flipped");
-        if (flipped) { grades.hidden = false; hint.style.visibility = "hidden"; if (autoRead) Speech.speak(queue[i].a); }
-        else { grades.hidden = true; hint.style.visibility = "visible"; }
+        setFaces(flipped);
+        if (flipped && autoRead) Speech.speak(queue[i].a);
       }
 
       function grade(g) {
@@ -92,6 +110,9 @@
       }
 
       cardEl.addEventListener("click", flip);
+      cardEl.addEventListener("keydown", function (e) {
+        if (e.target === cardEl && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); flip(); }
+      });
       container.querySelector("#fSpeak").addEventListener("click", function (e) {
         e.stopPropagation(); var c = queue[i]; Speech.speak(cardEl.classList.contains("flipped") ? c.a : c.q);
       });
@@ -105,8 +126,8 @@
 
     // typed / fill-in-the-blank recall: type the answer, then self-grade
     renderTyped: function (container, cards, title) {
-      if (!cards.length) { container.innerHTML = '<div class="empty">No cards to study here yet.</div>'; return; }
-      var queue = Store.buildQueue(cards).slice();
+      if (!cards.length) { container.innerHTML = '<div class="empty">' + EMPTY + '</div>'; return; }
+      var queue = Store.buildQueue(cards, cards.length > 60 ? 30 : undefined).slice();
       if (!queue.length) queue = cards.slice();
       var i = 0, reviewed = 0;
 
@@ -130,7 +151,11 @@
         var c = queue[i];
         var typed = (container.querySelector("#tIn").value || "").trim();
         var nt = normA(typed), na = normA(c.a);
-        var close = nt.length >= 2 && (nt === na || (na.length >= 3 && na.indexOf(nt) >= 0) || (nt.length >= 3 && nt.indexOf(na) >= 0));
+        // "Looks right" only for a real match: exact, or a typed answer that covers at least half of
+        // the official answer (so "of" or "ar" no longer counts), or that contains the whole answer.
+        var close = nt.length >= 2 && (nt === na ||
+          (nt.length >= 4 && nt.length >= 0.5 * na.length && na.indexOf(nt) >= 0) ||
+          (na.length >= 3 && nt.indexOf(na) >= 0));
         var verdict = !typed ? "" : close ? '<div class="badge-good" style="font-weight:700;">&#10003; Looks right</div>' : '<div class="badge-bad" style="font-weight:700;">&#10007; Compare carefully</div>';
         container.innerHTML =
           '<div class="flash-progress">Reviewed ' + reviewed + '  •  Left ' + (queue.length - i) + '</div>' +
@@ -139,9 +164,8 @@
             (typed ? '<div class="muted">You wrote: ' + esc(typed) + '</div>' + verdict + '<hr class="div">' : '') +
             '<div class="flash-tag">Answer</div><div class="flash-a">' + esc(c.a).replace(/\n/g, "<br>") + '</div>' +
             (c.ref ? '<div class="flash-ref">Reference: ' + esc(c.ref) + '</div>' : '') + '</div>' +
-          '<div class="grade-row"><button class="btn grade-again" id="gAgain">Again</button>' +
-            '<button class="btn grade-good" id="gGood">Good</button>' +
-            '<button class="btn grade-easy" id="gEasy">Easy</button></div>';
+          '<div class="flash-hint">' + GRADE_HINT + '</div>' +
+          '<div class="grade-row">' + GRADE_BTNS + '</div>';
         container.querySelector("#gAgain").addEventListener("click", function () { grade("again"); });
         container.querySelector("#gGood").addEventListener("click", function () { grade("good"); });
         container.querySelector("#gEasy").addEventListener("click", function () { grade("easy"); });
