@@ -11,6 +11,44 @@
   function esc(s) { return String(s).replace(/[&<>]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]; }); }
   function shuffle(a) { a = a.slice(); for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)); var t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
 
+  // Spread a board across subjects and topics: no two cards on the same idea (three "Restricted Report" cards
+  // in one board felt broken), and at most ~1 in 5 questions from one publication. Leftovers fill in only if needed.
+  var STOP = { the: 1, and: 1, for: 1, army: 1, program: 1, definitions: 1, definition: 1, sexual: 1, assault: 1, with: 1, from: 1 };
+  function topicKeys(c) {
+    return String(c.topic || "").toLowerCase().replace(/\([^)]*\)/g, " ").split(/[^a-z0-9]+/).filter(function (w) { return w.length >= 4 && !STOP[w]; })
+      .map(function (w) { return w.replace(/(ing|ed|s)$/, ""); });
+  }
+  function spread(list, want) {
+    var cap = Math.max(2, Math.ceil(want / 5)), perPub = {}, seenKey = {}, out = [], left = [];
+    list.forEach(function (c) {
+      var keys = topicKeys(c), clash = keys.some(function (k) { return seenKey[c.pub + ":" + k]; });
+      if (clash || (perPub[c.pub] || 0) >= cap) { left.push(c); return; }
+      perPub[c.pub] = (perPub[c.pub] || 0) + 1; keys.forEach(function (k) { seenKey[c.pub + ":" + k] = 1; }); out.push(c);
+    });
+    return out.concat(left);
+  }
+  // spoken-style wording when the card has one ("Which set lists..." reads like a quiz, not a board)
+  function qt(c) { return c.oral || c.q; }
+  // short subject names for "Board member 2 will ask about ..."
+  function subjectName(c) {
+    if (c.pub === "sit") return "a situation";
+    if (c.pub === "personal") return "you personally";
+    var p = STUDY.pubsById[c.pub]; if (!p) return c.pub;
+    var t = p.title.replace(/^.*?:\s*/, "").replace(/\s*\(.*\)\s*$/, "");
+    return /^[A-Z]{2,}/.test(p.code) && p.code.length <= 12 && t.length > 40 ? p.code : t.replace(/^The /, "the ");
+  }
+  function listJoin(a) { return a.length <= 1 ? a.join("") : a.slice(0, -1).join(", ") + " and " + a[a.length - 1]; }
+
+  // Voice check: optional speech-to-text that pre-ticks the key points you actually said (Chrome on Android/desktop).
+  var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  var STOPW = { that: 1, this: 1, with: 1, from: 1, they: 1, them: 1, their: 1, have: 1, will: 1, your: 1, into: 1, also: 1, only: 1, when: 1, what: 1, which: 1, than: 1, then: 1, each: 1, more: 1, must: 1, does: 1, about: 1, there: 1, were: 1, been: 1, being: 1, should: 1, could: 1, would: 1 };
+  function words(s) { return String(s).toLowerCase().replace(/[^a-z0-9 ]+/g, " ").split(/\s+/).filter(function (w) { return w.length >= 4 && !STOPW[w]; }).map(function (w) { return w.slice(0, 5); }); }
+  function hitRate(point, said) {
+    var pw = words(point); if (!pw.length) return 0;
+    var set = {}; words(said).forEach(function (w) { set[w] = 1; });
+    return pw.filter(function (w) { return set[w]; }).length / pw.length;
+  }
+
   var timer = null, releaseMic = null;
   function clearTimer() { if (timer) { clearInterval(timer); timer = null; } }
 
@@ -25,12 +63,12 @@
       length = Math.min(length || 15, pool.length);
       // A real board mixes "what would you do?" scenarios in with knowledge questions: about 20% (at least 2).
       var sit = shuffle(pool.filter(function (c) { return c.pub === "sit"; }));
-      var rest = shuffle(pool.filter(function (c) { return c.pub !== "sit"; }));
+      var rest = spread(shuffle(pool.filter(function (c) { return c.pub !== "sit"; })), length);
       var deck;
       if (sit.length && rest.length) {
         var nSit = Math.min(sit.length, Math.max(2, Math.round(length * 0.2)));
-        deck = shuffle(sit.slice(0, nSit).concat(rest.slice(0, length - nSit)));
-      } else deck = shuffle(pool).slice(0, length);
+        deck = shuffle(spread(sit, nSit).slice(0, nSit).concat(rest.slice(0, length - nSit)));
+      } else deck = shuffle(spread(shuffle(pool), length)).slice(0, length);
 
       // The board as a queue of steps. Follow-ups are inserted right after their question once it's graded.
       var steps = [];
@@ -44,11 +82,13 @@
         var M = deck.length >= 8 ? 4 : 3, per = Math.ceil(ordered.length / M), chunks = [];
         for (var m = 0; m < M; m++) chunks.push(ordered.slice(m * per, (m + 1) * per));
         sits.forEach(function (c, k) { chunks[k % M].push(c); });
-        steps.push({ kind: "reportIn" }, { kind: "intro" });
+        steps.push({ kind: "reportIn" }, { kind: "drill" }, { kind: "intro" });
         chunks.forEach(function (ch, m) {
           if (!ch.length) return;
           var last = m === chunks.length - 1;
-          var subs = []; ch.forEach(function (c) { var pt = STUDY.pubsById[c.pub]; var nm = c.pub === "sit" ? "a situation" : (pt ? pt.title : c.pub); if (subs.indexOf(nm) < 0) subs.push(nm); });
+          var subs = []; ch.forEach(function (c) { var nm = subjectName(c); if (subs.indexOf(nm) < 0) subs.push(nm); });
+          // "a situation" reads best last
+          subs.sort(function (a, b) { return (a === "a situation") - (b === "a situation"); });
           steps.push({ kind: "member", label: last ? "The Board President" : "Board member " + (m + 1), subs: subs });
           ch.forEach(function (c) { steps.push({ kind: "q", c: c }); });
         });
@@ -79,6 +119,7 @@
         rec.mr.stop();
       }
       releaseMic = function () {
+        stopVoice();
         try { if (rec.mr && rec.mr.state !== "inactive") rec.mr.stop(); } catch (e) {}
         if (rec.stream) rec.stream.getTracks().forEach(function (t) { t.stop(); });
         if (rec.url) URL.revokeObjectURL(rec.url);
@@ -170,6 +211,28 @@
         if (st.kind === "intro") return intro();
         if (st.kind === "reportOut") return reportOut();
         if (st.kind === "member") return member(st);
+        if (st.kind === "drill") return drill();
+      }
+
+      // Some boards test drill before you sit: the president gives a few facing movements.
+      function drill() {
+        var cmds = shuffle(["Left, FACE.", "Right, FACE.", "About, FACE.", "Parade, REST.", "Half left, FACE."]).slice(0, 3);
+        container.innerHTML = header() +
+          '<div class="card"><div class="flash-tag">The board president</div>' +
+            '<div class="q-text" style="margin-top:8px;">"Before you sit, let\'s see some drill."</div>' +
+            '<div class="muted">Stand up and do each command' + (sponsor ? ' as your sponsor calls it' : '') + ', sharply, from the position of attention. After each one, come back to attention.</div></div>' +
+          '<div class="card">' + cmds.map(function (t, k) { return '<div class="row" style="margin-bottom:6px;"><div class="numbubble">' + (k + 1) + '</div><div class="grow"><div class="ttl" style="font-size:1.15rem;font-weight:700;">' + esc(t) + '</div></div></div>'; }).join("") +
+            '<div class="muted" style="font-size:.85rem;margin-top:6px;">Parade rest: left foot about 10 inches left, hands at the small of the back. Half left: a 45-degree turn. Then wait for the president to tell you to take your seat.</div></div>' +
+          (sponsor ? '' : '<button class="btn ghost" id="sayIt">&#128266; Call the commands for me</button><div class="spacer"></div>') +
+          '<p class="center muted">Honest check: crisp, on the command of execution, back to attention each time?</p>' +
+          '<a class="btn ghost" href="#/flash/tc3-21-5" style="margin-bottom:10px;">Study drill cards (TC 3-21.5)</a>' +
+          gradeButtons("Needs work", "Drill was sharp");
+        var say = container.querySelector("#sayIt");
+        if (say) say.addEventListener("click", function () {
+          var k = 0;
+          (function nextCmd() { if (k >= cmds.length || !container.querySelector("#sayIt")) return; Speech.speak(cmds[k++]); setTimeout(nextCmd, 4000); })();
+        });
+        onGrade(function (ok) { Speech.stop(); bearing.push({ label: "Facing movements", ok: ok }); next(); });
       }
 
       // ---- full-board rehearsal steps ----
@@ -227,7 +290,7 @@
       function member(st) {
         container.innerHTML = header() +
           '<div class="card" style="border-color:var(--gold);"><div class="flash-tag">' + esc(st.label) + '</div>' +
-            '<div class="q-text" style="margin-top:8px;">' + esc(st.label) + ' will ask you about ' + esc(st.subs.join(", ")) + '.</div>' +
+            '<div class="q-text" style="margin-top:8px;">' + esc(st.label) + ' will ask about ' + esc(listJoin(st.subs)) + '.</div>' +
             '<div class="muted">Turn to face this member, keep your bearing, and answer to them.</div></div>' +
           '<button class="btn gold lg" id="ready">Ready</button>';
         container.querySelector("#ready").addEventListener("click", next);
@@ -242,33 +305,72 @@
           '<div class="card"><div class="flash-toprow"><span class="flash-tag">' + esc(pubCode(c)) + '</span>' +
             '<span><button class="mini" id="mSpeak" aria-label="Read aloud">&#128266;</button>' +
             '<button class="mini" id="mReport" aria-label="Report card">&#9873;</button></span></div>' +
-            '<div class="q-text" style="margin-top:8px;">' + esc(c.q) + '</div></div>' +
+            '<div class="q-text" style="margin-top:8px;">' + esc(qt(c)) + '</div></div>' +
           (sponsor ? sponsorBox(c.a, c.ref, whyHtml(c)) + '<p class="center muted">Read the question aloud, listen, then grade.</p>' + (c.points ? rubricHtml(c, "Sponsor: tick what the Soldier covered") : gradeButtons())
-                   : '<p class="center muted">Answer out loud, then reveal.</p>' + recButton() + '<button class="btn gold lg" id="reveal">Reveal answer</button>');
-        container.querySelector("#mSpeak").addEventListener("click", function () { Speech.speak(c.q); });
+                   : '<p class="center muted">Answer out loud, then reveal.</p>' + voiceButton() + recButton() + '<button class="btn gold lg" id="reveal">Reveal answer</button>');
+        container.querySelector("#mSpeak").addEventListener("click", function () { Speech.speak(qt(c)); });
         container.querySelector("#mReport").addEventListener("click", function () { App.reportCard(c); });
-        if (autoRead) Speech.speak(c.q);
+        if (autoRead) Speech.speak(qt(c));
         if (sponsor) {
           if (c.points) onRubric(function (fr) { clearTimer(); markQ(c, fr); }); else onGrade(function (ok) { clearTimer(); markQ(c, ok ? 1 : 0); });
           runTimer(cs, function () { var n = container.querySelector("#tNum"); if (n) n.textContent = "Time!"; }); return;
         }
-        var rev = function () { reveal(c); };
+        var rev = function () { stopVoice(); reveal(c); };
         container.querySelector("#reveal").addEventListener("click", rev);
-        wireRec();
+        wireRec(); wireVoice();
         runTimer(cs, rev);
+      }
+
+      // ---- voice check: hear what you said, pre-tick the key points it heard (you can still change any box) ----
+      var voice = { rec: null, text: "" };
+      function voiceButton() { return SR ? '<button class="btn ghost" id="voiceBtn">&#128483;&#65039; Voice check: the app listens and ticks what you covered</button><div class="spacer"></div>' : ""; }
+      function wireVoice() {
+        voice.text = "";
+        var b = container.querySelector("#voiceBtn"); if (!b) return;
+        b.addEventListener("click", function () {
+          try {
+            var r = new SR(); r.lang = "en-US"; r.continuous = true; r.interimResults = false;
+            r.onresult = function (e) { for (var k = e.resultIndex; k < e.results.length; k++) if (e.results[k].isFinal) voice.text += " " + e.results[k][0].transcript; };
+            r.onerror = function () { App.toast("Voice check isn't available right now (it may need a connection). Grade yourself as usual.", 4000); };
+            r.start(); voice.rec = r;
+            b.textContent = "⏺ Listening… (stops when you reveal)"; b.classList.add("on"); b.disabled = true;
+            var rb = container.querySelector("#recBtn"); if (rb) rb.disabled = true;   // one microphone user at a time
+          } catch (err) { App.toast("Voice check isn't supported in this browser.", 3500); }
+        });
+      }
+      function stopVoice() { if (voice.rec) { try { voice.rec.stop(); } catch (e) {} voice.rec = null; } }
+      // after reveal: show what it heard and pre-tick matching points (results can arrive a moment after stop)
+      function applyVoice(c) {
+        if (!voice.text && !container.querySelector("#heard")) return;
+        var box = container.querySelector("#heard"); if (!box) return;
+        var said = voice.text.trim();
+        if (!said) { box.innerHTML = '<div class="muted" style="font-size:.85rem;">Voice check didn\'t catch anything. Grade yourself below.</div>'; return; }
+        var html = '<div class="card"><div class="flash-tag">Voice check heard</div><div class="muted" style="font-size:.9rem;">"' + esc(said) + '"</div>';
+        if (c.points) {
+          var n = 0;
+          container.querySelectorAll(".kp").forEach(function (cb, k) { if (hitRate(c.points[k], said) >= 0.5) { cb.checked = true; n++; } });
+          html += '<div class="muted" style="font-size:.85rem;margin-top:6px;">Pre-ticked ' + n + ' of ' + c.points.length + ' key points it heard. Check the boxes yourself: you are the final judge.</div>';
+        } else {
+          var hr = Math.round(100 * hitRate(c.a, said));
+          html += '<div class="muted" style="font-size:.85rem;margin-top:6px;">You used about ' + hr + '% of the answer\'s key words.' + (hr >= 60 ? ' Looks like you had it.' : ' Compare carefully.') + '</div>';
+        }
+        box.innerHTML = html + '</div>';
       }
 
       function reveal(c) {
         clearTimer();
         if (autoRead) Speech.speak(c.a);
+        var listened = SR && container.querySelector("#voiceBtn") && container.querySelector("#voiceBtn").disabled;
         container.innerHTML = header() +
           '<div class="card"><div class="flash-tag">' + esc(pubCode(c)) + (c.topic ? " • " + esc(c.topic) : "") + '</div>' +
-            '<div class="q-text" style="margin:6px 0 12px;">' + esc(c.q) + '</div>' +
+            '<div class="q-text" style="margin:6px 0 12px;">' + esc(qt(c)) + '</div>' +
             '<div class="flash-tag">Answer</div><div class="flash-a">' + esc(c.a).replace(/\n/g, "<br>") + '</div>' +
             (c.ref ? '<div class="flash-ref">Reference: ' + esc(c.ref) + '</div>' : '') + whyHtml(c) + '</div>' +
+          (listened ? '<div id="heard"><div class="muted center" style="font-size:.85rem;">Checking what you said…</div></div>' : '') +
           '<div id="playback"></div>' +
           (c.points ? rubricHtml(c) : '<p class="center muted">How did you do?</p>' + gradeButtons());
         playback();
+        if (listened) setTimeout(function () { applyVoice(c); }, 900);
         if (c.points) onRubric(function (fr) { markQ(c, fr); }); else onGrade(function (ok) { markQ(c, ok ? 1 : 0); });
       }
 
@@ -277,7 +379,7 @@
         Store.grade(c.id, ok ? "good" : "again");
         var pp = perPub[c.pub] || (perPub[c.pub] = { n: 0, miss: 0, code: pubLabel(c) });
         pp.n++; asked++; got += score;
-        if (!ok) { pp.miss++; missed.push({ q: c.q, a: c.a, code: pubCode(c) + (score > 0 && score < 1 ? " \u2022 " + Math.round(score * 100) + "% of key points" : "") }); }
+        if (!ok) { pp.miss++; missed.push({ q: qt(c), a: c.a, code: pubCode(c) + (score > 0 && score < 1 ? " \u2022 " + Math.round(score * 100) + "% of key points" : "") }); }
         // Surprise follow-ups: asked only now, each as its own timed question.
         if (c.follow && c.follow.length) {
           var fu = c.follow.map(function (f) { return { kind: "follow", f: f, parent: c }; });
@@ -290,7 +392,7 @@
         var f = st.f, c = st.parent, t = secs;
         container.innerHTML = header() + timerHtml(t) +
           '<div class="card" style="border-color:var(--gold);"><div class="flash-tag">The board follows up</div>' +
-            '<div class="muted" style="font-size:.85rem;margin-top:6px;">About: ' + esc(String(c.q).length > 110 ? String(c.q).slice(0, 107) + "\u2026" : c.q) + '</div>' +
+            '<div class="muted" style="font-size:.85rem;margin-top:6px;">About: ' + esc(String(qt(c)).length > 110 ? String(qt(c)).slice(0, 107) + "\u2026" : qt(c)) + '</div>' +
             '<div class="q-text" style="margin-top:8px;">' + esc(f.q) + '</div></div>' +
           (sponsor ? sponsorBox(f.a, f.ref, "") + '<p class="center muted">Ask the follow-up, listen, then grade.</p>' + gradeButtons()
                    : '<p class="center muted">Answer out loud, then reveal.</p>' + recButton() + '<button class="btn gold lg" id="reveal">Reveal answer</button>');

@@ -23,7 +23,7 @@
     goal: 20,
     streak: 0,
     lastStudyDate: "",
-    settings: { autoRead: false, timer: 30, driveGap: 5, boardDate: "", fullBoard: true }   // boardDate: "YYYY-MM-DD" or ""
+    settings: { autoRead: false, timer: 30, driveGap: 5, boardDate: "", fullBoard: true, boardFor: "" }   // boardDate: "YYYY-MM-DD" or ""; boardFor: "SGT", "SSG" or ""
   };
 
   function clone(o) { return JSON.parse(JSON.stringify(o)); }
@@ -79,6 +79,7 @@
       s.settings.driveGap = num(d.settings.driveGap, DEFAULT.settings.driveGap);
       s.settings.boardDate = /^\d{4}-\d{2}-\d{2}$/.test(d.settings.boardDate) ? d.settings.boardDate : "";
       s.settings.fullBoard = d.settings.fullBoard !== false;
+      s.settings.boardFor = (d.settings.boardFor === "SGT" || d.settings.boardFor === "SSG") ? d.settings.boardFor : "";
     }
     return s;
   }

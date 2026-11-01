@@ -395,3 +395,8 @@ label.btn { cursor: pointer; }
 .learn-card { min-height: 200px; }
 .learn-q { font-size: 1rem; color: var(--gold); font-weight: 600; margin: 4px 0 12px; }
 .learn-a { font-size: 1.3rem; font-weight: 600; line-height: 1.4; }
+
+/* v3.7: readable in-text links (e.g. "Draft your opening statement first") and even-sized rubric checkboxes */
+.card a:not(.btn):not(.row), .muted a:not(.btn) { color: var(--gold); text-decoration: underline; font-weight: 600; }
+.switch input { flex: 0 0 22px; width: 22px; height: 22px; min-width: 22px; margin: 0; }
+.btn.on { border-color: var(--bad, #e05555); color: var(--text); }

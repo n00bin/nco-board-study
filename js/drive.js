@@ -70,7 +70,7 @@
           '<div class="flash-progress">Drive Mode • ' + esc(title) + ' • ' + (i + 1) + ' / ' + deck.length + '</div>' +
           '<div class="card drive-card"><div class="flash-tag">' + esc(p ? p.code : "") + '</div>' +
             '<div class="phase" id="phase">' + phaseLabel + '</div>' +
-            '<div class="flash-q" style="margin:10px 0;font-size:1.3em;line-height:1.4;">' + esc(c.q) + '</div>' +
+            '<div class="flash-q" style="margin:10px 0;font-size:1.3em;line-height:1.4;">' + esc(c.oral || c.q) + '</div>' +
             (phase === "a" ? '<hr class="div"><div class="flash-a" style="font-size:1.2em;line-height:1.4;">' + esc(c.a).replace(/\n/g, "<br>") + '</div>' : '') +
           '</div>' +
           '<div class="btn-row">' +
@@ -89,7 +89,7 @@
         if (!playing) return;
         var myGen = ++gen, c = deck[i];
         paint("q");
-        Speech.speak(c.q, { onEnd: function () {
+        Speech.speak(c.oral || c.q, { onEnd: function () {
           if (!playing || myGen !== gen) return;
           paint("listen");
           timer = setTimeout(function () {

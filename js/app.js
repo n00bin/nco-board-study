@@ -80,10 +80,25 @@
     });
   }
 
-  function allCards() { return STUDY.cards.concat(Store.userCards()).concat(chainCards()); }
+  // Cards tagged rank:"SGT"/"SSG" only show if they match the board you're going to (Settings > Which board?).
+  function rankOk(c) { var bf = Store.settings().boardFor; return !c.rank || !bf || c.rank === bf; }
+  function allCards() { return STUDY.cards.filter(rankOk).concat(Store.userCards()).concat(chainCards()); }
+  function daysToBoard() {
+    var bd = Store.settings().boardDate; if (!bd) return null;
+    var p = bd.split("-"), t = new Date();
+    return Math.round((new Date(+p[0], +p[1] - 1, +p[2]) - new Date(t.getFullYear(), t.getMonth(), t.getDate())) / 86400000);
+  }
+  function seenOf(id) { var r = Store.recOf(id); return !!(r && r.seen > 0); }
   function cardsForDeck(deck) {
     var all = allCards();
-    if (deck === "all") return all;
+    // "All" skips staff-level trivia (court-martial administration, open-sea survival); it stays in its own subject.
+    if (deck === "all") return all.filter(function (c) { return !c.deep; });
+    // Top 100: the highest-yield Board Core cards, for a late start. Not-yet-studied and missed cards first.
+    if (deck === "top") {
+      var tops = all.filter(function (c) { return c.top; });
+      var weakTop = tops.filter(function (c) { var r = Store.recOf(c.id); return !r || !(r.seen > 0) || r.reps === 0; });
+      return weakTop.concat(tops.filter(function (c) { return weakTop.indexOf(c) < 0; }));
+    }
     // Board Core: the tagged must-know cards, plus your own cards and chain-of-command roster
     if (deck === "core") return all.filter(function (c) { return c.core || c.custom; });
     // Final-week review: Board Core cards you've studied, weakest first (most misses, then soonest due), then the rest
@@ -114,6 +129,7 @@
     if (deck === "all") return "All Publications";
     if (deck === "core") return "Board Core";
     if (deck === "final") return "Final-Week Review";
+    if (deck === "top") return "Top 100 (late start)";
     if (deck === "due") return "Ready to Repeat";
     if (deck === "leeches") return "Cards You Keep Missing";
     if (deck === "cram") return "Night-before Cram";
@@ -126,36 +142,61 @@
   // ---------------- screens ----------------
 
   // One daily plan so Learn, reviews, and Mock Board stop competing.
+  // One daily plan so Learn, reviews, and Mock Board stop competing. It changes as the board gets close:
+  // the last day is about calm and bearing (no new material), the last week is review, a late start gets the Top 100.
   function todayPlan(coreIds, dueN) {
-    var items = [], lp = window.Learn && Learn.nextBoardLesson ? Learn.nextBoardLesson() : null;
-    if (lp && lp.next) items.push('<a href="#/lesson/' + escAttr(lp.next.id) + '">&#128214; 1 lesson: ' + esc(lp.next.title) + '</a>');
-    if (dueN > 0) items.push('<a href="#/flash/due">&#8635; Review ' + dueN + ' card' + (dueN > 1 ? "s" : "") + ' ready to repeat</a>');
-    var unseen = coreIds.filter(function (id) { var r = Store.recOf(id); return !r || !(r.seen > 0); }).length;
-    if (unseen) items.push('<a href="#/flash/core">&#11088; New Board Core cards (' + unseen + ' left)</a>');
-    var bd = Store.settings().boardDate;
-    if (bd) {
-      var p = bd.split("-"), t = new Date(), days = Math.round((new Date(+p[0], +p[1] - 1, +p[2]) - new Date(t.getFullYear(), t.getMonth(), t.getDate())) / 86400000);
-      if (days >= 0 && days <= 7) items.unshift('<a href="#/flash/final">&#127919; Final-Week Review: your weakest Board Core cards first</a>');
+    var days = daysToBoard(), items = [];
+    var seenN = coreIds.filter(seenOf).length, unseen = coreIds.length - seenN, seenPct = coreIds.length ? seenN / coreIds.length : 0;
+    var lateStart = days != null && days >= 2 && days <= 10 && seenPct < 0.5;
+    var title = "Today's plan";
+    if (days === 0) {
+      title = "Board day: no new studying";
+      items.push('<a href="#/reporting">&#127894; Walk through reporting in, out loud</a>',
+        '<a href="#/uniform">&#129509; Final uniform check</a>',
+        '<a href="#/statement">&#128221; Say your opening statement twice</a>',
+        '<a href="#/board/core">&#9749; Optional warm-up: a short Mock Board (5 to 10 questions)</a>');
+    } else if (days === 1) {
+      title = "Tonight: light review, then sleep";
+      items.push('<a href="#/flash/cram">&#128367;&#65039; Night-before cram: just your misses (about 20 minutes)</a>',
+        '<a href="#/board/core">&#127894; One Full board Mock Board, out loud</a>',
+        '<a href="#/uniform">&#129509; Lay out and inspect your uniform</a>',
+        '<a href="#/statement">&#128221; Run your opening statement</a>');
+    } else {
+      if (lateStart) items.push('<a href="#/flash/top">&#127919; Top 100: the highest-yield Board Core cards first (late start)</a>');
+      else if (days != null && days >= 2 && days <= 7) items.push('<a href="#/flash/final">&#127919; Final-Week Review: your weakest Board Core cards first</a>');
+      else {
+        var lp = window.Learn && Learn.nextBoardLesson ? Learn.nextBoardLesson() : null;
+        if (lp && lp.next) items.push('<a href="#/lesson/' + escAttr(lp.next.id) + '">&#128214; 1 lesson: ' + esc(lp.next.title) + '</a>');
+        if (dueN > 0) items.push('<a href="#/flash/due">&#8635; Review ' + Math.min(dueN, 40) + (dueN > 40 ? ' of ' + dueN : '') + ' card' + (dueN > 1 ? "s" : "") + ' ready to repeat</a>');
+        if (unseen) items.push('<a href="#/flash/core">&#11088; New Board Core cards (' + unseen + ' left)</a>');
+      }
+      items.push('<a href="#/board/core">&#127894; One 10-question Mock Board</a>');
+      // once a week, a real person: a sponsor board beats any app
+      var weekAgo = Date.now() - 7 * 86400000;
+      var sponsored = Store.quizzes().some(function (q) { return /with sponsor/.test(q.deck) && q.date > weekAgo; });
+      if (!sponsored && (days == null || days >= 2)) items.push('<a href="#/board/core">&#129309; This week: ask your sponsor to run a board with you (sponsor mode)</a>');
     }
-    items.push('<a href="#/board/core">&#127894; One 10-question Mock Board</a>');
     // style each item as a full-width button (default links are unreadable dark blue on this background)
     items = items.map(function (h) { return h.replace('<a href=', '<a class="btn ghost plan-item" href='); });
-    return '<div class="card"><div class="flash-tag">Today\'s plan</div><div style="display:flex;flex-direction:column;gap:8px;margin-top:8px;">' + items.join("") + '</div></div>';
+    return '<div class="card"><div class="flash-tag">' + esc(title) + '</div><div style="display:flex;flex-direction:column;gap:8px;margin-top:8px;">' + items.join("") + '</div></div>';
   }
-  // "Ready?" check: how much of Board Core you've seen and mastered, recent Mock Board average, and weakest subjects.
+  // "Ready?" check: based on what you actually REMEMBERED (last grade was a hit), plus recent Mock Boards.
+  // Cards merely seen don't count. Shows the weakest subjects by misses.
   function readyCheck(coreIds) {
-    var seen = 0, known = 0, lapsesByPub = {};
+    var seen = 0, recalled = 0, lapsesByPub = {};
     var pubOf = {}; STUDY.cards.forEach(function (c) { if (c.core) pubOf[c.id] = c.pub; });
-    coreIds.forEach(function (id) { var r = Store.recOf(id); if (r && r.seen > 0) { seen++; if (r.status === "known") known++; if (r.lapses) lapsesByPub[pubOf[id]] = (lapsesByPub[pubOf[id]] || 0) + r.lapses; } });
+    coreIds.forEach(function (id) { var r = Store.recOf(id); if (r && r.seen > 0) { seen++; if (r.reps > 0) recalled++; if (r.lapses) lapsesByPub[pubOf[id]] = (lapsesByPub[pubOf[id]] || 0) + r.lapses; } });
     if (!seen) return "";
     var boards = Store.quizzes().filter(function (q) { return /^Mock Board/.test(q.deck) && q.total; }).slice(0, 3);
     var mockAvg = boards.length ? Math.round(100 * boards.reduce(function (s, q) { return s + q.score / q.total; }, 0) / boards.length) : null;
-    var seenPct = Math.round(100 * seen / coreIds.length), knownPct = Math.round(100 * known / coreIds.length);
-    var ready = Math.round(0.4 * seenPct + 0.3 * knownPct + 0.3 * (mockAvg == null ? 0 : mockAvg));
+    var recallPct = Math.round(100 * recalled / coreIds.length);
+    // Mock Board scores only count in proportion to how much of Board Core you've covered (acing 10 cards isn't readiness).
+    var coverage = Math.min(1, seen / (0.5 * coreIds.length));
+    var ready = Math.round(0.6 * recallPct + 0.4 * (mockAvg == null ? 0 : mockAvg) * coverage);
     var weak = Object.keys(lapsesByPub).sort(function (a, b) { return lapsesByPub[b] - lapsesByPub[a]; }).slice(0, 3)
       .map(function (k) { var p = STUDY.pubsById[k]; return p ? (p.code === p.title ? p.code : p.title) : k; });
     return '<div class="card"><div class="flash-tag">Ready?</div><div style="font-size:1.4rem;font-weight:800;color:var(--gold);margin-top:4px;">' + ready + '% board-ready</div>' +
-      '<div class="muted" style="font-size:.85rem;">Board Core seen ' + seenPct + '% \u2022 mastered ' + knownPct + '%' + (mockAvg == null ? ' \u2022 run a Mock Board to finish this score' : ' \u2022 last Mock Boards ' + mockAvg + '%') + '</div>' +
+      '<div class="muted" style="font-size:.85rem;">Board Core you got right last time: ' + recalled + ' of ' + coreIds.length + (mockAvg == null ? ' \u2022 run a Mock Board to finish this score' : ' \u2022 last Mock Boards ' + mockAvg + '%') + '</div>' +
       (weak.length ? '<div class="muted" style="font-size:.85rem;margin-top:4px;">Work on: ' + esc(weak.join(", ")) + '</div>' : '') + '</div>';
   }
 
@@ -164,18 +205,18 @@
     var bd = Store.settings().boardDate;
     if (!bd) return '<a class="row" href="#/settings"><div class="grow"><div class="code">&#128197; Set your board date</div>' +
       '<div class="ttl">Get a countdown and a daily study pace</div></div><div class="chev">&#8250;</div></a>';
-    var p = bd.split("-"), t = new Date(), today = new Date(t.getFullYear(), t.getMonth(), t.getDate());
-    var days = Math.round((new Date(+p[0], +p[1] - 1, +p[2]) - today) / 86400000);
-    var unseen = coreIds.filter(function (id) { var r = Store.recOf(id); return !r || !(r.seen > 0); }).length;
+    var days = daysToBoard();
+    var unseen = coreIds.filter(function (id) { return !seenOf(id); }).length;
     var head, tip;
     if (days < 0) { head = "Your board date has passed"; tip = "How did it go? Set a new date in Settings if you have another board."; }
     else if (days === 0) {
       head = "Board day";
       var seenPct = coreIds.length ? Math.round(100 * (coreIds.length - unseen) / coreIds.length) : 0;
       tip = "Check your uniform, review your reporting steps and opening statement, and report in calm and confident." +
-        (seenPct >= 80 ? " You've studied " + seenPct + "% of Board Core. Trust your preparation." : " Quick win this morning: run a 10-question Mock Board to warm up.");
+        (seenPct >= 80 ? " You've studied " + seenPct + "% of Board Core. Trust your preparation." : " No cramming today: a short Mock Board to warm up is plenty.");
     }
     else if (days === 1) { head = "Board tomorrow"; tip = "Tonight: lay out and inspect your uniform, run one Full board Mock Board, review your reporting steps and opening statement, then get a full night's sleep."; }
+    else if (days <= 10 && unseen > coreIds.length / 2) { head = "Board in " + days + " days"; tip = "Late start? Don't try to see everything. Drill the Top 100 highest-yield cards and run a Mock Board every day."; }
     else if (days <= 7) { head = "Board in " + days + " days"; tip = "Board week: run a Mock Board every day and do the Final-Week Review (your weakest Board Core cards first)."; }
     else {
       head = "Board in " + days + " days";
@@ -194,8 +235,8 @@
     var counts = Store.counts(ids);
     var daily = Store.daily(), streak = Store.streak(), dueN = Store.dueCount(ids);
     // Lead with Board Core (what the board asks most), not the whole 1,500-card library.
-    var coreIds = STUDY.cards.filter(function (c) { return c.core; }).map(function (c) { return c.id; });
-    var cc = Store.counts(coreIds), cm = Math.round(Store.mastery(coreIds) * 100);
+    var coreIds = STUDY.cards.filter(function (c) { return c.core && rankOk(c); }).map(function (c) { return c.id; });
+    var cc = Store.counts(coreIds), cm = Math.round(Store.mastery(coreIds) * 100), dToB = daysToBoard();
 
     var html =
       '<div class="hero">' +
@@ -204,12 +245,13 @@
           '<div style="text-align:right;white-space:nowrap;"><div style="font-size:1.5rem;font-weight:800;">&#128293; ' + streak + '</div><div class="sub">day streak</div></div>' +
         '</div>' +
         '<div class="bar"><span style="width:' + cm + '%"></span></div>' +
-        '<div class="sub" style="margin-top:6px;font-size:.8rem;">All cards: ' + counts.known + ' of ' + all.length + ' mastered</div>' +
+        '<div class="sub" style="margin-top:6px;font-size:.8rem;">Board Core studied: ' + coreIds.filter(seenOf).length + ' of ' + coreIds.length + '</div>' +
         '<div class="sub" style="margin-top:8px;">Today: ' + daily.count + ' / ' + daily.goal + ' cards' + (daily.count >= daily.goal ? ' &#10003;' : '') + '</div>' +
       '</div>' +
       boardCountdown(coreIds) + todayPlan(coreIds, dueN) + readyCheck(coreIds) +
-      '<a class="btn lg learn-cta" href="#/learn">&#128214; Learn Mode — start from scratch</a>' +
-      '<div class="muted center" style="font-size:.8rem;margin:6px 0 12px;">New to this? Learn Mode teaches you first. Already know it? Drill below. <b>Your goal for a SGT/SSG board: Board Core.</b> Everything else is extra depth.</div>' +
+      // the "start from scratch" nudge is for the early weeks, not board week
+      ((dToB == null || dToB > 7) ? '<a class="btn lg learn-cta" href="#/learn">&#128214; Learn Mode — start from scratch</a>' +
+      '<div class="muted center" style="font-size:.8rem;margin:6px 0 12px;">New to this? Learn Mode teaches you first. Already know it? Drill below. <b>Your goal for a ' + (Store.settings().boardFor || "SGT/SSG") + ' board: Board Core.</b> Everything else is extra depth.</div>' : '<div class="spacer"></div>') +
       '<div class="btn-row">' +
         '<a class="btn gold lg" href="#/pick/flash">Flashcards</a>' +
         '<a class="btn green lg" href="#/pick/quiz">Quiz</a>' +
@@ -219,11 +261,12 @@
         '<a class="btn lg board-btn" href="#/board/core">&#127894; Mock Board</a>' +
         '<a class="btn lg drive-btn" href="#/pick/drive">&#128663; Drive Mode</a>' +
       '</div>';
-    var extras = [];
-    if (dueN > 0) extras.push('<a class="btn ghost" href="#/flash/due">&#8635; Review ' + dueN + ' card' + (dueN > 1 ? "s" : "") + ' ready to repeat</a>');
+    var extras = [], calm = dToB === 0 || dToB === 1;   // board day / night before: no pile of reviews on Home
+    if (dueN > 0 && !calm) extras.push('<a class="btn ghost" href="#/flash/due">&#8635; Review ' + dueN + ' card' + (dueN > 1 ? "s" : "") + ' ready to repeat</a>');
     var leechN = Store.leeches(ids).length;
-    if (leechN > 0) extras.push('<a class="btn ghost" href="#/flash/leeches">&#9888;&#65039; Practice ' + leechN + ' card' + (leechN > 1 ? "s" : "") + ' you keep missing</a>');
-    extras.push('<a class="btn ghost" href="#/flash/cram">&#128367;&#65039; Night-before cram</a>');
+    if (leechN > 0 && !calm) extras.push('<a class="btn ghost" href="#/flash/leeches">&#9888;&#65039; Practice ' + leechN + ' card' + (leechN > 1 ? "s" : "") + ' you keep missing</a>');
+    if (dToB !== 0) extras.push('<a class="btn ghost" href="#/flash/cram">&#128367;&#65039; Night-before cram</a>');
+    if (dToB == null || dToB > 1) extras.push('<a class="btn ghost" href="#/flash/top">&#127919; Top 100: highest-yield cards (late start)</a>');
     extras.forEach(function (e) { html += '<div class="spacer"></div>' + e; });
     html += '<div class="spacer"></div><a class="row board-row" href="#/boardday"><div class="grow"><div class="code">&#127894; Board Day Prep</div><div class="ttl">Chain of command, uniform check, how to report</div></div><div class="chev">&#8250;</div></a>';
 
@@ -427,6 +470,13 @@
         '<input class="input" type="date" id="bDate" value="' + escAttr(s.boardDate || "") + '" />' +
         '<div class="muted" style="font-size:.85rem;margin-top:8px;">Home shows a countdown and how many new Board Core cards to learn each day.</div>' +
         (s.boardDate ? '<button class="btn ghost" id="bClear" style="margin-top:10px;">Clear board date</button>' : '') + '</div>' +
+      '<h2 class="section">Which board?</h2><div class="muted" style="font-size:.85rem;margin:0 4px 8px;">Hides the few facts that only apply to the other rank (like SSG time-in-service numbers).</div><div class="chip-row" id="rankChips">' +
+        [["SGT", "Sergeant (E-5)"], ["SSG", "Staff Sergeant (E-6)"], ["", "Not sure / both"]].map(function (r) { return '<button class="chip' + ((s.boardFor || "") === r[0] ? ' on' : '') + '" data-r="' + r[0] + '">' + r[1] + '</button>'; }).join("") +
+      '</div>' +
+      '<h2 class="section">Daily reminder</h2><div class="card"><div class="muted" style="font-size:.85rem;">Add a daily study reminder' + (s.boardDate ? ' (until your board)' : '') + ' and a weekly "sponsor board" reminder to your phone\'s calendar.</div>' +
+        '<label class="lbl" for="remT">Remind me at</label><input class="input" type="time" id="remT" value="19:00" />' +
+        '<button class="btn green" id="remIcs" style="margin-top:10px;">&#128197; Add reminders to my calendar</button>' +
+        '<div class="muted" style="font-size:.8rem;margin-top:6px;">Downloads a calendar file. Open it and your calendar app adds the reminders. Nothing is sent anywhere.</div></div>' +
       '<h2 class="section">Daily goal</h2>' +
       '<div class="card"><div class="stepper"><button class="mini big" id="gMinus">&#8722;</button>' +
         '<span id="goalVal">' + daily.goal + '</span><button class="mini big" id="gPlus">+</button>' +
@@ -449,6 +499,18 @@
     });
     var bc = mount.querySelector("#bClear");
     if (bc) bc.addEventListener("click", function () { Store.setSetting("boardDate", ""); App.toast("Board date cleared"); screenSettings(); });
+    mount.querySelectorAll("#rankChips .chip").forEach(function (b) {
+      b.addEventListener("click", function () {
+        Store.setSetting("boardFor", b.getAttribute("data-r"));
+        mount.querySelectorAll("#rankChips .chip").forEach(function (x) { x.classList.remove("on"); });
+        b.classList.add("on");
+      });
+    });
+    mount.querySelector("#remIcs").addEventListener("click", function () {
+      var tm = (mount.querySelector("#remT").value || "19:00").replace(":", "") + "00";
+      download("ncoboard-reminders.ics", reminderIcs(tm, Store.settings().boardDate), "text/calendar");
+      App.toast("Calendar file downloaded: open it to add the reminders", 4000);
+    });
     mount.querySelector("#gMinus").addEventListener("click", function () { Store.setGoal(Store.daily().goal - 5); mount.querySelector("#goalVal").textContent = Store.daily().goal; });
     mount.querySelector("#gPlus").addEventListener("click", function () { Store.setGoal(Store.daily().goal + 5); mount.querySelector("#goalVal").textContent = Store.daily().goal; });
     mount.querySelectorAll("#timerChips .chip").forEach(function (b) {
@@ -512,9 +574,12 @@
         '<div class="muted" style="margin-top:10px;word-break:break-all;">' + APP_URL + '</div></div>' +
       '<button class="btn gold lg" id="share">&#128279; Share link</button>' +
       '<div class="spacer"></div><button class="btn ghost" id="copy">Copy link</button>' +
+      '<h2 class="section">Install it on your phone</h2>' +
+      '<div class="card"><div class="ttl"><b>Android (Chrome):</b> tap the Install button at the top, or Chrome menu &#8942; &#8594; Install app / Add to Home screen.</div>' +
+        '<div class="ttl" style="margin-top:8px;"><b>iPhone (Safari):</b> open the link in Safari, tap Share &#11014;&#65039;, then Add to Home Screen, then Add. Open it from the new icon; it works offline after the first visit.</div></div>' +
       '<h2 class="section">Spot an error?</h2>' +
-      '<a class="btn ghost" href="https://github.com/' + REPO + '/issues/new" target="_blank" rel="noopener">&#9873; Report a problem with a card (opens GitHub)</a>' +
-      '<div class="muted center" style="font-size:.8rem;margin-top:6px;">Reporting needs a free GitHub account.</div>';
+      '<div class="card"><div class="muted">Tap the &#9873; flag on any card. You can send the report from your phone (text, email, chat) or copy it. No account needed.</div></div>' +
+      '<a class="btn ghost" href="https://github.com/' + REPO + '/issues/new" target="_blank" rel="noopener">Or report on GitHub (needs a free account)</a>';
     mount.querySelector("#share").addEventListener("click", function () {
       if (navigator.share) navigator.share({ title: "NCO Board Study Guide", text: "Study for the E-5/E-6 board:", url: APP_URL }).catch(function () {});
       else copyLink();
@@ -622,7 +687,37 @@
       menuRow("#/uniform", "&#129509; Uniform Inspection", "Check your uniform before you walk in") +
       menuRow("#/reporting", "&#127894; How to Report to the Board", "Reporting sequence & bearing") +
       menuRow("#/statement", "&#128221; Opening Statement", "Draft and save your self-introduction") +
+      menuRow("#/pub/boardskills", "&#129504; Board Know-How", "If you freeze, asking for a repeat, what to bring, how to answer") +
+      menuRow("#/changes", "&#128260; What Changed Recently", "AFT, waist-to-height, grooming, and other 2025-2026 changes boards ask about") +
       menuRow("#/knowledge", "&#127758; Know Your Army & Your Job", "Current leaders, your unit, your MOS, and current events");
+  }
+
+  // ---- What changed recently: built from the cards, so the page and the cards always agree ----
+  var CHANGES = [
+    { h: "Fitness: the AFT replaced the ACFT (1 June 2025)", test: function (c) { return /^(fm722-04|fm722-06|ar350-1-d072|ar350-1-d073)$/.test(c.id); } },
+    { h: "Combat Field Test (AD 2026-07)", test: function (c) { return c.core && /Combat Field Test/.test(c.topic || ""); } },
+    { h: "Body fat: waist-to-height ratio replaced the tape test (AD 2026-13)", test: function (c) { return c.core && /AD 2026-13/.test(c.topic || ""); } },
+    { h: "Grooming and appearance (AD 2025-13, AD 2025-18, AD 2026-09)", test: function (c) { return c.core && (/\(AD 2025-1[38]\)|\(AD 2026-09\)/.test(c.topic || "") || c.id === "pam670-1-g01"); } },
+    { h: "Tattoos (AD 2022-09)", test: function (c) { return c.core && /AD 2022-09/.test(c.topic || ""); } },
+    { h: "Equal opportunity (AR 600-20, April 2026)", test: function (c) { return c.core && c.pub === "ar600-20" && /sexual orientation/i.test(c.a); } },
+    { h: "Promotions (AR 600-8-19, March 2026)", test: function (c) { return /^(ar600-8-19-15|ar600-8-19-16|ar600-8-19-32)$/.test(c.id); } },
+    { h: "Operations doctrine (ADP 3-0, March 2025)", test: function (c) { return /^(adp3-0-n08|adp30-03|stp21-24-d043)$/.test(c.id); } },
+    { h: "Marksmanship (TC 3-22.9)", test: function (c) { return c.id === "weapons-m4-11"; } },
+    { h: "Safety (AR 385-10, July 2023)", test: function (c) { return /^(ar385-10-01|ar385-10-06)$/.test(c.id); } },
+    { h: "Orders: paragraph 4 is Sustainment", test: function (c) { return c.id === "tc7-22-7-opord"; } }
+  ];
+  function screenChanges() {
+    setTitle("What Changed Recently", true);
+    var all = allCards();
+    var html = '<div class="card"><div class="muted">Boards like to check that you know the current rule, not the one your unit used a few years ago. Each item is a card from the app, with its source.</div></div>';
+    CHANGES.forEach(function (sec) {
+      var cs = all.filter(sec.test); if (!cs.length) return;
+      html += '<h2 class="section">' + esc(sec.h) + '</h2>';
+      cs.forEach(function (c) {
+        html += '<div class="card"><div style="font-weight:600;margin-bottom:4px;">' + esc(c.q) + '</div><div>' + esc(c.a) + '</div>' + (c.ref ? '<div class="flash-ref">' + esc(c.ref) + '</div>' : '') + '</div>';
+      });
+    });
+    mount.innerHTML = html;
   }
 
   function screenChain() {
@@ -728,16 +823,23 @@
   // ---- Know your Army & your job: things boards ask that depend on YOUR unit and the news (not flashcard facts) ----
   var KNOW_PROMPTS = [
     { id: "unit", t: "Your unit", h: "Battalion, brigade, and division: name, motto, what the patch means, mission, and a little history." },
-    { id: "job", t: "Your job", h: "Your MOS title and main duties, and a few of the individual tasks you perform. Boards can check your job proficiency." },
+    { id: "job", t: "Your job", h: "Your MOS title and main duties, and a few of the individual tasks you perform. Boards can check your job proficiency: look up your MOS Soldier's Manual (STP) and your individual critical task list on the Central Army Registry or your Digital Job Book, and ask your squad leader which tasks your board likes to ask." },
     { id: "post", t: "Your installation", h: "Installation commander and CSM; where ACS, AER, the SHARP office, and behavioral health are; the SHARP and suicide hotlines." },
-    { id: "army", t: "What's changing in the Army", h: "Recent changes you should be able to talk about: the AFT and Combat Field Test, waist-to-height ratio, grooming rules. Board Core covers the details." },
+    { id: "army", t: "What's changing in the Army", h: "Recent changes you should be able to talk about: the AFT and Combat Field Test, waist-to-height ratio, grooming rules. See What Changed Recently for the details and sources." },
     { id: "news", t: "Current events", h: "A few national and world headlines from this month, from a reliable news source, and how they could affect the Army or your unit." }
   ];
   function screenKnowledge() {
     setTitle("Know Your Army & Your Job", true);
     var notes = Store.chain();
+    var chainNow = Store.chain();
+    var todo = CHAIN_ROLES.filter(function (r) { return !chainNow[r.k]; }).map(function (r) { return r.label; })
+      .concat(KNOW_PROMPTS.filter(function (k) { return !notes["know-" + k.id]; }).map(function (k) { return k.t; }));
     var html = '<div class="card"><div class="muted">Boards often ask about your own unit, your job, and current events. These answers are yours to look up, so write them here (saved on this phone). For your leaders up to the Sergeant Major of the Army and the President, fill in the Chain of Command roster.</div></div>' +
-      '<a class="btn ghost" href="#/chain">&#129333; Open the Chain of Command roster</a>';
+      (todo.length ? '<div class="card"><div class="flash-tag">Still to look up (' + todo.length + ')</div><div class="muted" style="font-size:.9rem;">' + todo.map(esc).join(" • ") +
+        '</div><div class="muted" style="font-size:.8rem;margin-top:6px;">Names change: check army.mil, your unit\'s page, or your chain of command. Don\'t trust an old smart book.</div></div>'
+        : '<div class="card"><div class="badge-good" style="font-weight:700;">&#10003; Everything filled in. Re-check names the week of your board.</div></div>') +
+      '<a class="btn ghost" href="#/chain">&#129333; Open the Chain of Command roster</a><div class="spacer"></div>' +
+      '<a class="btn ghost" href="#/changes">&#128260; What changed recently (AFT, waist-to-height, grooming)</a>';
     KNOW_PROMPTS.forEach(function (k) {
       html += '<label class="lbl" for="kn-' + k.id + '"><b>' + esc(k.t) + '</b>: ' + esc(k.h) + '</label>' +
         '<textarea class="input" id="kn-' + k.id + '" rows="3" placeholder="Your notes...">' + esc(notes["know-" + k.id] || "") + '</textarea>';
@@ -782,6 +884,7 @@
     if (head === "statement") return screenStatement(), tab("home");
     if (head === "knowledge") return screenKnowledge(), tab("home");
     if (head === "room") return screenRoom(), tab("home");
+    if (head === "changes") return screenChanges(), tab("home");
     if (head === "pub") return screenPub(parts[1]), tab("browse");
     if (head === "pick") return screenPick(parts[1]), tab("home");
     if (head === "flash") return screenFlash(parts[1]), tab("home");
@@ -794,9 +897,26 @@
   function tab(name) { document.querySelectorAll(".tab").forEach(function (t) { var on = t.getAttribute("data-tab") === name; t.classList.toggle("active", on); if (on) t.setAttribute("aria-current", "page"); else t.removeAttribute("aria-current"); }); }
   function setTitle(t, showBack) { titleEl.textContent = t; backBtn.hidden = !showBack; }
 
-  function download(filename, text) {
+  // Calendar file with a daily study reminder (until the board date, if set) and a weekly sponsor-board reminder.
+  function reminderIcs(hhmmss, boardDate) {
+    var d = new Date(), pad = function (n) { return (n < 10 ? "0" : "") + n; };
+    var day = d.getFullYear() + pad(d.getMonth() + 1) + pad(d.getDate());
+    var until = boardDate ? ";UNTIL=" + boardDate.replace(/-/g, "") + "T235959" : "";
+    var stamp = day + "T000000Z";
+    function ev(uid, rule, summary, desc, mins) {
+      return ["BEGIN:VEVENT", "UID:" + uid + "-" + day + "@ncoboard", "DTSTAMP:" + stamp, "DTSTART:" + day + "T" + hhmmss, "DURATION:PT" + mins + "M",
+        "RRULE:" + rule + until, "SUMMARY:" + summary, "DESCRIPTION:" + desc + " " + APP_URL,
+        "BEGIN:VALARM", "ACTION:DISPLAY", "DESCRIPTION:" + summary, "TRIGGER:PT0M", "END:VALARM", "END:VEVENT"].join("\r\n");
+    }
+    return ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//NCO Board Study Guide//EN", "CALSCALE:GREGORIAN",
+      ev("daily", "FREQ=DAILY", "NCO board: 15 minutes of study", "Open the app and do Today's plan.", 15),
+      ev("sponsor", "FREQ=WEEKLY", "NCO board: mock board with your sponsor", "Ask your sponsor to run a Mock Board in sponsor mode.", 30),
+      "END:VCALENDAR"].join("\r\n") + "\r\n";
+  }
+
+  function download(filename, text, mime) {
     var a = document.createElement("a");
-    a.href = "data:application/json;charset=utf-8," + encodeURIComponent(text);
+    a.href = "data:" + (mime || "application/json") + ";charset=utf-8," + encodeURIComponent(text);
     a.download = filename; document.body.appendChild(a); a.click(); a.remove();
   }
 
@@ -812,10 +932,14 @@
     },
     reportCard: function (card) {
       if (card.custom) { App.toast("That's your own card — edit it under My Cards."); return; }
-      var title = encodeURIComponent("Card issue: " + String(card.q || "").slice(0, 60));
-      var body = encodeURIComponent("Card ID: " + card.id + "\nPublication: " + (card.pub || "") + "\nQuestion: " + card.q + "\nListed answer: " + card.a + "\n\nWhat's wrong / the correct answer:\n");
-      App.toast("Opening GitHub to report it (needs a free account)", 2500);
-      window.open("https://github.com/" + REPO + "/issues/new?title=" + title + "&body=" + body, "_blank");
+      // No account needed: hand the report to the phone's share sheet (text, email, chat), or copy it.
+      var text = "NCO Board app card issue\nCard ID: " + card.id + "\nSubject: " + (card.pub || "") + "\nQuestion: " + card.q + "\nListed answer: " + card.a +
+        "\nReference: " + (card.ref || "") + "\n\nWhat's wrong / the correct answer (with the reference):\n";
+      var gh = "https://github.com/" + REPO + "/issues/new?title=" + encodeURIComponent("Card issue: " + String(card.q || "").slice(0, 60)) + "&body=" + encodeURIComponent(text);
+      if (navigator.share) { navigator.share({ title: "Card issue: " + card.id, text: text }).catch(function () {}); return; }
+      var done = function () { App.toast("Report copied. Paste it to your sponsor, or on the GitHub page that just opened.", 4500); window.open(gh, "_blank"); };
+      if (navigator.clipboard) navigator.clipboard.writeText(text).then(done, function () { window.open(gh, "_blank"); });
+      else window.open(gh, "_blank");
     }
   };
   window.App = App;
@@ -831,7 +955,7 @@
   var deferredPrompt = null, installBtn = document.getElementById("installBtn");
   window.addEventListener("beforeinstallprompt", function (e) { e.preventDefault(); deferredPrompt = e; installBtn.hidden = false; });
   installBtn.addEventListener("click", function () {
-    if (!deferredPrompt) { App.toast("Use Chrome menu → Install app"); return; }
+    if (!deferredPrompt) { App.toast("Android: Chrome menu → Install app. iPhone: Safari Share → Add to Home Screen.", 4500); return; }
     deferredPrompt.prompt(); deferredPrompt.userChoice.finally(function () { deferredPrompt = null; installBtn.hidden = true; });
   });
   window.addEventListener("appinstalled", function () { installBtn.hidden = true; });

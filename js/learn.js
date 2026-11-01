@@ -34,8 +34,8 @@
   var FUND_OVERVIEW = "New to all of this? Start here. These lessons cover the bedrock every board expects you to know cold — the Army Values, the ranks and chain of command, the creeds, the general orders, and the Code of Conduct. Learn these first, then work through each publication.";
 
   var CORE_OVERVIEW = "Next stop after Fundamentals. These are the questions boards ask most, pulled from every publication and ordered so the most-asked subjects come first. Finish this track and you've covered the core of the board. The publication tracks below go deeper.";
-  var CORE_ORDER = ["tc7-21-13", "ar600-8-19", "sit", "personal", "adp6-22", "ar600-20", "atp6-22-1", "ar600-52", "ar27-10", "ar670-1", "pam670-1", "ar600-25", "tc3-21-5", "tc7-22-7", "ar623-3", "ar600-8-22", "ar840-10", "fm7-22",
-    "ar350-1", "stp21-1", "weapons", "ar735-5", "adp7-0", "fm7-0", "adp5-0", "atp5-19", "ar530-1", "ar600-85", "atp3-50-20", "ar608-1", "ar930-4", "stp21-24", "adp3-0"];
+  var CORE_ORDER = ["tc7-21-13", "ar600-8-19", "boardskills", "sit", "personal", "adp6-22", "ar600-20", "atp6-22-1", "ar600-52", "ar27-10", "ar670-1", "pam670-1", "ar600-25", "tc3-21-5", "tc7-22-7", "ar623-3", "ar600-8-22", "ar840-10", "fm7-22",
+    "ar350-1", "stp21-1", "weapons", "ar735-5", "adp7-0", "fm7-0", "adp5-0", "atp5-19", "ar530-1", "ar600-85", "atp3-50-20", "ar608-1", "ar930-4", "ar385-10", "ad2019-33", "brs", "stp21-24", "adp3-0"];
 
   // Board 101: what a promotion board is and how it works, from AR 600-8-19 (6 Mar 2026). First track in Learn.
   var B101_OVERVIEW = "Never been to a board? Start here. How you become eligible, who sits on the board, what they look for, how they vote, and how promotion points and cutoff scores turn a \"yes\" into stripes.";
@@ -63,9 +63,13 @@
     var groups = [], chunk = [];
     cards.forEach(function (c) { chunk.push(c); if (chunk.length >= 8) { groups.push(chunk); chunk = []; } });
     if (chunk.length) { if (chunk.length < 4 && groups.length) groups[groups.length - 1] = groups[groups.length - 1].concat(chunk); else groups.push(chunk); }
+    // Title a lesson by what's in it ("Restricted reports, Unrestricted reports & DD Form 2910"), not "Lesson 1: Reference".
     return groups.map(function (cs, n) {
-      var topic = dominantTopic(cs);
-      return { id: trackId + "-" + cs[0].id, alt: trackId + "-L" + (n + 1), title: "Lesson " + (n + 1) + (topic ? ": " + topic : ""), cards: cs };
+      var topics = [];
+      cs.forEach(function (c) { var t = (c.topic || "").replace(/\s*\((?:AD|AR|TC) [^)]*\)\s*$/, ""); if (t && topics.indexOf(t) < 0) topics.push(t); });
+      var title = topics.length ? (topics.length <= 3 ? topics.slice(0, -1).join(", ") + (topics.length > 1 ? " & " : "") + topics[topics.length - 1]
+        : topics.slice(0, 3).join(", ") + " & more") : "Lesson " + (n + 1);
+      return { id: trackId + "-" + cs[0].id, alt: trackId + "-L" + (n + 1), title: title, cards: cs };
     });
   }
 
@@ -91,7 +95,8 @@
       var p = STUDY.pubsById[pubId];
       var cs = all.filter(function (c) { return c.core && c.pub === pubId && !inFund[c.id]; });
       if (!p || !cs.length) return;
-      chunkLessons(cs, "core-" + pubId).forEach(function (l) { l.title = (p.title || p.code) + " \u2014 " + l.title; coreLessons.push(l); });
+      var nm = (p.code === p.title || /^[A-Z][a-z]/.test(p.code) ? p.code : p.title).replace(/\s*\([^)]*\)\s*$/, "");
+      chunkLessons(cs, "core-" + pubId).forEach(function (l) { l.title = nm + (/[?!]$/.test(nm) ? " " : ": ") + l.title; coreLessons.push(l); });
     });
     if (coreLessons.length)
       tracks.push({ id: "core", title: "⭐ Board Core — the must-know questions", overview: CORE_OVERVIEW, lessons: coreLessons });
@@ -115,12 +120,15 @@
     hub: function (container) {
       var tracks = buildTracks();
       var flat = flatLessons(tracks);
-      var doneN = doneCount(flat);
-      var pct = flat.length ? Math.round((doneN / flat.length) * 100) : 0;
-      var next = flat.filter(function (l) { return !isDone(l); })[0];
+      // Progress is measured against YOUR board path (Board 101, Fundamentals, Board Core), not every lesson in the app.
+      var pathFlat = flatLessons(tracks.filter(function (t) { return t.id === "board101" || t.id === "fundamentals" || t.id === "core"; }));
+      var doneN = doneCount(pathFlat);
+      var pct = pathFlat.length ? Math.round((doneN / pathFlat.length) * 100) : 0;
+      var next = pathFlat.filter(function (l) { return !isDone(l); })[0] || flat.filter(function (l) { return !isDone(l); })[0];
+      var extraDone = doneCount(flat) - doneN;
 
       var html =
-        '<div class="hero"><div class="big">' + pct + '%</div><div class="sub">of the learning path complete • ' + doneN + ' / ' + flat.length + ' lessons</div>' +
+        '<div class="hero"><div class="big">' + pct + '%</div><div class="sub">of your board path • ' + doneN + ' / ' + pathFlat.length + ' lessons' + (extraDone > 0 ? ' (+' + extraDone + ' extra)' : '') + '</div>' +
           '<div class="bar"><span style="width:' + pct + '%"></span></div></div>' +
         '<div class="card"><div class="muted">Learn Mode teaches you the material first, then practices it, a few facts at a time. <b>For your board, finish the first three tracks: Board 101, Fundamentals, and Board Core.</b> The publication tracks below them are extra depth if you have time.</div></div>';
       if (next) html += '<a class="btn gold lg" href="#/lesson/' + next.id + '">' + (doneN ? "&#9654; Continue learning" : "&#9654; Start learning") + '</a><div class="spacer"></div>';

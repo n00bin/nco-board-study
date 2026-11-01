@@ -1,18 +1,43 @@
 # NCO Board Study Guide
 
-A phone study app for the **E-5 / E-6 Army promotion board**, built from 30+ Army publications plus the 2022–2026 Army Directives.
-It installs to your Android home screen, runs **fully offline**, and keeps your progress on your phone —
+A phone study app for the **E-5 / E-6 Army promotion board**, built from 30+ Army publications plus the 2019–2026 Army Directives.
+It installs to your Android or iPhone home screen, runs **fully offline**, and keeps your progress on your phone —
 no account, no app store, nothing to sign up for.
 
 **Live app:** https://n00bin.github.io/nco-board-study/
 
 ---
 
+## What's new in 3.7
+
+- **Calm final days** — on board day and the night before, Today's plan stops adding new cards and lessons: just
+  reporting, uniform, your opening statement, and the night-before cram. Starting late (board within 10 days, under
+  half of Board Core seen)? The plan switches to the **Top 100** highest-yield cards.
+- **Honest Ready? score** — counts the Board Core cards you got right last time (not just the ones you've seen), and
+  Mock Board scores only count as far as your coverage goes.
+- **Which board?** — pick SGT or SSG in Settings and the other rank's numbers drop out.
+- **Mock Board** — one card per topic (no more three Restricted Report cards in one board), spoken wording for
+  quiz-style questions, a **facing-movements** step before you sit, plain "board member 2 will ask about..." lines,
+  and an optional **voice check** that listens and pre-ticks the key points you said (Chrome; you still make the call).
+  Key-point checklists now cover over 200 Board Core answers.
+- **New subjects** — Board Know-How (if you freeze, asking for a repeat, records, what to bring), "Tell us about
+  yourself" as a card, AR 385-10 safety (2023), Total Army Sponsorship (AD 2019-33), and TSP & the Blended
+  Retirement System.
+- **What Changed Recently** page (AFT, Combat Field Test, waist-to-height, grooming, tattoos, EO, ADP 3-0) and a
+  **still-to-look-up** checklist on Know Your Army.
+- **Daily reminder** — Settings adds a daily study reminder and a weekly sponsor-board reminder to your calendar.
+- **Reports without an account** — the ⚑ flag sends a card report through your phone's share sheet.
+- Lesson names say what's in them; Learn progress counts your board path, not every lesson in the app.
+- Fixes: Code of Conduct signed by Eisenhower (not Truman), OPORD paragraph 4 is Sustainment, DA Form 705, METT-TC(I);
+  eight cards of retired 2008 doctrine removed.
+
+**iPhone:** open the link in Safari, tap Share, then **Add to Home Screen**.
+
 ## What's inside
 
 - **Board 101** — what a promotion board is: eligibility, who sits on the board, what they look for, how they
   vote, promotion points and cutoff scores (AR 600-8-19, March 2026). First track in Learn Mode.
-- **What Would You Do?** — 43 situational leadership scenarios (SHARP, suicide prevention, substance abuse, EO,
+- **What Would You Do?** — 47 situational leadership scenarios (SHARP, suicide prevention, substance abuse, EO,
   hazing, Article 31, illegal orders, casualty care, ...) with a model answer, the governing regulation, and
   the board's follow-up questions. Mock Board mixes them into every board.
 - **Sponsor mode & record-and-replay** — hand the phone to your sponsor (they see the answer and grade you), or record
