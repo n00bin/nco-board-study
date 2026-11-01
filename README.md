@@ -8,6 +8,16 @@ no account, no app store, nothing to sign up for.
 
 ---
 
+## What's new in 3.12
+
+- **The Soldier's Rules** (FM 6-27) and **leader development** (FM 6-22) added.
+- **Every Board Core question has a real checklist** (the key fact, why it matters, the source) and is asked the
+  way a board member would say it.
+- **Sponsor boards send back your bearing grades**, not just the score.
+- **Straight answers**: a board with shaky bearing leads with "Not board-ready yet"; after "Recommended" the app
+  stops pushing study and points you to what's next (BLC or ALC).
+- Prep for **world affairs** questions, which title to use for the Secretary of War/Defense, and a starter question for your MOS.
+
 ## What's new in 3.11
 
 - **Honest Mock Board verdict**: a high score with shaky bearing or a missed required scenario now says "Not board-ready yet."

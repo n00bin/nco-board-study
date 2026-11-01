@@ -53,7 +53,16 @@
     return picked;
   }
   // spoken-style wording when the card has one ("Which set lists..." reads like a quiz, not a board)
-  function qt(c) { return c.oral || c.q; }
+  var LOWER = /^(What|Who|How|When|Where|Why|Which|Name|List|Define|Explain|Describe|Is|Are|Can|Do|Does|Should|May|In|On|At|Your|You|A|An|The|If|After|Before|During|Under|Recite|Give|Tell|Walk)\b/;
+  function qt(c) {
+    var q = c.oral || c.q;
+    if (c.pub === "sit" || c.pub === "personal" || /^(Sergeant|Specialist|Staff Sergeant),/.test(q)) return q;
+    var h = 0; for (var i = 0; i < c.id.length; i++) h = (h * 31 + c.id.charCodeAt(i)) >>> 0;
+    var who = window.Store && Store.settings().boardFor === "SSG" ? "Sergeant" : "Specialist";
+    var pre = ["", who + ", ", "", "Tell the board, "][h % 4];
+    if (!pre) return q;
+    return pre + (LOWER.test(q) ? q.charAt(0).toLowerCase() + q.slice(1) : q);
+  }
   // short subject names for "Board member 2 will ask about ..."
   function subjectName(c) {
     if (c.pub === "sit") return "a situation";
@@ -227,13 +236,17 @@
       function rubricHtml(c, who) {
         return '<div class="card" style="border-color:var(--gold);"><div class="flash-tag">' + (who || "Did you cover these?") + '</div>' +
           c.points.map(function (pt, k) {
-            return '<label class="switch" style="margin-top:10px;"><input type="checkbox" class="kp" data-k="' + k + '"> <span>' + esc(pt) + '</span></label>';
+            return '<label class="switch" style="margin-top:10px;"><input type="checkbox" class="kp" data-k="' + k + '"> <span>' + (c.kp1 && k === 0 ? '<b>' + esc(pt) + '</b> <span class="muted" style="font-size:.8rem;">(the key fact)</span>' : esc(pt)) + '</span></label>';
           }).join("") + '</div><button class="btn gold lg" id="rubricDone">Score this answer</button>';
       }
-      function onRubric(fn) {
+      function onRubric(fn, c) {
         container.querySelector("#rubricDone").addEventListener("click", function () {
           var boxes = container.querySelectorAll(".kp"), n = 0;
           boxes.forEach(function (b) { if (b.checked) n++; });
+          if (c && c.kp1 && boxes.length > 1) {
+            var rest = 0; boxes.forEach(function (b, k) { if (k > 0 && b.checked) rest++; });
+            return fn((boxes[0].checked ? 0.75 : 0) + 0.25 * rest / (boxes.length - 1));
+          }
           fn(boxes.length ? n / boxes.length : 0);
         });
       }
@@ -368,7 +381,7 @@
         container.querySelector("#mReport").addEventListener("click", function () { App.reportCard(c); });
         if (autoRead) Speech.speak(qt(c));
         if (sponsor) {
-          if (c.points) onRubric(function (fr) { clearTimer(); markQ(c, fr); }); else onGrade(function (ok) { clearTimer(); markQ(c, ok ? 1 : 0); });
+          if (c.points) onRubric(function (fr) { clearTimer(); markQ(c, fr); }, c); else onGrade(function (ok) { clearTimer(); markQ(c, ok ? 1 : 0); });
           runTimer(cs, function () { var n = container.querySelector("#tNum"); if (n) n.textContent = "Time!"; }); return;
         }
         var rev = function () { stopVoice(); reveal(c); };
@@ -431,7 +444,7 @@
           (c.points ? rubricHtml(c) : '<p class="center muted">How did you do?</p>' + gradeButtons());
         playback();
         if (listened) setTimeout(function () { applyVoice(c); }, 900);
-        if (c.points) onRubric(function (fr) { markQ(c, fr); }); else onGrade(function (ok) { markQ(c, ok ? 1 : 0); });
+        if (c.points) onRubric(function (fr) { markQ(c, fr); }, c); else onGrade(function (ok) { markQ(c, ok ? 1 : 0); });
       }
 
       function markQ(c, score) {          // score: 1 = got it, 0 = missed, fractions from the key-point rubric
@@ -526,12 +539,15 @@
         // A real board weighs bearing and the required situational questions, not just the percentage.
         var bearingMiss = bearing.filter(function (b) { return !b.ok; }).map(function (b) { return b.label.toLowerCase(); });
         var sitMiss = missedIds.filter(function (id) { return /^sit-/.test(id); }).length;
-        if (pct >= 75 && (bearingMiss.length || sitMiss)) msg = "Not board-ready yet: " +
-          [bearingMiss.length ? "fix your " + bearingMiss.join(" and ") : "", sitMiss ? "you missed " + sitMiss + " required situational question" + (sitMiss > 1 ? "s" : "") : ""].filter(Boolean).join(", and ") +
-          ". Boards weigh those as much as the facts.";
-        var html =
-          '<div class="ring-wrap"><div class="ring">' + pct + '%<small>' + asked + ' questions and follow-ups (partial credit counted)</small></div></div>' +
-          '<p class="center muted">' + msg + '</p>';
+        var notReady = pct >= 75 && (bearingMiss.length || sitMiss);
+        if (notReady) msg = "Not board-ready yet." + (bearingMiss.length ? " Work on: " + listJoin(bearingMiss) + "." : "") +
+          (sitMiss ? " You missed " + sitMiss + " required situational question" + (sitMiss > 1 ? "s" : "") + "." : "") + " A board weighs bearing and those questions as much as the facts.";
+        var nQ = deck.length, nF = Math.max(0, asked - nQ);
+        var countLine = nQ + " question" + (nQ === 1 ? "" : "s") + (nF ? " + " + nF + " follow-up" + (nF === 1 ? "" : "s") + " and second tries" : "") + " (partial credit counted)";
+        var html = notReady
+          ? '<div class="card" style="border-color:var(--bad);text-align:center;"><div style="font-size:1.4rem;font-weight:800;">Not board-ready yet</div><div class="muted" style="margin-top:6px;">' + esc(msg.replace(/^Not board-ready yet\.\s*/, "")) + '</div>' +
+              '<div class="muted" style="font-size:.85rem;margin-top:8px;">Answers: ' + pct + '% \u2022 ' + countLine + '</div></div>'
+          : '<div class="ring-wrap"><div class="ring">' + pct + '%<small>' + countLine + '</small></div></div>' + '<p class="center muted">' + msg + '</p>';
         if (bearing.length) {
           html += '<h2 class="section">Bearing &amp; delivery</h2>';
           bearing.forEach(function (b) {
@@ -559,7 +575,9 @@
         if (sb) sb.addEventListener("click", function () {
           var ids = missedIds.filter(function (id, k) { return missedIds.indexOf(id) === k; }).slice(0, 40);
           var note = (container.querySelector("#sbNote").value || "").trim().slice(0, 300);
-          var url = App.appUrl + "#/sbresult/" + (Math.round(got * 10) / 10) + "/" + asked + "/" + Date.now().toString(36) + "/" + ids.join(",") + (note ? "/" + encodeURIComponent(note) : "");
+          var CODE = { "Reporting in": "R", "Facing movements": "D", "Tell us about yourself": "I", "Reporting out": "O" };
+          var bcode = "b-" + bearing.map(function (b) { return (CODE[b.label] || "X") + (b.ok ? 1 : 0); }).join("");
+          var url = App.appUrl + "#/sbresult/" + (Math.round(got * 10) / 10) + "/" + asked + "/" + Date.now().toString(36) + "/" + ids.join(",") + "/" + bcode + (note ? "/" + encodeURIComponent(note) : "");
           var text = "Your practice board: " + pct + "%. Open this to save it in your app: " + url;
           if (navigator.share) navigator.share({ title: "Practice board results", text: text }).catch(function () {});
           else if (navigator.clipboard) navigator.clipboard.writeText(text).then(function () { App.toast("Link copied: text it to the Soldier", 3500); });

@@ -52,6 +52,8 @@
       var dueN = Store.isDue ? deck.filter(function (c) { return Store.isDue(c.id); }).length : 0;
       var tail = deck.slice(dueN);
       for (var k = tail.length - 1; k > 0; k--) { var j = Math.floor(Math.random() * (k + 1)); var tmp = tail[k]; tail[k] = tail[j]; tail[j] = tmp; }
+      // after the due cards, start with the highest-yield ones (Top 100) instead of a random niche card
+      tail = tail.filter(function (c) { return c.top; }).concat(tail.filter(function (c) { return !c.top; }));
       deck = deck.slice(0, dueN).concat(tail);
       if (!deck.length) { container.innerHTML = '<div class="empty">No cards to play here.</div>'; return; }
       var i = 0, loop = false;

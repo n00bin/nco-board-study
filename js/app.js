@@ -87,7 +87,7 @@
     var d = daysToBoard(), br = Store.settings().boardResult;
     if (d == null || d >= 0) return "";
     var AFTER = {
-      "Recommended": "Congratulations, Sergeant-to-be. Your name goes on the promotion recommended list, and you're promoted when your promotion points meet the monthly cutoff score for your MOS. Keep your records and points current (new AFT, weapons, schools, college), and get ready for BLC.",
+      "Recommended": (Store.settings().boardFor === "SSG" ? "Congratulations, Staff Sergeant-to-be." : "Congratulations, Sergeant-to-be.") + " Your name goes on the promotion recommended list, and you're promoted when your promotion points meet the monthly cutoff score for your MOS. Keep your records and points current (new AFT, weapons, schools, college), and get ready for " + (Store.settings().boardFor === "SSG" ? "ALC" : "BLC") + ".",
       "Not recommended": "It happens to good Soldiers, and it isn't the end. Your first-line leader must counsel you in writing on what to improve, with a development plan, and keep counseling you at least every 3 months (AR 600-8-19, para 1-33). Ask the board's feedback, fix those areas, and go back better.",
       "Board postponed": "Use the extra time: set the new date in Settings and the plan will pace you to it." };
     if (br) { var r = br.split("|")[1] || ""; return '<div class="card"><div class="flash-tag">Your board result: ' + esc(r) + '</div><div class="muted">' + esc(AFTER[r] || "") + '</div>' +
@@ -187,7 +187,7 @@
       var br = (Store.settings().boardResult || "").split("|")[1] || "";
       title = br === "Recommended" ? "Next steps after your board" : br === "Not recommended" ? "Your plan for the next board" : "After your board";
       if (br === "Not recommended") items.push('<a href="#/flash/leeches">&#9888;&#65039; Work on the cards you kept missing</a>', '<a href="#/board/core">&#127894; Run a Mock Board each week until your next board</a>');
-      else if (br === "Recommended") items.push('<a href="#/pub/ar600-8-19">&#128200; How points and cutoff scores work (AR 600-8-19)</a>', '<a href="#/pub/ar350-1">&#127891; Get ready for BLC: NCO professional development (AR 350-1)</a>');
+      else if (br === "Recommended") items.push('<a href="#/pub/ar600-8-19">&#128200; How points and cutoff scores work (AR 600-8-19)</a>', '<a href="#/pub/ar350-1">&#127891; Get ready for ' + (Store.settings().boardFor === "SSG" ? "ALC" : "BLC") + ': NCO professional development (AR 350-1)</a>');
       items.push('<a href="#/settings">&#128197; Set your next board date</a>');
     } else if (days === 0) {
       title = "Board day: no new studying";
@@ -244,6 +244,7 @@
   // The "how it's figured" card under the plan. The one number lives in the hero at the top of Home.
   function readyCheck(coreIds, rs) {
     var dd = daysToBoard(); if (!rs.seen || dd === 0 || dd === 1) return "";
+    if (dd != null && dd < 0 && /Recommended$/.test(Store.settings().boardResult || "") && !/Not recommended/.test(Store.settings().boardResult)) return "";
     return '<div class="card"><div class="flash-tag">How your board-ready score is figured</div>' +
       '<div class="muted" style="font-size:.85rem;">Board Core cards you got right the last time you saw them: ' + rs.recalled + ' of ' + coreIds.length +
       (rs.mockAvg == null ? ' \u2022 no Mock Boards yet' : ' \u2022 your last Mock Boards: ' + rs.mockAvg + '%') + '</div>' +
@@ -292,12 +293,13 @@
     var html =
       '<div class="hero">' +
         '<div style="display:flex;justify-content:space-between;align-items:flex-end;">' +
-          (dToB === 0 || dToB === 1 ? '<div><div class="big" style="font-size:1.6rem;">' + (dToB === 0 ? "Board day" : "Board tomorrow") + '</div><div class="sub">You\'ve studied ' + rs.seen + ' Board Core card' + (rs.seen === 1 ? '' : 's') + '. Stay calm and report in sharp.</div></div>'
+          (dToB != null && dToB < 0 && /\|Recommended$/.test(Store.settings().boardResult || "") ? '<div><div class="big" style="font-size:1.6rem;">Recommended</div><div class="sub">Keep your records and points current while you wait for the cutoff.</div></div>' :
+           dToB === 0 || dToB === 1 ? '<div><div class="big" style="font-size:1.6rem;">' + (dToB === 0 ? "Board day" : "Board tomorrow") + '</div><div class="sub">You\'ve studied ' + rs.seen + ' Board Core card' + (rs.seen === 1 ? '' : 's') + '. Stay calm and report in sharp.</div></div>'
             : '<div><div class="big">' + rs.ready + '%</div><div class="sub">board-ready</div></div>') +
           '<div style="text-align:right;white-space:nowrap;"><div style="font-size:1.5rem;font-weight:800;">&#128293; ' + streak + '</div><div class="sub">day streak</div></div>' +
         '</div>' +
         (dToB === 0 || dToB === 1 ? '' : '<div class="bar"><span style="width:' + rs.ready + '%"></span></div>') +
-        '<div class="sub" style="margin-top:6px;font-size:.8rem;">Board Core studied: ' + rs.seen + ' of ' + coreIds.length + '</div>' +
+        '<div class="sub" style="margin-top:6px;font-size:.8rem;">Board Core studied: ' + rs.seen + ' of ' + coreIds.length + (/^(SGT|SSG)$/.test(Store.settings().boardFor) ? ' (' + Store.settings().boardFor + ' board: the other rank\'s cards are hidden)' : '') + '</div>' +
         '<div class="sub" style="margin-top:8px;">Today: ' + daily.count + ' / ' + daily.goal + ' cards' + (daily.count >= daily.goal ? ' &#10003;' : '') + '</div>' +
       '</div>' +
       rankAsk() + boardCountdown(coreIds) + boardResultAsk(rs) + todayPlan(coreIds, dueN) + readyCheck(coreIds, rs) +
@@ -379,7 +381,7 @@
         '<div class="bar"><span style="width:' + m + '%"></span></div></div>' +
       '<div class="btn-row">' +
         '<a class="btn gold lg" href="#/flash/' + id + '">Flashcards</a>' +
-        '<a class="btn green lg" href="#/quiz/' + id + '">Quiz</a></div>' +
+        (pc.filter(function (c) { return !c.flashOnly && ((c.choices && c.choices.length >= 2) || (c.a && String(c.a).length <= 90)); }).length >= 4 ? '<a class="btn green lg" href="#/quiz/' + id + '">Quiz</a>' : '<a class="btn green lg" href="#/board/' + id + '">Practice out loud</a>') + '</div>' +
       '<div class="spacer"></div><a class="btn ghost" href="#/board/' + id + '">&#127894; Mock Board on this subject</a>' +
       '<div class="card" style="margin-top:16px;"><div class="muted" style="font-size:.85rem;">Known ' + counts.known +
         ' • Review ' + counts.review + ' • New ' + counts.new + '</div></div>';
@@ -831,7 +833,12 @@
   function screenSponsorResult(p) {
     setTitle("Sponsor Board Results", true);
     var got = parseFloat(p[0]), total = parseInt(p[1], 10), token = String(p[2] || "").replace(/[^a-z0-9]/g, ""), ids = String(p[3] || "").split(",").filter(Boolean);
-    var note = ""; try { note = decodeURIComponent(p.slice(4).join("/") || "").slice(0, 300); } catch (e) { note = ""; }
+    var bear = [], rest = p.slice(4);
+    if (/^b-/.test(rest[0] || "")) {
+      var NAMES = { R: "Reporting in", D: "Facing movements", I: "Tell us about yourself", O: "Reporting out" };
+      (rest.shift().slice(2).match(/[RDIO][01]/g) || []).forEach(function (t) { bear.push({ label: NAMES[t[0]], ok: t[1] === "1" }); });
+    }
+    var note = ""; try { note = decodeURIComponent(rest.join("/") || "").slice(0, 300); } catch (e) { note = ""; }
     if (!(total > 0) || !(got >= 0) || got > total || !token) { mount.innerHTML = '<div class="empty">This results link is incomplete.</div>'; return; }
     var seenKey = "sbr-" + token, fresh = !Store.chain()[seenKey];
     var byId = {}; STUDY.cards.forEach(function (c) { byId[c.id] = c; });
@@ -842,6 +849,9 @@
     }
     var pct = Math.round(100 * got / total);
     mount.innerHTML = '<div class="ring-wrap"><div class="ring">' + pct + '%<small>from your sponsor\'s board</small></div></div>' +
+      (bear.some(function (b) { return !b.ok; }) ? '<div class="card" style="border-color:var(--bad);text-align:center;"><b>Not board-ready yet.</b> <span class="muted">Your answers were strong, but work on: ' +
+        esc(bear.filter(function (b) { return !b.ok; }).map(function (b) { return b.label.toLowerCase(); }).join(", ")) + '. A board weighs bearing as much as the facts.</span></div>' : '') +
+      (bear.length ? '<h2 class="section">Bearing &amp; delivery (your sponsor\'s grades)</h2>' + bear.map(function (b) { return '<div class="row"><div class="grow"><div class="ttl">' + esc(b.label) + '</div></div><div class="' + (b.ok ? "badge-good" : "badge-bad") + '" style="font-weight:700;">' + (b.ok ? "\u2713 clean" : "\u2717 needs work") + '</div></div>'; }).join("") : '') +
       (note ? '<div class="card" style="border-color:var(--gold);"><div class="flash-tag">Your sponsor\'s notes</div><div style="white-space:pre-wrap;">' + esc(note) + '</div></div>' : '') +
       '<p class="center muted">' + (fresh ? "Saved to your history. " : "Already saved. ") + (ids.length ? "The questions you missed will come back sooner in your reviews:" : "No misses. Nice work.") + '</p>' +
       ids.map(function (id) { var c = byId[id]; return c ? '<div class="card"><div style="font-weight:600;margin-bottom:6px;">' + esc(c.q) + '</div><div class="muted">' + esc(c.a) + '</div></div>' : ""; }).join("") +
