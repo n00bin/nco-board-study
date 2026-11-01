@@ -82,6 +82,29 @@
 
   // Cards tagged rank:"SGT"/"SSG" only show if they match the board you're going to (Settings > Which board?).
   function rankOk(c) { var bf = Store.settings().boardFor; return !c.rank || !bf || bf === "BOTH" || c.rank === bf; }
+  // After the board date: one tap to log how it went, and an optional anonymous share to help improve the app
+  function boardResultAsk(rs) {
+    var d = daysToBoard(), br = Store.settings().boardResult;
+    if (d == null || d >= 0) return "";
+    if (br) return '<div class="card"><div class="flash-tag">Your board result</div><div class="muted">' + esc(br.split("|")[1] || "") + ' (logged ' + esc(br.split("|")[0] || "") + '). Thank you.</div>' +
+      '<button class="btn ghost" id="brShare" style="margin-top:8px;">Share it (anonymous) to help other Soldiers</button></div>';
+    return '<div class="card" style="border-color:var(--gold);"><div class="flash-tag">How did your board go?</div><div class="chip-row" id="brAsk">' +
+      ["Recommended", "Not recommended", "Board postponed"].map(function (t) { return '<button class="chip" data-r="' + t + '">' + t + '</button>'; }).join("") + '</div>' +
+      '<div class="muted" style="font-size:.8rem;margin-top:6px;">Saved on this phone only. You can choose to share it after.</div></div>';
+  }
+  function wireBoardResult(rs) {
+    mount.querySelectorAll("#brAsk .chip").forEach(function (b) {
+      b.addEventListener("click", function () { var t = new Date(); Store.setSetting("boardResult", t.toISOString().slice(0, 10) + "|" + b.getAttribute("data-r")); screenHome(); });
+    });
+    var sh = mount.querySelector("#brShare");
+    if (sh) sh.addEventListener("click", function () {
+      var br = Store.settings().boardResult.split("|"), boards = Store.quizzes().filter(function (q) { return /^Mock Board/.test(q.deck); }).length;
+      var text = "NCO Board app result (anonymous): " + br[1] + ". Board: " + (Store.settings().boardFor || "not set") + ". Board-ready score before the board: " + rs.ready + "%. Board Core cards studied: " + rs.seen + ". Mock Boards run: " + boards + ". App " + (STUDY.meta.version || "") + ".";
+      if (navigator.share) navigator.share({ title: "NCO Board app result", text: text }).catch(function () {});
+      else window.open("https://github.com/" + REPO + "/issues/new?title=" + encodeURIComponent("Board result: " + br[1]) + "&body=" + encodeURIComponent(text), "_blank");
+    });
+  }
+
   // First run: ask which board before showing anything rank-specific
   function rankAsk() {
     if (Store.settings().boardFor) return "";
@@ -169,7 +192,11 @@
         '<a href="#/uniform">&#129509; Lay out and inspect your uniform</a>',
         '<a href="#/statement">&#128221; Run your opening statement</a>');
     } else {
-      if (lateStart) items.push('<a href="#/flash/top">&#127919; Top 100: the highest-yield Board Core cards first (late start)</a>');
+      if (lateStart) {
+        var lp0 = window.Learn && Learn.nextBoardLesson ? Learn.nextBoardLesson() : null;
+        if (lp0 && lp0.next && /^board101/.test(lp0.next.id)) items.push('<a href="#/lesson/' + escAttr(lp0.next.id) + '">&#128214; First, 5 minutes on what a board is: ' + esc(lp0.next.title) + '</a>');
+        items.push('<a href="#/flash/top">&#127919; Top 100: the highest-yield Board Core cards first (late start)</a>');
+      }
       else if (days != null && days >= 2 && days <= 7) items.push('<a href="#/flash/final">&#127919; Final-Week Review: your weakest Board Core cards first</a>');
       else {
         var lp = window.Learn && Learn.nextBoardLesson ? Learn.nextBoardLesson() : null;
@@ -206,10 +233,11 @@
   }
   // The "how it's figured" card under the plan. The one number lives in the hero at the top of Home.
   function readyCheck(coreIds, rs) {
-    if (!rs.seen) return "";
+    var dd = daysToBoard(); if (!rs.seen || dd === 0 || dd === 1) return "";
     return '<div class="card"><div class="flash-tag">How your board-ready score is figured</div>' +
       '<div class="muted" style="font-size:.85rem;">Board Core cards you got right the last time you saw them: ' + rs.recalled + ' of ' + coreIds.length +
-      (rs.mockAvg == null ? ' • run a Mock Board to finish the score' : ' • your last Mock Boards: ' + rs.mockAvg + '%') + '</div>' +
+      (rs.mockAvg == null ? ' \u2022 no Mock Boards yet' : ' \u2022 your last Mock Boards: ' + rs.mockAvg + '%') + '</div>' +
+      '<div class="muted" style="font-size:.8rem;margin-top:4px;">The score is 60% Board Core cards you got right the last time you saw them, plus 40% your last three Mock Boards (that part grows as you cover more of Board Core).</div>' +
       (rs.weak.length ? '<div class="muted" style="font-size:.85rem;margin-top:4px;">Work on: ' + esc(rs.weak.join(", ")) + '</div>' : '') + '</div>';
   }
 
@@ -221,7 +249,7 @@
     var days = daysToBoard();
     var unseen = coreIds.filter(function (id) { return !seenOf(id); }).length;
     var head, tip;
-    if (days < 0) { head = "Your board date has passed"; tip = "How did it go? Set a new date in Settings if you have another board."; }
+    if (days < 0) { head = "Your board date has passed"; tip = Store.settings().boardResult ? "Result saved. Set a new date in Settings if you have another board." : "How did it go? Tell the app below, then set a new date in Settings if you have another board."; }
     else if (days === 0) {
       head = "Board day";
       var seenPct = coreIds.length ? Math.round(100 * (coreIds.length - unseen) / coreIds.length) : 0;
@@ -254,14 +282,15 @@
     var html =
       '<div class="hero">' +
         '<div style="display:flex;justify-content:space-between;align-items:flex-end;">' +
-          '<div><div class="big">' + rs.ready + '%</div><div class="sub">board-ready</div></div>' +
+          (dToB === 0 || dToB === 1 ? '<div><div class="big" style="font-size:1.6rem;">' + (dToB === 0 ? "Board day" : "Board tomorrow") + '</div><div class="sub">You\'ve studied ' + rs.seen + ' Board Core card' + (rs.seen === 1 ? '' : 's') + '. Stay calm and report in sharp.</div></div>'
+            : '<div><div class="big">' + rs.ready + '%</div><div class="sub">board-ready</div></div>') +
           '<div style="text-align:right;white-space:nowrap;"><div style="font-size:1.5rem;font-weight:800;">&#128293; ' + streak + '</div><div class="sub">day streak</div></div>' +
         '</div>' +
-        '<div class="bar"><span style="width:' + rs.ready + '%"></span></div>' +
+        (dToB === 0 || dToB === 1 ? '' : '<div class="bar"><span style="width:' + rs.ready + '%"></span></div>') +
         '<div class="sub" style="margin-top:6px;font-size:.8rem;">Board Core studied: ' + rs.seen + ' of ' + coreIds.length + '</div>' +
         '<div class="sub" style="margin-top:8px;">Today: ' + daily.count + ' / ' + daily.goal + ' cards' + (daily.count >= daily.goal ? ' &#10003;' : '') + '</div>' +
       '</div>' +
-      rankAsk() + boardCountdown(coreIds) + todayPlan(coreIds, dueN) + readyCheck(coreIds, rs) +
+      rankAsk() + boardCountdown(coreIds) + boardResultAsk(rs) + todayPlan(coreIds, dueN) + readyCheck(coreIds, rs) +
       // the "start from scratch" nudge is for the early weeks, not board week
       ((dToB == null || dToB > 7) ? '<a class="btn lg learn-cta" href="#/learn">&#128214; Learn Mode — start from scratch</a>' +
       '<div class="muted center" style="font-size:.8rem;margin:6px 0 12px;">New to this? Learn Mode teaches you first. Already know it? Drill below. <b>Your goal for a ' + (Store.settings().boardFor || "SGT/SSG") + ' board: Board Core.</b> Everything else is extra depth.</div>' : '<div class="spacer"></div>') +
@@ -302,6 +331,7 @@
       });
     });
     mount.innerHTML = html;
+    wireBoardResult(rs);
     mount.querySelectorAll("#rankAsk .chip").forEach(function (b) {
       b.addEventListener("click", function () { Store.setSetting("boardFor", b.getAttribute("data-r")); screenHome(); });
     });
@@ -765,7 +795,8 @@
     { h: "TRADOC is now T2COM (Army General Order 2025-23)", test: function (c) { return c.id === "ar600-20-t2com"; } },
     { h: "Kratom is banned for Soldiers (AD 2026-14, June 2026)", test: function (c) { return c.id === "ar600-85-k01" || c.id === "ar600-85-k03"; } },
     { h: "Maintenance policy updated (AR 750-1, April 2026)", test: function (c) { return c.id === "ar750-1-01" || c.id === "ar750-1-02"; } },
-    { h: "SGLI maximum is $500,000 (since March 2023)", test: function (c) { return c.id === "sgli-01"; } }
+    { h: "SGLI maximum is $500,000 (since March 2023)", test: function (c) { return c.id === "sgli-01"; } },
+    { h: "Army Community Service is now Soldier and Family Readiness (AR 608-1, May 2026)", test: function (c) { return c.id === "ar6081-02" || c.id === "ar608-1-d050"; } }
   ];
   // A board sent from a Soldier's phone: same questions, run here in sponsor mode (answers + checklists shown to the sponsor).
   function screenSponsorBoard(list) {
@@ -781,6 +812,25 @@
     mount.querySelector("#sbGo").addEventListener("click", function () {
       MockBoard.render(mount, cards, cards.length, { full: mount.querySelector("#sbFull").checked, sponsor: true, fixed: true });
     });
+  }
+
+  // Results sent back from a sponsor's phone: saved once, missed cards come back sooner.
+  function screenSponsorResult(p) {
+    setTitle("Sponsor Board Results", true);
+    var got = parseFloat(p[0]), total = parseInt(p[1], 10), token = String(p[2] || "").replace(/[^a-z0-9]/g, ""), ids = String(p[3] || "").split(",").filter(Boolean);
+    if (!(total > 0) || !(got >= 0) || got > total || !token) { mount.innerHTML = '<div class="empty">This results link is incomplete.</div>'; return; }
+    var seenKey = "sbr-" + token, fresh = !Store.chain()[seenKey];
+    var byId = {}; STUDY.cards.forEach(function (c) { byId[c.id] = c; });
+    if (fresh) {
+      Store.recordQuiz("Mock Board with sponsor", got, total);
+      ids.forEach(function (id) { if (byId[id]) Store.grade(id, "again"); });
+      Store.setChainRole(seenKey, "1");
+    }
+    var pct = Math.round(100 * got / total);
+    mount.innerHTML = '<div class="ring-wrap"><div class="ring">' + pct + '%<small>from your sponsor\'s board</small></div></div>' +
+      '<p class="center muted">' + (fresh ? "Saved to your history. " : "Already saved. ") + (ids.length ? "The questions you missed will come back sooner in your reviews:" : "No misses. Nice work.") + '</p>' +
+      ids.map(function (id) { var c = byId[id]; return c ? '<div class="card"><div style="font-weight:600;margin-bottom:6px;">' + esc(c.q) + '</div><div class="muted">' + esc(c.a) + '</div></div>' : ""; }).join("") +
+      '<div class="spacer"></div><a class="btn gold lg" href="#/">Home</a>';
   }
 
   function screenChanges() {
@@ -965,6 +1015,7 @@
     if (head === "room") return screenRoom(), tab("home");
     if (head === "changes") return screenChanges(), tab("home");
     if (head === "sponsor") return screenSponsorBoard(parts[1] || ""), tab("home");
+    if (head === "sbresult") return screenSponsorResult(parts.slice(1)), tab("home");
     if (head === "pub") return screenPub(parts[1]), tab("browse");
     if (head === "pick") return screenPick(parts[1]), tab("home");
     if (head === "flash") return screenFlash(parts[1]), tab("home");
@@ -1003,6 +1054,7 @@
   // ---------------- public helpers ----------------
   var App = {
     go: function (h) { location.hash = h; },
+    appUrl: APP_URL,
     allCards: allCards,
     reportingSteps: REPORTING_STEPS,
     toast: function (msg, ms) {

@@ -176,7 +176,7 @@
           '<div class="flash-a" style="margin-top:6px;">' + esc(a).replace(/\n/g, "<br>") + '</div>' + (ref ? '<div class="flash-ref">Reference: ' + esc(ref) + '</div>' : "") + (why || "") + '</div>';
       }
 
-      var s = 0, got = 0, asked = 0, missed = [], qNum = 0;
+      var s = 0, got = 0, asked = 0, missed = [], qNum = 0, missedIds = [];
       var bearing = [];          // {label, ok} for the reporting/intro steps
       var perPub = {};           // pub -> {n, miss, code}
       var secs = (Store.settings().timer | 0);
@@ -250,15 +250,22 @@
         if (st.kind === "drill") return drill();
       }
 
+      // one hint per command actually given (TC 3-21.5)
+      function drillHints(cmds) {
+        var H = { "Left, FACE.": "Left face: pivot 90 degrees on the left heel, then bring the right foot beside the left. ", "Right, FACE.": "Right face: pivot 90 degrees on the right heel, then bring the left foot beside the right. ",
+          "About, FACE.": "About face: place the right toe behind the left heel, pivot 180 degrees to the right, then bring the heels together. ",
+          "Parade, REST.": "Parade rest: left foot about 10 inches left, hands at the small of the back. ", "Half left, FACE.": "Half left: a 45-degree turn to the left. " };
+        return cmds.map(function (c) { return H[c] || ""; }).join("");
+      }
       // Some boards test drill before you sit: the president gives a few facing movements.
       function drill() {
         var cmds = shuffle(["Left, FACE.", "Right, FACE.", "About, FACE.", "Parade, REST.", "Half left, FACE."]).slice(0, 3);
         container.innerHTML = header() +
           '<div class="card"><div class="flash-tag">The board president</div>' +
             '<div class="q-text" style="margin-top:8px;">"Before you sit, let\'s see some drill."</div>' +
-            '<div class="muted">Stand up and do each command' + (sponsor ? ' as your sponsor calls it' : '') + ', sharply, from the position of attention. After each one, come back to attention.</div></div>' +
+            '<div class="muted">' + (sponsor ? 'Call each command out loud. Watch for a sharp movement on the command of execution, and a return to attention after each one.' : 'Stand up and do each command, sharply, from the position of attention. After each one, come back to attention.') + '</div></div>' +
           '<div class="card">' + cmds.map(function (t, k) { return '<div class="row" style="margin-bottom:6px;"><div class="numbubble">' + (k + 1) + '</div><div class="grow"><div class="ttl" style="font-size:1.15rem;font-weight:700;">' + esc(t) + '</div></div></div>'; }).join("") +
-            '<div class="muted" style="font-size:.85rem;margin-top:6px;">Parade rest: left foot about 10 inches left, hands at the small of the back. Half left: a 45-degree turn. Then wait for the president to tell you to take your seat.</div></div>' +
+            '<div class="muted" style="font-size:.85rem;margin-top:6px;">' + drillHints(cmds) + 'Then ' + (sponsor ? 'tell the Soldier to take their seat.' : 'wait for the president to tell you to take your seat.') + '</div></div>' +
           (sponsor ? '' : '<button class="btn ghost" id="sayIt">&#128266; Call the commands for me</button><div class="spacer"></div>') +
           '<p class="center muted">Honest check: crisp, on the command of execution, back to attention each time?</p>' +
           '<a class="btn ghost" href="#/flash/tc3-21-5" style="margin-bottom:10px;">Study drill cards (TC 3-21.5)</a>' +
@@ -281,10 +288,12 @@
         var all = (window.App && App.reportingSteps) || [];
         container.innerHTML = header() +
           '<div class="card"><div class="flash-tag">Report to the board</div>' +
-            '<div class="q-text" style="margin-top:8px;">You are called in. Stand up, walk in, and report — out loud, for real.</div>' +
-            '<div class="muted">"Sergeant Major, (your rank) (your last name) reports to the President of the Board." Use your own rank and your board memo\'s exact wording.</div></div>' +
+            (sponsor ? '<div class="q-text" style="margin-top:8px;">Call the Soldier in. Have them knock (if your SOP does), enter, and report to you out loud.</div>' +
+              '<div class="muted">Listen for: "Sergeant Major, (rank) (last name) reports to the President of the Board," a sharp salute held until you return it, and their correct rank.</div></div>'
+            : '<div class="q-text" style="margin-top:8px;">You are called in. Stand up, walk in, and report — out loud, for real.</div>' +
+              '<div class="muted">"Sergeant Major, (your rank) (your last name) reports to the President of the Board." Use your own rank and your board memo\'s exact wording.</div></div>') +
           '<button class="btn ghost" id="showSteps">Show the reporting steps</button><div id="stepsBox" hidden>' + stepsList(all.slice(1, 5)) + '</div>' +
-          '<p class="center muted">Honest check: halted two steps in front of the president, saluted and held it until returned, said your correct rank, sat only when told?</p>' +
+          '<p class="center muted">' + (sponsor ? 'Did they halt about two steps in front of you, salute and hold it, say their correct rank, and sit only when told?' : 'Honest check: halted two steps in front of the president, saluted and held it until returned, said your correct rank, sat only when told?') + '</p>' +
           gradeButtons("Needs work", "Reported in clean");
         container.querySelector("#showSteps").addEventListener("click", function () { var b = container.querySelector("#stepsBox"); b.hidden = !b.hidden; });
         onGrade(function (ok) { bearing.push({ label: "Reporting in", ok: ok }); next(); });
@@ -294,8 +303,9 @@
         container.innerHTML = header() + timerHtml(t) +
           '<div class="card"><div class="flash-tag">The board president</div>' +
             '<div class="q-text" style="margin-top:8px;">"Tell the board a little about yourself."</div></div>' +
-          '<div class="card"><div class="muted" style="font-size:.9rem;">Answer out loud in about a minute, eyes on the president: who you are, your job and unit, time in service, a real accomplishment or two, and your goals as an NCO. Say it, don\'t read it.' +
-            (stmt ? '' : ' <a href="#/statement">Draft your opening statement first</a> (there\'s an example), then come back.') + '</div></div>' +
+          '<div class="card"><div class="muted" style="font-size:.9rem;">' + (sponsor ? 'Ask the Soldier to tell you about themselves. Listen for about a minute: who they are, job and unit, time in service, a real accomplishment or two, and their goals as an NCO. Are they saying it, not reciting it?' :
+            'Answer out loud in about a minute, eyes on the president: who you are, your job and unit, time in service, a real accomplishment or two, and your goals as an NCO. Say it, don\'t read it.' +
+            (stmt ? '' : ' <a href="#/statement">Draft your opening statement first</a> (there\'s an example), then come back.')) + '</div></div>' +
           recButton() + '<button class="btn gold lg" id="reveal">I\'m done</button>';
         if (autoRead) Speech.speak("Tell the board a little about yourself.");
         var done = function () {
@@ -326,7 +336,7 @@
         container.innerHTML = header() +
           '<div class="card"><div class="flash-tag">The board president</div>' +
             '<div class="q-text" style="margin-top:8px;">"That concludes the board. You are dismissed."</div></div>' +
-          '<p class="center muted">Do it now: stand at attention, salute and hold until it\'s returned, face about, and march out.</p>' +
+          '<p class="center muted">' + (sponsor ? 'Watch them stand at attention, salute and hold until you return it, face about, and march out.' : 'Do it now: stand at attention, salute and hold until it\'s returned, face about, and march out.') + '</p>' +
           (all.length ? stepsList([all[all.length - 1]]) : '') + gradeButtons("Needs work", "Reported out clean");
         onGrade(function (ok) { bearing.push({ label: "Reporting out", ok: ok }); next(); });
       }
@@ -335,7 +345,7 @@
         container.innerHTML = header() +
           '<div class="card" style="border-color:var(--gold);"><div class="flash-tag">' + esc(st.label) + '</div>' +
             '<div class="q-text" style="margin-top:8px;">' + esc(st.label) + ' will ask about ' + esc(listJoin(st.subs)) + '.</div>' +
-            '<div class="muted">Turn to face this member, keep your bearing, and answer to them.</div></div>' +
+            '<div class="muted">' + (sponsor ? 'Speak as this board member. The Soldier should turn to face you, keep their bearing, and answer to you.' : 'Turn to face this member, keep your bearing, and answer to them.') + '</div></div>' +
           '<button class="btn gold lg" id="ready">Ready</button>';
         container.querySelector("#ready").addEventListener("click", next);
       }
@@ -427,7 +437,7 @@
         Store.grade(c.id, ok ? "good" : "again");
         var pp = perPub[c.pub] || (perPub[c.pub] = { n: 0, miss: 0, code: pubLabel(c) });
         pp.n++; asked++; got += score;
-        if (!ok) { pp.miss++; missed.push({ q: qt(c), a: c.a, code: pubCode(c) + (score > 0 && score < 1 ? " \u2022 " + Math.round(score * 100) + "% of key points" : "") }); }
+        if (!ok) { missedIds.push(c.id); pp.miss++; missed.push({ q: qt(c), a: c.a, code: pubCode(c) + (score > 0 && score < 1 ? " \u2022 " + Math.round(score * 100) + "% of key points" : "") }); }
         // Like a real board: a good answer earns a harder follow-up; a miss means the board comes back to it
         // later in that member's turn (or at the end), so you get a second chance to get it right.
         if (score >= 0.5 && c.follow && c.follow.length) {
@@ -530,10 +540,21 @@
             html += '<div class="card"><div class="flash-tag">' + esc(m.code) + '</div><div style="font-weight:600;margin-bottom:6px;">' + esc(m.q) + '</div><div class="muted">' + esc(m.a) + '</div></div>';
           });
         }
+        if (sponsor) html += '<div class="spacer"></div><button class="btn green lg" id="sendBack">&#128228; Send these results to the Soldier</button>' +
+          '<div class="muted center" style="font-size:.8rem;margin-top:6px;">They open the link on their phone: the score goes into their history and the questions they missed come back sooner.</div>';
         html += '<div class="spacer"></div><button class="btn gold lg" id="again">New board</button><div class="spacer"></div><button class="btn ghost" id="home">Home</button>';
         container.innerHTML = html;
         container.querySelector("#again").addEventListener("click", function () { MockBoard.render(container, cards, length, opts); });
         container.querySelector("#home").addEventListener("click", function () { App.go("#/"); });
+        var sb = container.querySelector("#sendBack");
+        if (sb) sb.addEventListener("click", function () {
+          var ids = missedIds.filter(function (id, k) { return missedIds.indexOf(id) === k; }).slice(0, 40);
+          var url = App.appUrl + "#/sbresult/" + (Math.round(got * 10) / 10) + "/" + asked + "/" + Date.now().toString(36) + "/" + ids.join(",");
+          var text = "Your practice board: " + pct + "%. Open this to save it in your app: " + url;
+          if (navigator.share) navigator.share({ title: "Practice board results", text: text }).catch(function () {});
+          else if (navigator.clipboard) navigator.clipboard.writeText(text).then(function () { App.toast("Link copied: text it to the Soldier", 3500); });
+          else App.toast(url, 6000);
+        });
       }
 
       show();

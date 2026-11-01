@@ -8,6 +8,16 @@ no account, no app store, nothing to sign up for.
 
 ---
 
+## What's new in 3.10
+
+- **Updated to AR 608-1 (May 2026), "Soldier and Family Readiness"**: Army Community Service is now one access point
+  of the SFR system. 30 cards were updated and 19 outdated ones retired (the old ACS logo, FRG rules now in AR 600-20).
+- **Every Board Core card has a key-point checklist**, so the voice check and grading work everywhere.
+- **Staff Sergeant scenarios**: rating your team leaders, acting platoon sergeant, fixing a squad's counseling program.
+- **Calm board day**: no percentage on board morning, just what to do.
+- **Sponsor boards come home**: your sponsor can send the results back, so they're saved in your history.
+- **After your board**: one tap to log how it went (stays on your phone; sharing is optional).
+
 ## What's new in 3.9
 
 - **Day 1 starts in the board room**: Board 101 opens with what happens when you walk in and how to answer.

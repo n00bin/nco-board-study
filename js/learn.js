@@ -22,7 +22,7 @@
     "ar670-1": "AR 670-1 sets the standards for wear and appearance of the uniform — grooming, insignia placement, and what's authorized (with DA PAM 670-1). The board inspects you against it.",
     "ar600-52": "AR 600-52 is the SHARP program — Sexual Harassment/Assault Response and Prevention. Know the two report types, the SARC and Victim Advocate, and DD Form 2910.",
     "ar600-85": "AR 600-85 is the Army Substance Abuse Program (ASAP). Know its purpose, the Limited Use Policy, and the types of referral.",
-    "ar608-1": "AR 608-1 is Army Community Service — the support programs for Soldiers and Families. Know what ACS offers and its symbol (a heart in a hand).",
+    "ar608-1": "AR 608-1 (May 2026) is Soldier and Family Readiness (SFR): the Army's support services for Soldiers and Families, such as financial readiness, EFMP, Family Advocacy, relocation, and employment help. Your installation's ACS center is one place to get them.",
     "ar930-4": "AR 930-4 is Army Emergency Relief — emergency financial help for Soldiers and Families. Know its motto, that it's a private nonprofit, and how it assists.",
     "stp21-1": "STP 21-1 is the Soldier's Manual of Common Tasks, Warrior Skills Level 1 — the hands-on tasks every Soldier must perform: shoot, move, communicate, survive, and first aid.",
     "stp21-24": "STP 21-24 is the common tasks for NCOs — Warrior Leader Skills, Levels 2-4. The leader tasks expected as you take charge.",
@@ -135,14 +135,16 @@
         '<div class="card"><div class="muted">Learn Mode teaches you the material first, then practices it, a few facts at a time. <b>For your board, finish the first three tracks: Board 101, Fundamentals, and Board Core.</b> The publication tracks below them are extra depth if you have time.</div></div>';
       if (next) html += '<a class="btn gold lg" href="#/lesson/' + next.id + '">' + (doneN ? "&#9654; Continue learning" : "&#9654; Start learning") + '</a><div class="spacer"></div>';
 
-      var BOARD_PATH = { board101: 1, fundamentals: 1, core: 1 }, shownExtra = false;
+      var BOARD_PATH = { board101: 1, fundamentals: 1, core: 1, sit: 1, personal: 1 }, shownExtra = false;
       html += '<h2 class="section">Your board path</h2>';
+      // keep the board path together at the top: the required scenario and personal tracks right after Board Core
+      tracks = tracks.filter(function (t) { return BOARD_PATH[t.id]; }).concat(tracks.filter(function (t) { return !BOARD_PATH[t.id]; }));
       tracks.forEach(function (t) {
         if (!BOARD_PATH[t.id] && !shownExtra) { shownExtra = true; html += '<h2 class="section">Extra depth (optional)</h2>'; }
         var td = doneCount(t.lessons);
         var tp = t.lessons.length ? Math.round((td / t.lessons.length) * 100) : 0;
         html += '<a class="row" href="#/track/' + t.id + '"><div class="grow"><div class="code">' + esc(t.title) + '</div>' +
-          '<div class="meta">' + td + ' / ' + t.lessons.length + ' lessons</div>' +
+          '<div class="meta">' + td + ' / ' + t.lessons.length + ' lessons' + (t.id === "sit" || t.id === "personal" ? ' \u2022 required at every board (also inside Board Core)' : '') + '</div>' +
           '<div class="bar"><span style="width:' + tp + '%"></span></div></div><div class="chev">&#8250;</div></a>';
       });
       container.innerHTML = html;

@@ -81,6 +81,7 @@
       s.settings.fullBoard = d.settings.fullBoard !== false;
       s.settings.boardFor = (d.settings.boardFor === "SGT" || d.settings.boardFor === "SSG" || d.settings.boardFor === "BOTH") ? d.settings.boardFor : "";
       s.settings.voiceAuto = !!d.settings.voiceAuto;
+      s.settings.boardResult = /^\d{4}-\d{2}-\d{2}\|(Recommended|Not recommended|Board postponed)$/.test(d.settings.boardResult || "") ? d.settings.boardResult : "";
     }
     return s;
   }
