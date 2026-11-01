@@ -15,13 +15,16 @@ no account, no app store, nothing to sign up for.
 - **What Would You Do?** — 43 situational leadership scenarios (SHARP, suicide prevention, substance abuse, EO,
   hazing, Article 31, illegal orders, casualty care, ...) with a model answer, the governing regulation, and
   the board's follow-up questions. Mock Board mixes them into every board.
+- **Sponsor mode & record-and-replay** — hand the phone to your sponsor (they see the answer and grade you), or record
+  your own answer and play it back to hear your delivery. Recordings stay on the phone.
+- **Know Your Army & Your Job** — prompts and notes for your unit, your MOS, your installation, and current events.
 - **Board date countdown** — set your board date in Settings; Home shows days left and a daily Board Core pace.
 - **Staple board subjects** — customs & courtesies (AR 600-25, 2026), flags & streamers (AR 840-10, 2025),
   drill & ceremony (TC 3-21.5), awards (AR 600-8-22, 2026), the NCOER (AR 623-3, 2025), and NCO history &
   duties (TC 7-22.7, 2025 + The Army Blue Book).
-- **Board Core (start here)** — about 380 must-know questions boards ask most, pulled from every
+- **Board Core (start here)** — about 400 must-know questions boards ask most, each with a one-line **why it matters**, pulled from every
   publication. Mock Board, the night-before cram, and Learn Mode's Board Core track use it by default;
-  "All Publications" keeps the full deep set (~1,800 cards) for when you want detail.
+  "All Publications" keeps the full deep set (~1,850 cards) for when you want detail.
 - **Learn Mode (start from scratch)** — a guided path of bite-sized lessons that **teach** the material
   first (with a plain-English overview of each publication), then **practice** it. Begins with the
   fundamentals (Army Values, ranks, chain of command, creeds, Code of Conduct), then each publication.
@@ -43,7 +46,7 @@ no account, no app store, nothing to sign up for.
 - **Daily goal & streak**, **Browse** by publication, full-text **Search**, and **Backup/restore**
   (export your progress to a file and move it to a new phone).
 
-Content covers **25 publications plus the 2022–2026 Army Directives** with **~1,800 cards** — most fact-checked page-by-page against the
+Content covers **25 publications plus the 2022–2026 Army Directives** with **~1,850 cards** — most fact-checked page-by-page against the
 source PDFs, with a page citation on each card (the Army Values, Code of Conduct, MDMP/TLP, warfighting
 functions, SHARP reporting, ACFT, the General Orders, the Soldier's & NCO Creeds, and much more).
 

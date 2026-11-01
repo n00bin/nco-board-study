@@ -11,11 +11,11 @@
   function esc(s) { return String(s).replace(/[&<>]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]; }); }
   function shuffle(a) { a = a.slice(); for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)); var t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
 
-  var timer = null;
+  var timer = null, releaseMic = null;
   function clearTimer() { if (timer) { clearInterval(timer); timer = null; } }
 
   var MockBoard = {
-    stop: function () { clearTimer(); if (window.Speech) Speech.stop(); },
+    stop: function () { clearTimer(); if (window.Speech) Speech.stop(); if (releaseMic) releaseMic(); },
 
     // opts.full: rehearse the whole board (report in, opening statement, report out)
     render: function (container, cards, length, opts) {
@@ -37,6 +37,50 @@
       if (opts.full) steps.push({ kind: "reportIn" }, { kind: "intro" });
       deck.forEach(function (c) { steps.push({ kind: "q", c: c }); });
       if (opts.full) steps.push({ kind: "reportOut" });
+
+      var sponsor = !!opts.sponsor;   // the sponsor holds the phone: answer shown with the question, sponsor grades
+
+      // ---- record-and-replay: hear your own delivery (audio stays on this phone, gone when the board ends) ----
+      var rec = { stream: null, mr: null, chunks: [], url: null };
+      var canRec = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder);
+      function getStream() { return rec.stream ? Promise.resolve(rec.stream) : navigator.mediaDevices.getUserMedia({ audio: true }).then(function (st) { rec.stream = st; return st; }); }
+      function startRec(btn) {
+        getStream().then(function (st) {
+          rec.chunks = []; rec.mr = new MediaRecorder(st);
+          rec.mr.ondataavailable = function (e) { if (e.data && e.data.size) rec.chunks.push(e.data); };
+          rec.mr.start(); btn.textContent = "⏺ Recording… (stops when you reveal)"; btn.classList.add("on"); btn.disabled = true;
+        }).catch(function () { App.toast("Can't use the microphone. Allow mic access for this app to record.", 4500); });
+      }
+      function stopRec(cb) {
+        if (!rec.mr || rec.mr.state === "inactive") return cb(null);
+        rec.mr.onstop = function () {
+          var b = new Blob(rec.chunks, { type: rec.mr.mimeType || "audio/webm" });
+          if (rec.url) URL.revokeObjectURL(rec.url);
+          rec.url = URL.createObjectURL(b); rec.mr = null; cb(rec.url);
+        };
+        rec.mr.stop();
+      }
+      releaseMic = function () {
+        try { if (rec.mr && rec.mr.state !== "inactive") rec.mr.stop(); } catch (e) {}
+        if (rec.stream) rec.stream.getTracks().forEach(function (t) { t.stop(); });
+        if (rec.url) URL.revokeObjectURL(rec.url);
+        rec = { stream: null, mr: null, chunks: [], url: null };
+      };
+      function recButton() { return canRec && !sponsor ? '<button class="btn ghost" id="recBtn">&#127897; Record my answer</button><div class="spacer"></div>' : ""; }
+      function wireRec() { var b = container.querySelector("#recBtn"); if (b) b.addEventListener("click", function () { startRec(b); }); }
+      // call right after a reveal screen is drawn: fills #playback once the recording is ready
+      function playback() {
+        stopRec(function (url) {
+          var box = container.querySelector("#playback");
+          if (url && box) box.innerHTML = '<div class="card"><div class="flash-tag">Your answer</div><audio controls src="' + url + '" style="width:100%;margin-top:6px;"></audio>' +
+            '<div class="muted" style="font-size:.85rem;margin-top:6px;">Listen for filler words ("um," "like"), pace, and whether you answered the question asked.</div></div>';
+        });
+      }
+      function whyHtml(c) { return c.why ? '<div class="flash-ref" style="color:var(--text);margin-top:10px;"><b>Why it matters:</b> ' + esc(c.why) + '</div>' : ""; }
+      function sponsorBox(a, ref, why) {
+        return '<div class="card" style="border-color:var(--gold);"><div class="flash-tag">Sponsor: the answer (don\'t show the Soldier)</div>' +
+          '<div class="flash-a" style="margin-top:6px;">' + esc(a).replace(/\n/g, "<br>") + '</div>' + (ref ? '<div class="flash-ref">Reference: ' + esc(ref) + '</div>' : "") + (why || "") + '</div>';
+      }
 
       var s = 0, got = 0, asked = 0, missed = [], qNum = 0;
       var bearing = [];          // {label, ok} for the reporting/intro steps
@@ -117,7 +161,7 @@
           '<div class="card"><div class="flash-tag">The board president</div>' +
             '<div class="q-text" style="margin-top:8px;">"Tell the board a little about yourself."</div></div>' +
           '<p class="center muted">Answer out loud. Aim for about a minute, eyes on the president.</p>' +
-          '<button class="btn gold lg" id="reveal">I\'m done</button>';
+          recButton() + '<button class="btn gold lg" id="reveal">I\'m done</button>';
         if (autoRead) Speech.speak("Tell the board a little about yourself.");
         var done = function () {
           clearTimer();
@@ -125,10 +169,13 @@
             '<div class="card"><div class="flash-tag">Your opening statement</div>' +
               (stmt ? '<div class="flash-a" style="white-space:pre-wrap;">' + esc(stmt) + '</div>'
                     : '<div class="muted">You haven\'t drafted one yet. Write it under Board Day Prep → Opening Statement, then practice it here.</div>') + '</div>' +
+            '<div id="playback"></div>' +
             '<p class="center muted">Did you deliver it smoothly, without reading it, in about a minute?</p>' + gradeButtons("Needs work", "Delivered it well");
+          playback();
           onGrade(function (ok) { bearing.push({ label: "Tell us about yourself", ok: ok }); next(); });
         };
         container.querySelector("#reveal").addEventListener("click", done);
+        wireRec();
         runTimer(t, done);
       }
       function reportOut() {
@@ -151,13 +198,15 @@
             '<span><button class="mini" id="mSpeak" aria-label="Read aloud">&#128266;</button>' +
             '<button class="mini" id="mReport" aria-label="Report card">&#9873;</button></span></div>' +
             '<div class="q-text" style="margin-top:8px;">' + esc(c.q) + '</div></div>' +
-          '<p class="center muted">Answer out loud, then reveal.</p>' +
-          '<button class="btn gold lg" id="reveal">Reveal answer</button>';
+          (sponsor ? sponsorBox(c.a, c.ref, whyHtml(c)) + '<p class="center muted">Read the question aloud, listen, then grade.</p>' + gradeButtons()
+                   : '<p class="center muted">Answer out loud, then reveal.</p>' + recButton() + '<button class="btn gold lg" id="reveal">Reveal answer</button>');
         container.querySelector("#mSpeak").addEventListener("click", function () { Speech.speak(c.q); });
         container.querySelector("#mReport").addEventListener("click", function () { App.reportCard(c); });
+        if (autoRead) Speech.speak(c.q);
+        if (sponsor) { onGrade(function (ok) { clearTimer(); markQ(c, ok); }); runTimer(cs, function () { var n = container.querySelector("#tNum"); if (n) n.textContent = "Time!"; }); return; }
         var rev = function () { reveal(c); };
         container.querySelector("#reveal").addEventListener("click", rev);
-        if (autoRead) Speech.speak(c.q);
+        wireRec();
         runTimer(cs, rev);
       }
 
@@ -168,8 +217,10 @@
           '<div class="card"><div class="flash-tag">' + esc(pubCode(c)) + (c.topic ? " • " + esc(c.topic) : "") + '</div>' +
             '<div class="q-text" style="margin:6px 0 12px;">' + esc(c.q) + '</div>' +
             '<div class="flash-tag">Answer</div><div class="flash-a">' + esc(c.a).replace(/\n/g, "<br>") + '</div>' +
-            (c.ref ? '<div class="flash-ref">Reference: ' + esc(c.ref) + '</div>' : '') + '</div>' +
+            (c.ref ? '<div class="flash-ref">Reference: ' + esc(c.ref) + '</div>' : '') + whyHtml(c) + '</div>' +
+          '<div id="playback"></div>' +
           '<p class="center muted">How did you do?</p>' + gradeButtons();
+        playback();
         onGrade(function (ok) { markQ(c, ok); });
       }
 
@@ -191,9 +242,16 @@
         container.innerHTML = header() + timerHtml(t) +
           '<div class="card" style="border-color:var(--gold);"><div class="flash-tag">The board follows up</div>' +
             '<div class="q-text" style="margin-top:8px;">' + esc(f.q) + '</div></div>' +
-          '<p class="center muted">Answer out loud, then reveal.</p>' +
-          '<button class="btn gold lg" id="reveal">Reveal answer</button>';
+          (sponsor ? sponsorBox(f.a, f.ref, "") + '<p class="center muted">Ask the follow-up, listen, then grade.</p>' + gradeButtons()
+                   : '<p class="center muted">Answer out loud, then reveal.</p>' + recButton() + '<button class="btn gold lg" id="reveal">Reveal answer</button>');
         if (autoRead) Speech.speak(f.q);
+        var gradeFollow = function (ok) {
+          var pp = perPub[c.pub] || (perPub[c.pub] = { n: 0, miss: 0, code: pubLabel(c) });
+          pp.n++; asked++;
+          if (ok) got++; else { pp.miss++; missed.push({ q: f.q, a: f.a, code: "Follow-up" }); }
+          next();
+        };
+        if (sponsor) { onGrade(function (ok) { clearTimer(); gradeFollow(ok); }); runTimer(t, function () { var n = container.querySelector("#tNum"); if (n) n.textContent = "Time!"; }); return; }
         var rev = function () {
           clearTimer();
           if (autoRead) Speech.speak(f.a);
@@ -202,21 +260,19 @@
               '<div class="q-text" style="margin:6px 0 12px;">' + esc(f.q) + '</div>' +
               '<div class="flash-tag">Answer</div><div class="flash-a">' + esc(f.a) + '</div>' +
               (f.ref ? '<div class="flash-ref">Reference: ' + esc(f.ref) + '</div>' : '') + '</div>' +
+            '<div id="playback"></div>' +
             '<p class="center muted">How did you do?</p>' + gradeButtons();
-          onGrade(function (ok) {
-            var pp = perPub[c.pub] || (perPub[c.pub] = { n: 0, miss: 0, code: pubLabel(c) });
-            pp.n++; asked++;
-            if (ok) got++; else { pp.miss++; missed.push({ q: f.q, a: f.a, code: "Follow-up" }); }
-            next();
-          });
+          playback();
+          onGrade(gradeFollow);
         };
         container.querySelector("#reveal").addEventListener("click", rev);
+        wireRec();
         runTimer(t, rev);
       }
 
       function results() {
-        clearTimer(); Speech.stop();
-        Store.recordQuiz(opts.full ? "Mock Board (full)" : "Mock Board", got, asked);
+        clearTimer(); Speech.stop(); releaseMic();
+        Store.recordQuiz("Mock Board" + (opts.full ? " (full)" : "") + (sponsor ? " with sponsor" : ""), got, asked);
         var pct = asked ? Math.round((got / asked) * 100) : 0;
         var weak = Object.keys(perPub).map(function (k) { return perPub[k]; })
           .filter(function (p) { return p.miss > 0; })

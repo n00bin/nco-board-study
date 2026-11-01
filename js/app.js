@@ -308,15 +308,16 @@
     mount.innerHTML =
       '<div class="card center"><div class="code" style="font-size:1.1rem;">&#127894; ' + esc(title) + '</div>' +
         '<div class="muted">Answer out loud, like the real board. Timer: ' + (timer > 0 ? timer + 's/question' : 'off') + ' (change in Settings)</div></div>' +
-      '<div class="card"><label class="switch"><input type="checkbox" id="fullBoard" checked> <span><b>Full board</b>: report in, "tell us about yourself," the questions, then report out</span></label></div>' +
+      '<div class="card"><label class="switch"><input type="checkbox" id="fullBoard" checked> <span><b>Full board</b>: report in, "tell us about yourself," the questions, then report out</span></label>' +
+        '<label class="switch" style="margin-top:12px;"><input type="checkbox" id="sponsorMode"> <span><b>My sponsor is holding the phone</b>: they read each question, see the answer, and grade you</span></label></div>' +
       '<h2 class="section">How many questions?</h2>' +
       '<button class="btn gold lg" data-n="10">10 questions</button><div class="spacer"></div>' +
       '<button class="btn green lg" data-n="15">15 questions</button><div class="spacer"></div>' +
       '<button class="btn ghost" data-n="25">25 questions</button>';
     mount.querySelectorAll("[data-n]").forEach(function (b) {
       b.addEventListener("click", function () {
-        var full = mount.querySelector("#fullBoard").checked;
-        MockBoard.render(mount, cards, parseInt(b.getAttribute("data-n"), 10), { full: full });
+        var full = mount.querySelector("#fullBoard").checked, sponsor = mount.querySelector("#sponsorMode").checked;
+        MockBoard.render(mount, cards, parseInt(b.getAttribute("data-n"), 10), { full: full, sponsor: sponsor });
       });
     });
   }
@@ -570,7 +571,8 @@
       menuRow("#/chain", "&#129333; Chain of Command", "Fill in your leaders — then quiz yourself") +
       menuRow("#/uniform", "&#129509; Uniform Inspection", "Check your uniform before you walk in") +
       menuRow("#/reporting", "&#127894; How to Report to the Board", "Reporting sequence & bearing") +
-      menuRow("#/statement", "&#128221; Opening Statement", "Draft and save your self-introduction");
+      menuRow("#/statement", "&#128221; Opening Statement", "Draft and save your self-introduction") +
+      menuRow("#/knowledge", "&#127758; Know Your Army & Your Job", "Current leaders, your unit, your MOS, and current events");
   }
 
   function screenChain() {
@@ -628,6 +630,31 @@
     mount.querySelector("#tmpl").addEventListener("click", function () { var t = mount.querySelector("#stmt"); if (!t.value.trim() || confirm("Replace current text with the template?")) t.value = skeleton; });
   }
 
+  // ---- Know your Army & your job: things boards ask that depend on YOUR unit and the news (not flashcard facts) ----
+  var KNOW_PROMPTS = [
+    { id: "unit", t: "Your unit", h: "Battalion, brigade, and division: name, motto, what the patch means, mission, and a little history." },
+    { id: "job", t: "Your job", h: "Your MOS title and main duties, and a few of the individual tasks you perform. Boards can check your job proficiency." },
+    { id: "post", t: "Your installation", h: "Installation commander and CSM; where ACS, AER, the SHARP office, and behavioral health are; the SHARP and suicide hotlines." },
+    { id: "army", t: "What's changing in the Army", h: "Recent changes you should be able to talk about: the AFT and Combat Field Test, waist-to-height ratio, grooming rules. Board Core covers the details." },
+    { id: "news", t: "Current events", h: "A few national and world headlines from this month, from a reliable news source, and how they could affect the Army or your unit." }
+  ];
+  function screenKnowledge() {
+    setTitle("Know Your Army & Your Job", true);
+    var notes = Store.chain();
+    var html = '<div class="card"><div class="muted">Boards often ask about your own unit, your job, and current events. These answers are yours to look up, so write them here (saved on this phone). For your leaders up to the Sergeant Major of the Army and the President, fill in the Chain of Command roster.</div></div>' +
+      '<a class="btn ghost" href="#/chain">&#129333; Open the Chain of Command roster</a>';
+    KNOW_PROMPTS.forEach(function (k) {
+      html += '<label class="lbl" for="kn-' + k.id + '"><b>' + esc(k.t) + '</b>: ' + esc(k.h) + '</label>' +
+        '<textarea class="input" id="kn-' + k.id + '" rows="3" placeholder="Your notes...">' + esc(notes["know-" + k.id] || "") + '</textarea>';
+    });
+    html += '<div class="spacer"></div><button class="btn gold lg" id="knSave">Save notes</button>';
+    mount.innerHTML = html;
+    mount.querySelector("#knSave").addEventListener("click", function () {
+      KNOW_PROMPTS.forEach(function (k) { Store.setChainRole("know-" + k.id, mount.querySelector("#kn-" + k.id).value.trim()); });
+      App.toast("Notes saved");
+    });
+  }
+
   // ---------------- router ----------------
   function route() {
     if (window.MockBoard) MockBoard.stop();
@@ -658,6 +685,7 @@
     if (head === "uniform") return screenUniform(), tab("home");
     if (head === "reporting") return screenReporting(), tab("home");
     if (head === "statement") return screenStatement(), tab("home");
+    if (head === "knowledge") return screenKnowledge(), tab("home");
     if (head === "pub") return screenPub(parts[1]), tab("browse");
     if (head === "pick") return screenPick(parts[1]), tab("home");
     if (head === "flash") return screenFlash(parts[1]), tab("home");

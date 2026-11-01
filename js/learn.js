@@ -91,7 +91,7 @@
       var p = STUDY.pubsById[pubId];
       var cs = all.filter(function (c) { return c.core && c.pub === pubId && !inFund[c.id]; });
       if (!p || !cs.length) return;
-      chunkLessons(cs, "core-" + pubId).forEach(function (l) { l.title = p.code + " — " + l.title; coreLessons.push(l); });
+      chunkLessons(cs, "core-" + pubId).forEach(function (l) { l.title = (p.title || p.code) + " \u2014 " + l.title; coreLessons.push(l); });
     });
     if (coreLessons.length)
       tracks.push({ id: "core", title: "⭐ Board Core — the must-know questions", overview: CORE_OVERVIEW, lessons: coreLessons });
@@ -144,7 +144,7 @@
       t.lessons.forEach(function (l) {
         var done = isDone(l);
         html += '<a class="row" href="#/lesson/' + l.id + '"><div class="checkbox' + (done ? " checked" : "") + '" style="' + (done ? "border-color:var(--good);" : "") + '">' + (done ? "&#10003;" : "") + '</div>' +
-          '<div class="grow"><div class="ttl">' + esc(l.title) + '</div><div class="meta">' + l.cards.length + ' facts</div></div><div class="chev">&#8250;</div></a>';
+          '<div class="grow"><div class="ttl">' + esc(l.title) + '</div><div class="meta">' + l.cards.length + (l.cards[0] && l.cards[0].pub === "sit" ? " scenarios" : " facts") + '</div></div><div class="chev">&#8250;</div></a>';
       });
       container.innerHTML = html;
       return t.title;
@@ -169,6 +169,7 @@
             '<button class="mini" id="lSpeak" aria-label="Read aloud">&#128266;</button></div>' +
             '<div class="learn-q">' + esc(c.q) + '</div>' +
             '<div class="learn-a">' + esc(c.a).replace(/\n/g, "<br>") + '</div>' +
+            (c.why ? '<div class="flash-ref" style="color:var(--text);margin-top:12px;"><b>Why it matters:</b> ' + esc(c.why) + '</div>' : '') +
             (c.ref ? '<div class="flash-ref">' + esc(c.ref) + '</div>' : '') + '</div>' +
           '<div class="btn-row">' +
             (i > 0 ? '<button class="btn ghost" id="lPrev">&#8592; Back</button>' : '') +
