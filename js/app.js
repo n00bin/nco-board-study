@@ -127,8 +127,14 @@
     var unseen = coreIds.filter(function (id) { var r = Store.recOf(id); return !r || !(r.seen > 0); }).length;
     var head, tip;
     if (days < 0) { head = "Your board date has passed"; tip = "How did it go? Set a new date in Settings if you have another board."; }
-    else if (days === 0) { head = "Board day"; tip = "Check your uniform, review your opening statement, and report in with confidence. You've put in the work."; }
-    else if (days <= 7) { head = "Board in " + days + " day" + (days > 1 ? "s" : ""); tip = "Board week: run a Mock Board every day and use the night-before cram on your misses."; }
+    else if (days === 0) {
+      head = "Board day";
+      var seenPct = coreIds.length ? Math.round(100 * (coreIds.length - unseen) / coreIds.length) : 0;
+      tip = "Check your uniform, review your reporting steps and opening statement, and report in calm and confident." +
+        (seenPct >= 80 ? " You've studied " + seenPct + "% of Board Core. Trust your preparation." : " Quick win this morning: run a 10-question Mock Board to warm up.");
+    }
+    else if (days === 1) { head = "Board tomorrow"; tip = "Tonight: lay out and inspect your uniform, run one Full board Mock Board, review your reporting steps and opening statement, then get a full night's sleep."; }
+    else if (days <= 7) { head = "Board in " + days + " days"; tip = "Board week: run a Mock Board every day and use the night-before cram on your misses."; }
     else {
       head = "Board in " + days + " days";
       var perDay = Math.ceil(unseen / Math.max(1, days - 7));   // leave the final week for review + mock boards
@@ -161,7 +167,7 @@
       '</div>' +
       boardCountdown(coreIds) +
       '<a class="btn lg learn-cta" href="#/learn">&#128214; Learn Mode — start from scratch</a>' +
-      '<div class="muted center" style="font-size:.8rem;margin:6px 0 12px;">New to this? Learn Mode teaches you first. Already know it? Drill below.</div>' +
+      '<div class="muted center" style="font-size:.8rem;margin:6px 0 12px;">New to this? Learn Mode teaches you first. Already know it? Drill below. <b>Your goal for a SGT/SSG board: Board Core.</b> Everything else is extra depth.</div>' +
       '<div class="btn-row">' +
         '<a class="btn gold lg" href="#/pick/flash">Flashcards</a>' +
         '<a class="btn green lg" href="#/pick/quiz">Quiz</a>' +

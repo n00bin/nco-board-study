@@ -87,6 +87,7 @@ body {
   border-radius: 10px;
   cursor: pointer;
 }
+.iconbtn .lbl-sm { font-size: .7rem; margin-left: 4px; }
 .iconbtn:active { background: rgba(255,255,255,0.08); }
 
 /* ---------- Launch screen ---------- */
@@ -245,6 +246,7 @@ h2.section { font-size: 1.05rem; color: var(--text-dim); text-transform: upperca
   display: flex;
   flex-direction: column;
   justify-content: center;
+  justify-content: safe center;   /* long answers start at the top instead of being cut off */
   padding: 24px;
   border-radius: var(--radius);
   border: 1px solid var(--line);

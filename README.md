@@ -1,6 +1,6 @@
 # NCO Board Study Guide
 
-A phone study app for the **E-5 / E-6 Army promotion board**, built from the 18 reference publications.
+A phone study app for the **E-5 / E-6 Army promotion board**, built from 25 Army publications plus the 2022–2026 Army Directives.
 It installs to your Android home screen, runs **fully offline**, and keeps your progress on your phone —
 no account, no app store, nothing to sign up for.
 
@@ -48,7 +48,7 @@ no account, no app store, nothing to sign up for.
 
 Content covers **25 publications plus the 2022–2026 Army Directives** with **~1,850 cards** — most fact-checked page-by-page against the
 source PDFs, with a page citation on each card (the Army Values, Code of Conduct, MDMP/TLP, warfighting
-functions, SHARP reporting, ACFT, the General Orders, the Soldier's & NCO Creeds, and much more).
+functions, SHARP reporting, the AFT and Combat Field Test, the General Orders, the Soldier's & NCO Creeds, and much more).
 
 ---
 

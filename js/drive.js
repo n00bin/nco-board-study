@@ -48,6 +48,11 @@
     render: function (container, cards, title) {
       var deck = Store.buildQueue(cards);
       if (!deck.length) deck = cards.slice();
+      // mix the order so a hands-free session doesn't open on the same card every time (due cards still come first)
+      var dueN = Store.isDue ? deck.filter(function (c) { return Store.isDue(c.id); }).length : 0;
+      var tail = deck.slice(dueN);
+      for (var k = tail.length - 1; k > 0; k--) { var j = Math.floor(Math.random() * (k + 1)); var tmp = tail[k]; tail[k] = tail[j]; tail[j] = tmp; }
+      deck = deck.slice(0, dueN).concat(tail);
       if (!deck.length) { container.innerHTML = '<div class="empty">No cards to play here.</div>'; return; }
       var i = 0, loop = false;
       var gap = (Store.settings().driveGap | 0) || 5;

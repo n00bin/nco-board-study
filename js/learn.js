@@ -122,7 +122,7 @@
       var html =
         '<div class="hero"><div class="big">' + pct + '%</div><div class="sub">of the learning path complete • ' + doneN + ' / ' + flat.length + ' lessons</div>' +
           '<div class="bar"><span style="width:' + pct + '%"></span></div></div>' +
-        '<div class="card"><div class="muted">Learn Mode teaches you the material first, then practices it — a few facts at a time. Work top to bottom.</div></div>';
+        '<div class="card"><div class="muted">Learn Mode teaches you the material first, then practices it, a few facts at a time. <b>For your board, finish the first three tracks: Board 101, Fundamentals, and Board Core.</b> The publication tracks below them are extra depth if you have time.</div></div>';
       if (next) html += '<a class="btn gold lg" href="#/lesson/' + next.id + '">' + (doneN ? "&#9654; Continue learning" : "&#9654; Start learning") + '</a><div class="spacer"></div>';
 
       tracks.forEach(function (t) {
