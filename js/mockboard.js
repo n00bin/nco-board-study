@@ -191,12 +191,14 @@
         if (L > 600) return 0;
         return (L > 200 || c.follow) ? secs * 2 : secs;
       }
-      function header() {
+      function header(label) {
         var totalQ = deck.length;
-        return '<div class="q-count">' + (qNum ? "Question " + qNum + " of " + totalQ : "") + (asked >= 3 ? (qNum ? "  •  " : "") + "Score so far " + Math.round(100 * got / asked) + "%" : "") + '</div>';
+        return '<div class="q-count">' + (label ? label : qNum ? "Question " + qNum + " of " + totalQ : "") + (asked >= 3 ? (qNum ? "  •  " : "") + "Score so far " + Math.round(100 * got / asked) + "%" : "") + '</div>';
       }
-      function timerHtml(t) {
-        return t > 0 ? '<div class="bar timer-bar"><span id="tBar" style="width:100%"></span></div><div class="center muted" id="tNum"></div>'
+      function timerHtml(t, why) {
+        // say why the clock isn't the Settings value (long answers and scenarios get double time; the intro gets 90 s)
+        var note = why ? why : (t > secs && secs ? "Double time: long answer" : "");
+        return t > 0 ? '<div class="bar timer-bar"><span id="tBar" style="width:100%"></span></div><div class="center muted" id="tNum"></div>' + (note ? '<div class="center muted" style="font-size:.75rem;">' + note + '</div>' : '')
           : (secs ? '<div class="center muted" style="font-size:.85rem;">No timer on this one: take it at your own pace.</div>' : '');
       }
       function runTimer(t, onEnd) {
@@ -300,7 +302,7 @@
       }
       function intro() {
         var t = secs ? 90 : 0, stmt = Store.statement();
-        container.innerHTML = header() + timerHtml(t) +
+        container.innerHTML = header() + timerHtml(t, "90 seconds for your introduction") +
           '<div class="card"><div class="flash-tag">The board president</div>' +
             '<div class="q-text" style="margin-top:8px;">"Tell the board a little about yourself."</div></div>' +
           '<div class="card"><div class="muted" style="font-size:.9rem;">' + (sponsor ? 'Ask the Soldier to tell you about themselves. Listen for about a minute: who they are, job and unit, time in service, a real accomplishment or two, and their goals as an NCO. Are they saying it, not reciting it?' :
@@ -454,7 +456,7 @@
       // second chance on a missed question: the board comes back to it
       function comeback(c) {
         var t = secs;
-        container.innerHTML = header() + timerHtml(t) +
+        container.innerHTML = header("Second try") + timerHtml(t) +
           '<div class="card" style="border-color:var(--gold);"><div class="flash-tag">The board comes back to it</div>' +
             '<div class="muted" style="font-size:.85rem;margin-top:6px;">"Let\'s go back to an earlier question."</div>' +
             '<div class="q-text" style="margin-top:8px;">' + esc(qt(c)) + '</div></div>' +
@@ -521,6 +523,12 @@
           .filter(function (p) { return p.miss > 0; })
           .sort(function (a, b) { return b.miss - a.miss; }).slice(0, 5);
         var msg = pct >= 90 ? "Board-ready." : pct >= 75 ? "Strong — tighten the misses." : pct >= 60 ? "Passing. Keep drilling." : "Needs work — run it again.";
+        // A real board weighs bearing and the required situational questions, not just the percentage.
+        var bearingMiss = bearing.filter(function (b) { return !b.ok; }).map(function (b) { return b.label.toLowerCase(); });
+        var sitMiss = missedIds.filter(function (id) { return /^sit-/.test(id); }).length;
+        if (pct >= 75 && (bearingMiss.length || sitMiss)) msg = "Not board-ready yet: " +
+          [bearingMiss.length ? "fix your " + bearingMiss.join(" and ") : "", sitMiss ? "you missed " + sitMiss + " required situational question" + (sitMiss > 1 ? "s" : "") : ""].filter(Boolean).join(", and ") +
+          ". Boards weigh those as much as the facts.";
         var html =
           '<div class="ring-wrap"><div class="ring">' + pct + '%<small>' + asked + ' questions and follow-ups (partial credit counted)</small></div></div>' +
           '<p class="center muted">' + msg + '</p>';
@@ -540,7 +548,8 @@
             html += '<div class="card"><div class="flash-tag">' + esc(m.code) + '</div><div style="font-weight:600;margin-bottom:6px;">' + esc(m.q) + '</div><div class="muted">' + esc(m.a) + '</div></div>';
           });
         }
-        if (sponsor) html += '<div class="spacer"></div><button class="btn green lg" id="sendBack">&#128228; Send these results to the Soldier</button>' +
+        if (sponsor) html += '<h2 class="section">Your notes for the Soldier (optional)</h2><textarea class="input" id="sbNote" rows="3" maxlength="300" placeholder="e.g. Good bearing. Rambled on the intro; slow down on SHARP answers."></textarea>' +
+          '<div class="spacer"></div><button class="btn green lg" id="sendBack">&#128228; Send these results to the Soldier</button>' +
           '<div class="muted center" style="font-size:.8rem;margin-top:6px;">They open the link on their phone: the score goes into their history and the questions they missed come back sooner.</div>';
         html += '<div class="spacer"></div><button class="btn gold lg" id="again">New board</button><div class="spacer"></div><button class="btn ghost" id="home">Home</button>';
         container.innerHTML = html;
@@ -549,7 +558,8 @@
         var sb = container.querySelector("#sendBack");
         if (sb) sb.addEventListener("click", function () {
           var ids = missedIds.filter(function (id, k) { return missedIds.indexOf(id) === k; }).slice(0, 40);
-          var url = App.appUrl + "#/sbresult/" + (Math.round(got * 10) / 10) + "/" + asked + "/" + Date.now().toString(36) + "/" + ids.join(",");
+          var note = (container.querySelector("#sbNote").value || "").trim().slice(0, 300);
+          var url = App.appUrl + "#/sbresult/" + (Math.round(got * 10) / 10) + "/" + asked + "/" + Date.now().toString(36) + "/" + ids.join(",") + (note ? "/" + encodeURIComponent(note) : "");
           var text = "Your practice board: " + pct + "%. Open this to save it in your app: " + url;
           if (navigator.share) navigator.share({ title: "Practice board results", text: text }).catch(function () {});
           else if (navigator.clipboard) navigator.clipboard.writeText(text).then(function () { App.toast("Link copied: text it to the Soldier", 3500); });

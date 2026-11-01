@@ -86,8 +86,12 @@
   function boardResultAsk(rs) {
     var d = daysToBoard(), br = Store.settings().boardResult;
     if (d == null || d >= 0) return "";
-    if (br) return '<div class="card"><div class="flash-tag">Your board result</div><div class="muted">' + esc(br.split("|")[1] || "") + ' (logged ' + esc(br.split("|")[0] || "") + '). Thank you.</div>' +
-      '<button class="btn ghost" id="brShare" style="margin-top:8px;">Share it (anonymous) to help other Soldiers</button></div>';
+    var AFTER = {
+      "Recommended": "Congratulations, Sergeant-to-be. Your name goes on the promotion recommended list, and you're promoted when your promotion points meet the monthly cutoff score for your MOS. Keep your records and points current (new AFT, weapons, schools, college), and get ready for BLC.",
+      "Not recommended": "It happens to good Soldiers, and it isn't the end. Your first-line leader must counsel you in writing on what to improve, with a development plan, and keep counseling you at least every 3 months (AR 600-8-19, para 1-33). Ask the board's feedback, fix those areas, and go back better.",
+      "Board postponed": "Use the extra time: set the new date in Settings and the plan will pace you to it." };
+    if (br) { var r = br.split("|")[1] || ""; return '<div class="card"><div class="flash-tag">Your board result: ' + esc(r) + '</div><div class="muted">' + esc(AFTER[r] || "") + '</div>' +
+      '<button class="btn ghost" id="brShare" style="margin-top:8px;">Share it (anonymous) to help other Soldiers</button></div>'; }
     return '<div class="card" style="border-color:var(--gold);"><div class="flash-tag">How did your board go?</div><div class="chip-row" id="brAsk">' +
       ["Recommended", "Not recommended", "Board postponed"].map(function (t) { return '<button class="chip" data-r="' + t + '">' + t + '</button>'; }).join("") + '</div>' +
       '<div class="muted" style="font-size:.8rem;margin-top:6px;">Saved on this phone only. You can choose to share it after.</div></div>';
@@ -179,7 +183,13 @@
     var seenN = coreIds.filter(seenOf).length, unseen = coreIds.length - seenN, seenPct = coreIds.length ? seenN / coreIds.length : 0;
     var lateStart = days != null && days >= 2 && days <= 10 && seenPct < 0.5;
     var title = "Today's plan";
-    if (days === 0) {
+    if (days != null && days < 0) {
+      var br = (Store.settings().boardResult || "").split("|")[1] || "";
+      title = br === "Recommended" ? "Next steps after your board" : br === "Not recommended" ? "Your plan for the next board" : "After your board";
+      if (br === "Not recommended") items.push('<a href="#/flash/leeches">&#9888;&#65039; Work on the cards you kept missing</a>', '<a href="#/board/core">&#127894; Run a Mock Board each week until your next board</a>');
+      else if (br === "Recommended") items.push('<a href="#/pub/ar600-8-19">&#128200; How points and cutoff scores work (AR 600-8-19)</a>', '<a href="#/pub/ar350-1">&#127891; Get ready for BLC: NCO professional development (AR 350-1)</a>');
+      items.push('<a href="#/settings">&#128197; Set your next board date</a>');
+    } else if (days === 0) {
       title = "Board day: no new studying";
       items.push('<a href="#/reporting">&#127894; Walk through reporting in, out loud</a>',
         '<a href="#/uniform">&#129509; Final uniform check</a>',
@@ -307,8 +317,9 @@
     if (false && dueN > 0 && !calm) extras.push('<a class="btn ghost" href="#/flash/due">&#8635; Review ' + dueN + ' card' + (dueN > 1 ? "s" : "") + ' ready to repeat</a>');
     var leechN = Store.leeches(ids).length;
     if (leechN > 0 && !calm) extras.push('<a class="btn ghost" href="#/flash/leeches">&#9888;&#65039; Practice ' + leechN + ' card' + (leechN > 1 ? "s" : "") + ' you keep missing</a>');
-    if (dToB !== 0) extras.push('<a class="btn ghost" href="#/flash/cram">&#128367;&#65039; Night-before cram</a>');
-    if (dToB == null || dToB > 1) extras.push('<a class="btn ghost" href="#/flash/top">&#127919; Top 100: highest-yield cards (late start)</a>');
+    if (dToB != null && dToB >= 1 && dToB <= 3) extras.push('<a class="btn ghost" href="#/flash/cram">&#128367;&#65039; Night-before cram</a>');
+    if (dToB != null && dToB >= 2 && dToB <= 14) extras.push('<a class="btn ghost" href="#/flash/top">&#127919; Top 100: highest-yield cards</a>');
+    if (!Store.settings().remindersAdded && (dToB == null || dToB > 1)) extras.push('<a class="btn ghost" href="#/settings">&#128276; Add daily study reminders to your calendar</a>');
     extras.forEach(function (e) { html += '<div class="spacer"></div>' + e; });
     html += '<div class="spacer"></div><a class="row board-row" href="#/boardday"><div class="grow"><div class="code">&#127894; Board Day Prep</div><div class="ttl">Chain of command, uniform check, how to report</div></div><div class="chev">&#8250;</div></a>';
 
@@ -576,6 +587,7 @@
     mount.querySelector("#remIcs").addEventListener("click", function () {
       var tm = (mount.querySelector("#remT").value || "19:00").replace(":", "") + "00";
       download("ncoboard-reminders.ics", reminderIcs(tm, Store.settings().boardDate), "text/calendar");
+      Store.setSetting("remindersAdded", true);
       App.toast("Calendar file downloaded: open it to add the reminders", 4000);
     });
     mount.querySelector("#gMinus").addEventListener("click", function () { Store.setGoal(Store.daily().goal - 5); mount.querySelector("#goalVal").textContent = Store.daily().goal; });
@@ -758,7 +770,7 @@
     "Wait to be called. When directed, approach the door and knock if your SOP requires it.",
     "Enter when told. Move to a position centered in front of the board president and halt about two steps away.",
     "Render the hand salute and report — e.g. \"Sergeant Major, Specialist (Last Name) reports to the President of the Board.\" Use YOUR current rank (a Specialist says Specialist), and follow the exact wording in your board memo/SOP. Hold the salute until it is returned.",
-    "Take your seat only when directed. Sit at attention: back straight, feet flat, hands on thighs, eyes on the questioner.",
+    "Some boards give you a few facing movements first (Left, FACE; About, FACE). Then take your seat only when directed. Sit at attention: back straight, feet flat, hands on thighs, eyes on the questioner.",
     "Answer the board member who asked. If you don't know: \"I do not know, Sergeant Major, but I will find out.\" Never guess.",
     "Keep your bearing and eye contact. Speak clearly and with confidence; address members by rank.",
     "When dismissed, stand at attention, render the hand salute, hold until returned, face about, and march out."
@@ -772,6 +784,7 @@
       menuRow("#/room", "&#127963;&#65039; What the Board Room Is Like", "Who sits on it, what happens, how they decide") +
       menuRow("#/chain", "&#129333; Chain of Command", "Fill in your leaders — then quiz yourself") +
       menuRow("#/uniform", "&#129509; Uniform Inspection", "Check your uniform before you walk in") +
+      menuRow("#/records", "&#128193; Records & What to Bring", "Check your SRB, points, and board memo; what goes in your pockets") +
       menuRow("#/reporting", "&#127894; How to Report to the Board", "Reporting sequence & bearing") +
       menuRow("#/statement", "&#128221; Opening Statement", "Draft and save your self-introduction") +
       menuRow("#/pub/boardskills", "&#129504; Board Know-How", "If you freeze, asking for a repeat, what to bring, how to answer") +
@@ -818,6 +831,7 @@
   function screenSponsorResult(p) {
     setTitle("Sponsor Board Results", true);
     var got = parseFloat(p[0]), total = parseInt(p[1], 10), token = String(p[2] || "").replace(/[^a-z0-9]/g, ""), ids = String(p[3] || "").split(",").filter(Boolean);
+    var note = ""; try { note = decodeURIComponent(p.slice(4).join("/") || "").slice(0, 300); } catch (e) { note = ""; }
     if (!(total > 0) || !(got >= 0) || got > total || !token) { mount.innerHTML = '<div class="empty">This results link is incomplete.</div>'; return; }
     var seenKey = "sbr-" + token, fresh = !Store.chain()[seenKey];
     var byId = {}; STUDY.cards.forEach(function (c) { byId[c.id] = c; });
@@ -828,6 +842,7 @@
     }
     var pct = Math.round(100 * got / total);
     mount.innerHTML = '<div class="ring-wrap"><div class="ring">' + pct + '%<small>from your sponsor\'s board</small></div></div>' +
+      (note ? '<div class="card" style="border-color:var(--gold);"><div class="flash-tag">Your sponsor\'s notes</div><div style="white-space:pre-wrap;">' + esc(note) + '</div></div>' : '') +
       '<p class="center muted">' + (fresh ? "Saved to your history. " : "Already saved. ") + (ids.length ? "The questions you missed will come back sooner in your reviews:" : "No misses. Nice work.") + '</p>' +
       ids.map(function (id) { var c = byId[id]; return c ? '<div class="card"><div style="font-weight:600;margin-bottom:6px;">' + esc(c.q) + '</div><div class="muted">' + esc(c.a) + '</div></div>' : ""; }).join("") +
       '<div class="spacer"></div><a class="btn gold lg" href="#/">Home</a>';
@@ -884,6 +899,30 @@
     mount.querySelector("#clear").addEventListener("click", function () { UNIFORM_CHECKS.forEach(function (u) { if (Store.checks()[u.id]) Store.toggleCheck(u.id); }); screenUniform(); });
   }
 
+  // One list for the week before: records, the board memo, and what to carry. Ticks are saved like the uniform checklist.
+  var RECORD_CHECKS = [
+    { id: "r1", t: "Review your Soldier Record Brief (SRB) in IPPS-A with your S-1 or records manager: personal data, awards, schools, civilian education" },
+    { id: "r2", t: "Promotion point items are current: latest record AFT, weapons qualification (within 24 months), BLC/college credits posted" },
+    { id: "r3", t: "Fix anything wrong now: corrections only count going forward (AR 600-8-19)" },
+    { id: "r4", t: "Read your board memo: date, time, place, uniform, and the exact reporting wording" },
+    { id: "r5", t: "Know your sponsor and run at least one practice board with them" },
+    { id: "r6", t: "Fill in your chain of command (Board Day Prep) and check the names are current" },
+    { id: "r7", t: "Carry only what the memo requires (usually your ID card). Phone left outside, pockets flat" },
+    { id: "r8", t: "Arrive early; know the board members' names and ranks" }
+  ];
+  function screenRecords() {
+    setTitle("Records & What to Bring", true);
+    var checks = Store.checks();
+    var html = '<div class="card"><div class="muted">Do this the week before your board. Your board memo and local SOP always come first.</div></div>';
+    RECORD_CHECKS.forEach(function (u) {
+      var on = !!checks[u.id];
+      html += '<button class="row check' + (on ? " checked" : "") + '" data-id="' + u.id + '"><div class="checkbox">' + (on ? "&#10003;" : "") + '</div><div class="grow"><div class="ttl">' + esc(u.t) + '</div></div></button>';
+    });
+    html += '<div class="spacer"></div><a class="btn ghost" href="#/pub/boardskills">Board Know-How cards</a>';
+    mount.innerHTML = html;
+    mount.querySelectorAll(".check").forEach(function (b) { b.addEventListener("click", function () { Store.toggleCheck(b.getAttribute("data-id")); screenRecords(); }); });
+  }
+
   function screenReporting() {
     setTitle("Report to the Board", true);
     var html = '<div class="card"><div class="muted">A general sequence — boards differ. Follow your local board SOP and appointment memo exactly.</div></div>';
@@ -931,7 +970,7 @@
       '<h2 class="section">Step by step</h2>';
     [ "Before: check your records and points are current, confirm the uniform and time in your board memo, and arrive early.",
       "When called: knock if your SOP says so, enter, halt about two steps in front of the president, salute, and report: \"Sergeant Major, (your rank and last name) reports to the President of the Board.\"",
-      "Sit only when directed, at attention. The president may ask you to tell the board about yourself.",
+      "Some boards have you do a few facing movements first. Then sit only when directed, at attention. The president may ask you to tell the board about yourself.",
       "Each board member asks questions in turn: leadership, Army programs, basic Soldiering, world affairs, and required situational questions on things like harassment, assault, abuse, and suicide.",
       "The president asks last and closes the board. When dismissed: stand, salute, hold until returned, face about, and march out.",
       "After: each voting member votes yes or no and the majority decides. The promotion authority makes the final call. If you aren't recommended, your first-line leader counsels you in writing on how to improve (AR 600-8-19, para 1-33)." ]
@@ -1013,6 +1052,7 @@
     if (head === "statement") return screenStatement(), tab("home");
     if (head === "knowledge") return screenKnowledge(), tab("home");
     if (head === "room") return screenRoom(), tab("home");
+    if (head === "records") return screenRecords(), tab("home");
     if (head === "changes") return screenChanges(), tab("home");
     if (head === "sponsor") return screenSponsorBoard(parts[1] || ""), tab("home");
     if (head === "sbresult") return screenSponsorResult(parts.slice(1)), tab("home");

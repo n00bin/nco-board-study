@@ -8,6 +8,15 @@ no account, no app store, nothing to sign up for.
 
 ---
 
+## What's new in 3.11
+
+- **Honest Mock Board verdict**: a high score with shaky bearing or a missed required scenario now says "Not board-ready yet."
+- **Real checklists** on list questions (one box per item) and delivery points on every personal question.
+- **Staff Sergeant pack**: T-weeks and training schedules, sergeant's time, reception and integration counseling,
+  rater duties, sub-hand receipts, squad risk management, and developing team leaders.
+- **After your board**: next steps for recommended and not recommended (counseling, a plan, what to fix).
+- **Records & What to Bring** checklist, sponsor notes on shared boards, and spoken wording on more questions.
+
 ## What's new in 3.10
 
 - **Updated to AR 608-1 (May 2026), "Soldier and Family Readiness"**: Army Community Service is now one access point
@@ -69,7 +78,7 @@ no account, no app store, nothing to sign up for.
 
 - **Board 101** — what a promotion board is: eligibility, who sits on the board, what they look for, how they
   vote, promotion points and cutoff scores (AR 600-8-19, March 2026). First track in Learn Mode.
-- **What Would You Do?** — 47 situational leadership scenarios (SHARP, suicide prevention, substance abuse, EO,
+- **What Would You Do?** — 56 situational leadership scenarios (SHARP, suicide prevention, substance abuse, EO,
   hazing, Article 31, illegal orders, casualty care, ...) with a model answer, the governing regulation, and
   the board's follow-up questions. Mock Board mixes them into every board.
 - **Sponsor mode & record-and-replay** — hand the phone to your sponsor (they see the answer and grade you), or record
@@ -86,9 +95,9 @@ no account, no app store, nothing to sign up for.
 - **Staple board subjects** — customs & courtesies (AR 600-25, 2026), flags & streamers (AR 840-10, 2025),
   drill & ceremony (TC 3-21.5), awards (AR 600-8-22, 2026), the NCOER (AR 623-3, 2025), and NCO history &
   duties (TC 7-22.7, 2025 + The Army Blue Book).
-- **Board Core (start here)** — about 400 must-know questions boards ask most, each with a one-line **why it matters**, pulled from every
+- **Board Core (start here)** — about 460 must-know questions boards ask most, each with a one-line **why it matters**, pulled from every
   publication. Mock Board, the night-before cram, and Learn Mode's Board Core track use it by default;
-  "All Publications" keeps the full deep set (~2,000 cards) for when you want detail.
+  "All Publications" keeps the full deep set (about 2,065 cards) for when you want detail.
 - **Learn Mode (start from scratch)** — a guided path of bite-sized lessons that **teach** the material
   first (with a plain-English overview of each publication), then **practice** it. Begins with the
   fundamentals (Army Values, ranks, chain of command, creeds, Code of Conduct), then each publication.
@@ -110,7 +119,7 @@ no account, no app store, nothing to sign up for.
 - **Daily goal & streak**, **Browse** by publication, full-text **Search**, and **Backup/restore**
   (export your progress to a file and move it to a new phone).
 
-Content covers **30+ publications plus the 2022–2026 Army Directives** with **~2,000 cards** — most fact-checked page-by-page against the
+Content covers **39 subjects from 35+ publications plus the 2019–2026 Army Directives** with **about 2,065 cards** — most fact-checked page-by-page against the
 source PDFs, with a page citation on each card (the Army Values, Code of Conduct, MDMP/TLP, warfighting
 functions, SHARP reporting, the AFT and Combat Field Test, the General Orders, the Soldier's & NCO Creeds, and much more).
 
@@ -188,7 +197,7 @@ so phones pick up the new content next time they're online, then re-upload the f
 
 ## A note on accuracy
 
-Cards were written from the 18 source publications and checked page by page against the PDFs; most
+Cards were written from the source publications and checked page by page against the PDFs; most
 cards cite the page they came from. Army publications change, so a few things to know:
 
 - The fitness-test cards follow the **Army Fitness Test (AFT)**, the test of record since 1 June 2025
