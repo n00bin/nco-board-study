@@ -38,7 +38,7 @@
     "ar350-1", "stp21-1", "weapons", "ar735-5", "adp7-0", "fm7-0", "adp5-0", "atp5-19", "ar530-1", "ar600-85", "atp3-50-20", "ar608-1", "ar930-4", "ar385-10", "ad2019-33", "brs", "stp21-24", "adp3-0"];
 
   // Board 101: what a promotion board is and how it works, from AR 600-8-19 (6 Mar 2026). First track in Learn.
-  var B101_OVERVIEW = "Never been to a board? Start here. First, what actually happens in the room and how to answer; then how you become eligible, who sits on the board, what they look for, how they vote, and how promotion points and cutoff scores turn a \"yes\" into stripes.";
+  var B101_OVERVIEW = "Never been to a board? Start here. See what happens in the room and how to answer, then how you get eligible, who sits on the board, how they vote, and how points turn a \"yes\" into stripes.";
   var BOARD101 = [
     { id: "board101-room", title: "What happens in the board room", ids: ["ar600-8-19-24", "ar600-8-19-26", "ar600-8-19-27", "bk-06", "bk-02", "bk-01", "personal-11"] },
     { title: "Getting to the board", ids: ["ar600-8-19-05", "ar600-8-19-06", "ar600-8-19-15", "ar600-8-19-16", "ar600-8-19-08"] },
@@ -85,8 +85,8 @@
     var bLessons = BOARD101.map(function (f, n) {
       return { id: f.id || "board101-L" + (BOARD101[0].id ? n : n + 1), title: f.title, cards: f.ids.map(function (id) { return byId[id]; }).filter(Boolean) };
     }).filter(function (l) { return l.cards.length; });
-    if (bLessons.length) tracks.push({ id: "board101", title: "Board 101 — What to Expect", overview: B101_OVERVIEW, lessons: bLessons });
-    tracks.push({ id: "fundamentals", title: "Fundamentals — The Bedrock", overview: FUND_OVERVIEW, lessons: fLessons });
+    if (bLessons.length) tracks.push({ id: "board101", title: "Board 101: what to expect", overview: B101_OVERVIEW, lessons: bLessons });
+    tracks.push({ id: "fundamentals", title: "Fundamentals: the bedrock", overview: FUND_OVERVIEW, lessons: fLessons });
 
     // Board Core track: the tagged must-know cards (minus what Fundamentals already teaches),
     // ordered high-yield first. Lesson ids are "core-<pub>-L<n>", so older saved progress is untouched.
@@ -101,12 +101,12 @@
       chunkLessons(cs, "core-" + pubId).forEach(function (l) { l.title = nm + (/[?!]$/.test(nm) ? " " : ": ") + l.title; coreLessons.push(l); });
     });
     if (coreLessons.length)
-      tracks.push({ id: "core", title: "⭐ Board Core — the must-know questions", overview: CORE_OVERVIEW, lessons: coreLessons });
+      tracks.push({ id: "core", title: "⭐ Board Core: the must-know questions", overview: CORE_OVERVIEW, lessons: coreLessons });
     STUDY.pubs.forEach(function (p) {
       if (p.id === "mine" || p.id === "chain") return;
       var cards = all.filter(function (c) { return c.pub === p.id; });
       if (!cards.length) return;
-      tracks.push({ id: p.id, title: p.code + " — " + p.title, overview: OVERVIEWS[p.id] || "", lessons: chunkLessons(cards, p.id) });
+      tracks.push({ id: p.id, title: (/^[A-Z]{2,}/.test(p.code) ? p.code + ": " : "") + p.title, overview: OVERVIEWS[p.id] || "", lessons: chunkLessons(cards, p.id) });
     });
     return tracks;
   }
@@ -144,7 +144,7 @@
         var td = doneCount(t.lessons);
         var tp = t.lessons.length ? Math.round((td / t.lessons.length) * 100) : 0;
         html += '<a class="row" href="#/track/' + t.id + '"><div class="grow"><div class="code">' + esc(t.title) + '</div>' +
-          '<div class="meta">' + td + ' / ' + t.lessons.length + ' lessons' + (t.id === "sit" || t.id === "personal" ? ' \u2022 required at every board (also inside Board Core)' : '') + '</div>' +
+          '<div class="meta">' + td + ' / ' + t.lessons.length + ' lessons' + (t.id === "sit" || t.id === "personal" ? ' \u2022 asked at every board (also part of Board Core)' : '') + '</div>' +
           '<div class="bar"><span style="width:' + tp + '%"></span></div></div><div class="chev">&#8250;</div></a>';
       });
       container.innerHTML = html;
@@ -218,12 +218,12 @@
 
       function complete(score, total) {
         Store.markLessonDone(lesson.id, score == null ? null : Math.round((score / total) * 100));
-        var line = (score == null) ? "Lesson complete." : "You scored " + score + " / " + total + ".";
+        var line = (score == null) ? "Nicely done." : "You scored " + score + " of " + total + ".";
         container.innerHTML =
           '<div class="ring-wrap"><div class="ring">&#10003;<small>Lesson complete</small></div></div>' +
           '<p class="center muted">' + line + '</p><div class="spacer"></div>' +
           (nextLesson ? '<button class="btn gold lg" id="next">Next lesson &#8594;</button><div class="spacer"></div>' : '') +
-          '<button class="btn ghost" id="path">Back to the path</button>';
+          '<button class="btn ghost" id="path">Back to Learn</button>';
         if (nextLesson) container.querySelector("#next").addEventListener("click", function () { App.go("#/lesson/" + nextLesson.id); });
         container.querySelector("#path").addEventListener("click", function () { App.go("#/learn"); });
       }

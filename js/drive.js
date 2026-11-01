@@ -69,7 +69,7 @@
         var p = STUDY.pubsById[c.pub];
         var phaseLabel = !playing ? "&#10073;&#10073; Paused" : phase === "q" ? "&#128266; Question…" : phase === "listen" ? "&#127908; Your turn — answer aloud" : "&#9989; Answer";
         container.innerHTML =
-          '<div class="flash-progress">Drive Mode • ' + esc(title) + ' • ' + (i + 1) + ' / ' + deck.length + (i === 0 ? '<br><span style="font-size:.8rem;">Cards due for review play first, then new ones. Stop any time: what you hear is saved.</span>' : '') + '</div>' +
+          '<div class="flash-progress">Drive Mode • ' + esc(title) + ' • ' + (i + 1) + ' / ' + deck.length + (i === 0 ? '<br><span style="font-size:.8rem;">Cards due for review play first, then new ones. Stop any time.</span>' : '') + '</div>' +
           '<div class="card drive-card"><div class="flash-tag">' + esc(p ? p.code : "") + '</div>' +
             '<div class="phase" id="phase">' + phaseLabel + '</div>' +
             '<div class="flash-q" style="margin:10px 0;font-size:1.3em;line-height:1.4;">' + esc(c.oral || c.q) + '</div>' +
@@ -79,11 +79,11 @@
             '<button class="btn lg" id="dPause">' + (playing ? "&#10073;&#10073; Pause" : "&#9658; Resume") + '</button>' +
             '<button class="btn lg" id="dNext">Next &#9197;</button>' +
           '</div><div class="spacer"></div>' +
-          '<button class="btn green" id="dLoop">' + (loop ? "&#128257; Loop: ON" : "&#128257; Loop: off") + '</button>' +
+          '<button class="btn green" id="dLoop">' + (loop ? "&#128257; Repeat: on" : "&#128257; Repeat: off") + '</button>' +
           '<div class="spacer"></div><button class="btn ghost" id="dStop">&#9209; Stop Drive Mode</button>';
         container.querySelector("#dPause").addEventListener("click", function () { playing ? pause() : resume(); });
         container.querySelector("#dNext").addEventListener("click", function () { skip(); });
-        container.querySelector("#dLoop").addEventListener("click", function () { loop = !loop; container.querySelector("#dLoop").innerHTML = loop ? "&#128257; Loop: ON" : "&#128257; Loop: off"; });
+        container.querySelector("#dLoop").addEventListener("click", function () { loop = !loop; container.querySelector("#dLoop").innerHTML = loop ? "&#128257; Repeat: on" : "&#128257; Repeat: off"; });
         container.querySelector("#dStop").addEventListener("click", function () { Drive.stop(); App.go("#/"); });
       }
 
@@ -120,7 +120,7 @@
           '<div class="ring-wrap"><div class="ring">&#9989;<small>Played ' + deck.length + ' cards</small></div></div>' +
           '<p class="center muted">Drive Mode complete.</p><div class="spacer"></div>' +
           '<button class="btn gold lg" id="again">Play again</button><div class="spacer"></div>' +
-          '<button class="btn ghost" id="home">Home</button>';
+          '<button class="btn ghost" id="home">Back to Home</button>';
         container.querySelector("#again").addEventListener("click", function () { Drive.render(container, cards, title); });
         container.querySelector("#home").addEventListener("click", function () { App.go("#/"); });
       }

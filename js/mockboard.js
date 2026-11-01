@@ -110,7 +110,7 @@
     render: function (container, cards, length, opts) {
       opts = opts || {};
       var pool = cards.filter(function (c) { return c.q && c.a; });
-      if (pool.length < 3) { container.innerHTML = '<div class="empty">Need a few more cards to run a board.</div>'; return; }
+      if (pool.length < 3) { container.innerHTML = '<div class="empty">A Mock Board needs at least 3 cards. Pick a bigger subject, or Board Core.</div>'; return; }
       length = Math.min(length || 15, pool.length);
       var deck = opts.fixed ? pool.slice(0, length) : drawDeck(pool, length);
 
@@ -392,7 +392,7 @@
 
       // ---- voice check: hear what you said, pre-tick the key points it heard (you can still change any box) ----
       var voice = { rec: null, text: "" };
-      function voiceButton() { return SR ? '<button class="btn ghost" id="voiceBtn">&#128483;&#65039; Voice check: the app listens and ticks what you covered</button><div class="spacer"></div>' : ""; }
+      function voiceButton() { return SR ? '<button class="btn ghost" id="voiceBtn">&#128483;&#65039; Voice check (optional): the app listens</button><div class="spacer"></div>' : ""; }
       function wireVoice() {
         voice.text = "";
         var b = container.querySelector("#voiceBtn"); if (!b) return;
@@ -535,19 +535,19 @@
         var weak = Object.keys(perPub).map(function (k) { return perPub[k]; })
           .filter(function (p) { return p.miss > 0; })
           .sort(function (a, b) { return b.miss - a.miss; }).slice(0, 5);
-        var msg = pct >= 90 ? "Board-ready." : pct >= 75 ? "Strong — tighten the misses." : pct >= 60 ? "Passing. Keep drilling." : "Needs work — run it again.";
+        var msg = pct >= 90 ? "Board-ready." : pct >= 75 ? "Strong. Tighten the misses." : pct >= 60 ? "Passing. Keep drilling." : "Needs work. Run it again.";
         // A real board weighs bearing and the required situational questions, not just the percentage.
         var bearingMiss = bearing.filter(function (b) { return !b.ok; }).map(function (b) { return b.label.toLowerCase(); });
         var sitMiss = missedIds.filter(function (id) { return /^sit-/.test(id); }).length;
         var notReady = pct >= 75 && (bearingMiss.length || sitMiss);
-        if (notReady) msg = "Not board-ready yet." + (bearingMiss.length ? " Work on: " + listJoin(bearingMiss) + "." : "") +
-          (sitMiss ? " You missed " + sitMiss + " required situational question" + (sitMiss > 1 ? "s" : "") + "." : "") + " A board weighs bearing and those questions as much as the facts.";
+        if (notReady) msg = "Your answers scored " + pct + "%, but a real board also grades " +
+          [bearingMiss.length ? "bearing (" + listJoin(bearingMiss) + ")" : "", sitMiss ? sitMiss + " required situational question" + (sitMiss > 1 ? "s" : "") + " you missed" : ""].filter(Boolean).join(" and ") + ".";
         var nQ = deck.length, nF = Math.max(0, asked - nQ);
-        var countLine = nQ + " question" + (nQ === 1 ? "" : "s") + (nF ? " + " + nF + " follow-up" + (nF === 1 ? "" : "s") + " and second tries" : "") + " (partial credit counted)";
-        var html = notReady
-          ? '<div class="card" style="border-color:var(--bad);text-align:center;"><div style="font-size:1.4rem;font-weight:800;">Not board-ready yet</div><div class="muted" style="margin-top:6px;">' + esc(msg.replace(/^Not board-ready yet\.\s*/, "")) + '</div>' +
-              '<div class="muted" style="font-size:.85rem;margin-top:8px;">Answers: ' + pct + '% \u2022 ' + countLine + '</div></div>'
-          : '<div class="ring-wrap"><div class="ring">' + pct + '%<small>' + countLine + '</small></div></div>' + '<p class="center muted">' + msg + '</p>';
+        var countLine = nQ + " question" + (nQ === 1 ? "" : "s") + (nF ? ", " + nF + " follow-up" + (nF === 1 ? "" : "s") + " or second tries" : "");
+        var html = (notReady ? '<div class="card" style="border-color:var(--bad);text-align:center;"><div style="font-size:1.3rem;font-weight:800;">Not board-ready yet</div><div class="muted" style="margin-top:6px;">' + esc(msg) + '</div>' +
+              (bearingMiss.length ? '<div class="btn-row" style="margin-top:10px;"><a class="btn ghost" href="#/reporting">Practice reporting</a><a class="btn ghost" href="#/flash/tc3-21-5">Drill cards</a></div>' : '') + '</div>' : '') +
+          '<div class="ring-wrap"><div class="ring">' + pct + '%<small>answers</small></div></div>' +
+          '<p class="center muted" style="font-size:.85rem;">' + countLine + ' (partial credit counted)</p>' + (notReady ? '' : '<p class="center muted">' + msg + '</p>');
         if (bearing.length) {
           html += '<h2 class="section">Bearing &amp; delivery</h2>';
           bearing.forEach(function (b) {
@@ -567,7 +567,7 @@
         if (sponsor) html += '<h2 class="section">Your notes for the Soldier (optional)</h2><textarea class="input" id="sbNote" rows="3" maxlength="300" placeholder="e.g. Good bearing. Rambled on the intro; slow down on SHARP answers."></textarea>' +
           '<div class="spacer"></div><button class="btn green lg" id="sendBack">&#128228; Send these results to the Soldier</button>' +
           '<div class="muted center" style="font-size:.8rem;margin-top:6px;">They open the link on their phone: the score goes into their history and the questions they missed come back sooner.</div>';
-        html += '<div class="spacer"></div><button class="btn gold lg" id="again">New board</button><div class="spacer"></div><button class="btn ghost" id="home">Home</button>';
+        html += '<div class="spacer"></div><button class="btn gold lg" id="again">Run another Mock Board</button><div class="spacer"></div><button class="btn ghost" id="home">Back to Home</button>';
         container.innerHTML = html;
         container.querySelector("#again").addEventListener("click", function () { MockBoard.render(container, cards, length, opts); });
         container.querySelector("#home").addEventListener("click", function () { App.go("#/"); });

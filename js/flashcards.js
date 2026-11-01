@@ -10,8 +10,8 @@
 
   function normA(s) { return String(s).toLowerCase().replace(/\b(a|an|the|and)\b/g, "").replace(/[^a-z0-9]/g, ""); }
 
-  var EMPTY = "Nothing to study in this deck right now. Try Board Core, or pick a subject.";
-  var GRADE_HINT = "How well did you know it? Missed it = see it again soon · Got it = knew it · Easy = see it much later";
+  var EMPTY = "Nothing to study here right now. Nothing is due, or the deck is empty. Try Board Core, or pick a subject.";
+  var GRADE_HINT = "Missed it: see it soon. Got it: see it later. Easy: see it much later.";
   var GRADE_BTNS =
     '<button class="btn grade-again" id="gAgain">Missed it</button>' +
     '<button class="btn grade-good" id="gGood">Got it</button>' +
@@ -79,7 +79,7 @@
             esc(c.a).replace(/\n/g, "<br>") +
             (c.why ? '<div class="flash-ref" style="color:var(--text);margin-top:12px;"><b>Why it matters:</b> ' + esc(c.why) + '</div>' : "") +
             (c.sample ? '<div class="flash-ref" style="color:var(--text);margin-top:12px;"><b>Example answer (fictional Soldier, make it yours):</b> ' + esc(c.sample) + '</div>' : "") +
-            (c.points && c.points.length > 1 ? '<div class="flash-ref" style="color:var(--text);margin-top:12px;"><b>Did you cover these?</b>' + c.points.map(function (p) { return '<div style="margin-top:4px;">\u2610 ' + esc(p) + '</div>'; }).join("") + '</div>' : "") +
+            (c.points && c.points.length > 1 ? '<div class="flash-ref" style="color:var(--text);margin-top:12px;"><b>Did you cover these?</b>' + c.points.map(function (p) { return '<div style="margin-top:4px;">\u2022 ' + esc(p) + '</div>'; }).join("") + '</div>' : "") +
             (c.follow && c.follow.length ? '<div class="flash-ref" style="margin-top:12px;"><b>Board follow-ups:</b>' +
               c.follow.map(function (f) { return '<div style="margin-top:6px;">&#8226; ' + esc(f.q) + '<br><span class="muted">' + esc(f.a) + '</span></div>'; }).join("") + '</div>' : "");
           container.querySelector("#fRef").textContent = c.ref ? "Reference: " + c.ref : "";
@@ -114,9 +114,9 @@
         if (opts && opts.onDone) return opts.onDone(reviewed);
         container.innerHTML =
           '<div class="ring-wrap"><div class="ring">&#10003;<small>' + reviewed + ' cards reviewed</small></div></div>' +
-          '<p class="center muted">Session complete — nicely done.</p><div class="spacer"></div>' +
+          '<p class="center muted">Session complete. Nicely done.</p><div class="spacer"></div>' +
           '<button class="btn gold lg" id="again">Study more</button><div class="spacer"></div>' +
-          '<button class="btn ghost" id="home">Back to home</button>';
+          '<button class="btn ghost" id="home">Back to Home</button>';
         container.querySelector("#again").addEventListener("click", function () { Flashcards.render(container, cards, title, opts); });
         container.querySelector("#home").addEventListener("click", function () { App.go("#/"); });
       }
@@ -190,8 +190,8 @@
         i++;
         if (i >= queue.length) {
           container.innerHTML = '<div class="ring-wrap"><div class="ring">&#10003;<small>' + reviewed + ' cards reviewed</small></div></div>' +
-            '<p class="center muted">Session complete.</p><div class="spacer"></div>' +
-            '<button class="btn gold lg" id="again">Study more</button><div class="spacer"></div><button class="btn ghost" id="home">Home</button>';
+            '<p class="center muted">Session complete. Nicely done.</p><div class="spacer"></div>' +
+            '<button class="btn gold lg" id="again">Study more</button><div class="spacer"></div><button class="btn ghost" id="home">Back to Home</button>';
           container.querySelector("#again").addEventListener("click", function () { Flashcards.renderTyped(container, cards, title); });
           container.querySelector("#home").addEventListener("click", function () { App.go("#/"); });
           return;

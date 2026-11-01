@@ -1,12 +1,12 @@
 /* NCO Board Study Guide content: 2072 cards across 41 subjects, built from 30+ Army publications,
    the 2019-2026 Army Directives, and DoD/TSP guidance (sources in the project folder). Checked against the sources 2026-11-01. */
 window.STUDY = {
-  meta: {"title":"NCO Board Study Guide","subtitle":"E-5 / E-6 Promotion Board","version":"3.12.0","updated":"2026-11-01","verified":"2026-11-01","cards":2072},
+  meta: {"title":"NCO Board Study Guide","subtitle":"E-5 / E-6 Promotion Board","version":"3.12.1","updated":"2026-11-01","verified":"2026-11-01","cards":2072},
   pubs: [
     {"id":"sit","code":"What Would You Do?","title":"Situational Leadership Scenarios","cat":"Board Skills"},
-    {"id":"personal","code":"Personal Questions","title":"Tell Us About You: Personal Board Questions","cat":"Board Skills"},
+    {"id":"personal","code":"Personal Questions","title":"Tell Us About You","cat":"Board Skills"},
     {"id":"adp6-22","code":"ADP 6-22","title":"Army Leadership and the Profession","cat":"Leadership & Doctrine"},
-    {"id":"atp6-22-1","code":"ATP 6-22.1","title":"Providing Feedback: Counseling/Coaching/Mentoring","cat":"Leadership & Doctrine"},
+    {"id":"atp6-22-1","code":"ATP 6-22.1","title":"Counseling, Coaching, and Mentoring","cat":"Leadership & Doctrine"},
     {"id":"adp3-0","code":"ADP 3-0","title":"Operations","cat":"Leadership & Doctrine"},
     {"id":"adp5-0","code":"ADP 5-0","title":"The Operations Process","cat":"Leadership & Doctrine"},
     {"id":"adp7-0","code":"ADP 7-0","title":"Training","cat":"Leadership & Doctrine"},
@@ -39,7 +39,8 @@ window.STUDY = {
     {"id":"boardskills","code":"Board Know-How","title":"Board Logistics, Nerves & Answering Well","cat":"Board Skills"},
     {"id":"ar385-10","code":"AR 385-10","title":"Army Safety and Occupational Health Program","cat":"Army Regulations"},
     {"id":"ad2019-33","code":"AD 2019-33","title":"Total Army Sponsorship Program","cat":"Army Regulations"},
-    {"id":"brs","code":"TSP & BRS","title":"Thrift Savings Plan & Blended Retirement","cat":"Soldier Skills & Readiness"},
+    {"id":"brs","code":"TSP & BRS","title":"Thrift Savings Plan & Blended Retirement","cat":"Soldier Skills & Readiness"}
+,
     {"id":"ar750-1","code":"AR 750-1","title":"Army Materiel Maintenance Policy (PMCS)","cat":"Army Regulations"},
     {"id":"ar600-92","code":"AR 600-92","title":"Army Suicide Prevention Program","cat":"Army Regulations"},
     {"id":"fm6-27","code":"FM 6-27","title":"Law of Land Warfare (Soldier's Rules)","cat":"Leadership & Doctrine"},

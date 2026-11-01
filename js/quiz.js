@@ -147,7 +147,7 @@
         if (!(opts && opts.onDone)) Store.recordQuiz(title, score, questions.length);   // lesson practice is not a "quiz"
         if (opts && opts.onDone) return opts.onDone(score, questions.length);
         var pct = Math.round((score / questions.length) * 100);
-        var msg = pct >= 90 ? "Outstanding." : pct >= 75 ? "Solid — keep drilling." :
+        var msg = pct >= 90 ? "Outstanding." : pct >= 75 ? "Solid. Keep drilling." :
                   pct >= 60 ? "Passing, but review the misses." : "Needs work. Run it again.";
         container.innerHTML =
           '<div class="ring-wrap"><div class="ring">' + pct + '%' +
@@ -156,7 +156,7 @@
           '<div class="spacer"></div>' +
           '<button class="btn gold lg" id="again">Try another quiz</button>' +
           '<div class="spacer"></div>' +
-          '<button class="btn ghost" id="home">Back to home</button>';
+          '<button class="btn ghost" id="home">Back to Home</button>';
         container.querySelector("#again").addEventListener("click", function () {
           Quiz.render(container, cards, title, length);
         });
