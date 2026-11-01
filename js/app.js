@@ -476,7 +476,7 @@
 
   // ---- Board Day content ----
   var UNIFORM_CHECKS = [
-    { id: "u1", t: "Haircut neat & tapered within AR 670-1; clean-shaven (or authorized, groomed beard waiver)" },
+    { id: "u1", t: "Haircut neat & tapered within AR 670-1; clean-shaven (mustache OK). Beard only with a signed medical ETP or approved religious accommodation, and carry the signed copy (AD 2025-13)" },
     { id: "u0", t: "Confirm WHICH uniform your board memo calls for (often the AGSU) and inspect that one" },
     { id: "u2", t: "Headgear (beret, garrison cap, or patrol cap, per the memo) shaped and worn correctly" },
     { id: "u3", t: "Nametapes (US ARMY / last name) correct, even, and properly placed" },

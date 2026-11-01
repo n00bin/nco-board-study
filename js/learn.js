@@ -13,7 +13,7 @@
   var OVERVIEWS = {
     "adp6-22": "ADP 6-22 is the Army's book on leadership and the profession. It defines what leadership is, the attributes and competencies every leader needs, and the Army Values. Boards lean on this heavily.",
     "atp6-22-1": "ATP 6-22.1 is how leaders develop Soldiers — counseling, coaching, and mentoring. Know the three types of developmental counseling and the form used (DA Form 4856).",
-    "adp3-0": "ADP 3-0 is the Army's capstone doctrine for operations — how the Army fights and wins on land. Focus on decisive action and the warfighting functions.",
+    "adp3-0": "ADP 3-0 (March 2025) is the Army's capstone doctrine for operations — multidomain operations, the six warfighting functions and combat power, the four tenets, and the Army's four strategic roles.",
     "adp5-0": "ADP 5-0 is how leaders plan, prepare, execute, and assess operations. Know the operations process, the MDMP, and Troop Leading Procedures (TLP).",
     "adp7-0": "ADP 7-0 is how the Army trains. Know the principles of training, 'train as you fight,' crawl-walk-run, and METL.",
     "ar600-20": "AR 600-20 is the Army Command Policy — the rules of command, discipline, and conduct. Chain of command, the NCO support channel, Equal Opportunity, and the ban on hazing and bullying. One of the most-tested regs.",
@@ -39,7 +39,7 @@
 
   var FUNDAMENTALS = [
     { title: "Leadership & the Army Values", ids: ["adp6-22-01", "adp6-22-02", "adp6-22-07", "adp6-22-08", "adp6-22-03", "adp6-22-04", "adp6-22-05", "adp6-22-12", "adp6-22-11"] },
-    { title: "The Warrior Ethos & the Creeds", ids: ["adp6-22-09", "tc72113-02", "tc72113-03"] },
+    { title: "The Warrior Ethos & the Creeds", ids: ["adp6-22-09", "tc72113-02", "tc72113-03", "tc72113-13", "tc72113-14"] },
     { title: "The Three General Orders", ids: ["tc72113-04", "tc72113-05", "tc72113-06"] },
     { title: "Ranks & the Chain of Command", ids: ["tc72113-09", "tc72113-10", "tc72113-11", "ar60020-01", "ar60020-03", "ar60020-04", "ar60020-05", "ar60020-09"] },
     { title: "Army History & Customs", ids: ["tc72113-07", "tc72113-08", "tc72113-12", "tc72113-01"] },
