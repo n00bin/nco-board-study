@@ -574,6 +574,7 @@
     setTitle("Board Day Prep", true);
     mount.innerHTML =
       '<div class="card"><div class="muted">Everything beyond the flashcards. Protocols vary by board and installation — always follow your local board SOP and appointment memo.</div></div>' +
+      menuRow("#/room", "&#127963;&#65039; What the Board Room Is Like", "Who sits on it, what happens, how they decide") +
       menuRow("#/chain", "&#129333; Chain of Command", "Fill in your leaders — then quiz yourself") +
       menuRow("#/uniform", "&#129509; Uniform Inspection", "Check your uniform before you walk in") +
       menuRow("#/reporting", "&#127894; How to Report to the Board", "Reporting sequence & bearing") +
@@ -609,7 +610,8 @@
       var on = !!checks[u.id];
       html += '<button class="row check' + (on ? " checked" : "") + '" data-id="' + u.id + '"><div class="checkbox">' + (on ? "&#10003;" : "") + '</div><div class="grow"><div class="ttl">' + esc(u.t) + '</div></div></button>';
     });
-    html += '<div class="spacer"></div><button class="btn ghost" id="clear">Reset checklist</button>';
+    html += '<div class="spacer"></div><a class="btn green" href="#/flash/pam670-1">Exact placement and measurements: study the DA PAM 670-1 cards</a>' +
+      '<div class="spacer"></div><button class="btn ghost" id="clear">Reset checklist</button>';
     mount.innerHTML = html;
     mount.querySelectorAll(".check").forEach(function (b) { b.addEventListener("click", function () { Store.toggleCheck(b.getAttribute("data-id")); screenUniform(); }); });
     mount.querySelector("#clear").addEventListener("click", function () { UNIFORM_CHECKS.forEach(function (u) { if (Store.checks()[u.id]) Store.toggleCheck(u.id); }); screenUniform(); });
@@ -623,6 +625,14 @@
     mount.innerHTML = html;
   }
 
+  var SAMPLE_STATEMENT = "Good morning, Sergeant Major and members of the board.\n" +
+    "I am Specialist Jordan Avery, a signal support systems specialist in Headquarters Company of my battalion.\n" +
+    "I have three years in service and have served as my company's communications NCO in a specialist's slot for the last eight months.\n" +
+    "In that time I trained eight Soldiers to operate and troubleshoot our radios, and our section passed its last command inspection with no deficiencies.\n" +
+    "Off duty, I'm working on my associate degree and I volunteer with our unit's BOSS program.\n" +
+    "I'm ready to be a sergeant because I already take care of Soldiers' training and welfare, and I want the responsibility that comes with the stripes.\n" +
+    "My goal is to graduate BLC near the top of my class and lead a team that is the first one my platoon sergeant calls on.\n" +
+    "Thank you.";
   function screenStatement() {
     setTitle("Opening Statement", true);
     var skeleton = "Good (morning/afternoon), Sergeant Major and members of the board.\nI am (Rank Last Name), serving as (duty position) in (unit).\nI have (X) years in service and (Y) time in grade.\nSome of my accomplishments include ...\nI am prepared for promotion because ...\nMy goals as an NCO are ...\nThank you.";
@@ -631,9 +641,37 @@
       '<div class="card"><div class="muted">Some boards ask for a brief self-introduction. Draft yours here — it saves on this device.</div></div>' +
       '<label class="lbl">Your opening statement</label>' +
       '<textarea class="input" id="stmt" rows="12" placeholder="Write your statement...">' + (cur ? esc(cur) : "") + '</textarea>' +
-      '<div class="btn-row" style="margin-top:10px;"><button class="btn gold" id="save">Save</button><button class="btn ghost" id="tmpl">Insert template</button></div>';
+      '<div class="btn-row" style="margin-top:10px;"><button class="btn gold" id="save">Save</button><button class="btn ghost" id="tmpl">Insert template</button></div>' +
+      '<div class="spacer"></div><button class="btn ghost" id="ex">Show an example</button>' +
+      '<div id="exBox" hidden><div class="card" style="margin-top:10px;"><div class="flash-tag">Example (fictional Soldier: write your own)</div><div style="white-space:pre-wrap;margin-top:6px;">' +
+        esc(SAMPLE_STATEMENT) + '</div><div class="muted" style="font-size:.85rem;margin-top:8px;">Keep yours about a minute. Say it, don\'t read it. Be specific: real duties, real accomplishments, real goals.</div></div></div>';
     mount.querySelector("#save").addEventListener("click", function () { Store.setStatement(mount.querySelector("#stmt").value); App.toast("Saved"); });
+    mount.querySelector("#ex").addEventListener("click", function () { var b = mount.querySelector("#exBox"); b.hidden = !b.hidden; });
     mount.querySelector("#tmpl").addEventListener("click", function () { var t = mount.querySelector("#stmt"); if (!t.value.trim() || confirm("Replace current text with the template?")) t.value = skeleton; });
+  }
+
+  // ---- What the board room is like: assembled from the AR 600-8-19 (Mar 2026) cards so the page and cards always agree ----
+  var ROOM_SECTIONS = [
+    { h: "Who sits on the board", ids: ["ar600-8-19-08", "ar600-8-19-09", "ar600-8-19-11", "ar600-8-19-13"] },
+    { h: "What happens in the room", ids: ["ar600-8-19-24", "ar600-8-19-26", "ar600-8-19-27", "ar600-8-19-25"] },
+    { h: "How they decide", ids: ["ar600-8-19-28", "ar600-8-19-30"] },
+    { h: "If you're not recommended", ids: ["ar600-8-19-29", "ar600-8-19-31"] }
+  ];
+  function screenRoom() {
+    setTitle("What the Board Room Is Like", true);
+    var byId = {}; STUDY.cards.forEach(function (c) { byId[c.id] = c; });
+    var html = '<div class="card"><div class="muted">What AR 600-8-19 (March 2026) says about the board itself. Your board memo and local SOP have the details for your board: time, place, uniform, and the exact reporting wording.</div></div>';
+    ROOM_SECTIONS.forEach(function (sec) {
+      html += '<h2 class="section">' + esc(sec.h) + '</h2>';
+      sec.ids.forEach(function (id) {
+        var c = byId[id]; if (!c) return;
+        html += '<div class="card"><div style="font-weight:600;margin-bottom:4px;">' + esc(c.q) + '</div><div>' + esc(c.a) + '</div>' +
+          (c.ref ? '<div class="flash-ref">' + esc(c.ref) + '</div>' : '') + '</div>';
+      });
+    });
+    html += '<div class="spacer"></div><a class="btn gold lg" href="#/reporting">How to report to the board</a><div class="spacer"></div>' +
+      '<a class="btn green lg" href="#/pick/board">Rehearse it: Full board Mock Board</a>';
+    mount.innerHTML = html;
   }
 
   // ---- Know your Army & your job: things boards ask that depend on YOUR unit and the news (not flashcard facts) ----
@@ -692,6 +730,7 @@
     if (head === "reporting") return screenReporting(), tab("home");
     if (head === "statement") return screenStatement(), tab("home");
     if (head === "knowledge") return screenKnowledge(), tab("home");
+    if (head === "room") return screenRoom(), tab("home");
     if (head === "pub") return screenPub(parts[1]), tab("browse");
     if (head === "pick") return screenPick(parts[1]), tab("home");
     if (head === "flash") return screenFlash(parts[1]), tab("home");

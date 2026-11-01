@@ -197,6 +197,15 @@
         else rest.push(c);
       });
       due.sort(function (a, b) { return state.cards[a.id].due - state.cards[b.id].due; });
+      // Interleave new cards across subjects (round-robin by publication) instead of one subject at a time:
+      // mixing related topics makes you work out which idea applies, which sticks better than blocked practice.
+      var byPub = {}, order = [];
+      fresh.forEach(function (c) { if (!byPub[c.pub]) { byPub[c.pub] = []; order.push(c.pub); } byPub[c.pub].push(c); });
+      if (order.length > 1) {
+        var mixed = [], left = fresh.length, k = 0;
+        while (left > 0) { var q = byPub[order[k % order.length]]; if (q.length) { mixed.push(q.shift()); left--; } k++; }
+        fresh = mixed;
+      }
       if (typeof newLimit === "number") fresh = fresh.slice(0, newLimit);
       return due.concat(fresh);
     },

@@ -99,7 +99,7 @@
       }
       function header() {
         var totalQ = deck.length;
-        return '<div class="q-count">' + (qNum ? "Question " + qNum + " of " + totalQ + "  •  " : "") + "Board score " + got + (asked ? "/" + asked : "") + '</div>';
+        return '<div class="q-count">' + (qNum ? "Question " + qNum + " of " + totalQ + "  \u2022  " : "") + "Board score " + fmt(got) + (asked ? "/" + asked : "") + '</div>';
       }
       function timerHtml(t) {
         return t > 0 ? '<div class="bar timer-bar"><span id="tBar" style="width:100%"></span></div><div class="center muted" id="tNum"></div>'
@@ -126,6 +126,22 @@
         container.querySelector("#miss").addEventListener("click", function () { fn(false); });
       }
       function next() { s++; if (s >= steps.length) return results(); show(); }
+
+      // Key-point rubric (scenario cards with `points`): tick what the answer actually covered; partial credit.
+      function rubricHtml(c, who) {
+        return '<div class="card" style="border-color:var(--gold);"><div class="flash-tag">' + (who || "Did you cover these?") + '</div>' +
+          c.points.map(function (pt, k) {
+            return '<label class="switch" style="margin-top:10px;"><input type="checkbox" class="kp" data-k="' + k + '"> <span>' + esc(pt) + '</span></label>';
+          }).join("") + '</div><button class="btn gold lg" id="rubricDone">Score this answer</button>';
+      }
+      function onRubric(fn) {
+        container.querySelector("#rubricDone").addEventListener("click", function () {
+          var boxes = container.querySelectorAll(".kp"), n = 0;
+          boxes.forEach(function (b) { if (b.checked) n++; });
+          fn(boxes.length ? n / boxes.length : 0);
+        });
+      }
+      function fmt(x) { return (Math.round(x * 10) / 10).toString(); }
 
       function show() {
         clearTimer();
@@ -198,12 +214,15 @@
             '<span><button class="mini" id="mSpeak" aria-label="Read aloud">&#128266;</button>' +
             '<button class="mini" id="mReport" aria-label="Report card">&#9873;</button></span></div>' +
             '<div class="q-text" style="margin-top:8px;">' + esc(c.q) + '</div></div>' +
-          (sponsor ? sponsorBox(c.a, c.ref, whyHtml(c)) + '<p class="center muted">Read the question aloud, listen, then grade.</p>' + gradeButtons()
+          (sponsor ? sponsorBox(c.a, c.ref, whyHtml(c)) + '<p class="center muted">Read the question aloud, listen, then grade.</p>' + (c.points ? rubricHtml(c, "Sponsor: tick what the Soldier covered") : gradeButtons())
                    : '<p class="center muted">Answer out loud, then reveal.</p>' + recButton() + '<button class="btn gold lg" id="reveal">Reveal answer</button>');
         container.querySelector("#mSpeak").addEventListener("click", function () { Speech.speak(c.q); });
         container.querySelector("#mReport").addEventListener("click", function () { App.reportCard(c); });
         if (autoRead) Speech.speak(c.q);
-        if (sponsor) { onGrade(function (ok) { clearTimer(); markQ(c, ok); }); runTimer(cs, function () { var n = container.querySelector("#tNum"); if (n) n.textContent = "Time!"; }); return; }
+        if (sponsor) {
+          if (c.points) onRubric(function (fr) { clearTimer(); markQ(c, fr); }); else onGrade(function (ok) { clearTimer(); markQ(c, ok ? 1 : 0); });
+          runTimer(cs, function () { var n = container.querySelector("#tNum"); if (n) n.textContent = "Time!"; }); return;
+        }
         var rev = function () { reveal(c); };
         container.querySelector("#reveal").addEventListener("click", rev);
         wireRec();
@@ -219,16 +238,17 @@
             '<div class="flash-tag">Answer</div><div class="flash-a">' + esc(c.a).replace(/\n/g, "<br>") + '</div>' +
             (c.ref ? '<div class="flash-ref">Reference: ' + esc(c.ref) + '</div>' : '') + whyHtml(c) + '</div>' +
           '<div id="playback"></div>' +
-          '<p class="center muted">How did you do?</p>' + gradeButtons();
+          (c.points ? rubricHtml(c) : '<p class="center muted">How did you do?</p>' + gradeButtons());
         playback();
-        onGrade(function (ok) { markQ(c, ok); });
+        if (c.points) onRubric(function (fr) { markQ(c, fr); }); else onGrade(function (ok) { markQ(c, ok ? 1 : 0); });
       }
 
-      function markQ(c, ok) {
+      function markQ(c, score) {          // score: 1 = got it, 0 = missed, fractions from the key-point rubric
+        var ok = score >= 0.75;
         Store.grade(c.id, ok ? "good" : "again");
         var pp = perPub[c.pub] || (perPub[c.pub] = { n: 0, miss: 0, code: pubLabel(c) });
-        pp.n++; asked++;
-        if (ok) got++; else { pp.miss++; missed.push({ q: c.q, a: c.a, code: pubCode(c) }); }
+        pp.n++; asked++; got += score;
+        if (!ok) { pp.miss++; missed.push({ q: c.q, a: c.a, code: pubCode(c) + (score > 0 && score < 1 ? " \u2022 " + Math.round(score * 100) + "% of key points" : "") }); }
         // Surprise follow-ups: asked only now, each as its own timed question.
         if (c.follow && c.follow.length) {
           var fu = c.follow.map(function (f) { return { kind: "follow", f: f, parent: c }; });
@@ -279,7 +299,7 @@
           .sort(function (a, b) { return b.miss - a.miss; }).slice(0, 5);
         var msg = pct >= 90 ? "Board-ready." : pct >= 75 ? "Strong — tighten the misses." : pct >= 60 ? "Passing. Keep drilling." : "Needs work — run it again.";
         var html =
-          '<div class="ring-wrap"><div class="ring">' + pct + '%<small>' + got + " of " + asked + ' answered well (incl. follow-ups)</small></div></div>' +
+          '<div class="ring-wrap"><div class="ring">' + pct + '%<small>' + fmt(got) + " of " + asked + ' points (incl. follow-ups and partial credit)</small></div></div>' +
           '<p class="center muted">' + msg + '</p>';
         if (bearing.length) {
           html += '<h2 class="section">Bearing &amp; delivery</h2>';
