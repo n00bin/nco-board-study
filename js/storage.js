@@ -79,7 +79,8 @@
       s.settings.driveGap = num(d.settings.driveGap, DEFAULT.settings.driveGap);
       s.settings.boardDate = /^\d{4}-\d{2}-\d{2}$/.test(d.settings.boardDate) ? d.settings.boardDate : "";
       s.settings.fullBoard = d.settings.fullBoard !== false;
-      s.settings.boardFor = (d.settings.boardFor === "SGT" || d.settings.boardFor === "SSG") ? d.settings.boardFor : "";
+      s.settings.boardFor = (d.settings.boardFor === "SGT" || d.settings.boardFor === "SSG" || d.settings.boardFor === "BOTH") ? d.settings.boardFor : "";
+      s.settings.voiceAuto = !!d.settings.voiceAuto;
     }
     return s;
   }

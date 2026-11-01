@@ -74,6 +74,20 @@
     return pw.filter(function (w) { return set[w]; }).length / pw.length;
   }
 
+  // Choose a board: about 20% scenarios (at least 2), spread across subjects and themes. Going to a SGT board?
+  // "Advanced" cards (more likely at an SSG board) go to the back of the line.
+  function drawDeck(pool, length) {
+    var sgt = window.Store && Store.settings().boardFor !== "SSG";
+    var basicsFirst = function (list) { return sgt ? list.filter(function (c) { return !c.adv; }).concat(list.filter(function (c) { return c.adv; })) : list; };
+    var sit = shuffle(pool.filter(function (c) { return c.pub === "sit"; }));
+    var rest = spread(basicsFirst(shuffle(pool.filter(function (c) { return c.pub !== "sit"; }))), length);
+    if (sit.length && rest.length) {
+      var nSit = Math.min(sit.length, Math.max(2, Math.round(length * 0.2)));
+      return shuffle(pickBoard(spread(sit, nSit), rest, nSit, length));
+    }
+    return shuffle(pickBoard([], spread(basicsFirst(shuffle(pool)), length), 0, length));
+  }
+
   var timer = null, releaseMic = null;
   function clearTimer() { if (timer) { clearInterval(timer); timer = null; } }
 
@@ -81,19 +95,15 @@
     stop: function () { clearTimer(); if (window.Speech) Speech.stop(); if (releaseMic) releaseMic(); },
 
     // opts.full: rehearse the whole board (report in, opening statement, report out)
+    // the ids a board would ask (used to send the same board to a sponsor's phone)
+    drawIds: function (cards, length) { return drawDeck(cards.filter(function (c) { return c.q && c.a; }), length).map(function (c) { return c.id; }); },
+
     render: function (container, cards, length, opts) {
       opts = opts || {};
       var pool = cards.filter(function (c) { return c.q && c.a; });
       if (pool.length < 3) { container.innerHTML = '<div class="empty">Need a few more cards to run a board.</div>'; return; }
       length = Math.min(length || 15, pool.length);
-      // A real board mixes "what would you do?" scenarios in with knowledge questions: about 20% (at least 2).
-      var sit = shuffle(pool.filter(function (c) { return c.pub === "sit"; }));
-      var rest = spread(shuffle(pool.filter(function (c) { return c.pub !== "sit"; })), length);
-      var deck;
-      if (sit.length && rest.length) {
-        var nSit = Math.min(sit.length, Math.max(2, Math.round(length * 0.2)));
-        deck = shuffle(pickBoard(spread(sit, nSit), rest, nSit, length));
-      } else deck = shuffle(pickBoard([], spread(shuffle(pool), length), 0, length));
+      var deck = opts.fixed ? pool.slice(0, length) : drawDeck(pool, length);
 
       // The board as a queue of steps. Follow-ups are inserted right after their question once it's graded.
       var steps = [];
@@ -183,7 +193,7 @@
       }
       function header() {
         var totalQ = deck.length;
-        return '<div class="q-count">' + (qNum ? "Question " + qNum + " of " + totalQ : "") + (asked ? (qNum ? "  •  " : "") + "Score so far " + Math.round(100 * got / asked) + "%" : "") + '</div>';
+        return '<div class="q-count">' + (qNum ? "Question " + qNum + " of " + totalQ : "") + (asked >= 3 ? (qNum ? "  •  " : "") + "Score so far " + Math.round(100 * got / asked) + "%" : "") + '</div>';
       }
       function timerHtml(t) {
         return t > 0 ? '<div class="bar timer-bar"><span id="tBar" style="width:100%"></span></div><div class="center muted" id="tNum"></div>'
@@ -336,7 +346,7 @@
         var cs = timeFor(c);
         container.innerHTML = header() + timerHtml(cs) +
           // Only the publication is shown on the question side: topic labels can give the answer away.
-          '<div class="card"><div class="flash-toprow"><span class="flash-tag">' + esc(pubCode(c)) + '</span>' +
+          '<div class="card"><div class="flash-toprow"><span class="flash-tag">' + esc(pubCode(c)) + (c.adv ? ' \u2022 Advanced' : '') + '</span>' +
             '<span><button class="mini" id="mSpeak" aria-label="Read aloud">&#128266;</button>' +
             '<button class="mini" id="mReport" aria-label="Report card">&#9873;</button></span></div>' +
             '<div class="q-text" style="margin-top:8px;">' + esc(qt(c)) + '</div></div>' +
@@ -361,7 +371,8 @@
       function wireVoice() {
         voice.text = "";
         var b = container.querySelector("#voiceBtn"); if (!b) return;
-        b.addEventListener("click", function () {
+        var start = function () {
+          Store.setSetting("voiceAuto", true);
           try {
             var r = new SR(); r.lang = "en-US"; r.continuous = true; r.interimResults = false;
             r.onresult = function (e) { for (var k = e.resultIndex; k < e.results.length; k++) if (e.results[k].isFinal) voice.text += " " + e.results[k][0].transcript; };
@@ -370,7 +381,9 @@
             b.textContent = "⏺ Listening… (stops when you reveal)"; b.classList.add("on"); b.disabled = true;
             var rb = container.querySelector("#recBtn"); if (rb) rb.disabled = true;   // one microphone user at a time
           } catch (err) { App.toast("Voice check isn't supported in this browser.", 3500); }
-        });
+        };
+        b.addEventListener("click", start);
+        if (Store.settings().voiceAuto) start();
       }
       function stopVoice() { if (voice.rec) { try { voice.rec.stop(); } catch (e) {} voice.rec = null; } }
       // after reveal: show what it heard and pre-tick matching points (results can arrive a moment after stop)

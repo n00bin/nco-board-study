@@ -67,7 +67,7 @@
         var p = STUDY.pubsById[c.pub];
         var phaseLabel = !playing ? "&#10073;&#10073; Paused" : phase === "q" ? "&#128266; Question…" : phase === "listen" ? "&#127908; Your turn — answer aloud" : "&#9989; Answer";
         container.innerHTML =
-          '<div class="flash-progress">Drive Mode • ' + esc(title) + ' • ' + (i + 1) + ' / ' + deck.length + '</div>' +
+          '<div class="flash-progress">Drive Mode • ' + esc(title) + ' • ' + (i + 1) + ' / ' + deck.length + (i === 0 ? '<br><span style="font-size:.8rem;">Cards due for review play first, then new ones. Stop any time: what you hear is saved.</span>' : '') + '</div>' +
           '<div class="card drive-card"><div class="flash-tag">' + esc(p ? p.code : "") + '</div>' +
             '<div class="phase" id="phase">' + phaseLabel + '</div>' +
             '<div class="flash-q" style="margin:10px 0;font-size:1.3em;line-height:1.4;">' + esc(c.oral || c.q) + '</div>' +

@@ -38,8 +38,9 @@
     "ar350-1", "stp21-1", "weapons", "ar735-5", "adp7-0", "fm7-0", "adp5-0", "atp5-19", "ar530-1", "ar600-85", "atp3-50-20", "ar608-1", "ar930-4", "ar385-10", "ad2019-33", "brs", "stp21-24", "adp3-0"];
 
   // Board 101: what a promotion board is and how it works, from AR 600-8-19 (6 Mar 2026). First track in Learn.
-  var B101_OVERVIEW = "Never been to a board? Start here. How you become eligible, who sits on the board, what they look for, how they vote, and how promotion points and cutoff scores turn a \"yes\" into stripes.";
+  var B101_OVERVIEW = "Never been to a board? Start here. First, what actually happens in the room and how to answer; then how you become eligible, who sits on the board, what they look for, how they vote, and how promotion points and cutoff scores turn a \"yes\" into stripes.";
   var BOARD101 = [
+    { id: "board101-room", title: "What happens in the board room", ids: ["ar600-8-19-24", "ar600-8-19-26", "ar600-8-19-27", "bk-06", "bk-02", "bk-01", "personal-11"] },
     { title: "Getting to the board", ids: ["ar600-8-19-05", "ar600-8-19-06", "ar600-8-19-15", "ar600-8-19-16", "ar600-8-19-08"] },
     { title: "Board day, points, and promotion", ids: ["ar600-8-19-24", "ar600-8-19-25", "ar600-8-19-28", "ar600-8-19-30", "ar600-8-19-32", "ar600-8-19-37", "ar600-8-19-40"] }
   ];
@@ -80,8 +81,9 @@
     var fLessons = FUNDAMENTALS.map(function (f, n) {
       return { id: "fundamentals-L" + (n + 1), title: f.title, cards: f.ids.map(function (id) { return byId[id]; }).filter(Boolean) };
     }).filter(function (l) { return l.cards.length; });
+    // the room-first lesson has its own id; the others keep "board101-L1/L2" so saved progress still counts
     var bLessons = BOARD101.map(function (f, n) {
-      return { id: "board101-L" + (n + 1), title: f.title, cards: f.ids.map(function (id) { return byId[id]; }).filter(Boolean) };
+      return { id: f.id || "board101-L" + (BOARD101[0].id ? n : n + 1), title: f.title, cards: f.ids.map(function (id) { return byId[id]; }).filter(Boolean) };
     }).filter(function (l) { return l.cards.length; });
     if (bLessons.length) tracks.push({ id: "board101", title: "Board 101 — What to Expect", overview: B101_OVERVIEW, lessons: bLessons });
     tracks.push({ id: "fundamentals", title: "Fundamentals — The Bedrock", overview: FUND_OVERVIEW, lessons: fLessons });

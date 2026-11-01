@@ -81,7 +81,14 @@
   }
 
   // Cards tagged rank:"SGT"/"SSG" only show if they match the board you're going to (Settings > Which board?).
-  function rankOk(c) { var bf = Store.settings().boardFor; return !c.rank || !bf || c.rank === bf; }
+  function rankOk(c) { var bf = Store.settings().boardFor; return !c.rank || !bf || bf === "BOTH" || c.rank === bf; }
+  // First run: ask which board before showing anything rank-specific
+  function rankAsk() {
+    if (Store.settings().boardFor) return "";
+    return '<div class="card" style="border-color:var(--gold);"><div class="flash-tag">First, which board are you going to?</div>' +
+      '<div class="muted" style="font-size:.85rem;margin-bottom:8px;">So the app only shows the numbers for your rank. You can change it in Settings.</div>' +
+      '<div class="chip-row" id="rankAsk"><button class="chip" data-r="SGT">Sergeant (E-5)</button><button class="chip" data-r="SSG">Staff Sergeant (E-6)</button><button class="chip" data-r="BOTH">Not sure</button></div></div>';
+  }
   function allCards() { return STUDY.cards.filter(rankOk).concat(Store.userCards()).concat(chainCards()); }
   function daysToBoard() {
     var bd = Store.settings().boardDate; if (!bd) return null;
@@ -178,7 +185,8 @@
     }
     // style each item as a full-width button (default links are unreadable dark blue on this background)
     items = items.map(function (h) { return h.replace('<a href=', '<a class="btn ghost plan-item" href='); });
-    return '<div class="card"><div class="flash-tag">' + esc(title) + '</div><div style="display:flex;flex-direction:column;gap:8px;margin-top:8px;">' + items.join("") + '</div></div>';
+    var sponsorNote = items.some(function (h) { return /sponsor/.test(h); }) ? '<div class="muted" style="font-size:.8rem;margin-top:8px;">Your board sponsor is the NCO who gets you ready, usually your first-line leader. Not sure who yours is? Ask your squad leader. <a href="#/pub/boardskills">More in Board Know-How</a>.</div>' : '';
+    return '<div class="card"><div class="flash-tag">' + esc(title) + '</div><div style="display:flex;flex-direction:column;gap:8px;margin-top:8px;">' + items.join("") + '</div>' + sponsorNote + '</div>';
   }
   // "Ready?" check: based on what you actually REMEMBERED (last grade was a hit), plus recent Mock Boards.
   // Cards merely seen don't count. Shows the weakest subjects by misses.
@@ -253,7 +261,7 @@
         '<div class="sub" style="margin-top:6px;font-size:.8rem;">Board Core studied: ' + rs.seen + ' of ' + coreIds.length + '</div>' +
         '<div class="sub" style="margin-top:8px;">Today: ' + daily.count + ' / ' + daily.goal + ' cards' + (daily.count >= daily.goal ? ' &#10003;' : '') + '</div>' +
       '</div>' +
-      boardCountdown(coreIds) + todayPlan(coreIds, dueN) + readyCheck(coreIds, rs) +
+      rankAsk() + boardCountdown(coreIds) + todayPlan(coreIds, dueN) + readyCheck(coreIds, rs) +
       // the "start from scratch" nudge is for the early weeks, not board week
       ((dToB == null || dToB > 7) ? '<a class="btn lg learn-cta" href="#/learn">&#128214; Learn Mode — start from scratch</a>' +
       '<div class="muted center" style="font-size:.8rem;margin:6px 0 12px;">New to this? Learn Mode teaches you first. Already know it? Drill below. <b>Your goal for a ' + (Store.settings().boardFor || "SGT/SSG") + ' board: Board Core.</b> Everything else is extra depth.</div>' : '<div class="spacer"></div>') +
@@ -267,7 +275,7 @@
         '<a class="btn lg drive-btn" href="#/pick/drive">&#128663; Drive Mode</a>' +
       '</div>';
     var extras = [], calm = dToB === 0 || dToB === 1;   // board day / night before: no pile of reviews on Home
-    if (dueN > 0 && !calm) extras.push('<a class="btn ghost" href="#/flash/due">&#8635; Review ' + dueN + ' card' + (dueN > 1 ? "s" : "") + ' ready to repeat</a>');
+    if (false && dueN > 0 && !calm) extras.push('<a class="btn ghost" href="#/flash/due">&#8635; Review ' + dueN + ' card' + (dueN > 1 ? "s" : "") + ' ready to repeat</a>');
     var leechN = Store.leeches(ids).length;
     if (leechN > 0 && !calm) extras.push('<a class="btn ghost" href="#/flash/leeches">&#9888;&#65039; Practice ' + leechN + ' card' + (leechN > 1 ? "s" : "") + ' you keep missing</a>');
     if (dToB !== 0) extras.push('<a class="btn ghost" href="#/flash/cram">&#128367;&#65039; Night-before cram</a>');
@@ -294,6 +302,9 @@
       });
     });
     mount.innerHTML = html;
+    mount.querySelectorAll("#rankAsk .chip").forEach(function (b) {
+      b.addEventListener("click", function () { Store.setSetting("boardFor", b.getAttribute("data-r")); screenHome(); });
+    });
   }
 
   function screenBrowse() {
@@ -408,9 +419,22 @@
       '<div class="card"><label class="switch"><input type="checkbox" id="fullBoard"' + (Store.settings().fullBoard !== false ? " checked" : "") + '> <span><b>Full board</b>: report in, "tell us about yourself," board members in turn, then report out. Turn off for a quick, quiet board (just the questions).</span></label>' +
         '<label class="switch" style="margin-top:12px;"><input type="checkbox" id="sponsorMode"> <span><b>My sponsor is holding the phone</b>: they read each question, see the answer, and grade you</span></label></div>' +
       '<h2 class="section">How many questions?</h2>' +
+      '<div class="muted" style="font-size:.85rem;margin:0 4px 8px;" id="lenNote"></div>' +
       '<button class="btn gold lg" data-n="10">10 questions</button><div class="spacer"></div>' +
       '<button class="btn green lg" data-n="15">15 questions</button><div class="spacer"></div>' +
-      '<button class="btn ghost" data-n="25">25 questions</button>';
+      '<button class="btn ghost" data-n="25">25 questions</button>' +
+      (/^(core|top|final)$/.test(deck) ? '<div class="spacer"></div><button class="btn ghost" id="sendSponsor">&#128228; Send a 10-question board to my sponsor\'s phone</button>' +
+        '<div class="muted center" style="font-size:.8rem;margin-top:6px;">Your sponsor opens the link and runs the same board on their phone, with the answers and checklists to grade you.</div>' : '');
+    var lenNote = function () { mount.querySelector("#lenNote").textContent = mount.querySelector("#fullBoard").checked ? "A Full board adds reporting in, drill, \"tell us about yourself\" and follow-up questions: 10 questions takes about 15 to 20 minutes. On a bus ride, turn Full board off." : "Quick board: just the questions, about 5 to 8 minutes for 10."; };
+    mount.querySelector("#fullBoard").addEventListener("change", lenNote); lenNote();
+    var ss = mount.querySelector("#sendSponsor");
+    if (ss) ss.addEventListener("click", function () {
+      var url = APP_URL + "#/sponsor/" + MockBoard.drawIds(cards, 10).join(",");
+      var text = "Can you run a practice board for me? Open this on your phone. It shows you each question with the answer so you can grade me: " + url;
+      if (navigator.share) navigator.share({ title: "Practice board", text: text }).catch(function () {});
+      else if (navigator.clipboard) navigator.clipboard.writeText(text).then(function () { App.toast("Link copied: text it to your sponsor", 3500); }, function () { App.toast(url, 6000); });
+      else App.toast(url, 6000);
+    });
     mount.querySelectorAll("[data-n]").forEach(function (b) {
       b.addEventListener("click", function () {
         var full = mount.querySelector("#fullBoard").checked, sponsor = mount.querySelector("#sponsorMode").checked;
@@ -430,6 +454,10 @@
       var all = allCards().filter(function (c) {
         return (c.q + " " + c.a + " " + (c.topic || "")).toLowerCase().indexOf(term) >= 0;
       });
+      // best matches first: the word in the topic or subject name, then in the question, then Board Core
+      var safe = term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), rx = new RegExp("\\b" + safe, "i");
+      var rank = function (c) { var p = STUDY.pubsById[c.pub] || {}; return (rx.test((c.topic || "") + " " + (p.code || "") + " " + (p.title || "")) ? 4 : 0) + (rx.test(c.q) ? 2 : 0) + (c.core ? 1 : 0); };
+      all.sort(function (a, b) { return rank(b) - rank(a); });
       var hits = all.slice(0, 80);
       var note = all.length > hits.length ? '<div class="muted center" style="margin-bottom:8px;">Showing the first 80 of ' + all.length + ' matches. Type more to narrow it down.</div>' : '';
       results.innerHTML = hits.length ? note + hits.map(function (c) {
@@ -448,7 +476,7 @@
     var m = Math.round(Store.mastery(ids) * 100), counts = Store.counts(ids);
     var quizzes = Store.quizzes();
     var html =
-      '<div class="hero"><div class="big">' + m + '%</div><div class="sub">overall mastery • ' + counts.known + ' known, ' + counts.review + ' to review, ' + counts.new + ' new</div></div>' +
+      '<div class="hero"><div class="big">' + readyScore(STUDY.cards.filter(function (c) { return c.core && rankOk(c); }).map(function (c) { return c.id; })).ready + '%</div><div class="sub">board-ready (same score as Home) • all cards: ' + counts.known + ' known, ' + counts.review + ' to review, ' + counts.new + ' new</div></div>' +
       '<a class="row" href="#/learn"><div class="grow"><div class="code">&#128214; Learn Mode</div><div class="ttl">Guided lessons — learn it from scratch</div></div><div class="chev">&#8250;</div></a>' +
       '<a class="row" href="#/pick/board"><div class="grow"><div class="code">&#127894; Mock Board</div><div class="ttl">Simulate the oral board</div></div><div class="chev">&#8250;</div></a>' +
       '<a class="row" href="#/boardday"><div class="grow"><div class="code">&#128203; Board Day Prep</div><div class="ttl">Chain of command, uniform, reporting</div></div><div class="chev">&#8250;</div></a>' +
@@ -459,8 +487,9 @@
       '<div class="muted center" style="font-size:.8rem;margin-top:18px;">NCO Board Study Guide<br>' + esc(versionLine()) + '</div>';
     html += '<h2 class="section">Recent quizzes &amp; boards</h2>';
     html += quizzes.length ? quizzes.slice(0, 10).map(function (q) {
-      var pct = Math.round((q.score / q.total) * 100), cls = pct >= 75 ? "badge-good" : "badge-bad";
-      return '<div class="row"><div class="grow"><div class="ttl">' + esc(q.deck) + '</div><div class="meta">' + q.score + "/" + q.total + ' correct</div></div><div class="' + cls + '" style="font-weight:700;">' + pct + '%</div></div>';
+      var pct = Math.round((q.score / q.total) * 100), cls = pct >= 75 ? "badge-good" : pct >= 60 ? "" : "badge-bad";
+      var nm = STUDY.pubsById[q.deck] ? STUDY.pubsById[q.deck].code : q.deck;
+      return '<div class="row"><div class="grow"><div class="ttl">' + esc(nm) + '</div><div class="meta">' + (Math.round(q.score * 10) / 10) + "/" + q.total + ' correct</div></div><div class="' + cls + '" style="font-weight:700;' + (cls ? '' : 'color:var(--gold);') + '">' + pct + '%</div></div>';
     }).join("") : '<div class="empty">No quizzes yet.</div>';
     mount.innerHTML = html;
   }
@@ -477,7 +506,7 @@
         '<div class="muted" style="font-size:.85rem;margin-top:8px;">Home shows a countdown and how many new Board Core cards to learn each day.</div>' +
         (s.boardDate ? '<button class="btn ghost" id="bClear" style="margin-top:10px;">Clear board date</button>' : '') + '</div>' +
       '<h2 class="section">Which board?</h2><div class="muted" style="font-size:.85rem;margin:0 4px 8px;">Hides the few facts that only apply to the other rank (like SSG time-in-service numbers).</div><div class="chip-row" id="rankChips">' +
-        [["SGT", "Sergeant (E-5)"], ["SSG", "Staff Sergeant (E-6)"], ["", "Not sure / both"]].map(function (r) { return '<button class="chip' + ((s.boardFor || "") === r[0] ? ' on' : '') + '" data-r="' + r[0] + '">' + r[1] + '</button>'; }).join("") +
+        [["SGT", "Sergeant (E-5)"], ["SSG", "Staff Sergeant (E-6)"], ["BOTH", "Not sure / both"]].map(function (r) { return '<button class="chip' + ((s.boardFor || "BOTH") === r[0] ? ' on' : '') + '" data-r="' + r[0] + '">' + r[1] + '</button>'; }).join("") +
       '</div>' +
       '<h2 class="section">Daily reminder</h2><div class="card"><div class="muted" style="font-size:.85rem;">Add a daily study reminder' + (s.boardDate ? ' (until your board)' : '') + ' and a weekly "sponsor board" reminder to your phone\'s calendar.</div>' +
         '<label class="lbl" for="remT">Remind me at</label><input class="input" type="time" id="remT" value="19:00" />' +
@@ -497,6 +526,8 @@
     if (Speech.supported())
       html += '<h2 class="section">Read-aloud</h2><div class="card"><label class="switch"><input type="checkbox" id="autoRead"' + (s.autoRead ? ' checked' : '') + '> <span>Automatically read questions &amp; answers aloud</span></label></div>';
     html += '<div class="spacer"></div><button class="btn ghost" id="speakTest">&#128266; Test the voice</button>';
+    if (window.SpeechRecognition || window.webkitSpeechRecognition)
+      html += '<h2 class="section">Mock Board voice check</h2><div class="card"><label class="switch"><input type="checkbox" id="voiceAuto"' + (s.voiceAuto ? ' checked' : '') + '> <span>Listen to every answer automatically and pre-tick the key points I said (turns on the first time you use it)</span></label></div>';
     mount.innerHTML = html;
 
     mount.querySelector("#bDate").addEventListener("change", function (e) {
@@ -533,6 +564,8 @@
         b.classList.add("on");
       });
     });
+    var va = mount.querySelector("#voiceAuto");
+    if (va) va.addEventListener("change", function () { Store.setSetting("voiceAuto", va.checked); });
     var ar = mount.querySelector("#autoRead");
     if (ar) ar.addEventListener("change", function () { Store.setSetting("autoRead", ar.checked); });
     mount.querySelector("#speakTest").addEventListener("click", function () {
@@ -734,6 +767,22 @@
     { h: "Maintenance policy updated (AR 750-1, April 2026)", test: function (c) { return c.id === "ar750-1-01" || c.id === "ar750-1-02"; } },
     { h: "SGLI maximum is $500,000 (since March 2023)", test: function (c) { return c.id === "sgli-01"; } }
   ];
+  // A board sent from a Soldier's phone: same questions, run here in sponsor mode (answers + checklists shown to the sponsor).
+  function screenSponsorBoard(list) {
+    setTitle("Sponsor Board", true);
+    var want = list.split(",").filter(Boolean), byId = {};
+    allCards().forEach(function (c) { byId[c.id] = c; });
+    var cards = want.map(function (id) { return byId[id]; }).filter(Boolean);
+    if (cards.length < 3) { mount.innerHTML = '<div class="empty">This board link is incomplete. Ask the Soldier to send it again.</div>'; return; }
+    mount.innerHTML = '<div class="card"><div class="flash-tag">You are the board</div><div class="muted">A Soldier asked you to run a practice board. You\'ll see each question with its answer and a checklist of key points. ' +
+      'Read the question aloud, listen, then grade what they actually said. At the end, read them their score and their weakest subjects.</div></div>' +
+      '<label class="switch card"><input type="checkbox" id="sbFull" checked> <span><b>Full board</b>: reporting in, drill, "tell us about yourself," then the questions</span></label>' +
+      '<button class="btn gold lg" id="sbGo">Start the board (' + cards.length + ' questions)</button>';
+    mount.querySelector("#sbGo").addEventListener("click", function () {
+      MockBoard.render(mount, cards, cards.length, { full: mount.querySelector("#sbFull").checked, sponsor: true, fixed: true });
+    });
+  }
+
   function screenChanges() {
     setTitle("What Changed Recently", true);
     var all = allCards();
@@ -835,7 +884,7 @@
       "Sit only when directed, at attention. The president may ask you to tell the board about yourself.",
       "Each board member asks questions in turn: leadership, Army programs, basic Soldiering, world affairs, and required situational questions on things like harassment, assault, abuse, and suicide.",
       "The president asks last and closes the board. When dismissed: stand, salute, hold until returned, face about, and march out.",
-      "After: each voting member votes yes or no and the majority decides. If you aren't recommended, the board gives you feedback, and the promotion authority makes the final call." ]
+      "After: each voting member votes yes or no and the majority decides. The promotion authority makes the final call. If you aren't recommended, your first-line leader counsels you in writing on how to improve (AR 600-8-19, para 1-33)." ]
       .forEach(function (t, i) { html += '<div class="row"><div class="numbubble">' + (i + 1) + '</div><div class="grow"><div class="ttl">' + esc(t) + '</div></div></div>'; });
     ROOM_SECTIONS.forEach(function (sec) {
       html += '<h2 class="section">' + esc(sec.h) + '</h2>';
@@ -915,6 +964,7 @@
     if (head === "knowledge") return screenKnowledge(), tab("home");
     if (head === "room") return screenRoom(), tab("home");
     if (head === "changes") return screenChanges(), tab("home");
+    if (head === "sponsor") return screenSponsorBoard(parts[1] || ""), tab("home");
     if (head === "pub") return screenPub(parts[1]), tab("browse");
     if (head === "pick") return screenPick(parts[1]), tab("home");
     if (head === "flash") return screenFlash(parts[1]), tab("home");

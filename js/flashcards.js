@@ -69,7 +69,7 @@
         cardEl.classList.remove("flipped");
         setFaces(false);
         container.querySelector("#fProg").textContent = "Reviewed " + reviewed + "  •  Left " + (queue.length - i);
-        container.querySelector("#fTagF").textContent = pubCode(c);   // topic only on the back: it can give the answer away
+        container.querySelector("#fTagF").textContent = pubCode(c) + (c.adv ? " \u2022 Advanced" : "");   // topic only on the back: it can give the answer away
         container.querySelector("#fTagB").textContent = "Answer" + (c.topic ? " • " + c.topic : "");
         container.querySelector("#fQ").textContent = c.q;
         // Wait for the flip-back animation before swapping in the next answer, so it never flashes.

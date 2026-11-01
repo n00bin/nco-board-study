@@ -8,6 +8,17 @@ no account, no app store, nothing to sign up for.
 
 ---
 
+## What's new in 3.9
+
+- **Day 1 starts in the board room**: Board 101 opens with what happens when you walk in and how to answer.
+  Home asks up front whether you're going to the SGT or SSG board.
+- **Suicide prevention** (AR 600-92): ACE, lethal means safety, crisis management, welfare checks, the Military
+  Crisis Line (988, press 1), and three new scenarios, including what to do after a suicide in your unit.
+- **26 personal questions** with coaching and a fictional example answer, plus "What is a board sponsor?"
+- **Send a board to your sponsor**: Mock Board sends a link; your sponsor runs the same questions on their phone.
+- "Advanced" tag on the harder cards (they come later on SGT boards), one board-ready score everywhere,
+  voice check that stays on once you use it, and better search.
+
 ## What's new in 3.8
 
 - **One readiness number** on Home: board-ready %, with a card explaining how it's figured.
