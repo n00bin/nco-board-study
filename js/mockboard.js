@@ -112,7 +112,8 @@
       function mark(ok) {
         var c = deck[i];
         Store.grade(c.id, ok ? "good" : "again");
-        var pp = perPub[c.pub] || (perPub[c.pub] = { n: 0, miss: 0, code: pubCode(c) });
+        var pt = STUDY.pubsById[c.pub];
+        var pp = perPub[c.pub] || (perPub[c.pub] = { n: 0, miss: 0, code: pt ? pt.code + (pt.title ? " — " + pt.title : "") : c.pub });
         pp.n++;
         if (ok) got++; else { pp.miss++; missed.push(c); }
         i++;

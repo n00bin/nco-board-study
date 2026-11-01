@@ -135,7 +135,7 @@
       tip = unseen ? "Learn about " + perDay + " new Board Core card" + (perDay > 1 ? "s" : "") + " a day to see all " + coreIds.length + " with a week to spare." :
         "You've seen every Board Core card. Keep up your reviews and run Mock Boards.";
     }
-    return '<a class="row board-row" href="#/settings"><div class="grow"><div class="code">&#128197; ' + esc(head) + '</div>' +
+    return '<a class="row board-row" href="' + (days >= 0 && days <= 7 ? "#/boardday" : "#/settings") + '"><div class="grow"><div class="code">&#128197; ' + esc(head) + '</div>' +
       '<div class="ttl">' + esc(tip) + '</div></div><div class="chev">&#8250;</div></a>';
   }
 
@@ -535,7 +535,7 @@
     { id: "u1", t: "Haircut neat & tapered within AR 670-1; clean-shaven (mustache OK); sideburns trimmed above the ear-canal opening (AD 2026-09). Beard only with a signed medical ETP or approved religious accommodation, and carry the signed copy (AD 2025-13)" },
     { id: "u1b", t: "Grooming per AD 2025-18: men's hair at most 2 in on top and 1 in on the sides; buns at most 3 in; nails square or rounded (women at most 1/4 in, men not past the fingertip); no lipstick; men wear no earrings, women plain matched studs only" },
     { id: "u0", t: "Confirm WHICH uniform your board memo calls for (often the AGSU) and inspect that one" },
-    { id: "u2", t: "Headgear (beret, garrison cap, or patrol cap, per the memo) shaped and worn correctly" },
+    { id: "u2", t: "Headgear per the memo, shaped and worn correctly: with the AGSU, the garrison cap (never the black beret, AD 2025-18); with the OCP, the patrol cap" },
     { id: "u3", t: "Nametapes (US ARMY / last name) correct, even, and properly placed" },
     { id: "u4", t: "Rank / grade insignia centered and correct" },
     { id: "u5", t: "Skill badges, tabs, and patches placed per regulation; not faded or frayed" },
@@ -544,8 +544,8 @@
     { id: "u8", t: "ID tags worn; ID card and any required documents on hand" },
     { id: "u9", t: "Jewelry / eyewear / cosmetics within standards; nothing unauthorized" },
     { id: "u10", t: "Pockets flat; nothing bulky or visible (pens, phone, etc.)" },
-    { id: "u11", t: "ASU (if worn): brass aligned, ribbons/medals in correct order of precedence, nameplate placed correctly" },
-    { id: "u12", t: "Pressed with sharp creases; gig line straight (ASU)" }
+    { id: "u11", t: "AGSU (or ASU): nameplate (last name only) placed correctly, ribbons in order of precedence, badges and DUI/RDI placed per AR 670-1 and AD 2025-18" },
+    { id: "u12", t: "Service uniform pressed with sharp creases; gig line straight; shoes polished" }
   ];
   var REPORTING_STEPS = [
     "Arrive early. Know each board member's name, rank, and position.",
