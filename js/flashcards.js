@@ -24,7 +24,7 @@
       if (!cards.length) { container.innerHTML = '<div class="empty">' + EMPTY + '</div>'; return; }
 
       // due first, then new; big decks only feed in 30 new cards per session so it stays doable
-      var queue = Store.buildQueue(cards, cards.length > 60 ? 30 : undefined).slice();
+      var queue = Store.buildQueue(cards, (cards.length > 60 && !(opts && opts.noCap)) ? 30 : undefined).slice();
       if (!queue.length) queue = cards.slice();           // (deck with nothing due) study all
       var i = 0, reviewed = 0;
       var autoRead = Store.settings().autoRead;
@@ -78,6 +78,7 @@
           container.querySelector("#fA").innerHTML = '<div class="muted" style="font-size:.85rem;margin-bottom:8px;">' + esc(c.q) + '</div>' +
             esc(c.a).replace(/\n/g, "<br>") +
             (c.why ? '<div class="flash-ref" style="color:var(--text);margin-top:12px;"><b>Why it matters:</b> ' + esc(c.why) + '</div>' : "") +
+            (c.sample ? '<div class="flash-ref" style="color:var(--text);margin-top:12px;"><b>Example answer (fictional Soldier, make it yours):</b> ' + esc(c.sample) + '</div>' : "") +
             (c.follow && c.follow.length ? '<div class="flash-ref" style="margin-top:12px;"><b>Board follow-ups:</b>' +
               c.follow.map(function (f) { return '<div style="margin-top:6px;">&#8226; ' + esc(f.q) + '<br><span class="muted">' + esc(f.a) + '</span></div>'; }).join("") + '</div>' : "");
           container.querySelector("#fRef").textContent = c.ref ? "Reference: " + c.ref : "";
@@ -115,7 +116,7 @@
           '<p class="center muted">Session complete — nicely done.</p><div class="spacer"></div>' +
           '<button class="btn gold lg" id="again">Study more</button><div class="spacer"></div>' +
           '<button class="btn ghost" id="home">Back to home</button>';
-        container.querySelector("#again").addEventListener("click", function () { Flashcards.render(container, cards, title); });
+        container.querySelector("#again").addEventListener("click", function () { Flashcards.render(container, cards, title, opts); });
         container.querySelector("#home").addEventListener("click", function () { App.go("#/"); });
       }
 

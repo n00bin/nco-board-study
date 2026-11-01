@@ -60,7 +60,7 @@
     { k: "sma", label: "Sergeant Major of the Army", your: false },
     { k: "csa", label: "Chief of Staff of the Army", your: false },
     { k: "secarmy", label: "Secretary of the Army", your: false },
-    { k: "secdef", label: "Secretary of Defense", your: false },
+    { k: "secdef", label: "Secretary of War (Secretary of Defense; secondary title since Sept 2025)", your: false },
     { k: "cjcs", label: "Chairman of the Joint Chiefs of Staff", your: false },
     { k: "potus", label: "Commander in Chief (the President)", your: false }
   ];
@@ -182,22 +182,27 @@
   }
   // "Ready?" check: based on what you actually REMEMBERED (last grade was a hit), plus recent Mock Boards.
   // Cards merely seen don't count. Shows the weakest subjects by misses.
-  function readyCheck(coreIds) {
+  function readyScore(coreIds) {
     var seen = 0, recalled = 0, lapsesByPub = {};
     var pubOf = {}; STUDY.cards.forEach(function (c) { if (c.core) pubOf[c.id] = c.pub; });
     coreIds.forEach(function (id) { var r = Store.recOf(id); if (r && r.seen > 0) { seen++; if (r.reps > 0) recalled++; if (r.lapses) lapsesByPub[pubOf[id]] = (lapsesByPub[pubOf[id]] || 0) + r.lapses; } });
-    if (!seen) return "";
     var boards = Store.quizzes().filter(function (q) { return /^Mock Board/.test(q.deck) && q.total; }).slice(0, 3);
     var mockAvg = boards.length ? Math.round(100 * boards.reduce(function (s, q) { return s + q.score / q.total; }, 0) / boards.length) : null;
-    var recallPct = Math.round(100 * recalled / coreIds.length);
+    var recallPct = coreIds.length ? Math.round(100 * recalled / coreIds.length) : 0;
     // Mock Board scores only count in proportion to how much of Board Core you've covered (acing 10 cards isn't readiness).
-    var coverage = Math.min(1, seen / (0.5 * coreIds.length));
+    var coverage = Math.min(1, seen / (0.5 * Math.max(1, coreIds.length)));
     var ready = Math.round(0.6 * recallPct + 0.4 * (mockAvg == null ? 0 : mockAvg) * coverage);
     var weak = Object.keys(lapsesByPub).sort(function (a, b) { return lapsesByPub[b] - lapsesByPub[a]; }).slice(0, 3)
       .map(function (k) { var p = STUDY.pubsById[k]; return p ? (p.code === p.title ? p.code : p.title) : k; });
-    return '<div class="card"><div class="flash-tag">Ready?</div><div style="font-size:1.4rem;font-weight:800;color:var(--gold);margin-top:4px;">' + ready + '% board-ready</div>' +
-      '<div class="muted" style="font-size:.85rem;">Board Core you got right last time: ' + recalled + ' of ' + coreIds.length + (mockAvg == null ? ' \u2022 run a Mock Board to finish this score' : ' \u2022 last Mock Boards ' + mockAvg + '%') + '</div>' +
-      (weak.length ? '<div class="muted" style="font-size:.85rem;margin-top:4px;">Work on: ' + esc(weak.join(", ")) + '</div>' : '') + '</div>';
+    return { ready: ready, seen: seen, recalled: recalled, mockAvg: mockAvg, weak: weak };
+  }
+  // The "how it's figured" card under the plan. The one number lives in the hero at the top of Home.
+  function readyCheck(coreIds, rs) {
+    if (!rs.seen) return "";
+    return '<div class="card"><div class="flash-tag">How your board-ready score is figured</div>' +
+      '<div class="muted" style="font-size:.85rem;">Board Core cards you got right the last time you saw them: ' + rs.recalled + ' of ' + coreIds.length +
+      (rs.mockAvg == null ? ' • run a Mock Board to finish the score' : ' • your last Mock Boards: ' + rs.mockAvg + '%') + '</div>' +
+      (rs.weak.length ? '<div class="muted" style="font-size:.85rem;margin-top:4px;">Work on: ' + esc(rs.weak.join(", ")) + '</div>' : '') + '</div>';
   }
 
   // Board-date countdown + a simple daily pace for Board Core (set the date under More > Settings).
@@ -236,19 +241,19 @@
     var daily = Store.daily(), streak = Store.streak(), dueN = Store.dueCount(ids);
     // Lead with Board Core (what the board asks most), not the whole 1,500-card library.
     var coreIds = STUDY.cards.filter(function (c) { return c.core && rankOk(c); }).map(function (c) { return c.id; });
-    var cc = Store.counts(coreIds), cm = Math.round(Store.mastery(coreIds) * 100), dToB = daysToBoard();
+    var rs = readyScore(coreIds), dToB = daysToBoard();
 
     var html =
       '<div class="hero">' +
         '<div style="display:flex;justify-content:space-between;align-items:flex-end;">' +
-          '<div><div class="big">' + cm + '%</div><div class="sub">Board Core • ' + cc.known + '/' + coreIds.length + ' mastered</div></div>' +
+          '<div><div class="big">' + rs.ready + '%</div><div class="sub">board-ready</div></div>' +
           '<div style="text-align:right;white-space:nowrap;"><div style="font-size:1.5rem;font-weight:800;">&#128293; ' + streak + '</div><div class="sub">day streak</div></div>' +
         '</div>' +
-        '<div class="bar"><span style="width:' + cm + '%"></span></div>' +
-        '<div class="sub" style="margin-top:6px;font-size:.8rem;">Board Core studied: ' + coreIds.filter(seenOf).length + ' of ' + coreIds.length + '</div>' +
+        '<div class="bar"><span style="width:' + rs.ready + '%"></span></div>' +
+        '<div class="sub" style="margin-top:6px;font-size:.8rem;">Board Core studied: ' + rs.seen + ' of ' + coreIds.length + '</div>' +
         '<div class="sub" style="margin-top:8px;">Today: ' + daily.count + ' / ' + daily.goal + ' cards' + (daily.count >= daily.goal ? ' &#10003;' : '') + '</div>' +
       '</div>' +
-      boardCountdown(coreIds) + todayPlan(coreIds, dueN) + readyCheck(coreIds) +
+      boardCountdown(coreIds) + todayPlan(coreIds, dueN) + readyCheck(coreIds, rs) +
       // the "start from scratch" nudge is for the early weeks, not board week
       ((dToB == null || dToB > 7) ? '<a class="btn lg learn-cta" href="#/learn">&#128214; Learn Mode — start from scratch</a>' +
       '<div class="muted center" style="font-size:.8rem;margin:6px 0 12px;">New to this? Learn Mode teaches you first. Already know it? Drill below. <b>Your goal for a ' + (Store.settings().boardFor || "SGT/SSG") + ' board: Board Core.</b> Everything else is extra depth.</div>' : '<div class="spacer"></div>') +
@@ -371,8 +376,9 @@
   function screenLesson(id) { setTitle("Lesson", true); Learn.lesson(mount, id); }
 
   function screenFlash(deck) {
-    setTitle("Flashcards", true);
-    Flashcards.render(mount, cardsForDeck(deck), deckTitle(deck));
+    setTitle(deckTitle(deck), true);
+    // Top 100 and Final-Week Review are meant to be done whole: no 30-new-card session cap
+    Flashcards.render(mount, cardsForDeck(deck), deckTitle(deck), (deck === "top" || deck === "final") ? { noCap: true } : undefined);
   }
 
   function screenQuiz(deck) {
@@ -666,6 +672,24 @@
     { id: "u11", t: "AGSU (or ASU): nameplate (last name only) placed correctly, ribbons in order of precedence, badges and DUI/RDI placed per AR 670-1 and AD 2025-18" },
     { id: "u12", t: "Service uniform pressed with sharp creases; gig line straight; shoes polished" }
   ];
+  // Labeled sketch of the AGSU coat front (viewer's view). Placements match the pam670-1 cards.
+  var UNIFORM_SVG = '<svg viewBox="0 0 320 300" role="img" aria-label="AGSU coat placement sketch" style="width:100%;height:auto;margin-top:8px;">' +
+    '<g fill="#5b4a3a" stroke="#c9a227" stroke-width="1.5">' +
+      '<path d="M110 30 L160 50 L210 30 L270 60 L300 230 L262 236 L246 120 L240 280 L80 280 L74 120 L58 236 L20 230 L50 60 Z"/>' +
+      '<path d="M160 50 L140 140 L160 280 L180 140 Z" fill="#4a3c2f"/>' +
+      '<rect x="92" y="118" width="44" height="34" rx="3" fill="#4a3c2f"/><rect x="184" y="118" width="44" height="34" rx="3" fill="#4a3c2f"/>' +
+    '</g>' +
+    '<rect x="98" y="124" width="32" height="8" fill="#e8e0c8"/>' +                              // nameplate on the wearer's right pocket flap
+    '<g fill="#b22234"><rect x="186" y="104" width="12" height="6"/><rect x="199" y="104" width="12" height="6"/><rect x="212" y="104" width="12" height="6"/>' +
+      '<rect x="192" y="97" width="12" height="6"/><rect x="205" y="97" width="12" height="6"/></g>' +   // ribbons above the wearer's left pocket
+    '<g fill="#ffcc33"><rect x="30" y="214" width="22" height="3"/><rect x="30" y="219" width="22" height="3"/></g>' +   // overseas bars, wearer's right sleeve
+    '<g stroke="#ffcc33" stroke-width="3"><line x1="268" y1="222" x2="288" y2="208"/><line x1="268" y1="228" x2="288" y2="214"/></g>' +   // service stripes, wearer's left sleeve
+    '<g font-size="11" fill="#f2efe4" font-family="sans-serif">' +
+      '<text x="4" y="112">Nameplate: centered</text><text x="4" y="125">on right pocket flap</text><line x1="96" y1="122" x2="80" y2="118" stroke="#f2efe4"/>' +
+      '<text x="196" y="70">Ribbons: centered 1/8"</text><text x="196" y="82">above left pocket</text>' +
+      '<text x="4" y="254">Overseas bars: right</text><text x="4" y="266">sleeve, 4" from bottom</text>' +
+      '<text x="196" y="254">Service stripes: left</text><text x="196" y="266">sleeve, 4" from bottom</text>' +
+    '</g></svg>';
   var REPORTING_STEPS = [
     "Arrive early. Know each board member's name, rank, and position.",
     "Wait to be called. When directed, approach the door and knock if your SOP requires it.",
@@ -704,7 +728,11 @@
     { h: "Operations doctrine (ADP 3-0, March 2025)", test: function (c) { return /^(adp3-0-n08|adp30-03|stp21-24-d043)$/.test(c.id); } },
     { h: "Marksmanship (TC 3-22.9)", test: function (c) { return c.id === "weapons-m4-11"; } },
     { h: "Safety (AR 385-10, July 2023)", test: function (c) { return /^(ar385-10-01|ar385-10-06)$/.test(c.id); } },
-    { h: "Orders: paragraph 4 is Sustainment", test: function (c) { return c.id === "tc7-22-7-opord"; } }
+    { h: "Orders: paragraph 4 is Sustainment", test: function (c) { return c.id === "tc7-22-7-opord"; } },
+    { h: "TRADOC is now T2COM (Army General Order 2025-23)", test: function (c) { return c.id === "ar600-20-t2com"; } },
+    { h: "Kratom is banned for Soldiers (AD 2026-14, June 2026)", test: function (c) { return c.id === "ar600-85-k01" || c.id === "ar600-85-k03"; } },
+    { h: "Maintenance policy updated (AR 750-1, April 2026)", test: function (c) { return c.id === "ar750-1-01" || c.id === "ar750-1-02"; } },
+    { h: "SGLI maximum is $500,000 (since March 2023)", test: function (c) { return c.id === "sgli-01"; } }
   ];
   function screenChanges() {
     setTitle("What Changed Recently", true);
@@ -743,7 +771,9 @@
   function screenUniform() {
     setTitle("Uniform Inspection", true);
     var checks = Store.checks();
-    var html = '<div class="card"><div class="muted">Tap each item once you\'ve verified it. Standards summarized from AR 670-1 / DA PAM 670-1 — verify exact measurements there and follow local guidance.</div></div>';
+    var html = '<div class="card"><div class="muted">Tap each item once you\'ve verified it. Standards summarized from AR 670-1 / DA PAM 670-1 — verify exact measurements there and follow local guidance.</div></div>' +
+      '<div class="card"><div class="flash-tag">AGSU coat: where the main items go (enlisted)</div>' + UNIFORM_SVG +
+        '<div class="muted" style="font-size:.8rem;margin-top:6px;">Simple sketch, not to scale, shown as you face the Soldier (their right is on your left). From DA PAM 670-1 and AD 2025-18; your board memo and local SOP have the final say.</div></div>';
     UNIFORM_CHECKS.forEach(function (u) {
       var on = !!checks[u.id];
       html += '<button class="row check' + (on ? " checked" : "") + '" data-id="' + u.id + '"><div class="checkbox">' + (on ? "&#10003;" : "") + '</div><div class="grow"><div class="ttl">' + esc(u.t) + '</div></div></button>';

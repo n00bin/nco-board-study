@@ -189,6 +189,7 @@
             '<div class="learn-q">' + esc(c.q) + '</div>' +
             '<div class="learn-a">' + esc(c.a).replace(/\n/g, "<br>") + '</div>' +
             (c.why ? '<div class="flash-ref" style="color:var(--text);margin-top:12px;"><b>Why it matters:</b> ' + esc(c.why) + '</div>' : '') +
+            (c.sample ? '<div class="flash-ref" style="color:var(--text);margin-top:12px;"><b>Example answer (fictional Soldier, make it yours):</b> ' + esc(c.sample) + '</div>' : '') +
             (c.ref ? '<div class="flash-ref">' + esc(c.ref) + '</div>' : '') + '</div>' +
           '<div class="btn-row">' +
             (i > 0 ? '<button class="btn ghost" id="lPrev">&#8592; Back</button>' : '') +

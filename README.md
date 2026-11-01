@@ -8,6 +8,17 @@ no account, no app store, nothing to sign up for.
 
 ---
 
+## What's new in 3.8
+
+- **One readiness number** on Home: board-ready %, with a card explaining how it's figured.
+- **Mock Board adapts**: a good answer gets the board's follow-up; a miss comes back later in that member's turn
+  for a second try. No opening statement drafted yet? The intro is scored against a short checklist instead.
+  Boards no longer repeat a theme (like a SHARP scenario plus a Restricted Report card).
+- **Example answers** (fictional Soldier) for the personal questions, and an **AGSU coat sketch** on Uniform Inspection.
+- **Current changes**: TRADOC is now T2COM, the kratom ban (AD 2026-14), AR 750-1 (April 2026) maintenance and PMCS,
+  SGLI/FSGLI, the Charge to the Newly Promoted NCO (key points), and the Secretary of War title.
+- More of the 2008 STP 21-24 deck retired; what's left stays in its own subject, out of the "All" drill.
+
 ## What's new in 3.7
 
 - **Calm final days** — on board day and the night before, Today's plan stops adding new cards and lessons: just

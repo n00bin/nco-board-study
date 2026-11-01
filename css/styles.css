@@ -400,3 +400,6 @@ label.btn { cursor: pointer; }
 .card a:not(.btn):not(.row), .muted a:not(.btn) { color: var(--gold); text-decoration: underline; font-weight: 600; }
 .switch input { flex: 0 0 22px; width: 22px; height: 22px; min-width: 22px; margin: 0; }
 .btn.on { border-color: var(--bad, #e05555); color: var(--text); }
+
+/* v3.8: long subject names (Counseling/Coaching/Mentoring) wrap instead of running off the card */
+.q-text, .ttl, .code, .flash-a { overflow-wrap: anywhere; }

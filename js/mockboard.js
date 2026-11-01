@@ -27,6 +27,31 @@
     });
     return out.concat(left);
   }
+  // Themes that cross subjects: a SHARP scenario and a Restricted Report fact card shouldn't share a board.
+  var THEMES = [/\brestricted\b|unrestricted|\bSARC\b/i, /suicid|\bACE\b/i, /hazing|bullying/i, /article 15|nonjudicial/i, /article 31/i, /tattoo/i,
+    /beard|facial hair|shav|sideburn/i, /waist-to-height|WHtR|body (fat|composition)/i, /\bAFT\b|fitness test|combat field test/i, /\bDUI\b|alcohol|drunk/i,
+    /drug|urinalysis|kratom/i, /inspector general|\bIG\b/i, /open[- ]door/i, /equal opportunity|\bEO\b|discriminat/i, /fraterniz/i, /extremis|gang/i,
+    /counsel/i, /9-line|medevac/i, /tourniquet|bleeding/i, /\bNCOER\b/i, /retaliat/i, /family advocacy|spouse|child abuse/i];
+  function themesOf(c) { var t = (c.topic || "") + " " + (c.oral || c.q || ""); var out = []; THEMES.forEach(function (re, k) { if (re.test(t)) out.push(k); }); return out; }
+  function pickBoard(sitList, restList, nSit, length) {
+    var used = {}, picked = [], spare = [];
+    function take(list, n) {
+      var got = 0;
+      list.forEach(function (c) {
+        if (got >= n) return;
+        var th = themesOf(c);
+        if (th.some(function (k) { return used[k]; })) { spare.push(c); return; }
+        th.forEach(function (k) { used[k] = 1; }); picked.push(c); got++;
+      });
+      return got;
+    }
+    take(sitList, nSit);
+    var nRest = length - picked.length;
+    take(restList, nRest);
+    // not enough without repeats (small decks): fill from the spares
+    for (var i = 0; picked.length < length && i < spare.length; i++) if (picked.indexOf(spare[i]) < 0) picked.push(spare[i]);
+    return picked;
+  }
   // spoken-style wording when the card has one ("Which set lists..." reads like a quiz, not a board)
   function qt(c) { return c.oral || c.q; }
   // short subject names for "Board member 2 will ask about ..."
@@ -67,8 +92,8 @@
       var deck;
       if (sit.length && rest.length) {
         var nSit = Math.min(sit.length, Math.max(2, Math.round(length * 0.2)));
-        deck = shuffle(spread(sit, nSit).slice(0, nSit).concat(rest.slice(0, length - nSit)));
-      } else deck = shuffle(spread(shuffle(pool), length)).slice(0, length);
+        deck = shuffle(pickBoard(spread(sit, nSit), rest, nSit, length));
+      } else deck = shuffle(pickBoard([], spread(shuffle(pool), length), 0, length));
 
       // The board as a queue of steps. Follow-ups are inserted right after their question once it's graded.
       var steps = [];
@@ -207,6 +232,7 @@
         var st = steps[s];
         if (st.kind === "q") return question(st.c);
         if (st.kind === "follow") return followUp(st);
+        if (st.kind === "comeback") return comeback(st.c);
         if (st.kind === "reportIn") return reportIn();
         if (st.kind === "intro") return intro();
         if (st.kind === "reportOut") return reportOut();
@@ -265,13 +291,21 @@
         var done = function () {
           clearTimer();
           container.innerHTML = header() +
-            '<div class="card"><div class="flash-tag">Your opening statement</div>' +
-              (stmt ? '<div class="flash-a" style="white-space:pre-wrap;">' + esc(stmt) + '</div>'
-                    : '<div class="muted">You haven\'t drafted one yet. Write it under Board Day Prep → Opening Statement, then practice it here.</div>') + '</div>' +
-            '<div id="playback"></div>' +
-            '<p class="center muted">Did you deliver it smoothly, without reading it, in about a minute?</p>' + gradeButtons("Needs work", "Delivered it well");
+            (stmt ? '<div class="card"><div class="flash-tag">Your opening statement</div><div class="flash-a" style="white-space:pre-wrap;">' + esc(stmt) + '</div></div>' +
+                    '<div id="playback"></div>' +
+                    '<p class="center muted">Did you deliver it smoothly, without reading it, in about a minute?</p>' + gradeButtons("Needs work", "Delivered it well")
+                  // no draft yet: score what you said against the parts of a good answer instead
+                  : '<div class="card" style="border-color:var(--gold);"><div class="flash-tag">Did you cover these?</div>' +
+                      ["Your rank, name, job, and unit", "Your time in service", "One or two real accomplishments", "Your goals as an NCO"].map(function (t) {
+                        return '<label class="switch" style="margin-top:10px;"><input type="checkbox" class="ip"> <span>' + esc(t) + '</span></label>'; }).join("") +
+                      '<div class="muted" style="font-size:.85rem;margin-top:10px;">Tip: draft it under Board Day Prep → Opening Statement (there\'s an example).</div></div>' +
+                    '<div id="playback"></div><button class="btn gold lg" id="introDone">Score it</button>');
           playback();
-          onGrade(function (ok) { bearing.push({ label: "Tell us about yourself", ok: ok }); next(); });
+          if (stmt) onGrade(function (ok) { bearing.push({ label: "Tell us about yourself", ok: ok }); next(); });
+          else container.querySelector("#introDone").addEventListener("click", function () {
+            var n = 0; container.querySelectorAll(".ip").forEach(function (b) { if (b.checked) n++; });
+            bearing.push({ label: "Tell us about yourself", ok: n >= 3 }); next();
+          });
         };
         container.querySelector("#reveal").addEventListener("click", done);
         wireRec();
@@ -365,7 +399,8 @@
           '<div class="card"><div class="flash-tag">' + esc(pubCode(c)) + (c.topic ? " • " + esc(c.topic) : "") + '</div>' +
             '<div class="q-text" style="margin:6px 0 12px;">' + esc(qt(c)) + '</div>' +
             '<div class="flash-tag">Answer</div><div class="flash-a">' + esc(c.a).replace(/\n/g, "<br>") + '</div>' +
-            (c.ref ? '<div class="flash-ref">Reference: ' + esc(c.ref) + '</div>' : '') + whyHtml(c) + '</div>' +
+            (c.ref ? '<div class="flash-ref">Reference: ' + esc(c.ref) + '</div>' : '') + whyHtml(c) +
+            (c.sample ? '<div class="flash-ref" style="color:var(--text);margin-top:10px;"><b>Example answer (fictional Soldier):</b> ' + esc(c.sample) + '</div>' : '') + '</div>' +
           (listened ? '<div id="heard"><div class="muted center" style="font-size:.85rem;">Checking what you said…</div></div>' : '') +
           '<div id="playback"></div>' +
           (c.points ? rubricHtml(c) : '<p class="center muted">How did you do?</p>' + gradeButtons());
@@ -380,12 +415,45 @@
         var pp = perPub[c.pub] || (perPub[c.pub] = { n: 0, miss: 0, code: pubLabel(c) });
         pp.n++; asked++; got += score;
         if (!ok) { pp.miss++; missed.push({ q: qt(c), a: c.a, code: pubCode(c) + (score > 0 && score < 1 ? " \u2022 " + Math.round(score * 100) + "% of key points" : "") }); }
-        // Surprise follow-ups: asked only now, each as its own timed question.
-        if (c.follow && c.follow.length) {
+        // Like a real board: a good answer earns a harder follow-up; a miss means the board comes back to it
+        // later in that member's turn (or at the end), so you get a second chance to get it right.
+        if (score >= 0.5 && c.follow && c.follow.length) {
           var fu = c.follow.map(function (f) { return { kind: "follow", f: f, parent: c }; });
           Array.prototype.splice.apply(steps, [s + 1, 0].concat(fu));
+        } else if (score < 0.5) {
+          var at = s + 1;
+          while (at < steps.length && steps[at].kind !== "member" && steps[at].kind !== "reportOut") at++;
+          steps.splice(at, 0, { kind: "comeback", c: c });
         }
         next();
+      }
+
+      // second chance on a missed question: the board comes back to it
+      function comeback(c) {
+        var t = secs;
+        container.innerHTML = header() + timerHtml(t) +
+          '<div class="card" style="border-color:var(--gold);"><div class="flash-tag">The board comes back to it</div>' +
+            '<div class="muted" style="font-size:.85rem;margin-top:6px;">"Let\'s go back to an earlier question."</div>' +
+            '<div class="q-text" style="margin-top:8px;">' + esc(qt(c)) + '</div></div>' +
+          (sponsor ? sponsorBox(c.a, c.ref, "") + '<p class="center muted">Ask it again, listen, then grade.</p>' + gradeButtons()
+                   : '<p class="center muted">You saw the answer a few minutes ago. Say it out loud now, in your own words, then reveal.</p><button class="btn gold lg" id="reveal">Reveal answer</button>');
+        if (autoRead) Speech.speak(qt(c));
+        var gradeIt = function (ok) {
+          var pp = perPub[c.pub] || (perPub[c.pub] = { n: 0, miss: 0, code: pubLabel(c) });
+          pp.n++; asked++; if (ok) got++; else pp.miss++;
+          next();
+        };
+        if (sponsor) { onGrade(function (ok) { clearTimer(); gradeIt(ok); }); runTimer(t, function () { var n = container.querySelector("#tNum"); if (n) n.textContent = "Time!"; }); return; }
+        var rev = function () {
+          clearTimer();
+          container.innerHTML = header() +
+            '<div class="card"><div class="flash-tag">Second try</div><div class="q-text" style="margin:6px 0 12px;">' + esc(qt(c)) + '</div>' +
+            '<div class="flash-tag">Answer</div><div class="flash-a">' + esc(c.a).replace(/\n/g, "<br>") + '</div></div>' +
+            '<p class="center muted">Did you get it this time?</p>' + gradeButtons();
+          onGrade(gradeIt);
+        };
+        container.querySelector("#reveal").addEventListener("click", rev);
+        runTimer(t, rev);
       }
 
       function followUp(st) {
