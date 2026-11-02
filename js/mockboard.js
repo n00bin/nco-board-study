@@ -121,7 +121,7 @@
     if (pct >= 75 && fix.length) return { level: "almost", title: "Almost board-ready", msg: "Your answers scored " + pct + "%. A real board also grades bearing and the situational questions, so tighten up " + listJoin2(fix) + " and run it again." };
     if (pct >= 90) return { level: "ready", title: "Board-ready", msg: "Board-ready. Keep it sharp with a board every few days." };
     if (pct >= 75) return { level: "ready", title: "Strong", msg: "Strong. Tighten the misses." };
-    if (pct >= 60) return { level: "work", title: "Passing", msg: "Passing. Keep drilling the misses" + (fix.length ? ", and work on " + listJoin2(fix) : "") + "." };
+    if (pct >= 60) return { level: "work", title: "Getting there", msg: pct + "% is getting there, but a board doesn't pass you on a percentage: it wants confident, complete answers. Drill the misses" + (fix.length ? ", work on " + listJoin2(fix) : "") + ", and run it again." };
     return { level: "work", title: "Needs work", msg: "Needs work. Study the misses, then run it again" + (fix.length ? ", and practice " + listJoin2(fix) : "") + "." };
   }
 
@@ -262,8 +262,8 @@
         return (L > 200 || c.follow) ? secs * 2 : secs;
       }
       function header(label) {
-        var totalQ = deck.length;
-        return '<div class="q-count">' + (label ? label : qNum ? "Question " + qNum + " of " + totalQ : "") + (asked >= 3 ? (qNum ? "  •  " : "") + "Score so far " + Math.round(100 * got / asked) + "%" : "") + '</div>';
+        var localN = deck.filter(function (c) { return c.local; }).length, totalQ = deck.length - localN;
+        return '<div class="q-count">' + (label ? label : qNum ? "Question " + qNum + " of " + totalQ + (localN ? " (+" + localN + " about your unit)" : "") : "") + (asked >= 3 ? (qNum ? "  •  " : "") + "Score so far " + Math.round(100 * got / asked) + "%" : "") + '</div>';
       }
       function timerHtml(t, why) {
         // say why the clock isn't the Settings value (long answers and scenarios get double time; the intro gets 90 s)
@@ -305,13 +305,13 @@
       }
       function onRubric(fn, c) {
         container.querySelector("#rubricDone").addEventListener("click", function () {
-          var boxes = container.querySelectorAll(".kp"), n = 0;
-          boxes.forEach(function (b) { if (b.checked) n++; });
+          var boxes = container.querySelectorAll(".kp"), n = 0, left = [];
+          boxes.forEach(function (b, k) { if (b.checked) n++; else left.push(k); });
           if (c && c.kp1 && boxes.length > 1) {
             var rest = 0; boxes.forEach(function (b, k) { if (k > 0 && b.checked) rest++; });
-            return fn((boxes[0].checked ? 0.75 : 0) + 0.25 * rest / (boxes.length - 1));
+            return fn((boxes[0].checked ? 0.75 : 0) + 0.25 * rest / (boxes.length - 1), left);
           }
-          fn(boxes.length ? n / boxes.length : 0);
+          fn(boxes.length ? n / boxes.length : 0, left);
         });
       }
       function fmt(x) { return (Math.round(x * 10) / 10).toString(); }
@@ -454,7 +454,7 @@
         container.querySelector("#mReport").addEventListener("click", function () { App.reportCard(c); });
         if (autoRead) Speech.speak(qt(c), curVoice);
         if (sponsor) {
-          if (c.points) onRubric(function (fr) { clearTimer(); markQ(c, fr); }, c); else onGrade(function (ok) { clearTimer(); markQ(c, ok ? 1 : 0); });
+          if (c.points) onRubric(function (fr, left) { clearTimer(); markQ(c, fr, left); }, c); else onGrade(function (ok) { clearTimer(); markQ(c, ok ? 1 : 0); });
           runTimer(cs, function () { var n = container.querySelector("#tNum"); if (n) n.textContent = "Time!"; }); return;
         }
         var rev = function () { stopVoice(); reveal(c); };
@@ -519,17 +519,20 @@
           '<div class="card"><div class="flash-tag">' + esc(pubCode(c)) + (c.topic ? " • " + esc(c.topic) : "") + '</div>' +
             '<div class="q-text" style="margin:6px 0 12px;">' + esc(qt(c)) + '</div>' +
             '<div class="flash-tag">Answer</div><div class="flash-a">' + esc(c.a).replace(/\n/g, "<br>") + '</div>' +
+            (c.changed ? '<div class="flash-ref" style="color:var(--gold);margin-top:8px;">&#9888;&#65039; ' + esc(c.changed) + '</div>' : '') +
             (c.ref ? '<div class="flash-ref">Reference: ' + esc(c.ref) + '</div>' : '') + (curStyle === "why" && c.pub !== "sit" && c.pub !== "personal" ? '' : whyHtml(c)) +
             (c.sample ? '<div class="flash-ref" style="color:var(--text);margin-top:10px;"><b>Example answer (fictional Soldier):</b> ' + esc(c.sample) + '</div>' : '') + '</div>' +
           (listened ? '<div id="heard"><div class="muted center" style="font-size:.85rem;">Checking what you said…</div></div>' : '') +
           '<div id="playback"></div>' +
-          (c.points ? rubricHtml(c) : '<p class="center muted">How did you do?</p>' + gradeButtons());
+          (c.unfilled ? '<div class="card"><div class="muted">You haven\'t filled this in yet, so it isn\'t scored. Boards do ask it: look it up and add it under Board Day Prep, then it counts.</div></div><button class="btn gold lg" id="skipLocal">Next question</button>'
+            : c.points ? rubricHtml(c) : '<p class="center muted">How did you do?</p>' + gradeButtons());
         playback();
         if (listened) setTimeout(function () { applyVoice(c); }, 900);
-        if (c.points) onRubric(function (fr) { markQ(c, fr); }, c); else onGrade(function (ok) { markQ(c, ok ? 1 : 0); });
+        if (c.unfilled) { container.querySelector("#skipLocal").addEventListener("click", function () { next(); }); return; }
+        if (c.points) onRubric(function (fr, left) { markQ(c, fr, left); }, c); else onGrade(function (ok) { markQ(c, ok ? 1 : 0); });
       }
 
-      function markQ(c, score) {          // score: 1 = got it, 0 = missed, fractions from the key-point rubric
+      function markQ(c, score, left) {          // score: 1 = got it, 0 = missed, fractions from the key-point rubric
         var ok = score >= 0.75;
         Store.grade(c.id, ok ? "good" : "again");
         var pp = perPub[c.pub] || (perPub[c.pub] = { n: 0, miss: 0, code: pubLabel(c) });
@@ -540,6 +543,11 @@
         var fups = (c.follow || []).slice();
         if (curStyle === "why" && c.why && c.pub !== "sit" && c.pub !== "personal") fups = [{ q: "Why does that matter?", a: c.why, ref: c.ref }];
         if (curStyle === "rapid") fups = [];
+        // A real board member presses on what you left out: ask about the first missed key point (bonus "why" boxes skipped)
+        var gap = (left || []).map(function (k) { return c.points && c.points[k]; }).filter(function (p) { return p && !/^Said why it matters/i.test(p); })[0];
+        if (score >= 0.5 && score < 1 && gap && curStyle !== "rapid" && !c.local) {
+          fups = [{ q: "You didn't mention this: \u201c" + gap.replace(/\.$/, "") + ".\u201d Tell the board about that, and why it matters.", a: gap.replace(/.$/, "") + "." + (c.why ? " " + c.why : ""), ref: c.ref, adaptive: true }];
+        }
         if (score >= 0.5 && fups.length) {
           var fu = fups.map(function (f) { return { kind: "follow", f: f, parent: c }; });
           Array.prototype.splice.apply(steps, [s + 1, 0].concat(fu));

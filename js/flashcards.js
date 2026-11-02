@@ -82,6 +82,7 @@
           // the question stays visible on the back, and the card grows to fit long answers instead of clipping them
           container.querySelector("#fA").innerHTML = '<div class="muted" style="font-size:.85rem;margin-bottom:8px;">' + esc(c.q) + '</div>' +
             esc(c.a).replace(/\n/g, "<br>") +
+            (c.changed ? '<div class="flash-ref" style="color:var(--gold);margin-top:10px;">&#9888;&#65039; ' + esc(c.changed) + '</div>' : "") +
             (c.why ? '<div class="flash-ref" style="color:var(--text);margin-top:12px;"><b>Why it matters:</b> ' + esc(c.why) + '</div>' : "") +
             (c.sample ? '<div class="flash-ref" style="color:var(--text);margin-top:12px;"><b>Example answer (fictional Soldier, make it yours):</b> ' + esc(c.sample) + '</div>' : "") +
             (c.points && c.points.length > 1 ? '<div class="flash-ref" style="color:var(--text);margin-top:12px;"><b>Did you cover these?</b>' + c.points.map(function (p) { return '<div style="margin-top:4px;">\u2022 ' + esc(p) + '</div>'; }).join("") + '</div>' : "") +

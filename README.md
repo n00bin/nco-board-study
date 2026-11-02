@@ -10,6 +10,20 @@ no account, no app store, nothing to sign up for.
 
 ---
 
+## What's new in 3.19
+
+- **Follow-ups that react to your answer**: leave out a key point and the board member asks about exactly that.
+- **"This changed" notes** on 30 cards where the rule changed from what Soldiers often heard (BLC for SGT, the AFT,
+  waist-to-height, mandatory reporters, Secretary of War, T2COM, and more).
+- **Old 2008 Soldier's manual cards retired or moved to current sources** (51 retired, 15 re-sourced to STP 21-1 2025 and
+  other current publications). AFT cards now cite the new **ATP 7-22.01 (Mar 2026)**.
+- **New cards**: land navigation, M4 basics, SFL-TAP, Army Career Tracker / IPPS-A, and ACS services.
+- **Sponsor boards from your actual misses**, a **read-all list** for every subject, and a **printable share kit**
+  (QR + install steps + a note for your sponsor).
+- Honest Mock Board count ("10 + 2 about your unit"), blank roster questions aren't scored, and "Getting there"
+  instead of "Passing" below 75%.
+- 70 quiz questions rebalanced so the longest choice isn't a giveaway.
+
 ## What's new in 3.18
 
 - **A board member who asks about YOUR unit and your Army**: your chain of command, your unit's history, your
@@ -174,9 +188,9 @@ no account, no app store, nothing to sign up for.
 - **Staple board subjects** — customs & courtesies (AR 600-25, 2026), flags & streamers (AR 840-10, 2025),
   drill & ceremony (TC 3-21.5), awards (AR 600-8-22, 2026), the NCOER (AR 623-3, 2025), and NCO history &
   duties (TC 7-22.7, 2025 + The Army Blue Book).
-- **Board Core (start here)** — about 540 must-know questions boards ask most, each with a one-line **why it matters**, pulled from every
+- **Board Core (start here)** — about 550 must-know questions boards ask most, each with a one-line **why it matters**, pulled from every
   publication. Mock Board, the night-before cram, and Learn Mode's Board Core track use it by default;
-  "All Publications" keeps the full deep set (about 2,140 cards) for when you want detail.
+  "All Publications" keeps the full deep set (about 2,100 cards) for when you want detail.
 - **Learn Mode (start from scratch)** — a guided path of bite-sized lessons that **teach** the material
   first (with a plain-English overview of each publication), then **practice** it. Begins with the
   fundamentals (Army Values, ranks, chain of command, creeds, Code of Conduct), then each publication.
@@ -198,13 +212,19 @@ no account, no app store, nothing to sign up for.
 - **Daily goal & streak**, **Browse** by publication, full-text **Search**, and **Backup/restore**
   (export your progress to a file and move it to a new phone).
 
-Content covers **39 subjects from 35+ publications plus the 2019–2026 Army Directives** with **about 2,140 cards** — most fact-checked page-by-page against the
+Content covers **39 subjects from 35+ publications plus the 2019–2026 Army Directives** with **about 2,100 cards** — most fact-checked page-by-page against the
 source PDFs, with a page citation on each card (the Army Values, Code of Conduct, MDMP/TLP, warfighting
 functions, SHARP reporting, the AFT and Combat Field Test, the General Orders, the Soldier's & NCO Creeds, and much more).
 
 ---
 
-## Get it on your Android phone (easiest way — about 3 minutes)
+## Get it on your phone
+
+The app is live at **https://n00bin.github.io/nco-board-study/** (a permanent link). Open it on your phone:
+**Android (Chrome):** menu ⋮ → Install app. **iPhone (Safari):** Share → Add to Home Screen. It works offline after the first open.
+In the app, More → Share & QR code → *Print a one-page share kit* gives you a QR handout.
+
+## Host your own copy (optional)
 
 Phones can only "install" a web app when it's served over a secure (`https`) web address, so we put the
 `app` folder online for free first. The simplest option needs **no account**:
