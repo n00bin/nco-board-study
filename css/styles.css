@@ -771,3 +771,7 @@ body.session .screen:has(.drive-ctl) { padding-bottom: 180px !important; }
 @keyframes ringpop { from { transform: scale(.9); opacity: .4; } }
 .ring[style] { animation: ringfill 1s ease-out, ringpop .4s ease-out; }
 @media (prefers-reduced-motion: reduce) { .ring[style] { animation: none; } }
+
+/* ---------- v3.36 polish round 9 ---------- */
+.verdict, #choices + .verdict, .flash-ref { scroll-margin-bottom: 120px; }
+details { scroll-margin-bottom: 90px; }

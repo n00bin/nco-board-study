@@ -589,6 +589,7 @@
     function run() {
       var term = input.value.trim().toLowerCase();
       mount.querySelector("#qx").hidden = !input.value;
+      try { sessionStorage.setItem("ncob-q", input.value); } catch (e) {}
       if (term.length < 2) { results.innerHTML = '<div class="muted" style="font-size:.85rem;margin:10px 4px 6px;">Try one of these:</div>' + tryChips(); return; }
       var all = allCards().filter(function (c) {
         return (c.q + " " + c.a + " " + (c.topic || "")).toLowerCase().indexOf(term) >= 0;
@@ -606,10 +607,14 @@
           '<div style="font-weight:600;margin-bottom:6px;">' + hl(c.q) + '</div><div class="muted">' + hl(c.a) + '</div></a>';
       }).join("") : '<div class="empty">No matches. Try a shorter word, or one of these:</div>' + tryChips();
     }
+    try { var q0 = sessionStorage.getItem("ncob-q"); if (q0) input.value = q0; } catch (e) {}
     function tryChips() { return '<div class="chip-row">' + ["SHARP", "AFT", "hazing", "counseling", "NCOER", "Article 15", "waist-to-height", "kratom", "land navigation", "Army Values"].map(function (w) { return '<button class="chip" data-try="' + w + '">' + w + '</button>'; }).join("") + '</div>'; }
     results.addEventListener("click", function (e) { var b = e.target.closest("[data-try]"); if (b) { input.value = b.getAttribute("data-try"); run(); } });
     mount.querySelector("#qx").addEventListener("click", function () { input.value = ""; run(); input.focus(); });
-    input.addEventListener("input", run); input.focus(); run();
+    results.addEventListener("click", function (e) { if (e.target.closest("a.card")) try { sessionStorage.setItem("ncob-qy", String(window.scrollY)); } catch (x) {} });
+    input.addEventListener("input", run); run();
+    var y0 = 0; try { y0 = +sessionStorage.getItem("ncob-qy") || 0; sessionStorage.removeItem("ncob-qy"); } catch (e) {}
+    if (y0 && input.value) setTimeout(function () { window.scrollTo(0, y0); }, 30); else input.focus();
   }
 
   // ---- More menu (stats + links) ----
@@ -1094,7 +1099,7 @@
       (note ? '<div class="card" style="border-color:var(--gold);"><div class="flash-tag">Your sponsor\'s notes</div><div style="white-space:pre-wrap;">' + esc(note) + '</div></div>' : '') +
       '<p class="center muted">' + (fresh ? "Saved to your history. " : "Already saved. ") + (ids.length ? "The questions you missed will come back sooner in your reviews:" : "No misses. Nice work.") + '</p>' +
       ids.map(function (id) { var c = byId[id]; return c ? '<details class="set-fold"><summary>' + esc(c.q) + '</summary><div style="padding:0 2px 10px;">' + esc(c.a) + '</div></details>' : ""; }).join("") +
-      (ids.length ? (Store.setChainRole("last-misses", ids.join(",")), '<div class="spacer"></div><a class="btn gold lg" href="#/flash/misses">Drill the ' + ids.length + ' you missed now</a><div class="spacer"></div><a class="btn ghost lg" href="#/">Back to Home</a>')
+      (ids.length ? (Store.setChainRole("last-misses", ids.join(",")), '<div class="spacer"></div><a class="btn gold lg" href="#/flash/misses"><svg class=ic aria-hidden=true><use href=#i-refresh></use></svg> Drill your ' + ids.length + ' miss' + (ids.length === 1 ? '' : 'es') + ' now</a><div class="spacer"></div><a class="btn ghost lg" href="#/">Back to Home</a>')
         : '<div class="spacer"></div><a class="btn gold lg" href="#/board/core">Run a Mock Board on your own</a><div class="spacer"></div><a class="btn ghost lg" href="#/">Back to Home</a>');
   }
 
@@ -1719,6 +1724,10 @@
     App.toast("Could not save your progress: phone storage may be full. Export a backup from More.", 5000);
   });
 
+  document.addEventListener("toggle", function (e) {
+    var d = e.target; if (!d || d.tagName !== "DETAILS" || !d.open) return;
+    var r = d.getBoundingClientRect(); if (r.bottom > window.innerHeight - 70) d.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  }, true);
   backBtn.addEventListener("click", function () { if (history.length > 1) history.back(); else App.go("#/"); });
 
   // ---------------- install prompt (Android Chrome) ----------------

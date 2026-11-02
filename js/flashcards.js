@@ -25,7 +25,7 @@
     return '<div class="ring-wrap"><div class="ring ' + (p >= 75 ? 'good' : p >= 50 ? 'mid' : 'bad') + '" style="--p:' + p + ';"><div class="ring-in">' + p + '%</div></div><small>knew it the first time</small></div>' +
       '<div class="done-h">Session complete</div>' +
       '<div class="dots" aria-hidden="true">' + ids.slice(0, 80).map(function (k) { return '<span class="dot ' + (first[k] === "again" ? 'r' : 'g') + '"></span>'; }).join("") + '</div>' +
-      '<p class="center muted">' + n + ' card' + (n === 1 ? '' : 's') + ' \u2022 ' + (known - easy) + ' got it \u2022 ' + easy + ' easy \u2022 ' + miss + ' missed</p>' +
+      '<p class="center muted">' + n + ' card' + (n === 1 ? '' : 's') + ' \u2022 ' + (known - easy) + ' got it' + (easy ? ' \u2022 ' + easy + ' easy' : '') + ' \u2022 ' + miss + ' missed</p>' +
       (miss ? (Store.setChainRole("last-misses", ids.filter(function (k) { return first[k] === "again"; }).slice(0, 40).join(",")), '<a class="btn gold lg" href="#/flash/misses"><svg class=ic aria-hidden=true><use href=#i-refresh></use></svg> Drill your ' + miss + ' miss' + (miss === 1 ? '' : 'es') + ' now</a>') : '');
   }
   function hasMiss(first) { return Object.keys(first).some(function (k) { return first[k] === "again"; }); }

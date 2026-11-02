@@ -315,14 +315,14 @@
           '<div class="muted" style="font-size:.85rem;margin-top:4px;">' + rule + '</div>' +
           c.points.map(function (pt, k) {
             var bonus = /^Said why it matters/i.test(pt);
-            return '<label class="switch" style="margin-top:10px;"><input type="checkbox" class="kp" data-k="' + k + '"> <span>' + (c.kp1 && k === 0 ? '<b>' + esc(pt) + '</b> <span class="muted" style="font-size:.85rem;">(the key fact)</span>' : esc(pt) + (bonus ? ' <span class="muted" style="font-size:.85rem;">(bonus)</span>' : '')) + '</span></label>';
+            return '<label class="switch" style="margin-top:10px;"><input type="checkbox" class="kp" data-k="' + k + '"> <span>' + (c.kp1 && k === 0 ? (pt.length > 60 ? '<b>Said the key fact</b> <span class="muted" style="font-size:.85rem;">(' + esc(pt.slice(0, 48).replace(/\s+\S*$/, "")) + '\u2026)</span>' : '<b>' + esc(pt) + '</b> <span class="muted" style="font-size:.85rem;">(the key fact)</span>') : esc(pt) + (bonus ? ' <span class="muted" style="font-size:.85rem;">(bonus)</span>' : '')) + '</span></label>';
           }).join("") + '</div><button class="btn gold lg" id="rubricDone">Score this answer</button>';
       }
       function onRubric(fn, c) {
         // if the checklist is still below the fold, the first tap takes you to it instead of scoring an unticked answer
         var btn = container.querySelector("#rubricDone"), rc = btn.previousElementSibling, gate = false;
         if (window.IntersectionObserver && rc && rc.getBoundingClientRect().top > window.innerHeight - 140) {
-          gate = true; btn.textContent = "Tick what you said ↓";
+          gate = true; btn.textContent = sponsor ? "Tick what they said \u2193" : "Tick what you said \u2193";
           var io = new IntersectionObserver(function (es) { if (es.some(function (e) { return e.isIntersecting; })) { gate = false; btn.textContent = "Score this answer"; io.disconnect(); } }, { rootMargin: "0px 0px -100px 0px" });
           io.observe(rc);
         }
@@ -399,7 +399,7 @@
           '<button class="btn ghost" id="showSteps">Show the reporting steps</button><div id="stepsBox" hidden>' + stepsList(all.slice(1, 5)) + '</div><div class="spacer"></div>' +
           mirrorButton() + '<p class="center muted">' + (sponsor ? 'Did they halt about two steps in front of you, salute and hold it, say their correct rank, and sit only when told?' : 'Honest check: halted two steps in front of the president, saluted and held it until returned, said your correct rank, sat only when told?') + '</p>' +
           gradeButtons("Needs work", "Clean");
-        container.querySelector("#showSteps").addEventListener("click", function () { var b = container.querySelector("#stepsBox"); b.hidden = !b.hidden; });
+        container.querySelector("#showSteps").addEventListener("click", function () { var b = container.querySelector("#stepsBox"); b.hidden = !b.hidden; this.textContent = b.hidden ? "Show the reporting steps" : "Hide the reporting steps"; });
         wireMirror();
         onGrade(function (ok) { bearing.push({ label: "Reporting in", ok: ok }); next(); });
       }
@@ -442,7 +442,7 @@
           '<div class="card"><div class="flash-tag">The board president</div>' +
             '<div class="q-text" style="margin-top:8px;">"That concludes the board. You are dismissed."</div></div>' +
           '<p class="center muted">' + (sponsor ? 'Watch them stand at attention, salute and hold until you return it, face about, and march out.' : 'Do it now: stand at attention, salute and hold until it\'s returned, face about, and march out.') + '</p>' +
-          (all.length ? '<div class="card"><div class="muted" style="font-size:.92rem;">' + esc(all[all.length - 1]) + '</div></div>' : '') + gradeButtons("Needs work", "Clean");
+          gradeButtons("Needs work", "Clean");
         onGrade(function (ok) { bearing.push({ label: "Reporting out", ok: ok }); next(); });
       }
 
@@ -493,7 +493,7 @@
         voice.text = ""; voice.paused = false; voice.started = false;
         var b = container.querySelector("#voiceBtn"); if (!b) return;
         if (c && (c.local || c.pub === "personal")) {   // your unit, your leaders, your life: keep it off the speech service
-          b.textContent = "Voice check off"; b.disabled = true; b.title = "Off for personal and your-unit questions"; return;
+          b.textContent = "No voice check here"; b.disabled = true; b.title = "Off for personal and your-unit questions"; return;
         }
         var start = function () {
           Store.setSetting("voiceAuto", true); voice.started = true;
@@ -537,6 +537,7 @@
         box.innerHTML = html + '</div>';
       }
 
+      function subjHtml(s) { var x = String(s).split(" \u2014 "); return '<span class="t" style="font-weight:700;">' + esc(x[0]) + '</span>' + (x.length > 1 ? '<span class="s">' + esc(x.slice(1).join(" \u2014 ")) + '</span>' : ''); }
       function moreHtml(c) {
         return (curStyle === "why" && c.pub !== "sit" && c.pub !== "personal" ? '' : whyHtml(c)) +
           (c.ref ? '<div class="flash-ref">Reference: ' + esc(c.ref) + '</div>' : '') +
@@ -549,7 +550,7 @@
         container.innerHTML = header() +
           '<div class="card"><div class="flash-tag">' + esc(pubCode(c)) + (c.topic && String(c.topic).toLowerCase() !== String(pubCode(c)).toLowerCase() ? " • " + esc(c.topic) : "") + '</div>' +
             '<div class="q-text" style="margin:6px 0 12px;">' + esc(qt(c)) + '</div>' +
-            '<div class="flash-tag">Answer</div><div class="flash-a">' + esc(c.a).replace(/\n/g, "<br>") + '</div>' +
+            (c.unfilled ? '' : '<div class="flash-tag">Answer</div><div class="flash-a">' + esc(c.a).replace(/\n/g, "<br>") + '</div>') +
             (c.changed ? '<div class="flash-ref" style="color:var(--gold);margin-top:8px;"><svg class=ic aria-hidden=true><use href=#i-alert></use></svg> ' + esc(c.changed) + '</div>' : '') +
             (c.points && !c.unfilled ? '' : moreHtml(c)) + '</div>' +
           (c.points && !c.unfilled ? (listened ? '<div id="heard"><div class="muted center" style="font-size:.85rem;">Checking what you said…</div></div>' : '') + rubricHtml(c) +
@@ -585,7 +586,7 @@
           var shortList = c.points.every(function (p) { return p.length <= 22 || /^Said why/i.test(p); });
           var nLeft = (left || []).filter(function (k) { return c.points[k] && !/^Said why/i.test(c.points[k]); }).length;
           var tp = c.topic ? String(c.topic).replace(/\s*\(.*\)\s*$/, "") : "";
-          if (tp && !/^[A-Z0-9]{2,}/.test(tp)) tp = tp.charAt(0).toLowerCase() + tp.slice(1);   // keep acronyms like AFTB, SHARP
+          if (tp && !/^[A-Z0-9]{2,}/.test(tp) && !/\s[A-Z]/.test(tp)) tp = tp.charAt(0).toLowerCase() + tp.slice(1);   // keep acronyms like AFTB, SHARP
           var cue = c.pub === "sit" ? "What else would you do, Sergeant?" : shortList ? (nLeft > 1 ? "You left some out. What's the rest of it?" : "You left one out. What's the rest of it?") : "There's more to it. What else should the board hear" + (tp ? " about " + tp : "") + "?";
           fups = [{ q: cue, a: "The part left out: " + gap.replace(/\.$/, "") + "." + (c.why ? " " + c.why : ""), ref: c.ref, adaptive: true }];
         }
@@ -608,7 +609,7 @@
             '<div class="muted" style="font-size:.85rem;margin-top:6px;">"Let\'s go back to an earlier question."</div>' +
             qShow(qt(c)) + (listen ? '<button class="mini" id="cbSpeak" aria-label="Hear it again" style="margin-top:6px;"><svg class=ic aria-hidden=true><use href=#i-speaker></use></svg></button>' : '') + '</div>' +
           (sponsor ? sponsorBox(c.a, c.ref, "") + '<p class="center muted">Ask it again, listen, then grade.</p>' + gradeButtons()
-                   : '<p class="center muted">You saw the answer a few minutes ago. Say it out loud now, in your own words, then reveal.</p><button class="btn gold lg" id="reveal">Reveal answer</button>');
+                   : '<p class="center muted">You saw the answer a few minutes ago. Say it out loud now, in your own words, then reveal.</p>' + recButton() + '<button class="btn gold lg" id="reveal">Reveal answer</button>');
         sayQ(qt(c));
         var cbs = container.querySelector("#cbSpeak"); if (cbs) cbs.addEventListener("click", function () { Speech.speak(qt(c), curVoice); });
         var gradeIt = function (ok) {
@@ -623,10 +624,12 @@
           container.innerHTML = header("Second try") +
             '<div class="card"><div class="flash-tag">' + esc(pubCode(c)) + '</div><div class="q-text" style="margin:6px 0 12px;">' + esc(qt(c)) + '</div>' +
             '<div class="flash-tag">Answer</div><div class="flash-a">' + esc(c.a).replace(/\n/g, "<br>") + '</div></div>' +
-            '<p class="center muted">Did you get it this time?</p>' + gradeButtons();
+            '<div id="playback"></div><p class="center muted">Did you get it this time?</p>' + gradeButtons();
+          playback();
           onGrade(gradeIt);
         };
         container.querySelector("#reveal").addEventListener("click", rev);
+        wireRec();
         runTimer(t, rev);
       }
 
@@ -678,6 +681,7 @@
         var pubOf = {}; cards.forEach(function (c) { pubOf[c.id] = c.pub; });
         var sitMiss = missedIds.filter(function (id, k) { return pubOf[id] === "sit" && missedIds.indexOf(id) === k; }).length;
         var V = verdict(pct, bearingMiss, sitMiss), notReady = V.level === "almost", msg = V.msg;
+        if (sponsor) msg = msg.replace(/^Your answers/, "Their answers").replace(/so tighten up/, "so have them tighten up");
         if (deck.length < 8 && V.level !== "work") { V = { level: "work", title: "Good practice", msg: pct + "% on a short board. Board-ready takes a full board of 10 or more questions." }; msg = V.msg; }
         var nQ = deck.filter(function (c) { return !c.local; }).length, nF = Math.max(0, asked - nQ);
         var countLine = nQ + " question" + (nQ === 1 ? "" : "s") + (nF ? ", " + nF + " follow-up" + (nF === 1 ? "" : "s") + " or second tries" : "");
@@ -709,7 +713,7 @@
         }
         if (weak.length) {
           html += '<h2 class="section">Weakest subjects</h2><div class="lg">';
-          weak.forEach(function (p) { html += '<a class="li" href="#/flash/' + encodeURIComponent(p.id || "") + '"><span class="grow"><span class="t" style="font-weight:600;font-size:.92rem;">' + esc(p.code) + '</span></span><b class="badge-bad" style="white-space:nowrap;">missed ' + p.miss + ' of ' + p.n + '</b><span class="chev" aria-hidden="true"><svg class=ic aria-hidden=true><use href=#i-chev></use></svg></span></a>'; });
+          weak.forEach(function (p) { html += '<a class="li" href="#/flash/' + encodeURIComponent(p.id || "") + '"><span class="grow">' + subjHtml(p.code) + '</span><b class="badge-bad" style="white-space:nowrap;">missed ' + p.miss + ' of ' + p.n + '</b><span class="chev" aria-hidden="true"><svg class=ic aria-hidden=true><use href=#i-chev></use></svg></span></a>'; });
           html += '</div>';
         }
         if (missed.length) {

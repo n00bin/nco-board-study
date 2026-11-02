@@ -131,6 +131,8 @@
 
       var html =
         '<div class="hero"><div class="big" style="font-size:1.6rem;">' + doneN + ' of ' + pathFlat.length + ' lessons</div><div class="sub">on your board path' + (extraDone > 0 ? ' (+' + extraDone + ' extra)' : '') + '</div>' +
+          (function () { var seen = STUDY.cards.filter(function (c) { if (!c.core) return false; var r = Store.recOf(c.id); return r && r.seen > 0; }).length;
+            return seen && !doneN ? '<div class="sub" style="margin-top:4px;">You&#39;ve already studied ' + seen + ' Board Core cards in Flashcards. Lessons teach them step by step.</div>' : ''; })() +
           '<div class="bar"><span style="width:' + pct + '%"></span></div></div>' +
         '<div class="card"><div class="muted">Learn it, then practice it. <b>For your board: finish Board 101, Fundamentals and Board Core.</b></div></div>';
       if (next) html += '<a class="btn gold lg" href="#/lesson/' + next.id + '">' + (doneN ? "<svg class=ic aria-hidden=true><use href=#i-play></use></svg> Continue learning" : "<svg class=ic aria-hidden=true><use href=#i-play></use></svg> Start learning") + '</a><div class="spacer"></div>';
@@ -218,23 +220,21 @@
       function practice() {
         Speech.stop();
         var quizzable = lesson.cards.filter(function (c) { return !c.flashOnly && ((c.choices && c.choices.length >= 2 && typeof c.answer === "number") || (c.a && String(c.a).length <= 90)); });
-        container.innerHTML = '<div class="card center"><div class="code">Practice: ' + esc(lesson.title) + '</div><div class="muted">Now recall what you just learned.</div></div>';
-        var go = document.createElement("button"); go.className = "btn gold lg"; go.textContent = "Start practice";
-        container.appendChild(go);
-        go.addEventListener("click", function () {
-          if (quizzable.length >= 4) Quiz.render(container, lesson.cards, lesson.title, quizzable.length, { onDone: complete });
-          else Flashcards.render(container, lesson.cards, lesson.title, { onDone: function () { complete(null, null); } });
-        });
+        window.scrollTo(0, 0);
+        if (quizzable.length >= 4) Quiz.render(container, lesson.cards, lesson.title, quizzable.length, { onDone: complete });
+        else Flashcards.render(container, lesson.cards, lesson.title, { onDone: function () { complete(null, null); } });
       }
 
       function complete(score, total) {
         Store.markLessonDone(lesson.id, score == null ? null : Math.round((score / total) * 100));
-        var line = (score == null) ? "Nicely done." : "You scored " + score + " of " + total + ".";
+        var p = score == null ? 100 : Math.round(100 * score / Math.max(1, total));
+        var line = (score == null) ? "Practice done. Missed cards come back sooner in your reviews." : "You got " + score + " of " + total + " in practice.";
         container.innerHTML =
-          '<div class="ring-wrap"><div class="ring">&#10003;<small>Lesson complete</small></div></div>' +
+          '<div class="ring-wrap"><div class="ring ' + (p >= 75 ? 'good' : p >= 50 ? 'mid' : 'bad') + '" style="--p:' + p + ';"><div class="ring-in">' + (score == null ? '&#10003;' : p + '%') + '</div></div><small>' + esc(lesson.title) + '</small></div>' +
+          '<div class="done-h">Lesson complete</div>' +
           '<p class="center muted">' + line + '</p><div class="spacer"></div>' + (window.App && App.sessionNextHtml ? App.sessionNextHtml() : '') +
           (nextLesson ? '<button class="btn gold lg" id="next">Next lesson &#8594;</button><div class="spacer"></div>' : '') +
-          '<button class="btn ghost" id="path">Back to Learn</button>';
+          '<button class="btn ghost lg" id="path">Back to Learn</button>';
         if (nextLesson) container.querySelector("#next").addEventListener("click", function () { App.go("#/lesson/" + nextLesson.id); });
         container.querySelector("#path").addEventListener("click", function () { App.go("#/learn"); });
       }

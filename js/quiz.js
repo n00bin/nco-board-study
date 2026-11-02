@@ -147,6 +147,8 @@
           if (sb) container.insertBefore(ref, sb); else container.appendChild(ref);
         }
         if (sb) sb.replaceWith(nav); else container.appendChild(nav);
+        var last = container.querySelector(".flash-ref") || verdict;
+        if (last && last.scrollIntoView) setTimeout(function () { last.scrollIntoView({ block: "nearest", behavior: "smooth" }); }, 30);
       }
 
       function showResults() {
@@ -156,9 +158,10 @@
         var missHtml = misses.length ? '<details class="set-fold"><summary>Review your ' + misses.length + ' miss' + (misses.length === 1 ? '' : 'es') + '</summary>' + misses.map(function (c) { return '<div class="chg"><div style="font-weight:600;margin-bottom:4px;">' + esc(c.q) + '</div><div>' + esc(c.a) + '</div></div>'; }).join("") + '</details>' : '';
         var dots = '<div class="dots" aria-hidden="true">' + res.map(function (x) { return '<span class="dot ' + (x ? 'g' : 'r') + '"></span>'; }).join("") + '</div>' +
           '<div class="dot-legend"><span><span class="dot g"></span>right</span><span><span class="dot r"></span>missed</span></div>';
+        var nOfK = {}; questions.forEach(function (it) { var c = it.card, p = window.STUDY && STUDY.pubsById[c.pub]; var k = c.label || (p ? p.code + (p.title && p.title !== p.code ? " \u2014 " + p.title : "") : c.pub || "Your cards"); nOfK[k] = (nOfK[k] || 0) + 1; });
         var byPub = {}, pubOfK = {}; misses.forEach(function (c) { var p = window.STUDY && STUDY.pubsById[c.pub]; var k = c.label || (p ? p.code + (p.title && p.title !== p.code ? " \u2014 " + p.title : "") : c.pub || "Your cards"); byPub[k] = (byPub[k] || 0) + 1; pubOfK[k] = c.pub; });
         var weakK = Object.keys(byPub).sort(function (x, y) { return byPub[y] - byPub[x]; }).slice(0, 4);
-        var weakHtml = weakK.length ? '<h2 class="section">Weakest subjects</h2><div class="lg">' + weakK.map(function (k) { return '<a class="li" href="#/flash/' + encodeURIComponent(pubOfK[k] || "") + '"><span class="grow"><span class="t" style="font-weight:600;">' + esc(k) + '</span></span><b class="badge-bad" style="white-space:nowrap;">missed ' + byPub[k] + '</b><span class="chev" aria-hidden="true"><svg class=ic aria-hidden=true><use href=#i-chev></use></svg></span></a>'; }).join("") + '</div>' : '';
+        var weakHtml = weakK.length ? '<h2 class="section">Weakest subjects</h2><div class="lg">' + weakK.map(function (k) { return '<a class="li" href="#/flash/' + encodeURIComponent(pubOfK[k] || "") + '"><span class="grow">' + (function () { var x = k.split(" \u2014 "); return '<span class="t" style="font-weight:700;">' + esc(x[0]) + '</span>' + (x.length > 1 ? '<span class="s">' + esc(x.slice(1).join(" \u2014 ")) + '</span>' : ''); })() + '</span><b class="badge-bad" style="white-space:nowrap;">missed ' + byPub[k] + ' of ' + (nOfK[k] || byPub[k]) + '</b><span class="chev" aria-hidden="true"><svg class=ic aria-hidden=true><use href=#i-chev></use></svg></span></a>'; }).join("") + '</div>' : '';
         var msg = pct >= 90 ? "Outstanding." : pct >= 75 ? "Solid. Keep drilling." :
                   pct >= 60 ? "Passing, but review the misses." : "Needs work. Run it again.";
         container.innerHTML =
