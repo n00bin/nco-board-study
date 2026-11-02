@@ -109,7 +109,20 @@
   var timer = null, releaseMic = null, voiceFail = false;
   function clearTimer() { if (timer) { clearInterval(timer); timer = null; } }
 
+  function listJoin2(a) { return a.length < 2 ? a.join("") : a.slice(0, -1).join(", ") + " and " + a[a.length - 1]; }
+  // One verdict everywhere. bearingMiss: labels that need work; sitMiss: required situational questions missed.
+  function verdict(pct, bearingMiss, sitMiss) {
+    bearingMiss = bearingMiss || []; sitMiss = sitMiss || 0;
+    var fix = [bearingMiss.length ? listJoin2(bearingMiss) : "", sitMiss ? sitMiss + " situational question" + (sitMiss > 1 ? "s" : "") : ""].filter(Boolean);
+    if (pct >= 75 && fix.length) return { level: "almost", title: "Almost board-ready", msg: "Your answers scored " + pct + "%. A real board also grades bearing and the situational questions, so tighten up " + listJoin2(fix) + " and run it again." };
+    if (pct >= 90) return { level: "ready", title: "Board-ready", msg: "Board-ready. Keep it sharp with a board every few days." };
+    if (pct >= 75) return { level: "ready", title: "Strong", msg: "Strong. Tighten the misses." };
+    if (pct >= 60) return { level: "work", title: "Passing", msg: "Passing. Keep drilling the misses" + (fix.length ? ", and work on " + listJoin2(fix) : "") + "." };
+    return { level: "work", title: "Needs work", msg: "Needs work. Study the misses, then run it again" + (fix.length ? ", and practice " + listJoin2(fix) : "") + "." };
+  }
+
   var MockBoard = {
+    verdict: verdict,
     stop: function () { clearTimer(); if (window.Speech) Speech.stop(); if (releaseMic) releaseMic(); },
 
     // opts.full: rehearse the whole board (report in, opening statement, report out)
@@ -144,7 +157,7 @@
           subs.sort(function (a, b) { return (a === "a situation") - (b === "a situation"); });
           var style = last ? "standard" : ["standard", "rapid", "why"][m % 3];
           steps.push({ kind: "member", label: last ? "The Board President" : "Board member " + (m + 1), subs: subs, style: style });
-          ch.forEach(function (c) { steps.push({ kind: "q", c: c, style: style }); });
+          ch.forEach(function (c) { steps.push({ kind: "q", c: c, style: style, mi: last ? 3 : m % 3 }); });
         });
         steps.push({ kind: "reportOut" });
         deck = [].concat.apply([], chunks);
@@ -178,7 +191,23 @@
         if (rec.stream) rec.stream.getTracks().forEach(function (t) { t.stop(); });
         if (rec.url) URL.revokeObjectURL(rec.url);
         rec = { stream: null, mr: null, chunks: [], url: null };
+        stopMirror();
       };
+      var mirror = { stream: null };
+      function mirrorButton() { return (!sponsor && navigator.mediaDevices && navigator.mediaDevices.getUserMedia) ? '<button class="btn ghost" id="mirrorBtn">&#129694; Mirror: check your bearing (front camera)</button><div id="mirrorBox"></div><div class="spacer"></div>' : ''; }
+      function stopMirror() { if (mirror.stream) { mirror.stream.getTracks().forEach(function (t) { t.stop(); }); mirror.stream = null; } }
+      function wireMirror() {
+        var b = container.querySelector("#mirrorBtn"); if (!b) return;
+        b.addEventListener("click", function () {
+          if (mirror.stream) { stopMirror(); container.querySelector("#mirrorBox").innerHTML = ""; b.textContent = "Mirror: check your bearing (front camera)"; return; }
+          navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false }).then(function (st) {
+            mirror.stream = st;
+            var box = container.querySelector("#mirrorBox"); if (!box) { stopMirror(); return; }
+            box.innerHTML = '<video autoplay playsinline muted style="width:100%;border-radius:10px;transform:scaleX(-1);margin-top:6px;"></video><div class="muted" style="font-size:.85rem;">Head and eyes front, hands still at your sides, no swaying. Nothing is recorded or saved.</div>';
+            box.querySelector("video").srcObject = st; b.textContent = "Turn the mirror off";
+          }).catch(function () { App.toast("Can't use the camera. Allow camera access to use the mirror.", 4000); });
+        });
+      }
       function recButton() { return canRec && !sponsor ? '<button class="btn ghost" id="recBtn">&#127897; Record my answer</button><div class="spacer"></div>' : ""; }
       // Record takes the microphone from the voice check (one microphone user at a time)
       function wireRec() { var b = container.querySelector("#recBtn"); if (b) b.addEventListener("click", function () {
@@ -251,7 +280,7 @@
         container.querySelector("#got").addEventListener("click", function () { fn(true); });
         container.querySelector("#miss").addEventListener("click", function () { fn(false); });
       }
-      function next() { s++; if (s >= steps.length) return results(); show(); }
+      function next() { stopMirror(); s++; if (s >= steps.length) return results(); show(); }
 
       // Key-point rubric (scenario cards with `points`): tick what the answer actually covered; partial credit.
       function rubricHtml(c, who) {
@@ -279,7 +308,7 @@
       function show() {
         clearTimer();
         var st = steps[s];
-        if (st.kind === "q") { curStyle = st.style || "standard"; return question(st.c); }
+        if (st.kind === "q") { curStyle = st.style || "standard"; curVoice = VOICES[st.mi || 0] || VOICES[0]; return question(st.c); }
         if (st.kind === "follow") return followUp(st);
         if (st.kind === "comeback") return comeback(st.c);
         if (st.kind === "reportIn") return reportIn();
@@ -306,9 +335,10 @@
           '<div class="card">' + cmds.map(function (t, k) { return '<div class="row" style="margin-bottom:6px;"><div class="numbubble">' + (k + 1) + '</div><div class="grow"><div class="ttl" style="font-size:1.15rem;font-weight:700;">' + esc(t) + '</div></div></div>'; }).join("") +
             '<div class="muted" style="font-size:.85rem;margin-top:6px;">' + drillHints(cmds) + 'Then ' + (sponsor ? 'tell the Soldier to take their seat.' : 'wait for the president to tell you to take your seat.') + '</div></div>' +
           (sponsor ? '' : '<button class="btn ghost" id="sayIt">&#128266; Call the commands for me</button><div class="spacer"></div>') +
-          '<p class="center muted">Honest check: crisp, on the command of execution, back to attention each time?</p>' +
-          '<a class="btn ghost" href="#/flash/tc3-21-5" style="margin-bottom:10px;">Study drill cards (TC 3-21.5)</a>' +
+          '<p class="center muted">' + (sponsor ? 'Were the movements crisp, on the command of execution, back to attention each time?' : 'Honest check: crisp, on the command of execution, back to attention each time?') + '</p>' +
+          (sponsor ? '' : '<a class="btn ghost" href="#/flash/tc3-21-5" style="margin-bottom:10px;">Study drill cards (TC 3-21.5)</a>') + mirrorButton() +
           gradeButtons("Needs work", "Drill was sharp");
+        setTimeout(wireMirror, 0);
         var say = container.querySelector("#sayIt");
         if (say) say.addEventListener("click", function () {
           var k = 0;
@@ -333,9 +363,10 @@
               (Store.chain()["memo-report"] ? '<div class="muted">Your memo\'s wording: <b>"' + esc(Store.chain()["memo-report"]) + '"</b></div></div>'
                 : '<div class="muted">"Sergeant Major, (your rank) (your last name) reports to the President of the Board." Use your own rank and your board memo\'s exact wording. <a href="#/memo">Add your memo\'s wording</a>.</div></div>')) +
           '<button class="btn ghost" id="showSteps">Show the reporting steps</button><div id="stepsBox" hidden>' + stepsList(all.slice(1, 5)) + '</div>' +
-          '<p class="center muted">' + (sponsor ? 'Did they halt about two steps in front of you, salute and hold it, say their correct rank, and sit only when told?' : 'Honest check: halted two steps in front of the president, saluted and held it until returned, said your correct rank, sat only when told?') + '</p>' +
+          mirrorButton() + '<p class="center muted">' + (sponsor ? 'Did they halt about two steps in front of you, salute and hold it, say their correct rank, and sit only when told?' : 'Honest check: halted two steps in front of the president, saluted and held it until returned, said your correct rank, sat only when told?') + '</p>' +
           gradeButtons("Needs work", "Reported in clean");
         container.querySelector("#showSteps").addEventListener("click", function () { var b = container.querySelector("#stepsBox"); b.hidden = !b.hidden; });
+        wireMirror();
         onGrade(function (ok) { bearing.push({ label: "Reporting in", ok: ok }); next(); });
       }
       function intro() {
@@ -358,7 +389,7 @@
                   : '<div class="card" style="border-color:var(--gold);"><div class="flash-tag">Did you cover these?</div>' +
                       ["Your rank, name, job, and unit", "Your time in service", "One or two real accomplishments", "Your goals as an NCO"].map(function (t) {
                         return '<label class="switch" style="margin-top:10px;"><input type="checkbox" class="ip"> <span>' + esc(t) + '</span></label>'; }).join("") +
-                      '<div class="muted" style="font-size:.85rem;margin-top:10px;">Tip: draft it under Board Day Prep → Opening Statement (there\'s an example).</div></div>' +
+                      (sponsor ? '</div>' : '<div class="muted" style="font-size:.85rem;margin-top:10px;">Tip: draft it under Board Day Prep → Opening Statement (there\'s an example).</div></div>') +
                     '<div id="playback"></div><button class="btn gold lg" id="introDone">Score it</button>');
           playback();
           if (stmt) onGrade(function (ok) { bearing.push({ label: "Tell us about yourself", ok: ok }); next(); });
@@ -395,6 +426,7 @@
 
       // ---- questions ----
       var curStyle = "standard";
+      var VOICES = [{ pitch: 1, rate: 0.98 }, { pitch: 0.8, rate: 0.92 }, { pitch: 1.2, rate: 1.05 }, { pitch: 0.9, rate: 0.9 }], curVoice = VOICES[0];
       function question(c) {
         qNum++;
         var cs = timeFor(c); curLimit = cs || 0;
@@ -407,9 +439,9 @@
             '<div class="q-text" style="margin-top:8px;">' + esc(qt(c)) + '</div></div>' +
           (sponsor ? sponsorBox(c.a, c.ref, whyHtml(c)) + '<p class="center muted">Read the question aloud, listen, then grade.</p>' + (c.points ? rubricHtml(c, "Sponsor: tick what the Soldier covered") : gradeButtons())
                    : '<p class="center muted">' + (c.why && c.pub !== "sit" && c.pub !== "personal" ? 'Answer out loud, then say why it matters. Then reveal.' : 'Answer out loud, then reveal.') + '</p>' + recButton() + voiceButton() + '<button class="btn gold lg" id="reveal">Reveal answer</button>');
-        container.querySelector("#mSpeak").addEventListener("click", function () { Speech.speak(qt(c)); });
+        container.querySelector("#mSpeak").addEventListener("click", function () { Speech.speak(qt(c), curVoice); });
         container.querySelector("#mReport").addEventListener("click", function () { App.reportCard(c); });
-        if (autoRead) Speech.speak(qt(c));
+        if (autoRead) Speech.speak(qt(c), curVoice);
         if (sponsor) {
           if (c.points) onRubric(function (fr) { clearTimer(); markQ(c, fr); }, c); else onGrade(function (ok) { clearTimer(); markQ(c, ok ? 1 : 0); });
           runTimer(cs, function () { var n = container.querySelector("#tNum"); if (n) n.textContent = "Time!"; }); return;
@@ -511,7 +543,7 @@
             '<div class="q-text" style="margin-top:8px;">' + esc(qt(c)) + '</div></div>' +
           (sponsor ? sponsorBox(c.a, c.ref, "") + '<p class="center muted">Ask it again, listen, then grade.</p>' + gradeButtons()
                    : '<p class="center muted">You saw the answer a few minutes ago. Say it out loud now, in your own words, then reveal.</p><button class="btn gold lg" id="reveal">Reveal answer</button>');
-        if (autoRead) Speech.speak(qt(c));
+        if (autoRead) Speech.speak(qt(c), curVoice);
         var gradeIt = function (ok) {
           var pp = perPub[c.pub] || (perPub[c.pub] = { n: 0, miss: 0, code: pubLabel(c) });
           pp.n++; asked++; if (ok) got++; else pp.miss++;
@@ -538,7 +570,7 @@
             '<div class="q-text" style="margin-top:8px;">' + esc(f.q) + '</div></div>' +
           (sponsor ? sponsorBox(f.a, f.ref, "") + '<p class="center muted">Ask the follow-up, listen, then grade.</p>' + gradeButtons()
                    : '<p class="center muted">Answer out loud, then reveal.</p>' + recButton() + '<button class="btn gold lg" id="reveal">Reveal answer</button>');
-        if (autoRead) Speech.speak(f.q);
+        if (autoRead) Speech.speak(f.q, curVoice);
         var gradeFollow = function (ok) {
           var pp = perPub[c.pub] || (perPub[c.pub] = { n: 0, miss: 0, code: pubLabel(c) });
           pp.n++; asked++;
@@ -571,16 +603,14 @@
         var weak = Object.keys(perPub).map(function (k) { return perPub[k]; })
           .filter(function (p) { return p.miss > 0; })
           .sort(function (a, b) { return b.miss - a.miss; }).slice(0, 5);
-        var msg = pct >= 90 ? "Board-ready." : pct >= 75 ? "Strong. Tighten the misses." : pct >= 60 ? "Passing. Keep drilling." : "Needs work. Run it again.";
+
         // A real board weighs bearing and the required situational questions, not just the percentage.
         var bearingMiss = bearing.filter(function (b) { return !b.ok; }).map(function (b) { return b.label.toLowerCase(); });
         var sitMiss = missedIds.filter(function (id) { return /^sit-/.test(id); }).length;
-        var notReady = pct >= 75 && (bearingMiss.length || sitMiss);
-        if (notReady) msg = "Your answers scored " + pct + "%, but a real board also grades " +
-          [bearingMiss.length ? "bearing (" + listJoin(bearingMiss) + ")" : "", sitMiss ? sitMiss + " required situational question" + (sitMiss > 1 ? "s" : "") + " you missed" : ""].filter(Boolean).join(" and ") + ".";
+        var V = verdict(pct, bearingMiss, sitMiss), notReady = V.level === "almost", msg = V.msg;
         var nQ = deck.length, nF = Math.max(0, asked - nQ);
         var countLine = nQ + " question" + (nQ === 1 ? "" : "s") + (nF ? ", " + nF + " follow-up" + (nF === 1 ? "" : "s") + " or second tries" : "");
-        var html = (notReady ? '<div class="card" style="border-color:var(--bad);text-align:center;"><div style="font-size:1.3rem;font-weight:800;">Not board-ready yet</div><div class="muted" style="margin-top:6px;">' + esc(msg) + '</div>' +
+        var html = (notReady ? '<div class="card" style="border-color:var(--gold);text-align:center;"><div style="font-size:1.3rem;font-weight:800;">' + esc(V.title) + '</div><div class="muted" style="margin-top:6px;">' + esc(msg) + '</div>' +
               (bearingMiss.length ? '<div class="btn-row" style="margin-top:10px;"><a class="btn ghost" href="#/reporting">Practice reporting</a><a class="btn ghost" href="#/flash/tc3-21-5">Drill cards</a></div>' : '') + '</div>' : '') +
           '<div class="ring-wrap"><div class="ring">' + pct + '%<small>answers</small></div></div>' +
           '<p class="center muted" style="font-size:.85rem;">' + countLine + ' (partial credit counted)</p>' + (notReady ? '' : '<p class="center muted">' + msg + '</p>');

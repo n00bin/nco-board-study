@@ -318,10 +318,11 @@
     var html =
       '<div class="hero">' +
         '<div style="display:flex;justify-content:space-between;align-items:flex-end;"><div>' + head + '</div>' +
-          '<div style="text-align:right;white-space:nowrap;"><div style="font-size:1.5rem;font-weight:800;">&#128293; ' + streak + '</div><div class="sub">day streak</div></div></div>' +
+          '<div style="text-align:right;white-space:nowrap;"><div style="font-size:1.5rem;font-weight:800;">&#128293; ' + streak + '</div><div class="sub">day streak' + (Store.saverUsed() && Date.now() - Store.saverUsed() < 2 * 86400000 ? ' (1 missed day forgiven)' : '') + '</div></div></div>' +
         (calm || recommended ? '' : '<div class="bar"><span style="width:' + rs.ready + '%"></span></div>' +
           '<div class="sub" style="margin-top:6px;font-size:.85rem;">' + (daily.count >= dayTarget ? 'Done for today: ' + daily.count + ' cards &#10003;' : 'Today: ' + daily.count + ' of ' + dayTarget + ' cards') +
           ' • Board Core ' + rs.seen + ' of ' + coreIds.length + '</div>' +
+          (rs.mockAvg == null && rs.seen >= 30 ? '<div class="sub" style="margin-top:4px;font-size:.85rem;">No Mock Boards yet: they are 40% of this score. <a href="#/board/core" style="color:inherit;text-decoration:underline;">Run one</a> to raise it.</div>' : '') +
           (rs.weak.length ? '<div class="sub" style="margin-top:4px;font-size:.85rem;">Work on: <b>' + esc(rs.weak.join(", ")) + '</b></div>' : '') +
           (rs.seen ? '<details style="margin-top:4px;"><summary class="sub" style="font-size:.8rem;">How is board-ready figured?</summary><div class="sub" style="font-size:.8rem;margin-top:4px;">60% Board Core cards you got right last time (' + rs.recalled + ' of ' + coreIds.length + ') + 40% your last 3 Mock Boards (' + (rs.mockAvg == null ? 'none yet' : rs.mockAvg + '%') + '), counted more as you cover Board Core.</div></details>' : '')) +
       '</div>' +
@@ -532,7 +533,8 @@
       '<a class="row" href="#/share"><div class="grow"><div class="code">&#128279; Share &amp; QR code</div><div class="ttl">Send the app to other Soldiers</div></div><div class="chev">&#8250;</div></a>' +
       '<a class="row" href="#/settings"><div class="grow"><div class="code">&#9881;&#65039; Settings</div><div class="ttl">Daily goal, board timer, read-aloud</div></div><div class="chev">&#8250;</div></a>' +
       '<a class="row" href="#/backup"><div class="grow"><div class="code">&#128190; Backup &amp; restore</div><div class="ttl">Save or move your progress</div></div><div class="chev">&#8250;</div></a>' +
-      '<div class="muted center" style="font-size:.8rem;margin-top:18px;">NCO Board Study Guide<br>' + esc(versionLine()) + '</div>';
+      '<a class="row" href="#/sources"><div class="grow"><div class="code">&#128218; Sources &amp; editions</div><div class="ttl">Every publication the cards come from, and its edition</div></div><div class="chev">&#8250;</div></a>' +
+      '<div class="muted center" style="font-size:.8rem;margin-top:18px;">NCO Board Study Guide<br>' + esc(versionLine()) + '<br>Unofficial study aid. Not endorsed by the U.S. Army or the Department of Defense. Your board memo and local SOP come first.</div>';
     html += '<h2 class="section">Recent quizzes &amp; boards</h2>';
     html += quizzes.length ? quizzes.slice(0, 10).map(function (q) {
       var pct = Math.round((q.score / q.total) * 100), cls = pct >= 75 ? "badge-good" : pct >= 60 ? "" : "badge-bad";
@@ -858,7 +860,8 @@
     if (cards.length < 3) { mount.innerHTML = '<div class="empty">This sheet link is incomplete.</div>'; return; }
     var box = '<span class="sheet-box"></span>';
     var html = '<div class="card no-print"><div class="muted">Print this (or save it as a PDF) and hand it to your sponsor. They read each question aloud, tick what you said, and grade your bearing. No app needed on their side.</div>' +
-      '<div class="spacer"></div><button class="btn gold lg" id="doPrint">&#128424;&#65039; Print or save as PDF</button></div>' +
+      '<div class="spacer"></div><button class="btn gold lg" id="doPrint">&#128424;&#65039; Print or save as PDF</button>' +
+      '<div class="spacer"></div><a class="btn ghost" href="#/sheetin/' + escAttr(want.join(",")) + '">&#9997;&#65039; After the board: enter the paper results</a></div>' +
       '<div class="sheet"><h2 style="margin:6px 0;">Practice Promotion Board</h2><div class="muted">Soldier: ____________________ &nbsp; Date: __________ &nbsp; Sponsor: ____________________</div>' +
       '<h3>Bearing (tick if clean)</h3>' + ["Reporting in", "Facing movements", "Tell us about yourself (about 90 seconds)", "Reporting out"].map(function (b) { return '<div>' + box + ' ' + esc(b) + '</div>'; }).join("");
     cards.forEach(function (c, k) {
@@ -868,9 +871,31 @@
         (c.follow && c.follow.length ? '<div class="muted" style="margin-top:4px;font-size:.85rem;">If they get it, follow up: ' + esc(c.follow[0].q) + ' (' + esc(c.follow[0].a) + ')</div>' : '') +
         '<div class="muted" style="font-size:.75rem;margin-top:4px;">' + esc(c.ref || "") + '</div></div>';
     });
-    html += '<h3>Notes for the Soldier</h3><div class="sheet-lines"></div><div class="muted" style="font-size:.75rem;">From the NCO Board Study Guide app. The board memo and local SOP come first.</div></div>';
+    html += '<div style="margin-top:10px;font-weight:700;">Questions correct: ______ of ' + cards.length + '</div><h3>Notes for the Soldier</h3><div class="sheet-lines"></div><div class="muted" style="font-size:.75rem;">From the NCO Board Study Guide app. The board memo and local SOP come first.</div></div>';
     mount.innerHTML = html;
     mount.querySelector("#doPrint").addEventListener("click", function () { window.print(); });
+  }
+
+  // ---- type the paper board's results back in: same save path as a sponsor's results link ----
+  function screenSheetIn(list) {
+    setTitle("Enter Paper Board Results", true);
+    var want = String(list || "").split(",").filter(Boolean), byId = {};
+    allCards().forEach(function (c) { byId[c.id] = c; });
+    var cards = want.map(function (id) { return byId[id]; }).filter(Boolean);
+    if (cards.length < 3) { mount.innerHTML = '<div class="empty">This link is incomplete.</div>'; return; }
+    var B = [["R", "Reporting in"], ["D", "Facing movements"], ["I", "Tell us about yourself"], ["O", "Reporting out"]];
+    mount.innerHTML = '<div class="card"><div class="muted">Copy what your sponsor marked on the paper sheet. Tap each question you got right.</div></div>' +
+      cards.map(function (c, k) { return '<label class="switch card"><input type="checkbox" class="pq" data-id="' + escAttr(c.id) + '"> <span>' + (k + 1) + '. ' + esc(c.oral || c.q) + '</span></label>'; }).join("") +
+      '<h2 class="section">Bearing (tick if clean)</h2>' + B.map(function (b) { return '<label class="switch card"><input type="checkbox" class="pb" data-b="' + b[0] + '"> <span>' + esc(b[1]) + '</span></label>'; }).join("") +
+      '<label class="lbl" for="pNote">Your sponsor\'s notes (optional)</label><textarea class="input" id="pNote" rows="3" maxlength="300"></textarea>' +
+      '<div class="spacer"></div><button class="btn gold lg" id="pSave">Save these results</button>';
+    mount.querySelector("#pSave").addEventListener("click", function () {
+      var got = 0, missed = [];
+      mount.querySelectorAll(".pq").forEach(function (x) { if (x.checked) got++; else missed.push(x.getAttribute("data-id")); });
+      var bcode = "b-" + Array.prototype.map.call(mount.querySelectorAll(".pb"), function (x) { return x.getAttribute("data-b") + (x.checked ? 1 : 0); }).join("");
+      var note = (mount.querySelector("#pNote").value || "").trim().slice(0, 300);
+      App.go("#/sbresult/" + got + "/" + cards.length + "/" + Date.now().toString(36) + "/" + missed.join(",") + "/" + bcode + (note ? "/" + encodeURIComponent(note) : ""));
+    });
   }
 
   // A board sent from a Soldier's phone: same questions, run here in sponsor mode (answers + checklists shown to the sponsor).
@@ -912,8 +937,10 @@
     }
     var pct = Math.round(100 * got / total);
     mount.innerHTML = '<div class="ring-wrap"><div class="ring">' + pct + '%<small>from your sponsor\'s board</small></div></div>' +
-      (bear.some(function (b) { return !b.ok; }) ? '<div class="card" style="border-color:var(--bad);text-align:center;"><b>Not board-ready yet.</b> <span class="muted">' + (pct >= 75 ? 'Your answers were strong, but work on: ' : 'Work on your answers, and on: ') +
-        esc(bear.filter(function (b) { return !b.ok; }).map(function (b) { return b.label.toLowerCase(); }).join(", ")) + '. A board weighs bearing as much as the facts.</span></div>' : '') +
+      (function () {
+        var V = MockBoard.verdict(pct, bear.filter(function (b) { return !b.ok; }).map(function (b) { return b.label.toLowerCase(); }), ids.filter(function (id) { return /^sit-/.test(id); }).length);
+        return '<div class="card" style="border-color:' + (V.level === "ready" ? 'var(--good)' : 'var(--gold)') + ';text-align:center;"><b>' + esc(V.title) + '.</b> <span class="muted">' + esc(V.msg) + '</span></div>';
+      })() +
       (selfPct != null ? '<div class="card"><div class="flash-tag">You vs. your sponsor</div><div class="muted">Your own Mock Boards average <b>' + selfPct + '%</b>. Your sponsor scored you <b>' + pct + '%</b>. ' +
         (selfPct - pct >= 10 ? 'You grade yourself about ' + (selfPct - pct) + ' points higher than your sponsor does. Next time, only give yourself a key point if you said it out loud, clearly.' : selfPct - pct <= -10 ? 'Your sponsor scored you higher than you score yourself. You know more than you think.' : 'Your own grading is close to your sponsor&#39;s. You can trust your practice scores.') + '</div></div>' : '') +
       (bear.length ? '<h2 class="section">Bearing &amp; delivery (your sponsor\'s grades)</h2>' + bear.map(function (b) { return '<div class="row"><div class="grow"><div class="ttl">' + esc(b.label) + '</div></div><div class="' + (b.ok ? "badge-good" : "badge-bad") + '" style="font-weight:700;">' + (b.ok ? "\u2713 clean" : "\u2717 needs work") + '</div></div>'; }).join("") : '') +
@@ -1036,6 +1063,24 @@
     mount.querySelector("#shareMine").addEventListener("click", function () { Store.setSetting("displayName", dn.value.replace(/[<>]/g, "").trim().slice(0, 30)); shareProgress(); });
   }
 
+  // ---- sources & editions: built from the cards' own citations ----
+  function screenSources() {
+    setTitle("Sources & Editions", true);
+    var by = {};
+    STUDY.cards.forEach(function (c) {
+      var m = String(c.ref || "").match(/^([^;(]+?)\s*\(([^)]*\d{4}[^)]*)\)/); if (!m) return;
+      var k = m[1].trim(), e = m[2].trim(); if (!by[k]) by[k] = { n: 0, ed: {} }; by[k].n++; by[k].ed[e] = (by[k].ed[e] || 0) + 1;
+    });
+    var rows = Object.keys(by).filter(function (k) { return by[k].n >= 2; }).sort(function (x, y) { return x.localeCompare(y, undefined, { numeric: true }); });
+    mount.innerHTML = '<div class="card"><div class="muted">Every card cites its publication, edition and paragraph. Content was last checked against these editions on ' + esc(STUDY.meta.updated || "") +
+      '. A weekly check compares them with the Army Publishing Directorate list. Unofficial study aid. Not endorsed by the U.S. Army or the Department of Defense. Your board memo and local SOP come first.</div></div>' +
+      rows.map(function (k) {
+        var eds = Object.keys(by[k].ed).sort(function (x, y) { return by[k].ed[y] - by[k].ed[x]; });
+        return '<div class="row"><div class="grow"><div class="code">' + esc(k) + '</div><div class="ttl">' + esc(eds[0]) + ' • ' + by[k].n + ' cards</div></div></div>';
+      }).join("") +
+      '<div class="muted center" style="font-size:.8rem;margin-top:12px;">Spot a problem? Use the flag on any card.</div>';
+  }
+
   function screenChanges() {
     setTitle("What Changed Recently", true);
     var all = allCards();
@@ -1133,7 +1178,7 @@
   function riflePts(hits, rank) { hits = hits | 0; if (hits > 40) hits = 40; return hits >= 23 ? RIFLE[rank][40 - hits] : 0; }
   // table 3-4: 500 = 120, then 3 points less per 5-point band, 300-304 = 1
   function aftPts(s) { s = s | 0; if (s >= 500) return 120; if (s >= 305) return 117 - 3 * Math.floor((499 - s) / 5); return s >= 300 ? 1 : 0; }
-  var AWARDS = [["bsm", "Bronze Star Medal", 30], ["msm", "Meritorious Service Medal", 25], ["arcom", "Army Commendation Medal", 20], ["aam", "Army Achievement Medal", 10], ["gcm", "Good Conduct Medal", 10]];
+  var AWARDS = [["aam", "Army Achievement Medal", 10], ["gcm", "Good Conduct Medal", 10], ["arcom", "Army Commendation Medal", 20], ["msm", "Meritorious Service Medal", 25], ["bsm", "Bronze Star Medal", 30]];
   function screenPoints() {
     setTitle("Promotion Points Worksheet", true);
     var rank = Store.settings().boardFor === "SSG" ? "SSG" : "SGT", m = Store.chain();
@@ -1141,10 +1186,12 @@
     function inp(id, ph, w) { return '<input class="input" id="' + id + '" inputmode="numeric" maxlength="4" placeholder="' + ph + '" value="' + escAttr(m["pts-" + id.slice(2)] || "") + '"' + (w ? ' style="max-width:' + w + ';"' : '') + '>'; }
     var help = {
       mil: '<label class="lbl" for="ptxhits">Rifle qualification hits (M4/M16/M249, out of 40)</label>' + inp("ptxhits", "e.g. 33", "140px") +
-        '<label class="lbl" for="ptxaft">AFT total score (last record test)</label>' + inp("ptxaft", "e.g. 420", "140px"),
+        '<label class="lbl" for="ptxaft">AFT total score (last record test)</label>' + inp("ptxaft", "e.g. 420", "140px") + '<div class="muted" id="ptxmilsplit" style="font-size:.85rem;margin-top:6px;"></div>',
       awd: AWARDS.map(function (w) { return '<label class="lbl" for="ptx' + w[0] + '">' + esc(w[1]) + ' (' + w[2] + ' each): how many?</label>' + inp("ptx" + w[0], "0", "100px"); }).join("") +
         '<div class="muted" style="font-size:.8rem;margin-top:4px;">Badges and other awards (tables 3-5 and 3-6): add them in the box above.</div>',
       med: '<label class="switch card" style="margin-top:6px;"><input type="checkbox" id="ptxschool"' + (m["pts-xschool"] ? " checked" : "") + '> <span>I graduated ' + school + ' (+150)</span></label>' +
+        '<label class="lbl" for="ptxweeks">Resident military courses in ATRRS: total weeks (4 points a week, up to ' + (rank === "SSG" ? 115 : 110) + ')</label>' + inp("ptxweeks", "e.g. 2", "120px") +
+        '<label class="lbl" for="ptxcbt">Online courses (ATRRS self-development, Army e-Learning): total hours (1 point per 5 hours, up to 90)</label>' + inp("ptxcbt", "e.g. 40", "120px") +
         '<div class="chip-row" id="ptxhon">' + [["0", "No honors"], ["20", "Commandant's list (+20)"], ["40", "DHG or DLG (+40)"]].map(function (h) { return '<button class="chip' + ((m["pts-xhon"] || "0") === h[0] ? " on" : "") + '" data-h="' + h[0] + '">' + esc(h[1]) + '</button>'; }).join("") + '</div>',
       civ: '<label class="lbl" for="ptxhours">College semester hours (2 points each)</label>' + inp("ptxhours", "e.g. 15", "140px")
     };
@@ -1165,9 +1212,11 @@
     var hon = m["pts-xhon"] || "0";
     function convert(k) {   // fill a category from the helper inputs
       var v = null;
-      if (k === "mil") { var h = n("ptxhits"), s = n("ptxaft"); if (h != null || s != null) v = (h != null ? riflePts(h, rank) : 0) + (s != null ? aftPts(s) : 0); }
+      if (k === "mil") { var h = n("ptxhits"), s = n("ptxaft"); if (h != null || s != null) { var rp = h != null ? riflePts(h, rank) : 0, ap = s != null ? aftPts(s) : 0; v = rp + ap;
+          mount.querySelector("#ptxmilsplit").textContent = "Rifle " + rp + " + AFT " + ap + " = " + v + (h != null && h < 23 ? " (below 23 hits earns no rifle points)" : ""); } }
       if (k === "awd") { var t = 0, any = false; AWARDS.forEach(function (w) { var c = n("ptx" + w[0]); if (c != null) { any = true; t += c * w[2]; } }); if (any) v = t; }
-      if (k === "med") { var sc = mount.querySelector("#ptxschool").checked; v = sc ? 150 + (+hon) : null; }
+      if (k === "med") { var sc = mount.querySelector("#ptxschool").checked, wk = n("ptxweeks"), cb = n("ptxcbt");
+        if (sc || wk != null || cb != null) v = (sc ? 150 + (+hon) : 0) + Math.min((wk || 0) * 4, rank === "SSG" ? 115 : 110) + Math.min(Math.floor((cb || 0) / 5), 90); }
       if (k === "civ") { var hr = n("ptxhours"); if (hr != null) v = hr * 2; }
       if (v != null) { mount.querySelector("#pt-" + k).value = String(v); Store.setChainRole("pts-x" + k, "1"); }
       update();
@@ -1180,7 +1229,8 @@
         total += Math.min(raw, cap); save("pt-" + p.k);
       });
       var cut = n("pt-cut"); save("pt-cut");
-      var gap = cut == null ? "" : total >= cut ? '<div style="margin-top:6px;" class="badge-good"><b>' + (total - cut) + ' points over the cutoff.</b></div>'
+      var blank = PTS.filter(function (p) { return n("pt-" + p.k) == null; }).length;
+      var gap = cut == null ? "" : blank ? '<div class="muted" style="margin-top:6px;">Fill in all four categories (0 is fine) to compare with the cutoff.</div>' : total >= cut ? '<div style="margin-top:6px;" class="badge-good"><b>' + (total - cut) + ' points over the cutoff.</b></div>'
         : '<div style="margin-top:6px;"><b>' + (cut - total) + ' points short of the cutoff.</b> <span class="muted">The categories with the most room left are the fastest gains.</span></div>';
       var room = PTS.map(function (p) { return { t: p.t, left: p.max[rank] - Math.min(n("pt-" + p.k) || 0, p.max[rank]) }; }).sort(function (x, y) { return y.left - x.left; }).slice(0, 2);
       mount.querySelector("#ptTotal").innerHTML = '<div class="flash-tag">Your estimate for ' + rank + '</div><div style="font-size:1.8rem;font-weight:800;">' + total + ' <span class="muted" style="font-size:1rem;">of 800</span></div>' + gap +
@@ -1189,7 +1239,7 @@
     }
     PTS.forEach(function (p) { mount.querySelector("#pt-" + p.k).addEventListener("input", update); });
     mount.querySelector("#pt-cut").addEventListener("input", update);
-    [["ptxhits", "mil"], ["ptxaft", "mil"], ["ptxhours", "civ"]].concat(AWARDS.map(function (w) { return ["ptx" + w[0], "awd"]; })).forEach(function (x) {
+    [["ptxhits", "mil"], ["ptxaft", "mil"], ["ptxhours", "civ"], ["ptxweeks", "med"], ["ptxcbt", "med"]].concat(AWARDS.map(function (w) { return ["ptx" + w[0], "awd"]; })).forEach(function (x) {
       mount.querySelector("#" + x[0]).addEventListener("input", function () { save(x[0]); convert(x[1]); });
     });
     mount.querySelector("#ptxschool").addEventListener("change", function (e) { Store.setChainRole("pts-xschool", e.target.checked ? "1" : ""); convert("med"); });
@@ -1349,11 +1399,13 @@
     if (head === "points") return screenPoints(), tab("home");
     if (head === "memo") return screenMemo(), tab("home");
     if (head === "changes") return screenChanges(), tab("home");
+    if (head === "sources") return screenSources(), tab("more");
     if (head === "badges") return screenBadges(), tab("more");
     if (head === "sendprogress" || head === "squad") return screenSendProgress(), tab("more");
     if (head === "progress") return screenProgress(parts[1] || ""), tab("home");
     if (head === "sponsor") return screenSponsorBoard(parts[1] || ""), tab("home");
     if (head === "sheet") return screenSheet(parts[1] || ""), tab("home");
+    if (head === "sheetin") return screenSheetIn(parts[1] || ""), tab("home");
     if (head === "sbresult") return screenSponsorResult(parts.slice(1)), tab("home");
     if (head === "pub") return screenPub(parts[1]), tab("browse");
     if (head === "pick") return screenPick(parts[1]), tab("home");

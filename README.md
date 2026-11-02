@@ -4,9 +4,24 @@ A phone study app for the **E-5 / E-6 Army promotion board**, built from 30+ Arm
 It installs to your Android or iPhone home screen, runs **fully offline**, and keeps your progress on your phone —
 no account, no app store, nothing to sign up for.
 
+> Unofficial study aid. Not endorsed by the U.S. Army or the Department of Defense. Your board memo and local SOP come first.
+
 **Live app:** https://n00bin.github.io/nco-board-study/
 
 ---
+
+## What's new in 3.17
+
+- **25 Sergeant / team-leader scenarios** for SGT boards: first counseling, PCIs, heat and cold injuries, AFT retests,
+  corrective training, hazing, SHARP, Red Cross messages, a missing night vision device, OPSEC, and more.
+- **Clearer, kinder verdicts**: "Almost board-ready" when your answers are strong but bearing slipped, the same on your
+  phone and your sponsor's.
+- **Paper boards count**: type in what your sponsor marked on the sheet and it saves like a sponsor board.
+- **Points worksheet** shows the rifle + AFT split, and counts resident course weeks and online course hours.
+- **One missed day a week won't break your streak.**
+- **Mirror**: check your bearing with the front camera during reporting in and drill (nothing is recorded).
+- Each board member has a different voice when read aloud. **Sources & editions** screen. Unofficial-study-aid notice.
+- 37 cards tightened (shorter answers, better locators), and more near-duplicates kept apart.
 
 ## What's new in 3.16
 
@@ -145,14 +160,14 @@ no account, no app store, nothing to sign up for.
 - **Staple board subjects** — customs & courtesies (AR 600-25, 2026), flags & streamers (AR 840-10, 2025),
   drill & ceremony (TC 3-21.5), awards (AR 600-8-22, 2026), the NCOER (AR 623-3, 2025), and NCO history &
   duties (TC 7-22.7, 2025 + The Army Blue Book).
-- **Board Core (start here)** — about 500 must-know questions boards ask most, each with a one-line **why it matters**, pulled from every
+- **Board Core (start here)** — about 530 must-know questions boards ask most, each with a one-line **why it matters**, pulled from every
   publication. Mock Board, the night-before cram, and Learn Mode's Board Core track use it by default;
-  "All Publications" keeps the full deep set (about 2,100 cards) for when you want detail.
+  "All Publications" keeps the full deep set (about 2,130 cards) for when you want detail.
 - **Learn Mode (start from scratch)** — a guided path of bite-sized lessons that **teach** the material
   first (with a plain-English overview of each publication), then **practice** it. Begins with the
   fundamentals (Army Values, ranks, chain of command, creeds, Code of Conduct), then each publication.
   Tracks which lessons you've completed. *Use this if you're new; use the drills below once you know it.*
-- **Flashcards with spaced repetition** — grade each card **Again / Good / Easy**; the app reschedules
+- **Flashcards with spaced repetition** — grade each card **Missed it / Got it / Easy**; the app reschedules
   it automatically (miss it → comes back soon, know it → comes back later) and surfaces what's *due*.
 - **Quiz** — multiple-choice, scored, with instant right/wrong feedback. Pick 10, 20, or all questions.
 - **Mock Board** — a timed oral-board simulation. **Full board** mode rehearses the whole thing: report in, "tell the
@@ -169,7 +184,7 @@ no account, no app store, nothing to sign up for.
 - **Daily goal & streak**, **Browse** by publication, full-text **Search**, and **Backup/restore**
   (export your progress to a file and move it to a new phone).
 
-Content covers **39 subjects from 35+ publications plus the 2019–2026 Army Directives** with **about 2,100 cards** — most fact-checked page-by-page against the
+Content covers **39 subjects from 35+ publications plus the 2019–2026 Army Directives** with **about 2,130 cards** — most fact-checked page-by-page against the
 source PDFs, with a page citation on each card (the Army Values, Code of Conduct, MDMP/TLP, warfighting
 functions, SHARP reporting, the AFT and Combat Field Test, the General Orders, the Soldier's & NCO Creeds, and much more).
 

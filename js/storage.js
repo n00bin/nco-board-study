@@ -77,6 +77,7 @@
     if (isObj(d.days)) for (k in d.days) if (/^\d{4}-\d{2}-\d{2}$/.test(k)) s.days[k] = Math.max(0, num(d.days[k], 0) | 0);
     if (isObj(d.badges)) for (k in d.badges) if (okKey(k) && /^[a-z0-9-]{1,30}$/.test(k)) s.badges[k] = num(d.badges[k], 0);
     if (isObj(d.calib)) ['sureN', 'sureRight', 'unsureN', 'unsureRight'].forEach(function (k) { s.calib[k] = Math.max(0, num(d.calib[k], 0) | 0); });
+    s.saverUsed = num(d.saverUsed, 0);
     s.uid = /^[a-z0-9]{6,16}$/.test(d.uid || "") ? d.uid : "";
     s.goal = Math.max(5, num(d.goal, DEFAULT.goal) | 0);
     s.streak = num(d.streak, 0);
@@ -148,8 +149,10 @@
   function touchDay(now) {
     var today = localDay(now);
     if (state.lastStudyDate !== today) {
-      var yest = localYesterday(now);
-      state.streak = (state.lastStudyDate === yest) ? (state.streak + 1) : 1;
+      var yest = localYesterday(now), dayBefore = localYesterday(now - DAY);
+      if (state.lastStudyDate === yest) state.streak = state.streak + 1;
+      else if (state.lastStudyDate === dayBefore && state.streak > 0 && !(state.saverUsed && now - state.saverUsed < 7 * DAY)) { state.streak = state.streak + 1; state.saverUsed = now; }   // one missed day a week is forgiven
+      else state.streak = 1;
       state.lastStudyDate = today;
     }
     if (state.daily.date !== today) state.daily = { date: today, count: 0 };
@@ -210,6 +213,7 @@
       } else if (g !== "again" && state.cards[id]) state.cards[id].cw = 0;
       return applyGrade(id, g);
     },
+    saverUsed: function () { return state.saverUsed || 0; },
     calib: function () { return state.calib || { sureN: 0, sureRight: 0, unsureN: 0, unsureRight: 0 }; },
     markKnown: function (id) { applyGrade(id, "good"); },   // back-compat
     markReview: function (id) { applyGrade(id, "again"); }, // back-compat
@@ -294,6 +298,8 @@
       if (!state.lastStudyDate) return 0;
       var t = localDay(Date.now()), y = localYesterday(Date.now());
       if (state.lastStudyDate === t || state.lastStudyDate === y) return state.streak;
+      // one missed day can still be forgiven today, so don't show 0 yet
+      if (state.lastStudyDate === localYesterday(Date.now() - DAY) && !(state.saverUsed && Date.now() - state.saverUsed < 7 * DAY)) return state.streak;
       return 0;
     },
     setGoal: function (n) { state.goal = Math.max(5, n | 0); save(); },
