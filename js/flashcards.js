@@ -74,7 +74,7 @@
         setFaces(false);
         conf = undefined;
         var left = queue.length - i, mins = Math.max(1, Math.round(left * 15 / 60));
-        container.querySelector("#fProg").textContent = "Reviewed " + reviewed + "  •  Left " + left + " (about " + mins + " min)";
+        container.querySelector("#fProg").textContent = reviewed + " done  •  " + left + " to go in this session (about " + mins + " min)";
         container.querySelector("#fTagF").textContent = pubCode(c) + (c.adv ? " \u2022 Advanced" : "");   // topic only on the back: it can give the answer away
         container.querySelector("#fTagB").textContent = "Answer" + (c.topic ? " • " + c.topic : "");
         container.querySelector("#fQ").textContent = c.q;

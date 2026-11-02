@@ -501,6 +501,7 @@ a.textlink { text-align: center; }
 #appTitle { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 body.session .tabbar, body.guest .tabbar { display: none; }
 body.session .screen, body.guest .screen { padding-bottom: 28px; }
+body.session .grade-row:not(#fGrades) { background: var(--bg); padding: 8px 0 calc(8px + env(safe-area-inset-bottom)); bottom: 0 !important; }
 body.session #reveal, body.session #rubricDone, body.session #fGrades, body.session #knSave, body.session .grade-row:not(#fGrades) {
   position: sticky; bottom: calc(10px + env(safe-area-inset-bottom)); z-index: 6; box-shadow: 0 -6px 18px rgba(0,0,0,.45); }
 body.session #fGrades { bottom: 0; padding: 10px 0 calc(10px + env(safe-area-inset-bottom)); box-shadow: 0 -10px 18px rgba(20,22,15,.95); }
@@ -520,7 +521,7 @@ mark { background: rgba(255,204,51,.28); color: inherit; border-radius: 3px; pad
 .progress-bar { height: 4px; background: var(--line); border-radius: 2px; margin: 2px 0 8px; overflow: hidden; }
 .progress-bar span { display: block; height: 100%; background: var(--gold); }
 details > summary { min-height: 44px; display: flex; align-items: center; }
-details.fb-fold > summary, details.hero-more > summary { display: list-item; min-height: 0; padding: 12px 0; }
+
 .textlink { min-height: 44px; }
 .bar { background: var(--line); }
 
@@ -575,3 +576,21 @@ label.switch input[type=checkbox]:checked::after { content: "\2713"; color: #1a1
 textarea.input { resize: none; }
 a.btn { justify-content: center; text-align: center; }
 a.pill { text-decoration: none; color: var(--gold); }
+
+/* ---------- v3.30 polish round 3 ---------- */
+.ic { display: inline-block; filter: grayscale(1) sepia(1) saturate(2.4) hue-rotate(2deg) brightness(1.15); }
+.btn.gold:not(.tool-grid .btn) .ic { filter: grayscale(1) brightness(.35); }
+.tool-grid .btn .ic { filter: grayscale(1) sepia(1) saturate(2.4) hue-rotate(2deg) brightness(1.15); }
+.li .ic { filter: grayscale(1) sepia(1) saturate(2.4) hue-rotate(2deg) brightness(1.15); }
+.numbubble.done { background: var(--good); color: #10140c; }
+body.session #qNext, body.session #submitBtn, body.session .lesson-nav { position: fixed; left: 16px; right: 16px; bottom: calc(12px + env(safe-area-inset-bottom)); width: auto; z-index: 8; margin: 0 !important; }
+body.session .lesson-nav { background: var(--bg); padding-top: 8px; }
+.appbar { min-height: 56px; }
+.dot-legend { display: flex; justify-content: center; gap: 14px; font-size: .75rem; color: var(--text-dim); margin-top: 2px; }
+.dot-legend > span { display: inline-flex; align-items: center; gap: 5px; }
+.dot-legend .dot { width: 9px; height: 9px; }
+.jump-row { -webkit-mask-image: linear-gradient(90deg, #000 85%, transparent); mask-image: linear-gradient(90deg, #000 85%, transparent); }
+.stepper .muted { font-size: .9rem !important; }
+.sheet input[type=checkbox], .sheet-box { width: 18px; height: 18px; border: 2px solid var(--text-dim); border-radius: 4px; display: inline-block; vertical-align: -3px; }
+.sheet .card { background: var(--surface); }
+.tool-grid .btn { white-space: nowrap; gap: 6px; padding-left: 8px; padding-right: 8px; }

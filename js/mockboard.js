@@ -124,7 +124,7 @@
     if (pct >= 75 && fix.length) return { level: "almost", title: "Almost board-ready", msg: "Your answers scored " + pct + "%. A real board also grades bearing and the situational questions, so tighten up " + listJoin2(fix) + " and run it again." };
     if (pct >= 90) return { level: "ready", title: "Board-ready", msg: "Board-ready. Keep it sharp with a board every few days." };
     if (pct >= 75) return { level: "ready", title: "Strong", msg: "Strong. Tighten the misses." };
-    if (pct >= 60) return { level: "work", title: "Getting there", msg: pct + "% is getting there, but a board doesn't pass you on a percentage: it wants confident, complete answers. Drill the misses" + (fix.length ? ", work on " + listJoin2(fix) : "") + ", and run it again." };
+    if (pct >= 60) return { level: "work", title: "Getting there", msg: "A board doesn't pass you on a percentage: it wants confident, complete answers. Drill the misses" + (fix.length ? ", work on " + listJoin2(fix) : "") + ", and run it again." };
     return { level: "work", title: "Needs work", msg: "Needs work. Study the misses, then run it again" + (fix.length ? ", and practice " + listJoin2(fix) : "") + "." };
   }
 
@@ -231,7 +231,7 @@
           }).catch(function () { App.toast("Can't use the camera. Allow camera access to use the mirror.", 4000); });
         });
       }
-      function recButton() { return canRec && !sponsor ? '<button class="btn ghost" id="recBtn">&#127897; Record</button><div class="spacer"></div>' : ""; }
+      function recButton() { return canRec && !sponsor ? '<button class="btn ghost" id="recBtn"><span class="ic">&#127897;</span> Record</button><div class="spacer"></div>' : ""; }
       // Record takes the microphone from the voice check (one microphone user at a time)
       function wireRec() { var b = container.querySelector("#recBtn"); if (b) b.addEventListener("click", function () {
         if (voice.rec) { stopVoice(); voice.paused = true; var vb = container.querySelector("#voiceBtn"); if (vb) { vb.textContent = "Voice check paused while you record"; vb.disabled = true; } }
@@ -477,7 +477,7 @@
 
       // ---- voice check: hear what you said, pre-tick the key points it heard (you can still change any box) ----
       var voice = { rec: null, text: "" };
-      function voiceButton() { return SR ? '<button class="btn ghost" id="voiceBtn" title="Uses your phone\u2019s speech service (Google or Apple); needs a connection">&#128483;&#65039; Voice check</button><div class="spacer"></div>' : ""; }
+      function voiceButton() { return SR ? '<button class="btn ghost" id="voiceBtn" title="Uses your phone\u2019s speech service (Google or Apple); needs a connection"><span class="ic">&#128483;&#65039;</span> Voice check</button><div class="spacer"></div>' : ""; }
       function wireVoice(c) {
         voice.text = ""; voice.paused = false;
         var b = container.querySelector("#voiceBtn"); if (!b) return;
@@ -669,7 +669,8 @@
           '<div class="ring-wrap"><div class="ring">' + pct + '%<small>score</small></div></div>' +
           (function () {
             var full = qScores.filter(function (x) { return x >= 0.99; }).length, part = qScores.filter(function (x) { return x >= 0.66 && x < 0.99; }).length, miss = qScores.length - full - part;
-            return '<div class="dots" aria-hidden="true">' + qScores.map(function (x) { return '<span class="dot ' + (x >= 0.99 ? 'g' : x >= 0.66 ? 'a' : 'r') + '"></span>'; }).join("") + '</div>' +
+            var legend = '<div class="dot-legend"><span><span class="dot g"></span>full</span><span><span class="dot a"></span>with gaps</span><span><span class="dot r"></span>missed</span></div>';
+            return legend + '<div class="dots" aria-hidden="true">' + qScores.map(function (x) { return '<span class="dot ' + (x >= 0.99 ? 'g' : x >= 0.66 ? 'a' : 'r') + '"></span>'; }).join("") + '</div>' +
               '<p class="center muted" style="font-size:.85rem;">' + full + ' full \u2022 ' + part + ' with gaps • ' + miss + ' missed' + (nF ? ' \u2022 plus ' + nF + ' follow-up' + (nF === 1 ? '' : 's') : '') + '</p>' +
               (pct >= 75 && !notReady ? '<p class="center" style="font-weight:700;color:var(--gold);">&#127881; Strong board. Keep it sharp.</p>' : '');
           })() + (notReady ? '' : '<p class="center muted">' + msg + '</p>') +
@@ -697,7 +698,7 @@
         if (sponsor) html += '<h2 class="section">Your notes for the Soldier (optional)</h2><textarea class="input" id="sbNote" rows="3" maxlength="300" placeholder="e.g. Good bearing. Rambled on the intro; slow down on SHARP answers."></textarea>' +
           '<div class="spacer"></div><button class="btn green lg" id="sendBack">&#128228; Send these results to the Soldier</button>' +
           '<div class="muted center" style="font-size:.8rem;margin-top:6px;">They open the link on their phone: the score goes into their history and the questions they missed come back sooner.</div>';
-        html += (window.App && App.sessionNextHtml ? App.sessionNextHtml() : '') + '<div class="spacer"></div><button class="btn ' + (missed.length && !sponsor ? 'ghost' : 'gold') + ' lg" id="again">Run another board</button><button class="textlink" id="home">Back to Home</button>';
+        html += (window.App && App.sessionNextHtml ? App.sessionNextHtml() : '') + '<div class="spacer"></div><button class="btn ' + (missed.length && !sponsor ? 'ghost' : 'gold') + ' lg" id="again">Run another board</button><div class="spacer"></div><button class="btn ghost" id="home">Back to Home</button>';
         container.innerHTML = html;
         container.querySelector("#again").addEventListener("click", function () { MockBoard.render(container, cards, length, opts); });
         container.querySelector("#home").addEventListener("click", function () { App.go("#/"); });

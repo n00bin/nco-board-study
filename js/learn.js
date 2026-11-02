@@ -130,7 +130,7 @@
       var extraDone = doneCount(flat) - doneN;
 
       var html =
-        '<div class="hero"><div class="big">' + pct + '%</div><div class="sub">of your board path • ' + doneN + ' / ' + pathFlat.length + ' lessons' + (extraDone > 0 ? ' (+' + extraDone + ' extra)' : '') + '</div>' +
+        '<div class="hero"><div class="big" style="font-size:1.6rem;">' + doneN + ' of ' + pathFlat.length + ' lessons</div><div class="sub">on your board path' + (extraDone > 0 ? ' (+' + extraDone + ' extra)' : '') + '</div>' +
           '<div class="bar"><span style="width:' + pct + '%"></span></div></div>' +
         '<div class="card"><div class="muted">Learn it, then practice it. <b>For your board: finish Board 101, Fundamentals and Board Core.</b></div></div>';
       if (next) html += '<a class="btn gold lg" href="#/lesson/' + next.id + '">' + (doneN ? "&#9654; Continue learning" : "&#9654; Start learning") + '</a><div class="spacer"></div>';
@@ -165,11 +165,13 @@
       var t = tracks.filter(function (x) { return x.id === trackId; })[0];
       if (!t) return Learn.hub(container);
       var html = t.overview ? '<div class="card"><div class="muted">' + esc(t.overview) + '</div></div>' : '';
-      t.lessons.forEach(function (l) {
+      t.lessons.forEach(function (l, k) {
         var done = isDone(l);
-        html += '<a class="row" href="#/lesson/' + l.id + '"><div class="checkbox' + (done ? " checked" : "") + '" style="' + (done ? "border-color:var(--good);" : "") + '">' + (done ? "&#10003;" : "") + '</div>' +
-          '<div class="grow"><div class="ttl">' + esc(l.title) + '</div><div class="meta">' + l.cards.length + (l.cards[0] && l.cards[0].pub === "sit" ? " scenarios" : " facts") + '</div></div><div class="chev">&#8250;</div></a>';
+        var parts = String(l.title).replace(/ & more$/, "").split(/, | & /), short = parts[0] + (parts.length > 1 ? ' +' + (parts.length - 1) + ' more' : '');
+        html += (k ? '' : '<div class="lg">') + '<a class="li" href="#/lesson/' + l.id + '"><span class="numbubble' + (done ? ' done' : '') + '">' + (done ? "&#10003;" : (k + 1)) + '</span>' +
+          '<span class="grow"><span class="t" style="font-weight:600;">' + esc(short) + '</span><span class="s">' + l.cards.length + (l.cards[0] && l.cards[0].pub === "sit" ? " scenarios" : " facts") + (parts.length > 1 ? ' \u2022 ' + esc(parts.slice(1).join(", ")) : '') + '</span></span><span class="chev">&#8250;</span></a>';
       });
+      if (t.lessons.length) html += '</div>';
       container.innerHTML = html;
       return t.title;
     },
@@ -196,7 +198,7 @@
             (c.why ? '<div class="flash-ref" style="color:var(--text);margin-top:12px;"><b>Why it matters:</b> ' + esc(c.why) + '</div>' : '') +
             (c.sample ? '<div class="flash-ref" style="color:var(--text);margin-top:12px;"><b>Example answer (fictional Soldier, make it yours):</b> ' + esc(c.sample) + '</div>' : '') +
             (c.ref ? '<div class="flash-ref">' + esc(c.ref) + '</div>' : '') + '</div>' +
-          '<div class="btn-row">' +
+          '<div class="btn-row lesson-nav">' +
             (i > 0 ? '<button class="btn ghost" id="lPrev">&#8592; Back</button>' : '') +
             '<button class="btn gold" id="lNext">' + (i + 1 >= lesson.cards.length ? "Practice these &#8594;" : "Next &#8594;") + '</button></div>';
         container.querySelector("#lSpeak").addEventListener("click", function () { Speech.speak(c.q + ". " + c.a); });

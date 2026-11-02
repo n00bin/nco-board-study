@@ -71,7 +71,7 @@
         : ((window.STUDY && window.STUDY.cards) ? window.STUDY.cards : cards);
       var questions = picked.map(function (c) { return buildQuestion(c, distractorPool); });
 
-      var i = 0, score = 0;
+      var i = 0, score = 0, misses = [];
 
       var selected = null;
 
@@ -123,12 +123,12 @@
           score++;
           if (verdict) { verdict.className = "verdict ok"; verdict.textContent = "✓ Correct"; }
         } else {
-          btn.classList.add("wrong"); mark(btn, false);
+          btn.classList.add("wrong"); mark(btn, false); misses.push(item.card);
           all.forEach(function (b) { if (b._opt && b._opt.correct) { b.classList.add("correct"); mark(b, true); } });
           if (verdict) { verdict.className = "verdict no"; verdict.textContent = "\u2717 Not quite: the right answer is marked"; }
         }
         var nav = document.createElement("button");
-        nav.className = "btn gold";
+        nav.className = "btn gold lg"; nav.id = "qNext";
         nav.style.marginTop = "12px";
         nav.textContent = (i + 1 >= questions.length) ? "See results" : "Next question";
         nav.addEventListener("click", function () {
@@ -149,12 +149,13 @@
         if (!(opts && opts.onDone)) Store.recordQuiz(title, score, questions.length);   // lesson practice is not a "quiz"
         if (opts && opts.onDone) return opts.onDone(score, questions.length);
         var pct = Math.round((score / questions.length) * 100);
+        var missHtml = misses.length ? '<details class="set-fold"><summary>Review your ' + misses.length + ' miss' + (misses.length === 1 ? '' : 'es') + '</summary>' + misses.map(function (c) { return '<div class="chg"><div style="font-weight:600;margin-bottom:4px;">' + esc(c.q) + '</div><div>' + esc(c.a) + '</div></div>'; }).join("") + '</details>' : '';
         var msg = pct >= 90 ? "Outstanding." : pct >= 75 ? "Solid. Keep drilling." :
                   pct >= 60 ? "Passing, but review the misses." : "Needs work. Run it again.";
         container.innerHTML =
           '<div class="ring-wrap"><div class="ring">' + pct + '%' +
             '<small>' + score + " of " + questions.length + ' correct</small></div></div>' +
-          '<p class="center muted">' + msg + '</p>' +
+          '<p class="center muted">' + msg + '</p>' + missHtml +
           '<div class="spacer"></div>' +
           '<button class="btn gold lg" id="again">Try another quiz</button>' +
           '<div class="spacer"></div>' +
