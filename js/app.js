@@ -1284,8 +1284,7 @@
     PTS.forEach(function (p) {
       html += '<label class="lbl" for="pt-' + p.k + '"><b>' + esc(p.t) + '</b> (max ' + p.max[rank] + ')</label>' +
         '<input class="input" id="pt-' + p.k + '" inputmode="numeric" maxlength="3" placeholder="0" value="' + escAttr(m["pts-" + p.k] || "") + '">' +
-        '<details class="pt-help"' + (m["pts-x" + p.k] ? " open" : "") + '><summary class="muted" style="font-size:.85rem;margin-top:4px;">&#129518; Figure it for me</summary>' + help[p.k] + '</details>' +
-        '<div class="muted" style="font-size:.8rem;margin:4px 0 10px;">' + esc(p.h) + ' AR 600-8-19 (Mar 2026), ' + p.ref + '.</div>';
+        '<details class="pt-help"' + (m["pts-x" + p.k] ? " open" : "") + '><summary class="muted" style="font-size:.85rem;margin-top:4px;">&#129518; Figure it for me</summary><div class="muted" style="font-size:.8rem;margin:4px 0;">' + esc(p.h) + ' AR 600-8-19 (Mar 2026), ' + p.ref + '.</div>' + help[p.k] + '</details><div style="height:10px;"></div>';
     });
     html += '<label class="lbl" for="pt-cut">This month\'s cutoff score for your MOS (from your S1 or the HRC cutoff list)</label>' +
       '<input class="input" id="pt-cut" inputmode="numeric" maxlength="3" placeholder="e.g. 450" value="' + escAttr(m["pts-cut"] || "") + '">' +
