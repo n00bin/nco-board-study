@@ -79,8 +79,7 @@
         var item = questions[i];
         selected = null;
         container.innerHTML =
-          '<div class="q-count">Question ' + (i + 1) + " of " + questions.length +
-            " • Score " + score + '</div><div class="progress-bar"><span style="width:' + Math.round(100 * i / questions.length) + '%"></span></div>' +
+          '<div class="q-count mb-head"><span>Question ' + (i + 1) + " of " + questions.length + '</span><span class="pill score-pill" id="qScore">Score ' + score + '</span></div><div class="progress-bar"><span style="width:' + Math.round(100 * i / questions.length) + '%"></span></div>' +
           '<div class="card">' + (function () { var p = window.STUDY && STUDY.pubsById[item.card.pub]; var t = item.card.label || (p ? p.code : ""); return t ? '<div class="flash-tag">' + esc(t) + '</div>' : ''; })() + '<div class="q-text" style="margin:0;">' + esc(item.q) + '</div></div>' +
           '<div id="choices"></div>' +
           '<div id="verdict" class="verdict" role="status" aria-live="polite"></div>' +
@@ -121,7 +120,7 @@
         if (opt.correct) {
           btn.classList.add("correct"); mark(btn, true);
           score++; res.push(1);
-          var qc = container.querySelector(".q-count"); if (qc) qc.textContent = "Question " + (i + 1) + " of " + questions.length + " \u2022 Score " + score;
+          var qc = container.querySelector("#qScore"); if (qc) qc.textContent = "Score " + score;
           if (verdict) { verdict.className = "verdict ok"; verdict.textContent = "✓ Correct"; }
         } else {
           btn.classList.add("wrong"); mark(btn, false); misses.push(item.card); res.push(0);

@@ -275,7 +275,8 @@
       }
       function header(label) {
         var localN = deck.filter(function (c) { return c.local; }).length, totalQ = deck.length - localN;
-        var txt = label ? label : curLocal ? "About your unit" : qNum ? "Question " + qNum + " of " + totalQ : "";
+        var kind = steps[s] && steps[s].kind, KL = { reportIn: "Reporting in", drill: "Facing movements", intro: "Tell us about yourself", member: "Next board member", reportOut: "Reporting out", follow: "Follow-up to question " + qNum };
+        var txt = label ? label : (kind && kind !== "q" && KL[kind]) ? KL[kind] : curLocal ? "About your unit" : qNum ? "Question " + qNum + " of " + totalQ : "";
         return '<div class="q-count mb-head"><span>' + txt + '</span>' + (asked >= 3 ? '<span class="pill score-pill">Score ' + Math.round(100 * got / asked) + '%</span>' : '') + '</div>' +
           '<div class="progress-bar"><span style="width:' + Math.round(100 * s / Math.max(1, steps.length)) + '%"></span></div>';
       }
@@ -366,10 +367,10 @@
             '<div class="q-text" style="margin-top:8px;">"Before you sit, let\'s see some drill."</div>' +
             '<div class="muted">' + (sponsor ? 'Call each command out loud. Watch for a sharp movement on the command of execution, then they hold the position until your next command.' : 'Stand up and do each command, sharply, on the command of execution. Hold each position until the next command.') + '</div></div>' +
           '<div class="card">' + cmds.map(function (t, k) { return '<div class="row" style="margin-bottom:6px;"><div class="numbubble">' + (k + 1) + '</div><div class="grow"><div class="ttl" style="font-size:1.15rem;font-weight:700;">' + esc(t) + '</div></div></div>'; }).join("") +
-            '<div class="muted" style="font-size:.85rem;margin-top:6px;">' + drillHints(cmds) + 'Then ' + (sponsor ? 'tell the Soldier to take their seat.' : 'wait for the president to tell you to take your seat.') + '</div></div>' +
-          (sponsor ? '' : '<button class="btn ghost" id="sayIt"><svg class=ic aria-hidden=true><use href=#i-speaker></use></svg> Call the commands for me</button><div class="spacer"></div>') +
+            (sponsor ? '' : '<button class="btn ghost" id="sayIt" style="margin-top:6px;"><svg class=ic aria-hidden=true><use href=#i-speaker></use></svg> Call the commands for me</button>') +
+            '<details class="fb-fold"><summary>How to do these</summary><div class="muted" style="font-size:.92rem;">' + drillHints(cmds) + 'Then ' + (sponsor ? 'tell the Soldier to take their seat.' : 'wait for the president to tell you to take your seat.') + '</div></details></div>' +
           '<p class="center muted">' + (sponsor ? 'Were the movements crisp, on the command of execution, back to attention each time?' : 'Honest check: crisp, on the command of execution, back to attention each time?') + '</p>' +
-          (sponsor ? '' : '<a class="btn ghost" href="#/flash/tc3-21-5" style="margin-bottom:10px;">Study drill cards (TC 3-21.5)</a>') + mirrorButton() +
+          mirrorButton() +
           gradeButtons("Needs work", "Clean");
         setTimeout(wireMirror, 0);
         var say = container.querySelector("#sayIt");
@@ -691,8 +692,10 @@
               '<p class="center muted" style="font-size:.92rem;margin:4px 0 0;">' + countLine + '</p><details class="fb-fold score-how"><summary>How this was scored</summary><p class="muted" style="font-size:.92rem;margin:0 0 8px;">First answers: ' + full + ' full \u2022 ' + part + ' with gaps \u2022 ' + miss + ' missed' +
                 (cb.length ? '<br>Second tries: ' + cbOk + ' of ' + cb.length + ' recovered' : '') + (fu.length ? '<br>Follow-ups: ' + fuOk + ' of ' + fu.length + ' right' : '') +
                 '<br>The score counts every answer, with part credit for answers with gaps.</p></details>' +
-              (pct >= 75 && !notReady && V.level !== "work" && deck.length >= 8 ? '<p class="center" style="font-weight:700;color:var(--gold);"><svg class=ic aria-hidden=true><use href=#i-trophy></use></svg> Strong board.</p>' : '');
-          })() + (notReady ? '<div class="verdict-line"><b>' + esc(V.title) + '.</b> ' + esc(msg) + '</div>' : '<p class="center muted">' + msg + '</p>') +
+              '';
+          })() + (pct >= 75 && !notReady && V.level !== "work" && deck.length >= 8
+            ? '<p class="center strong-line"><svg class=ic aria-hidden=true><use href=#i-trophy></use></svg> Strong board' + (missed.length ? ': tighten the ' + missed.length + ' miss' + (missed.length === 1 ? '' : 'es') + '.' : '. Keep it sharp.') + '</p>'
+            : notReady ? '<div class="verdict-line"><b>' + esc(V.title) + '.</b> ' + esc(msg) + '</div>' : '<p class="center muted">' + msg + '</p>') +
           // the next step first: drill the misses (or run another), then the details
           (missed.length && !sponsor ? '<button class="btn gold lg" id="drillMiss"><svg class=ic aria-hidden=true><use href=#i-refresh></use></svg> Drill your ' + missed.length + ' miss' + (missed.length === 1 ? '' : 'es') + ' now</button><div class="spacer"></div>' : '');
         if (bearing.length) {
@@ -710,7 +713,7 @@
           html += '</div>';
         }
         if (missed.length) {
-          html += '<details class="set-fold"' + (sponsor ? ' open' : '') + '><summary>Review the ' + missed.length + ' question' + (missed.length === 1 ? '' : 's') + ' ' + (sponsor ? 'they' : 'you') + ' missed</summary>';
+          html += '<details class="set-fold"' + (sponsor ? ' open' : '') + '><summary>Review ' + (sponsor ? 'their' : 'your') + ' ' + missed.length + ' miss' + (missed.length === 1 ? '' : 'es') + '</summary>';
           missed.forEach(function (m) {
             html += '<div class="card"><div class="flash-tag">' + esc(m.code) + '</div><div style="font-weight:600;margin-bottom:6px;">' + esc(m.q) + '</div><div class="muted">' + esc(m.a) + '</div></div>';
           });

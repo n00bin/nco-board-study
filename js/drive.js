@@ -69,21 +69,21 @@
         var p = STUDY.pubsById[c.pub];
         var phaseLabel = !playing ? "<svg class=ic aria-hidden=true><use href=#i-pause></use></svg> Paused" : phase === "q" ? "<svg class=ic aria-hidden=true><use href=#i-speaker></use></svg> Question…" : phase === "listen" ? "<svg class=ic aria-hidden=true><use href=#i-mic></use></svg> Your turn — answer aloud" : "<svg class=ic aria-hidden=true><use href=#i-check></use></svg> Answer";
         container.innerHTML =
-          '<div class="flash-progress">' + esc(title) + ' • card ' + (i + 1) + ' of ' + deck.length + (i === 0 ? '<br><span style="font-size:.85rem;">Due and new cards only. Due ones play first. Stop any time.</span>' : '') + '</div>' +
+          '<div class="q-count mb-head"><span>' + esc(title) + '</span><span class="pill">' + (i + 1) + ' / ' + deck.length + '</span></div>' + (i === 0 ? '<div class="muted center" style="font-size:.85rem;margin:-2px 0 8px;">Due and new cards only. Due ones play first.</div>' : '') +
           '<div class="card drive-card"><div class="flash-tag">' + esc(p ? p.code : "") + '</div>' +
             '<div class="phase" id="phase">' + phaseLabel + '</div>' +
             '<div class="flash-q" style="margin:10px 0;font-size:1.3em;line-height:1.4;">' + esc(c.oral || c.q) + '</div>' +
             (phase === "a" ? '<hr class="div"><div class="flash-a" style="font-size:1.2em;line-height:1.4;">' + esc(c.a).replace(/\n/g, "<br>") + '</div>' : '') +
           '</div>' +
-          '<div class="btn-row drive-ctl">' +
+          '<div class="drive-ctl"><div class="drive-sub">' +
+            '<button class="btn ghost sm' + (loop ? ' on' : '') + '" id="dLoop">' + (loop ? "<svg class=ic aria-hidden=true><use href=#i-refresh></use></svg> Repeat: on" : "<svg class=ic aria-hidden=true><use href=#i-refresh></use></svg> Repeat: off") + '</button>' +
+            '<button class="btn ghost sm" id="dStop"><svg class=ic aria-hidden=true><use href=#i-stop></use></svg> Stop</button></div><div class="btn-row">' +
             '<button class="btn lg" id="dPause">' + (playing ? "<svg class=ic aria-hidden=true><use href=#i-pause></use></svg> Pause" : "<svg class=ic aria-hidden=true><use href=#i-play></use></svg> Resume") + '</button>' +
             '<button class="btn lg" id="dNext">Next <svg class=ic aria-hidden=true><use href=#i-next></use></svg></button>' +
-          '</div><div class="spacer"></div>' +
-          '<button class="btn ' + (loop ? 'green' : 'ghost') + '" id="dLoop">' + (loop ? "<svg class=ic aria-hidden=true><use href=#i-refresh></use></svg> Repeat: on" : "<svg class=ic aria-hidden=true><use href=#i-refresh></use></svg> Repeat: off") + '</button>' +
-          '<div class="spacer"></div><button class="btn ghost" id="dStop"><svg class=ic aria-hidden=true><use href=#i-stop></use></svg> Stop Drive Mode</button>';
+          '</div></div>';
         container.querySelector("#dPause").addEventListener("click", function () { playing ? pause() : resume(); });
         container.querySelector("#dNext").addEventListener("click", function () { skip(); });
-        container.querySelector("#dLoop").addEventListener("click", function () { loop = !loop; container.querySelector("#dLoop").className = "btn " + (loop ? "green" : "ghost"); container.querySelector("#dLoop").innerHTML = loop ? "<svg class=ic aria-hidden=true><use href=#i-refresh></use></svg> Repeat: on" : "<svg class=ic aria-hidden=true><use href=#i-refresh></use></svg> Repeat: off"; });
+        container.querySelector("#dLoop").addEventListener("click", function () { loop = !loop; container.querySelector("#dLoop").className = "btn ghost sm" + (loop ? " on" : ""); container.querySelector("#dLoop").innerHTML = loop ? "<svg class=ic aria-hidden=true><use href=#i-refresh></use></svg> Repeat: on" : "<svg class=ic aria-hidden=true><use href=#i-refresh></use></svg> Repeat: off"; });
         container.querySelector("#dStop").addEventListener("click", function () { Drive.stop(); App.go("#/"); });
       }
 

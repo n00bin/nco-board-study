@@ -144,10 +144,11 @@
         var td = doneCount(t.lessons);
         var tp = t.lessons.length ? Math.round((td / t.lessons.length) * 100) : 0;
         html += '<a class="row" href="#/track/' + t.id + '"><div class="grow"><div class="code">' + esc(t.title) + '</div>' +
-          '<div class="meta">' + td + ' / ' + t.lessons.length + ' lessons' + (t.id === "sit" || t.id === "personal" ? ' \u2022 asked at every board (also part of Board Core)' : '') + '</div>' +
-          '<div class="bar"><span style="width:' + tp + '%"></span></div></div><div class="chev">&#8250;</div></a>';
+          '<div class="meta">' + td + ' / ' + t.lessons.length + ' lessons' + (t.id === "sit" || t.id === "personal" ? ' \u2022 asked at every board' : '') + '</div>' +
+          '<div class="bar"><span style="width:' + tp + '%"></span></div></div><div class="chev" aria-hidden="true"><svg class=ic aria-hidden=true><use href=#i-chev></use></svg></div></a>';
       });
       if (shownExtra) html += '</details>';
+      html = html.replace(/((?:<a class="row" href="#\/track\/[^"]*">[\s\S]*?<\/a>)+)/g, '<div class="lg rows">$1</div>');
       container.innerHTML = html;
     },
 
@@ -197,7 +198,7 @@
       function teach() {
         var c = lesson.cards[i], p = STUDY.pubsById[c.pub];
         container.innerHTML =
-          '<div class="flash-progress">Learn • ' + esc(lesson.title) + ' • ' + (i + 1) + ' / ' + lesson.cards.length + '</div><div class="progress-bar"><span style="width:' + Math.round(100 * (i + 1) / lesson.cards.length) + '%"></span></div>' +
+          '<div class="q-count mb-head"><span>' + esc(lesson.title) + '</span><span class="pill">' + (i + 1) + ' / ' + lesson.cards.length + '</span></div><div class="progress-bar"><span style="width:' + Math.round(100 * (i + 1) / lesson.cards.length) + '%"></span></div>' +
           '<div class="card learn-card"><div class="flash-toprow"><span class="flash-tag">' + esc(p ? p.code : "") + (c.topic ? " • " + esc(c.topic) : "") + '</span>' +
             '<button class="mini" id="lSpeak" aria-label="Read aloud"><svg class=ic aria-hidden=true><use href=#i-speaker></use></svg></button></div>' +
             '<div class="learn-q">' + esc(c.q) + '</div>' +

@@ -24,8 +24,11 @@
     var known = n - miss, p = n ? Math.round(100 * known / n) : 0;
     return '<div class="ring-wrap"><div class="ring ' + (p >= 75 ? 'good' : p >= 50 ? 'mid' : 'bad') + '" style="--p:' + p + ';"><div class="ring-in">' + p + '%</div></div><small>knew it the first time</small></div>' +
       '<div class="done-h">Session complete</div>' +
-      '<p class="center muted">' + n + ' card' + (n === 1 ? '' : 's') + ' \u2022 ' + (known - easy) + ' got it \u2022 ' + easy + ' easy \u2022 ' + miss + ' missed' + (miss ? '<br>The ones you missed come back sooner.' : '') + '</p>';
+      '<div class="dots" aria-hidden="true">' + ids.slice(0, 80).map(function (k) { return '<span class="dot ' + (first[k] === "again" ? 'r' : 'g') + '"></span>'; }).join("") + '</div>' +
+      '<p class="center muted">' + n + ' card' + (n === 1 ? '' : 's') + ' \u2022 ' + (known - easy) + ' got it \u2022 ' + easy + ' easy \u2022 ' + miss + ' missed</p>' +
+      (miss ? (Store.setChainRole("last-misses", ids.filter(function (k) { return first[k] === "again"; }).slice(0, 40).join(",")), '<a class="btn gold lg" href="#/flash/misses"><svg class=ic aria-hidden=true><use href=#i-refresh></use></svg> Drill your ' + miss + ' miss' + (miss === 1 ? '' : 'es') + ' now</a>') : '');
   }
+  function hasMiss(first) { return Object.keys(first).some(function (k) { return first[k] === "again"; }); }
   var Flashcards = {
     // cards = the deck for this session (already filtered by caller)
     render: function (container, cards, title, opts) {
@@ -41,7 +44,7 @@
 
       container.innerHTML =
         '<div class="flash-wrap">' +
-          '<div class="flash-progress" id="fProg" aria-live="polite"></div><div class="progress-bar"><span id="fBar" style="width:0%"></span></div>' +
+          '<div class="q-count mb-head" id="fProg" aria-live="polite"></div><div class="progress-bar"><span id="fBar" style="width:0%"></span></div>' +
           '<div class="flashcard" id="fCard" role="button" tabindex="0" aria-label="Flashcard. Tap or press Enter to flip."><div class="flash-inner">' +
             '<div class="flash-face flash-front" id="fFront">' +
               '<div class="flash-toprow"><span class="flash-tag" id="fTagF"></span>' +
@@ -86,7 +89,7 @@
         conf = undefined;
         var left = queue.length - i, mins = Math.max(1, Math.round(left * 15 / 60));
         container.querySelector("#fBar").style.width = Math.round(100 * passed / Math.max(1, passed + left)) + "%";
-        container.querySelector("#fProg").textContent = passed + " done  •  " + left + " to go (about " + mins + " min)" + (reviewed > passed ? "  •  misses come back" : "");
+        container.querySelector("#fProg").innerHTML = '<span>' + passed + ' done' + (reviewed > passed ? ' \u2022 misses come back' : '') + '</span><span class="pill">' + left + ' to go \u2022 ~' + mins + ' min</span>';
         container.querySelector("#fTagF").textContent = pubCode(c) + (c.adv ? " \u2022 Advanced" : "");   // topic only on the back: it can give the answer away
         container.querySelector("#fTagB").textContent = "Answer" + (c.topic ? " • " + c.topic : "");
         container.querySelector("#fQ").textContent = c.q;
@@ -141,7 +144,7 @@
         if (opts && opts.onDone) return opts.onDone(reviewed);
         container.innerHTML =
           finishHtml(first) + '<div class="spacer"></div>' + (window.App && App.sessionNextHtml ? App.sessionNextHtml() : '') +
-          '<button class="btn gold lg" id="again">Study more</button><div class="spacer"></div>' +
+          '<button class="btn ' + (hasMiss(first) ? 'ghost' : 'gold') + ' lg" id="again">Study more</button><div class="spacer"></div>' +
           '<button class="btn ghost lg" id="home">Back to Home</button>';
         container.querySelector("#again").addEventListener("click", function () { Flashcards.render(container, cards, title, opts); });
         container.querySelector("#home").addEventListener("click", function () { App.go("#/"); });
@@ -179,7 +182,7 @@
       function ask() {
         var c = queue[i];
         container.innerHTML =
-          '<div class="flash-progress">Reviewed ' + reviewed + '  •  Left ' + (queue.length - i) + '</div>' +
+          '<div class="q-count mb-head"><span>' + reviewed + ' reviewed</span><span class="pill">' + (queue.length - i) + ' to go</span></div>' +
           '<div class="card"><div class="flash-toprow"><span class="flash-tag">' + esc(pubCode(c)) + '</span></div>' +
             '<div class="flash-q" style="margin-bottom:14px;">' + esc(c.q) + '</div>' +
             '<textarea class="input" id="tIn" rows="2" placeholder="Type your answer…"></textarea></div>' +
@@ -221,7 +224,7 @@
         i++;
         if (i >= queue.length) {
           container.innerHTML = finishHtml(first) + '<div class="spacer"></div>' +
-            '<button class="btn gold lg" id="again">Study more</button><div class="spacer"></div><button class="btn ghost lg" id="home">Back to Home</button>';
+            '<button class="btn ' + (hasMiss(first) ? 'ghost' : 'gold') + ' lg" id="again">Study more</button><div class="spacer"></div><button class="btn ghost lg" id="home">Back to Home</button>';
           container.querySelector("#again").addEventListener("click", function () { Flashcards.renderTyped(container, cards, title); });
           container.querySelector("#home").addEventListener("click", function () { App.go("#/"); });
           return;
