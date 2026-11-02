@@ -81,7 +81,7 @@
         container.innerHTML =
           '<div class="progress-bar"><span style="width:' + Math.round(100 * i / questions.length) + '%"></span></div><div class="q-count">Question ' + (i + 1) + " of " + questions.length +
             " • Score " + score + '</div>' +
-          '<div class="q-text">' + esc(item.q) + '</div>' +
+          '<div class="card"><div class="q-text" style="margin:0;">' + esc(item.q) + '</div></div>' +
           '<div id="choices"></div>' +
           '<div id="verdict" class="verdict" role="status" aria-live="polite"></div>' +
           '<button class="btn gold lg" id="submitBtn" disabled>Submit answer</button>';
@@ -156,18 +156,17 @@
         var missHtml = misses.length ? '<details class="set-fold"><summary>Review your ' + misses.length + ' miss' + (misses.length === 1 ? '' : 'es') + '</summary>' + misses.map(function (c) { return '<div class="chg"><div style="font-weight:600;margin-bottom:4px;">' + esc(c.q) + '</div><div>' + esc(c.a) + '</div></div>'; }).join("") + '</details>' : '';
         var dots = '<div class="dots" aria-hidden="true">' + res.map(function (x) { return '<span class="dot ' + (x ? 'g' : 'r') + '"></span>'; }).join("") + '</div>' +
           '<div class="dot-legend"><span><span class="dot g"></span>right</span><span><span class="dot r"></span>missed</span></div>';
-        var byPub = {}; misses.forEach(function (c) { var p = window.STUDY && STUDY.pubsById[c.pub]; var k = c.label || (p ? p.code : c.pub || "Your cards"); byPub[k] = (byPub[k] || 0) + 1; });
+        var byPub = {}; misses.forEach(function (c) { var p = window.STUDY && STUDY.pubsById[c.pub]; var k = c.label || (p ? p.code + (p.title && p.title !== p.code ? " \u2014 " + p.title : "") : c.pub || "Your cards"); byPub[k] = (byPub[k] || 0) + 1; });
         var weakK = Object.keys(byPub).sort(function (x, y) { return byPub[y] - byPub[x]; }).slice(0, 4);
         var weakHtml = weakK.length ? '<h2 class="section">Weakest subjects</h2><div class="lg">' + weakK.map(function (k) { return '<div class="li"><span class="grow"><span class="t" style="font-weight:600;">' + esc(k) + '</span></span><b class="badge-bad" style="white-space:nowrap;">missed ' + byPub[k] + '</b></div>'; }).join("") + '</div>' : '';
         var msg = pct >= 90 ? "Outstanding." : pct >= 75 ? "Solid. Keep drilling." :
                   pct >= 60 ? "Passing, but review the misses." : "Needs work. Run it again.";
         container.innerHTML =
-          '<div class="ring-wrap"><div class="ring">' + pct + '%' +
-            '<small>' + score + " of " + questions.length + ' correct</small></div></div>' +
+          '<div class="ring-wrap"><div class="ring ' + (pct >= 75 ? 'good' : pct >= 50 ? 'mid' : 'bad') + '" style="--p:' + pct + ';"><div class="ring-in">' + pct + '%</div></div><small>' + score + " of " + questions.length + ' correct</small></div>' +
           dots + '<p class="center muted">' + msg + '</p>' +
           '<button class="btn gold lg" id="again">Try another quiz</button>' + weakHtml + missHtml +
           '<div class="spacer"></div>' +
-          '<button class="btn ghost" id="home">Back to Home</button>';
+          '<button class="btn ghost lg" id="home">Back to Home</button>';
         container.querySelector("#again").addEventListener("click", function () {
           Quiz.render(container, cards, title, length);
         });

@@ -207,7 +207,7 @@
             (c.ref ? '<div class="flash-ref">' + esc(c.ref) + '</div>' : '') + '</div>' +
           '<div class="btn-row lesson-nav">' +
             (i > 0 ? '<button class="btn ghost" id="lPrev">&#8592; Back</button>' : '') +
-            '<button class="btn gold" id="lNext">' + (i + 1 >= lesson.cards.length ? "Practice these &#8594;" : "Next &#8594;") + '</button></div>';
+            '<button class="btn gold" id="lNext">' + (i + 1 >= lesson.cards.length ? "Practice &#8594;" : "Next &#8594;") + '</button></div>';
         container.querySelector("#lSpeak").addEventListener("click", function () { Speech.speak(c.q + ". " + c.a); });
         if (container.querySelector("#lPrev")) container.querySelector("#lPrev").addEventListener("click", function () { i--; teach(); });
         container.querySelector("#lNext").addEventListener("click", function () { if (i + 1 >= lesson.cards.length) practice(); else { i++; teach(); } });

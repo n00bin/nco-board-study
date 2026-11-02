@@ -275,7 +275,9 @@
       }
       function header(label) {
         var localN = deck.filter(function (c) { return c.local; }).length, totalQ = deck.length - localN;
-        return '<div class="q-count">' + (label ? label : curLocal ? "About your unit and your Army" : qNum ? "Question " + qNum + " of " + totalQ + (localN ? " (+" + localN + " about your unit)" : "") : "") + (asked >= 3 ? (qNum ? "  •  " : "") + "Score so far " + Math.round(100 * got / asked) + "%" : "") + '</div>';
+        var txt = label ? label : curLocal ? "About your unit" : qNum ? "Question " + qNum + " of " + totalQ : "";
+        return '<div class="progress-bar"><span style="width:' + Math.round(100 * s / Math.max(1, steps.length)) + '%"></span></div>' +
+          '<div class="q-count mb-head"><span>' + txt + '</span>' + (asked >= 3 ? '<span class="pill score-pill">Score ' + Math.round(100 * got / asked) + '%</span>' : '') + '</div>';
       }
       function timerHtml(t, why) {
         // say why the clock isn't the Settings value (long answers and scenarios get double time; the intro gets 90 s)
@@ -296,7 +298,7 @@
         }, 1000);
       }
       function gradeButtons(missLabel, gotLabel) {
-        return '<div class="grade-row"><button class="btn grade-again" id="miss">' + (missLabel || "Missed it") + '</button>' +
+        return '<div class="grade-row"><button class="btn grade-again" id="miss">' + (missLabel || "Missed") + '</button>' +
           '<button class="btn grade-good" id="got">' + (gotLabel || "Got it") + '</button></div>';
       }
       function onGrade(fn) {
@@ -316,7 +318,15 @@
           }).join("") + '</div><button class="btn gold lg" id="rubricDone">Score this answer</button>';
       }
       function onRubric(fn, c) {
-        container.querySelector("#rubricDone").addEventListener("click", function () {
+        // if the checklist is still below the fold, the first tap takes you to it instead of scoring an unticked answer
+        var btn = container.querySelector("#rubricDone"), rc = btn.previousElementSibling, gate = false;
+        if (window.IntersectionObserver && rc && rc.getBoundingClientRect().top > window.innerHeight - 140) {
+          gate = true; btn.textContent = "Tick what you said ↓";
+          var io = new IntersectionObserver(function (es) { if (es.some(function (e) { return e.isIntersecting; })) { gate = false; btn.textContent = "Score this answer"; io.disconnect(); } }, { rootMargin: "0px 0px -100px 0px" });
+          io.observe(rc);
+        }
+        btn.addEventListener("click", function () {
+          if (gate) { gate = false; btn.textContent = "Score this answer"; rc.scrollIntoView({ behavior: "smooth", block: "center" }); return; }
           var boxes = container.querySelectorAll(".kp"), n = 0, left = [];
           boxes.forEach(function (b, k) { if (b.checked) n++; else left.push(k); });
           if (c && c.kp1 && boxes.length > 1) {
@@ -360,7 +370,7 @@
           (sponsor ? '' : '<button class="btn ghost" id="sayIt"><svg class=ic aria-hidden=true><use href=#i-speaker></use></svg> Call the commands for me</button><div class="spacer"></div>') +
           '<p class="center muted">' + (sponsor ? 'Were the movements crisp, on the command of execution, back to attention each time?' : 'Honest check: crisp, on the command of execution, back to attention each time?') + '</p>' +
           (sponsor ? '' : '<a class="btn ghost" href="#/flash/tc3-21-5" style="margin-bottom:10px;">Study drill cards (TC 3-21.5)</a>') + mirrorButton() +
-          gradeButtons("Needs work", "Drill was sharp");
+          gradeButtons("Needs work", "Clean");
         setTimeout(wireMirror, 0);
         var say = container.querySelector("#sayIt");
         if (say) say.addEventListener("click", function () {
@@ -385,9 +395,9 @@
             : '<div class="q-text" style="margin-top:8px;">You are called in. Stand up, walk in, and report — out loud, for real.</div>' +
               (Store.chain()["memo-report"] ? '<div class="muted">Your memo\'s wording: <b>"' + esc(Store.chain()["memo-report"]) + '"</b></div></div>'
                 : '<div class="muted">"Sergeant Major, ' + esc(Store.settings().displayName || "(your rank) (your last name)") + ' reports to the President of the Board." Use your board memo\'s exact wording. <a href="#/memo">Add your memo\'s wording</a>.</div></div>')) +
-          '<button class="btn ghost" id="showSteps">Show the reporting steps</button><div id="stepsBox" hidden>' + stepsList(all.slice(1, 5)) + '</div>' +
+          '<button class="btn ghost" id="showSteps">Show the reporting steps</button><div id="stepsBox" hidden>' + stepsList(all.slice(1, 5)) + '</div><div class="spacer"></div>' +
           mirrorButton() + '<p class="center muted">' + (sponsor ? 'Did they halt about two steps in front of you, salute and hold it, say their correct rank, and sit only when told?' : 'Honest check: halted two steps in front of the president, saluted and held it until returned, said your correct rank, sat only when told?') + '</p>' +
-          gradeButtons("Needs work", "Reported in clean");
+          gradeButtons("Needs work", "Clean");
         container.querySelector("#showSteps").addEventListener("click", function () { var b = container.querySelector("#stepsBox"); b.hidden = !b.hidden; });
         wireMirror();
         onGrade(function (ok) { bearing.push({ label: "Reporting in", ok: ok }); next(); });
@@ -407,7 +417,7 @@
           container.innerHTML = header() +
             (stmt ? '<div class="card"><div class="flash-tag">Your opening statement</div><div class="flash-a" style="white-space:pre-wrap;">' + esc(stmt) + '</div></div>' +
                     '<div id="playback"></div>' +
-                    '<p class="center muted">Did you deliver it smoothly, without reading it, in about a minute?</p>' + gradeButtons("Needs work", "Delivered it well")
+                    '<p class="center muted">Did you deliver it smoothly, without reading it, in about a minute?</p>' + gradeButtons("Needs work", "Clean")
                   // no draft yet: score what you said against the parts of a good answer instead
                   : '<div class="card" style="border-color:var(--gold);"><div class="flash-tag">Did you cover these?</div>' +
                       ["Your rank, name, job, and unit", "Your time in service", "One or two real accomplishments", "Your goals as an NCO"].map(function (t) {
@@ -431,7 +441,7 @@
           '<div class="card"><div class="flash-tag">The board president</div>' +
             '<div class="q-text" style="margin-top:8px;">"That concludes the board. You are dismissed."</div></div>' +
           '<p class="center muted">' + (sponsor ? 'Watch them stand at attention, salute and hold until you return it, face about, and march out.' : 'Do it now: stand at attention, salute and hold until it\'s returned, face about, and march out.') + '</p>' +
-          (all.length ? stepsList([all[all.length - 1]]) : '') + gradeButtons("Needs work", "Reported out clean");
+          (all.length ? '<div class="card"><div class="muted" style="font-size:.92rem;">' + esc(all[all.length - 1]) + '</div></div>' : '') + gradeButtons("Needs work", "Clean");
         onGrade(function (ok) { bearing.push({ label: "Reporting out", ok: ok }); next(); });
       }
 
@@ -482,7 +492,7 @@
         voice.text = ""; voice.paused = false;
         var b = container.querySelector("#voiceBtn"); if (!b) return;
         if (c && (c.local || c.pub === "personal")) {   // your unit, your leaders, your life: keep it off the speech service
-          b.textContent = "Voice check stays off for personal and your-unit questions"; b.disabled = true; return;
+          b.textContent = "Voice check off"; b.disabled = true; b.title = "Off for personal and your-unit questions"; return;
         }
         var start = function () {
           Store.setSetting("voiceAuto", true);
@@ -526,6 +536,11 @@
         box.innerHTML = html + '</div>';
       }
 
+      function moreHtml(c) {
+        return (curStyle === "why" && c.pub !== "sit" && c.pub !== "personal" ? '' : whyHtml(c)) +
+          (c.ref ? '<div class="flash-ref">Reference: ' + esc(c.ref) + '</div>' : '') +
+          (c.sample && c.pub === "personal" ? '<div class="flash-ref" style="color:var(--text);margin-top:10px;"><b>Example answer (fictional Soldier):</b> ' + esc(c.sample) + '</div>' : '');
+      }
       function reveal(c) {
         clearTimer();
         if (autoRead) Speech.speak(c.a);
@@ -535,14 +550,14 @@
             '<div class="q-text" style="margin:6px 0 12px;">' + esc(qt(c)) + '</div>' +
             '<div class="flash-tag">Answer</div><div class="flash-a">' + esc(c.a).replace(/\n/g, "<br>") + '</div>' +
             (c.changed ? '<div class="flash-ref" style="color:var(--gold);margin-top:8px;"><svg class=ic aria-hidden=true><use href=#i-alert></use></svg> ' + esc(c.changed) + '</div>' : '') +
-            (curStyle === "why" && c.pub !== "sit" && c.pub !== "personal" ? '' : whyHtml(c)) +
-            (c.ref ? '<div class="flash-ref">Reference: ' + esc(c.ref) + '</div>' : '') +
-            (c.sample && c.pub === "personal" ? '<div class="flash-ref" style="color:var(--text);margin-top:10px;"><b>Example answer (fictional Soldier):</b> ' + esc(c.sample) + '</div>' : '') + '</div>' +
+            (c.points && !c.unfilled ? '' : moreHtml(c)) + '</div>' +
+          (c.points && !c.unfilled ? (listened ? '<div id="heard"><div class="muted center" style="font-size:.85rem;">Checking what you said…</div></div>' : '') + rubricHtml(c) +
+            (moreHtml(c) ? '<div class="card">' + moreHtml(c) + '</div>' : '') : '') +
           (window.Speech && Speech.supported() ? '<button class="btn ghost" id="hearA" style="margin-bottom:8px;"><svg class=ic aria-hidden=true><use href=#i-speaker></use></svg> Hear a model answer</button>' : '') +
-          (listened ? '<div id="heard"><div class="muted center" style="font-size:.85rem;">Checking what you said…</div></div>' : '') +
+          (listened && !c.points ? '<div id="heard"><div class="muted center" style="font-size:.85rem;">Checking what you said…</div></div>' : '') +
           '<div id="playback"></div>' +
           (c.unfilled ? '<div class="card"><div class="muted">You haven\'t filled this in yet, so it isn\'t scored. Boards do ask it: look it up and add it under Board Day Prep, then it counts.</div></div><button class="btn gold lg" id="skipLocal">Next question</button>'
-            : c.points ? rubricHtml(c) : '<p class="center muted">How did you do?</p>' + gradeButtons());
+            : c.points ? '' : '<p class="center muted">How did you do?</p>' + gradeButtons());
         playback();
         var ha = container.querySelector("#hearA"); if (ha) ha.addEventListener("click", function () { Speech.speak(c.sample || c.a, { rate: 0.95 }); });
         if (listened) setTimeout(function () { applyVoice(c); }, 900);
@@ -550,7 +565,7 @@
         if (c.points) onRubric(function (fr, left) { markQ(c, fr, left); }, c); else onGrade(function (ok) { markQ(c, ok ? 1 : 0); });
       }
 
-      var qScores = [];
+      var qScores = [], extras = [];   // extras: second tries and follow-ups, {k: 'cb'|'fu', ok}
       function markQ(c, score, left) {
         if (!c.local) qScores.push(score);          // score: 1 = got it, 0 = missed, fractions from the key-point rubric
         var ok = score >= 0.66;   // two of three key points is a pass; the key fact alone (kp1) is 0.75
@@ -598,12 +613,13 @@
         var gradeIt = function (ok) {
           var pp = perPub[c.pub] || (perPub[c.pub] = { n: 0, miss: 0, code: pubLabel(c) });
           pp.n++; asked++; if (ok) got++; else pp.miss++;
+          extras.push({ k: "cb", ok: ok });
           next();
         };
         if (sponsor) { onGrade(function (ok) { clearTimer(); gradeIt(ok); }); runTimer(t, function () { var n = container.querySelector("#tNum"); if (n) n.textContent = "Time!"; }); return; }
         var rev = function () {
           clearTimer();
-          container.innerHTML = header() +
+          container.innerHTML = header("Second try") +
             '<div class="card"><div class="flash-tag">Second try</div><div class="q-text" style="margin:6px 0 12px;">' + esc(qt(c)) + '</div>' +
             '<div class="flash-tag">Answer</div><div class="flash-a">' + esc(c.a).replace(/\n/g, "<br>") + '</div></div>' +
             '<p class="center muted">Did you get it this time?</p>' + gradeButtons();
@@ -625,7 +641,7 @@
         var fus = container.querySelector("#fuSpeak"); if (fus) fus.addEventListener("click", function () { Speech.speak(f.q, curVoice); });
         var gradeFollow = function (ok) {
           var pp = perPub[c.pub] || (perPub[c.pub] = { n: 0, miss: 0, code: pubLabel(c) });
-          pp.n++; asked++;
+          pp.n++; asked++; extras.push({ k: "fu", ok: ok });
           if (ok) got++; else { pp.miss++; missed.push({ q: f.q, a: f.a, code: "Follow-up" }); }
           next();
         };
@@ -666,12 +682,17 @@
         var countLine = nQ + " question" + (nQ === 1 ? "" : "s") + (nF ? ", " + nF + " follow-up" + (nF === 1 ? "" : "s") + " or second tries" : "");
         var html = (notReady ? '<div class="card" style="border-color:var(--gold);text-align:center;"><div style="font-size:1.35rem;font-weight:800;">' + esc(V.title) + '</div><div class="muted" style="margin-top:6px;">' + esc(msg) + '</div>' +
               (bearingMiss.length && !sponsor ? '<div class="btn-row" style="margin-top:10px;"><a class="btn ghost" href="#/reporting">Practice reporting</a><a class="btn ghost" href="#/flash/tc3-21-5">Drill cards</a></div>' : '') + '</div>' : '') +
-          '<div class="ring-wrap"><div class="ring">' + pct + '%<small>score</small></div></div>' +
+          '<div class="ring-wrap"><div class="ring ' + (pct >= 75 ? 'good' : pct >= 50 ? 'mid' : 'bad') + '" style="--p:' + pct + ';"><div class="ring-in">' + pct + '%</div></div><small>score</small></div>' +
           (function () {
             var full = qScores.filter(function (x) { return x >= 0.99; }).length, part = qScores.filter(function (x) { return x >= 0.66 && x < 0.99; }).length, miss = qScores.length - full - part;
-            var legend = '<div class="dot-legend"><span><span class="dot g"></span>full</span><span><span class="dot a"></span>with gaps</span><span><span class="dot r"></span>missed</span></div>';
-            return legend + '<div class="dots" aria-hidden="true">' + qScores.map(function (x) { return '<span class="dot ' + (x >= 0.99 ? 'g' : x >= 0.66 ? 'a' : 'r') + '"></span>'; }).join("") + '</div>' +
-              '<p class="center muted" style="font-size:.85rem;">' + full + ' full \u2022 ' + part + ' with gaps • ' + miss + ' missed' + (nF ? ' \u2022 plus ' + nF + ' follow-up' + (nF === 1 ? '' : 's') : '') + '<br>Answers with some key points still earn part credit.</p>' +
+            var cb = extras.filter(function (x) { return x.k === "cb"; }), fu = extras.filter(function (x) { return x.k === "fu"; });
+            var cbOk = cb.filter(function (x) { return x.ok; }).length, fuOk = fu.filter(function (x) { return x.ok; }).length;
+            var legend = '<div class="dot-legend"><span><span class="dot g"></span>full</span><span><span class="dot a"></span>with gaps</span><span><span class="dot r"></span>missed</span>' + (extras.length ? '<span><span class="dot sq"></span>second try / follow-up</span>' : '') + '</div>';
+            return '<div class="dots" aria-hidden="true">' + qScores.map(function (x) { return '<span class="dot ' + (x >= 0.99 ? 'g' : x >= 0.66 ? 'a' : 'r') + '"></span>'; }).join("") +
+                (extras.length ? '<span class="dot-gap"></span>' + extras.map(function (x) { return '<span class="dot sq ' + (x.ok ? 'g' : 'r') + '"></span>'; }).join("") : '') + '</div>' + legend +
+              '<p class="center muted" style="font-size:.85rem;">First answers: ' + full + ' full \u2022 ' + part + ' with gaps \u2022 ' + miss + ' missed' +
+                (cb.length ? '<br>Second tries: ' + cbOk + ' of ' + cb.length + ' recovered' : '') + (fu.length ? '<br>Follow-ups: ' + fuOk + ' of ' + fu.length + ' right' : '') +
+                '<br>The score counts every answer, with part credit for answers with gaps.</p>' +
               (pct >= 75 && !notReady ? '<p class="center" style="font-weight:700;color:var(--gold);"><svg class=ic aria-hidden=true><use href=#i-trophy></use></svg> Strong board. Keep it sharp.</p>' : '');
           })() + (notReady ? '' : '<p class="center muted">' + msg + '</p>') +
           // the next step first: drill the misses (or run another), then the details
@@ -689,7 +710,7 @@
           html += '</div>';
         }
         if (missed.length) {
-          html += '<details class="plan-more"' + (sponsor ? ' open' : '') + '><summary>Review the ' + missed.length + ' question' + (missed.length === 1 ? '' : 's') + ' ' + (sponsor ? 'they' : 'you') + ' missed</summary>';
+          html += '<details class="set-fold"' + (sponsor ? ' open' : '') + '><summary>Review the ' + missed.length + ' question' + (missed.length === 1 ? '' : 's') + ' ' + (sponsor ? 'they' : 'you') + ' missed</summary>';
           missed.forEach(function (m) {
             html += '<div class="card"><div class="flash-tag">' + esc(m.code) + '</div><div style="font-weight:600;margin-bottom:6px;">' + esc(m.q) + '</div><div class="muted">' + esc(m.a) + '</div></div>';
           });
@@ -698,7 +719,7 @@
         if (sponsor) html += '<h2 class="section">Your notes for the Soldier (optional)</h2><textarea class="input" id="sbNote" rows="3" maxlength="300" placeholder="e.g. Good bearing. Rambled on the intro; slow down on SHARP answers."></textarea>' +
           '<div class="spacer"></div><button class="btn green lg" id="sendBack"><svg class=ic aria-hidden=true><use href=#i-send></use></svg> Send these results to the Soldier</button>' +
           '<div class="muted center" style="font-size:.85rem;margin-top:6px;">They open the link on their phone: the score goes into their history and the questions they missed come back sooner.</div>';
-        html += (window.App && App.sessionNextHtml ? App.sessionNextHtml() : '') + '<div class="spacer"></div><button class="btn ' + (missed.length && !sponsor ? 'ghost' : 'gold') + ' lg" id="again">Run another board</button><div class="spacer"></div><button class="btn ghost" id="home">Back to Home</button>';
+        html += (window.App && App.sessionNextHtml ? App.sessionNextHtml() : '') + '<div class="spacer"></div><button class="btn ' + (missed.length && !sponsor ? 'ghost' : 'gold') + ' lg" id="again">Run another board</button><div class="spacer"></div><button class="btn ghost lg" id="home">Back to Home</button>';
         container.innerHTML = html;
         container.querySelector("#again").addEventListener("click", function () { MockBoard.render(container, cards, length, opts); });
         container.querySelector("#home").addEventListener("click", function () { App.go("#/"); });
