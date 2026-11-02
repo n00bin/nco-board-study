@@ -126,7 +126,7 @@
         if (opts && opts.onDone) return opts.onDone(reviewed);
         container.innerHTML =
           '<div class="ring-wrap"><div class="ring">&#10003;<small>' + reviewed + ' cards reviewed</small></div></div>' +
-          '<p class="center muted">Session complete. Nicely done.</p><div class="spacer"></div>' +
+          '<p class="center muted">Session complete. Nicely done.</p><div class="spacer"></div>' + (window.App && App.sessionNextHtml ? App.sessionNextHtml() : '') +
           '<button class="btn gold lg" id="again">Study more</button><div class="spacer"></div>' +
           '<button class="btn ghost" id="home">Back to Home</button>';
         container.querySelector("#again").addEventListener("click", function () { Flashcards.render(container, cards, title, opts); });

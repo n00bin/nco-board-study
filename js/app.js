@@ -187,6 +187,24 @@
   // One daily plan so Learn, reviews, and Mock Board stop competing.
   // One daily plan so Learn, reviews, and Mock Board stop competing. It changes as the board gets close:
   // the last day is about calm and bearing (no new material), the last week is review, a late start gets the Top 100.
+  var lastPlan = [], planExtras = "";
+  // ---- today's session: run the plan in order; each finished screen offers the next step ----
+  function startSession() {
+    if (!lastPlan.length) return;
+    try { sessionStorage.setItem("ncob-sess", JSON.stringify({ items: lastPlan, i: 0 })); } catch (e) {}
+    App.go(lastPlan[0].href);
+  }
+  function sessionNextHtml() {
+    var s; try { s = JSON.parse(sessionStorage.getItem("ncob-sess") || "null"); } catch (e) { s = null; }
+    if (!s || !s.items || s.i >= s.items.length) return "";
+    var cur = s.items[s.i];
+    if (location.hash.indexOf(cur.href) !== 0) return "";
+    s.i++; try { sessionStorage.setItem("ncob-sess", JSON.stringify(s)); } catch (e) {}
+    if (s.i >= s.items.length) { try { sessionStorage.removeItem("ncob-sess"); } catch (e) {} return '<div class="card center" style="border-color:var(--gold);"><b>&#10003; Today&#39;s session is done.</b> <span class="muted">Nice work. Come back tomorrow.</span></div><div class="spacer"></div>'; }
+    var nx = s.items[s.i];
+    return '<button class="btn gold lg" data-sessnext="' + escAttr(nx.href) + '">Next in today&#39;s session: ' + esc(nx.label) + ' &#8594;</button><div class="spacer"></div>';
+  }
+  document.addEventListener("click", function (e) { var b = e.target.closest && e.target.closest("[data-sessnext]"); if (b) App.go(b.getAttribute("data-sessnext")); });
   // New cards a day to see all of Board Core a week before the board, capped at 20 so a late start stays doable.
   var NEW_CAP = 20;
   function pacePlan(unseen, days) {
@@ -234,7 +252,7 @@
           else items.push('<a href="#/flash/core">&#11088; ' + (pp.pace ? 'Learn ' + pp.pace + ' new Board Core cards' : 'New Board Core cards') + ' (' + unseen + ' left)</a>'); }
       }
       if (leechN > 0) items.push('<a href="#/flash/leeches">&#9888;&#65039; Practice ' + leechN + ' card' + (leechN > 1 ? "s" : "") + ' you keep missing</a>');
-      items.push('<a href="#/board/core">&#127894; One 10-question Mock Board</a>');
+      items.push('<a href="#/board/core">&#127894; One Mock Board (the 5-minute one is fine on a busy day)</a>');
       // once a week, a real person: a sponsor board beats any app
       var weekAgo = Date.now() - 7 * 86400000;
       var sponsored = Store.quizzes().some(function (q) { return /with sponsor/.test(q.deck) && q.date > weekAgo; });
@@ -242,6 +260,9 @@
       var sentAt = +(Store.chain()["sent-progress"] || 0);
       if (sponsored && Date.now() - sentAt > 7 * 86400000 && (days == null || days > 1)) items.push('<a href="#/sendprogress">&#128228; Send your sponsor this week\u2019s progress</a>');
     }
+    // remember today's plan for the one-button session (skip the sponsor/settings nudges)
+    lastPlan = items.map(function (h) { var mm = h.match(/href="([^"]+)">([\s\S]*?)<\/a>/); return mm ? { href: mm[1], label: mm[2].replace(/<[^>]+>/g, "").replace(/&[#\w]+;/g, "").trim() } : null; })
+      .filter(function (x) { return x && !/sponsor|sendprogress|settings/.test(x.href + x.label); });
     // style each item as a full-width button (default links are unreadable dark blue on this background)
     items = items.map(function (h) { return h.replace('<a href=', '<a class="btn ghost plan-item" href='); });
     var sponsorNote = items.some(function (h) { return /sponsor/.test(h); }) ? '<div class="muted" style="font-size:.8rem;margin-top:8px;">Your sponsor is the NCO who preps you, usually your first-line leader. <a href="#/pub/boardskills">More</a></div>' : '';
@@ -250,7 +271,9 @@
     var pp2 = pacePlan(unseen, days);
     var triageNote = (pp2.triage && days > 7) ? '<div class="muted" style="font-size:.8rem;margin-top:8px;">Short on time: at ' + NEW_CAP + ' a day you\u2019ll reach about ' + pp2.reach + ' of ' + unseen + ' new cards before board week. That\u2019s OK. Top 100 and the scenarios first; skip cards marked Advanced.</div>' : '';
     var remind = (!Store.settings().remindersAdded && (days == null || days > 1)) ? '<div style="margin-top:8px;font-size:.85rem;"><a href="#/settings">&#128276; Add study reminders to my calendar</a></div>' : '';
-    return '<div class="card"><div class="flash-tag">' + esc(title) + '</div><div style="display:flex;flex-direction:column;gap:8px;margin-top:8px;">' + items.join("") + '</div>' + blank + triageNote + sponsorNote + remind + '</div>';
+    planExtras = (sponsorNote || remind) ? '<div class="card">' + sponsorNote.replace("margin-top:8px;", "") + remind + '</div>' : '';
+    var startBtn = lastPlan.length >= 2 ? '<button class="btn gold lg" id="startSess" style="margin-top:8px;">&#9654; Start today&#39;s session</button>' : '';
+    return '<div class="card"><div class="flash-tag">' + esc(title) + '</div>' + startBtn + '<div style="display:flex;flex-direction:column;gap:8px;margin-top:8px;">' + items.join("") + '</div>' + blank + triageNote + '</div>';
   }
   // "Ready?" check: based on what you actually REMEMBERED (last grade was a hit), plus recent Mock Boards.
   // Cards merely seen don't count. Shows the weakest subjects by misses.
@@ -259,7 +282,9 @@
     var pubOf = {}; STUDY.cards.forEach(function (c) { if (c.core) pubOf[c.id] = c.pub; });
     coreIds.forEach(function (id) { var r = Store.recOf(id); if (r && r.seen > 0) { seen++; if (r.reps > 0) recalled++; if (r.lapses) lapsesByPub[pubOf[id]] = (lapsesByPub[pubOf[id]] || 0) + r.lapses; } });
     var boards = Store.quizzes().filter(function (q) { return /^Mock Board/.test(q.deck) && q.total; }).slice(0, 3);
-    var mockAvg = boards.length ? Math.round(100 * boards.reduce(function (s, q) { return s + q.score / q.total; }, 0) / boards.length) : null;
+    var wsum = 0, wtot = 0;
+    boards.forEach(function (q) { var w = /with sponsor/.test(q.deck) ? 2 : 1; wsum += w * q.score / q.total; wtot += w; });   // a sponsor's grading counts double
+    var mockAvg = boards.length ? Math.round(100 * wsum / wtot) : null;
     var recallPct = coreIds.length ? Math.round(100 * recalled / coreIds.length) : 0;
     // Mock Board scores only count in proportion to how much of Board Core you've covered (acing 10 cards isn't readiness).
     var coverage = Math.min(1, seen / (0.5 * Math.max(1, coreIds.length)));
@@ -332,11 +357,17 @@
         (calm || recommended || notRec ? '' : '<div class="bar"><span style="width:' + rs.ready + '%"></span></div>' +
           '<div class="sub" style="margin-top:6px;font-size:.85rem;">' + (daily.count >= dayTarget ? 'Done for today: ' + daily.count + ' cards &#10003;' : 'Today: ' + daily.count + ' of ' + dayTarget + ' cards') +
           ' • Board Core ' + rs.seen + ' of ' + coreIds.length + '</div>' +
+          (function () {
+            var q = Store.quizzes(), sp = q.filter(function (x) { return /with sponsor/.test(x.deck) && x.total; })[0], me = q.filter(function (x) { return /^Mock Board/.test(x.deck) && !/with sponsor/.test(x.deck) && x.total; }).slice(0, 5);
+            if (!sp || !me.length) return '';
+            var gap = Math.round(me.reduce(function (s, x) { return s + 100 * x.score / x.total; }, 0) / me.length - 100 * sp.score / sp.total);
+            return gap >= 10 ? '<div class="sub" style="margin-top:4px;font-size:.85rem;">You grade yourself about ' + gap + ' points higher than your sponsor does. Tick only what you said out loud.</div>' : '';
+          })() +
           (rs.mockAvg == null && rs.seen >= 30 ? '<div class="sub" style="margin-top:4px;font-size:.85rem;">No Mock Boards yet: they are 40% of this score. <a href="#/board/core" style="color:inherit;text-decoration:underline;">Run one</a> to raise it.</div>' : '') +
           (rs.weak.length ? '<div class="sub" style="margin-top:4px;font-size:.85rem;">Work on: <b>' + esc(rs.weak.join(", ")) + '</b></div>' : '') +
           (rs.seen ? '<details style="margin-top:4px;"><summary class="sub" style="font-size:.8rem;">How is board-ready figured?</summary><div class="sub" style="font-size:.8rem;margin-top:4px;">60% Board Core cards you got right last time (' + rs.recalled + ' of ' + coreIds.length + ') + 40% your last 3 Mock Boards (' + (rs.mockAvg == null ? 'none yet' : rs.mockAvg + '%') + '), counted fully once you have 3 Mock Boards and have covered half of Board Core.</div></details>' : '')) +
       '</div>' +
-      (freshBadges.length ? '<a class="row" href="#/badges" style="border-color:var(--gold);"><div class="grow"><div class="code">&#127941; New badge' + (freshBadges.length > 1 ? 's' : '') + ': ' + esc(freshBadges.length > 2 ? freshBadges.slice(0, 2).join(", ") + " and " + (freshBadges.length - 2) + " more" : freshBadges.join(" and ")) + '</div><div class="ttl">See all your badges</div></div><div class="chev">&#8250;</div></a>' : '') +
+      (false ? '<a class="row" href="#/badges" style="border-color:var(--gold);"><div class="grow"><div class="code">&#127941; New badge' + (freshBadges.length > 1 ? 's' : '') + ': ' + esc(freshBadges.length > 2 ? freshBadges.slice(0, 2).join(", ") + " and " + (freshBadges.length - 2) + " more" : freshBadges.join(" and ")) + '</div><div class="ttl">See all your badges</div></div><div class="chev">&#8250;</div></a>' : '') +
       ((/iPhone|iPad|iPod/.test(navigator.userAgent) && !navigator.standalone && !Store.settings().iosTipDone) ? '<div class="card" id="iosTip" style="border-color:var(--gold);"><div class="flash-tag">Put it on your home screen</div><div style="font-size:.95rem;">In Safari, tap Share (the square with the arrow), then <b>Add to Home Screen</b>, then <b>Add</b>. It opens like an app and works offline.</div><button class="btn ghost" id="iosOk" style="margin-top:8px;">Got it</button></div>' : '') +
       rankAsk() + boardCountdown(coreIds) + boardResultAsk(rs) +
       // 2) what to do today (one list; board-week extras are folded in)
@@ -348,6 +379,8 @@
         '<a class="btn board-btn" href="#/board/core">&#127894; Mock Board</a>' +
         '<a class="btn drive-btn" href="#/pick/drive">&#128663; Drive Mode</a>' +
       '</div>' +
+      (freshBadges.length ? '<a class="row" href="#/badges" style="border-color:var(--gold);"><div class="grow"><div class="code">&#127941; New badge' + (freshBadges.length > 1 ? 's' : '') + ': ' + esc(freshBadges.length > 2 ? freshBadges.slice(0, 2).join(", ") + " and " + (freshBadges.length - 2) + " more" : freshBadges.join(" and ")) + '</div><div class="ttl">See all your badges</div></div><div class="chev">&#8250;</div></a>' : '') +
+      planExtras +
       // 4) board-day prep and everything else
       '<a class="row board-row" href="#/boardday"><div class="grow"><div class="code">&#127894; Board Day Prep</div><div class="ttl">Room, reporting, uniform, records, your memo</div></div><div class="chev">&#8250;</div></a>' +
       '<a class="row" href="#/browse"><div class="grow"><div class="code">&#128218; All subjects</div><div class="ttl">Browse every publication and topic</div></div><div class="chev">&#8250;</div></a>' +
@@ -355,6 +388,7 @@
       weeklyRecap();
     mount.innerHTML = html;
     wireBoardResult(rs);
+    var ss0 = mount.querySelector("#startSess"); if (ss0) ss0.addEventListener("click", startSession);
     var iok = mount.querySelector("#iosOk"); if (iok) iok.addEventListener("click", function () { Store.setSetting("iosTipDone", true); mount.querySelector("#iosTip").remove(); });
     mount.querySelectorAll("#rankAsk .chip").forEach(function (b) {
       b.addEventListener("click", function () { Store.setSetting("boardFor", b.getAttribute("data-r")); screenHome(); });
@@ -512,7 +546,7 @@
         var quick = b.getAttribute("data-quick") === "1";
         var full = !quick && mount.querySelector("#fullBoard").checked, sponsor = mount.querySelector("#sponsorMode").checked;
         if (!quick) Store.setSetting("fullBoard", full);
-        MockBoard.render(mount, cards, parseInt(b.getAttribute("data-n"), 10), { full: full, sponsor: sponsor });
+        MockBoard.render(mount, cards, parseInt(b.getAttribute("data-n"), 10), { full: full, sponsor: sponsor, quick: quick });
       });
     });
   }
@@ -1552,6 +1586,7 @@
 
   var App = {
     localQuestions: localQuestions,
+    sessionNextHtml: sessionNextHtml,
     go: function (h) { location.hash = h; },
     appUrl: APP_URL,
     allCards: allCards,

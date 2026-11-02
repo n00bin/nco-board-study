@@ -221,7 +221,7 @@
         var line = (score == null) ? "Nicely done." : "You scored " + score + " of " + total + ".";
         container.innerHTML =
           '<div class="ring-wrap"><div class="ring">&#10003;<small>Lesson complete</small></div></div>' +
-          '<p class="center muted">' + line + '</p><div class="spacer"></div>' +
+          '<p class="center muted">' + line + '</p><div class="spacer"></div>' + (window.App && App.sessionNextHtml ? App.sessionNextHtml() : '') +
           (nextLesson ? '<button class="btn gold lg" id="next">Next lesson &#8594;</button><div class="spacer"></div>' : '') +
           '<button class="btn ghost" id="path">Back to Learn</button>';
         if (nextLesson) container.querySelector("#next").addEventListener("click", function () { App.go("#/lesson/" + nextLesson.id); });

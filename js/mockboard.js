@@ -230,7 +230,7 @@
           var box = container.querySelector("#playback");
           if (url && box) box.innerHTML = '<div class="card"><div class="flash-tag">Your answer</div><audio controls src="' + url + '" style="width:100%;margin-top:6px;"></audio>' +
             lengthCue(rec.secs) +
-            '<div class="muted" style="font-size:.85rem;margin-top:6px;">Listen for filler words ("um," "like"), pace, and whether you answered the question asked.</div></div>';
+            '<div class="muted" style="font-size:.85rem;margin-top:6px;">Play it back before you tick the boxes: grade what you actually said. Listen for filler words ("um," "like"), pace, and whether you answered the question asked.</div></div>';
         });
       }
       var curLimit = 0;   // seconds allowed for the question on screen
@@ -535,7 +535,7 @@
       }
 
       function markQ(c, score, left) {          // score: 1 = got it, 0 = missed, fractions from the key-point rubric
-        var ok = score >= 0.75;
+        var ok = score >= 0.66;   // two of three key points is a pass; the key fact alone (kp1) is 0.75
         Store.grade(c.id, ok ? "good" : "again");
         var pp = perPub[c.pub] || (perPub[c.pub] = { n: 0, miss: 0, code: pubLabel(c) });
         pp.n++; asked++; got += score;
@@ -544,16 +544,18 @@
         // later in that member's turn (or at the end), so you get a second chance to get it right.
         var fups = (c.follow || []).slice();
         if (curStyle === "why" && c.why && c.pub !== "sit" && c.pub !== "personal") fups = [{ q: "Why does that matter?", a: c.why, ref: c.ref }];
-        if (curStyle === "rapid") fups = [];
+        if (curStyle === "rapid" || opts.quick) fups = [];
         // A real board member presses on what you left out: ask about the first missed key point (bonus "why" boxes skipped)
         var gap = (left || []).map(function (k) { return c.points && c.points[k]; }).filter(function (p) { return p && !/^Said why it matters/i.test(p); })[0];
         if (score >= 0.5 && score < 1 && gap && curStyle !== "rapid" && !c.local && c.pub !== "personal") {
-          fups = [{ q: "You didn't mention this: \u201c" + gap.replace(/\.$/, "") + ".\u201d Tell the board about that, and why it matters.", a: gap.replace(/\.$/, "") + "." + (c.why ? " " + c.why : ""), ref: c.ref, adaptive: true }];
+          var shortList = c.points.every(function (p) { return p.length <= 22 || /^Said why/i.test(p); });
+          var cue = c.pub === "sit" ? "What else would you do, Sergeant?" : shortList ? "You left one out. What's the rest of it?" : "There's more to it. What else should the board hear" + (c.topic ? " about " + String(c.topic).replace(/\s*\(.*\)\s*$/, "").toLowerCase() : "") + "?";
+          fups = [{ q: cue, a: "The part left out: " + gap.replace(/\.$/, "") + "." + (c.why ? " " + c.why : ""), ref: c.ref, adaptive: true }];
         }
         if (score >= 0.5 && fups.length) {
           var fu = fups.map(function (f) { return { kind: "follow", f: f, parent: c }; });
           Array.prototype.splice.apply(steps, [s + 1, 0].concat(fu));
-        } else if (score < 0.5) {
+        } else if (score < 0.5 && !opts.quick) {
           var at = s + 1;
           while (at < steps.length && steps[at].kind !== "member" && steps[at].kind !== "reportOut") at++;
           steps.splice(at, 0, { kind: "comeback", c: c });
@@ -636,6 +638,7 @@
         var pubOf = {}; cards.forEach(function (c) { pubOf[c.id] = c.pub; });
         var sitMiss = missedIds.filter(function (id, k) { return pubOf[id] === "sit" && missedIds.indexOf(id) === k; }).length;
         var V = verdict(pct, bearingMiss, sitMiss), notReady = V.level === "almost", msg = V.msg;
+        if (deck.length < 8 && V.level === "ready") { V = { level: "work", title: "Good practice", msg: pct + "% on a short board. Board-ready takes a full board of 10 or more questions." }; msg = V.msg; }
         var nQ = deck.length, nF = Math.max(0, asked - nQ);
         var countLine = nQ + " question" + (nQ === 1 ? "" : "s") + (nF ? ", " + nF + " follow-up" + (nF === 1 ? "" : "s") + " or second tries" : "");
         var html = (notReady ? '<div class="card" style="border-color:var(--gold);text-align:center;"><div style="font-size:1.3rem;font-weight:800;">' + esc(V.title) + '</div><div class="muted" style="margin-top:6px;">' + esc(msg) + '</div>' +
@@ -661,7 +664,7 @@
         if (sponsor) html += '<h2 class="section">Your notes for the Soldier (optional)</h2><textarea class="input" id="sbNote" rows="3" maxlength="300" placeholder="e.g. Good bearing. Rambled on the intro; slow down on SHARP answers."></textarea>' +
           '<div class="spacer"></div><button class="btn green lg" id="sendBack">&#128228; Send these results to the Soldier</button>' +
           '<div class="muted center" style="font-size:.8rem;margin-top:6px;">They open the link on their phone: the score goes into their history and the questions they missed come back sooner.</div>';
-        html += '<div class="spacer"></div><button class="btn gold lg" id="again">Run another Mock Board</button><div class="spacer"></div><button class="btn ghost" id="home">Back to Home</button>';
+        html += (window.App && App.sessionNextHtml ? App.sessionNextHtml() : '') + '<div class="spacer"></div><button class="btn gold lg" id="again">Run another Mock Board</button><div class="spacer"></div><button class="btn ghost" id="home">Back to Home</button>';
         container.innerHTML = html;
         container.querySelector("#again").addEventListener("click", function () { MockBoard.render(container, cards, length, opts); });
         container.querySelector("#home").addEventListener("click", function () { App.go("#/"); });

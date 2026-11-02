@@ -10,6 +10,17 @@ no account, no app store, nothing to sign up for.
 
 ---
 
+## What's new in 3.21
+
+- **Start today's session**: one button on Home runs your plan in order; each finished step offers the next one.
+- **Follow-ups give a hint, not the answer**: leave out a key point and the board asks "What's the rest of it?" or
+  "What else would you do, Sergeant?" The missed point shows only in the answer.
+- **Fairer grading**: two of three key points counts as a pass, and several checklists were reworded.
+- **The 5-minute board is really 5 minutes** (no follow-ups or second tries) and won't call you board-ready after 5 questions.
+- Home is tidier (badges and tips below the four tools), shows if you grade yourself higher than your sponsor does, and
+  board-ready counts a sponsor's board double.
+- Staff-level trivia (guidon streamers, ASU service stripes) moved out of Board Core; kratom exceptions added.
+
 ## What's new in 3.20
 
 - **Duty rosters** (AR 220-45, Apr 2024) and **information security** (AR 380-5, Mar 2022) cards, including CUI replacing
