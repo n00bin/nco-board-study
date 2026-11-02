@@ -163,7 +163,8 @@
           steps.push({ kind: "member", label: last ? "The Board President" : "Board member " + (m + 1), subs: subs, style: style });
           ch.forEach(function (c) { steps.push({ kind: "q", c: c, style: style, mi: last ? 3 : m % 3 }); });
         });
-        var local = (!sponsorMode && !opts.fixed && window.App && App.localQuestions) ? App.localQuestions(2) : [];
+        var inDeck = {}; deck.forEach(function (c) { inDeck[c.id] = 1; });
+        var local = (!sponsorMode && !opts.fixed && window.App && App.localQuestions) ? App.localQuestions(3).filter(function (c) { return !inDeck[c.id]; }).slice(0, 2) : [];
         if (local.length) {   // goes in just before the Board President
           var pi = steps.map(function (x) { return x.kind; }).lastIndexOf("member");
           var ins = [{ kind: "member", label: "Board member " + M, subs: ["your unit and your Army"], style: "standard" }].concat(local.map(function (c) { return { kind: "q", c: c, style: "standard", mi: 2 }; }));
@@ -449,7 +450,7 @@
             '<button class="mini" id="mReport" aria-label="Report card">&#9873;</button></span></div>' +
             '<div class="q-text" style="margin-top:8px;">' + esc(qt(c)) + '</div></div>' +
           (sponsor ? sponsorBox(c.a, c.ref, whyHtml(c)) + '<p class="center muted">Read the question aloud, listen, then grade.</p>' + (c.points ? rubricHtml(c, "Sponsor: tick what the Soldier covered") : gradeButtons())
-                   : '<p class="center muted">' + (c.why && c.pub !== "sit" && c.pub !== "personal" ? 'Answer out loud, then say why it matters. Then reveal.' : 'Answer out loud, then reveal.') + '</p>' + recButton() + voiceButton() + '<button class="btn gold lg" id="reveal">Reveal answer</button>');
+                   : '<p class="center muted">' + (c.why && c.pub !== "sit" && c.pub !== "personal" && curStyle !== "rapid" ? 'Answer out loud, then say why it matters. Then reveal.' : 'Answer out loud, then reveal.') + '</p>' + recButton() + voiceButton() + '<button class="btn gold lg" id="reveal">Reveal answer</button>');
         container.querySelector("#mSpeak").addEventListener("click", function () { Speech.speak(qt(c), curVoice); });
         container.querySelector("#mReport").addEventListener("click", function () { App.reportCard(c); });
         if (autoRead) Speech.speak(qt(c), curVoice);
@@ -547,9 +548,12 @@
         if (curStyle === "rapid" || opts.quick) fups = [];
         // A real board member presses on what you left out: ask about the first missed key point (bonus "why" boxes skipped)
         var gap = (left || []).map(function (k) { return c.points && c.points[k]; }).filter(function (p) { return p && !/^Said why it matters/i.test(p); })[0];
-        if (score >= 0.5 && score < 1 && gap && curStyle !== "rapid" && !c.local && c.pub !== "personal") {
+        if (score >= 0.5 && score < 1 && gap && curStyle !== "rapid" && !opts.quick && !c.local && c.pub !== "personal") {
           var shortList = c.points.every(function (p) { return p.length <= 22 || /^Said why/i.test(p); });
-          var cue = c.pub === "sit" ? "What else would you do, Sergeant?" : shortList ? "You left one out. What's the rest of it?" : "There's more to it. What else should the board hear" + (c.topic ? " about " + String(c.topic).replace(/\s*\(.*\)\s*$/, "").toLowerCase() : "") + "?";
+          var nLeft = (left || []).filter(function (k) { return c.points[k] && !/^Said why/i.test(c.points[k]); }).length;
+          var tp = c.topic ? String(c.topic).replace(/\s*\(.*\)\s*$/, "") : "";
+          if (tp && !/^[A-Z0-9]{2,}/.test(tp)) tp = tp.charAt(0).toLowerCase() + tp.slice(1);   // keep acronyms like AFTB, SHARP
+          var cue = c.pub === "sit" ? "What else would you do, Sergeant?" : shortList ? (nLeft > 1 ? "You left some out. What's the rest of it?" : "You left one out. What's the rest of it?") : "There's more to it. What else should the board hear" + (tp ? " about " + tp : "") + "?";
           fups = [{ q: cue, a: "The part left out: " + gap.replace(/\.$/, "") + "." + (c.why ? " " + c.why : ""), ref: c.ref, adaptive: true }];
         }
         if (score >= 0.5 && fups.length) {
@@ -638,7 +642,7 @@
         var pubOf = {}; cards.forEach(function (c) { pubOf[c.id] = c.pub; });
         var sitMiss = missedIds.filter(function (id, k) { return pubOf[id] === "sit" && missedIds.indexOf(id) === k; }).length;
         var V = verdict(pct, bearingMiss, sitMiss), notReady = V.level === "almost", msg = V.msg;
-        if (deck.length < 8 && V.level === "ready") { V = { level: "work", title: "Good practice", msg: pct + "% on a short board. Board-ready takes a full board of 10 or more questions." }; msg = V.msg; }
+        if (deck.length < 8 && V.level !== "work") { V = { level: "work", title: "Good practice", msg: pct + "% on a short board. Board-ready takes a full board of 10 or more questions." }; msg = V.msg; }
         var nQ = deck.length, nF = Math.max(0, asked - nQ);
         var countLine = nQ + " question" + (nQ === 1 ? "" : "s") + (nF ? ", " + nF + " follow-up" + (nF === 1 ? "" : "s") + " or second tries" : "");
         var html = (notReady ? '<div class="card" style="border-color:var(--gold);text-align:center;"><div style="font-size:1.3rem;font-weight:800;">' + esc(V.title) + '</div><div class="muted" style="margin-top:6px;">' + esc(msg) + '</div>' +
