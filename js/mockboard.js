@@ -113,7 +113,7 @@
 
     render: function (container, cards, length, opts) {
       opts = opts || {};
-      var pool = cards.filter(function (c) { return c.q && c.a; });
+      var pool = cards.filter(function (c) { return c.q && c.a && !(opts.full && c.id === "personal-11"); });
       if (pool.length < 3) { container.innerHTML = '<div class="empty">A Mock Board needs at least 3 cards. Pick a bigger subject, or Board Core.</div>'; return; }
       length = Math.min(length || 15, pool.length);
       var deck = opts.fixed ? pool.slice(0, length) : drawDeck(pool, length);
@@ -214,7 +214,7 @@
       }
       function timerHtml(t, why) {
         // say why the clock isn't the Settings value (long answers and scenarios get double time; the intro gets 90 s)
-        var note = why ? why : (t > secs && secs ? "Double time: long answer" : "");
+        var note = why ? why : (t > secs && secs ? "Extra time: long answer" : "");
         return t > 0 ? '<div class="bar timer-bar"><span id="tBar" style="width:100%"></span></div><div class="center muted" id="tNum"></div>' + (note ? '<div class="center muted" style="font-size:.75rem;">' + note + '</div>' : '')
           : (secs ? '<div class="center muted" style="font-size:.85rem;">No timer on this one: take it at your own pace.</div>' : '');
       }
@@ -286,7 +286,7 @@
         container.innerHTML = header() +
           '<div class="card"><div class="flash-tag">The board president</div>' +
             '<div class="q-text" style="margin-top:8px;">"Before you sit, let\'s see some drill."</div>' +
-            '<div class="muted">' + (sponsor ? 'Call each command out loud. Watch for a sharp movement on the command of execution, and a return to attention after each one.' : 'Stand up and do each command, sharply, from the position of attention. After each one, come back to attention.') + '</div></div>' +
+            '<div class="muted">' + (sponsor ? 'Call each command out loud. Watch for a sharp movement on the command of execution, then they hold the position until your next command.' : 'Stand up and do each command, sharply, on the command of execution. Hold each position until the next command.') + '</div></div>' +
           '<div class="card">' + cmds.map(function (t, k) { return '<div class="row" style="margin-bottom:6px;"><div class="numbubble">' + (k + 1) + '</div><div class="grow"><div class="ttl" style="font-size:1.15rem;font-weight:700;">' + esc(t) + '</div></div></div>'; }).join("") +
             '<div class="muted" style="font-size:.85rem;margin-top:6px;">' + drillHints(cmds) + 'Then ' + (sponsor ? 'tell the Soldier to take their seat.' : 'wait for the president to tell you to take your seat.') + '</div></div>' +
           (sponsor ? '' : '<button class="btn ghost" id="sayIt">&#128266; Call the commands for me</button><div class="spacer"></div>') +
@@ -381,7 +381,7 @@
       function question(c) {
         qNum++;
         var cs = timeFor(c);
-        if (curStyle === "rapid" && secs) cs = Math.min(cs || 20, 20);
+        if (curStyle === "rapid" && secs && c.pub !== "sit" && c.pub !== "personal") cs = Math.min(cs || 20, 20);
         container.innerHTML = header() + timerHtml(cs) +
           // Only the publication is shown on the question side: topic labels can give the answer away.
           '<div class="card"><div class="flash-toprow"><span class="flash-tag">' + esc(pubCode(c)) + (c.adv ? ' \u2022 Advanced' : '') + '</span>' +
@@ -450,7 +450,7 @@
           '<div class="card"><div class="flash-tag">' + esc(pubCode(c)) + (c.topic ? " • " + esc(c.topic) : "") + '</div>' +
             '<div class="q-text" style="margin:6px 0 12px;">' + esc(qt(c)) + '</div>' +
             '<div class="flash-tag">Answer</div><div class="flash-a">' + esc(c.a).replace(/\n/g, "<br>") + '</div>' +
-            (c.ref ? '<div class="flash-ref">Reference: ' + esc(c.ref) + '</div>' : '') + whyHtml(c) +
+            (c.ref ? '<div class="flash-ref">Reference: ' + esc(c.ref) + '</div>' : '') + (curStyle === "why" && c.pub !== "sit" && c.pub !== "personal" ? '' : whyHtml(c)) +
             (c.sample ? '<div class="flash-ref" style="color:var(--text);margin-top:10px;"><b>Example answer (fictional Soldier):</b> ' + esc(c.sample) + '</div>' : '') + '</div>' +
           (listened ? '<div id="heard"><div class="muted center" style="font-size:.85rem;">Checking what you said…</div></div>' : '') +
           '<div id="playback"></div>' +

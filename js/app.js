@@ -287,6 +287,9 @@
     // Lead with Board Core (what the board asks most), not the whole 1,500-card library.
     var coreIds = STUDY.cards.filter(function (c) { return c.core && rankOk(c); }).map(function (c) { return c.id; });
     var rs = readyScore(coreIds), dToB = daysToBoard();
+    // today's target = the plan (reviews due + paced new cards), never less than the daily goal
+    var unseenN = coreIds.length - rs.seen, paceN = (dToB != null && dToB > 7) ? Math.ceil(unseenN / Math.max(1, dToB - 7)) : 0;
+    var dayTarget = Math.max(daily.goal, Math.min(Store.dueCount(ids), 40) + paceN);
 
     var html =
       '<div class="hero">' +
@@ -298,7 +301,7 @@
         '</div>' +
         (dToB === 0 || dToB === 1 ? '' : '<div class="bar"><span style="width:' + rs.ready + '%"></span></div>') +
         '<div class="sub" style="margin-top:6px;font-size:.8rem;">Board Core: ' + rs.seen + ' of ' + coreIds.length + ' studied' + (/^(SGT|SSG)$/.test(Store.settings().boardFor) ? ' (' + Store.settings().boardFor + ' cards only)' : '') + '</div>' +
-        (dToB === 0 || dToB === 1 ? '' : '<div class="sub" style="margin-top:8px;">' + (daily.count >= daily.goal ? 'Done for today: ' + daily.count + ' cards &#10003;' : 'Today: ' + daily.count + ' of ' + daily.goal + ' cards') + '</div>') +
+        (dToB === 0 || dToB === 1 ? '' : '<div class="sub" style="margin-top:8px;">' + (daily.count >= dayTarget ? 'Done for today: ' + daily.count + ' cards &#10003;' : 'Today: ' + daily.count + ' of ' + dayTarget + ' cards') + '</div>') +
       '</div>' +
       rankAsk() + boardCountdown(coreIds) + boardResultAsk(rs) + todayPlan(coreIds, dueN) + weeklyRecap() + readyCheck(coreIds, rs) +
       // the "start from scratch" nudge is for the early weeks, not board week
@@ -959,7 +962,7 @@
       '<div class="muted center" style="font-size:.8rem;margin-top:8px;">Nothing is sent anywhere: this page was built from the link itself.</div>';
     mount.querySelector("#addSquad").addEventListener("click", function () {
       if (x.id === Store.uid()) { App.toast("That's your own progress."); return; }
-      Store.upsertSquad({ id: String(x.id || "").replace(/[^a-z0-9]/g, "").slice(0, 16), name: String(x.n || "Soldier").slice(0, 30), ready: x.r | 0, core: x.s | 0, week: x.wk | 0, streak: x.st | 0, mocks: x.mw | 0, at: x.at | 0 });
+      Store.upsertSquad({ id: String(x.id || "").replace(/[^a-z0-9]/g, "").slice(0, 16), name: String(x.n || "Soldier").slice(0, 30), ready: x.r | 0, core: x.s | 0, week: x.wk | 0, streak: x.st | 0, mocks: x.mw | 0, at: Number(x.at) || Date.now() });
       App.toast("Added to your squad board"); App.go("#/squad");
     });
   }
