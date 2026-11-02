@@ -233,6 +233,8 @@
       var weekAgo = Date.now() - 7 * 86400000;
       var sponsored = Store.quizzes().some(function (q) { return /with sponsor/.test(q.deck) && q.date > weekAgo; });
       if (!sponsored && (days == null || days > 7)) items.push('<a href="#/board/core">&#129309; This week: ask your sponsor to run a board with you (sponsor mode)</a>');
+      var sentAt = +(Store.chain()["sent-progress"] || 0);
+      if (sponsored && Date.now() - sentAt > 7 * 86400000 && (days == null || days > 1)) items.push('<a href="#/sendprogress">&#128228; Send your sponsor this week\u2019s progress</a>');
     }
     // style each item as a full-width button (default links are unreadable dark blue on this background)
     items = items.map(function (h) { return h.replace('<a href=', '<a class="btn ghost plan-item" href='); });
@@ -311,7 +313,8 @@
     var recommended = dToB != null && dToB < 0 && /\|Recommended$/.test(Store.settings().boardResult || "");
 
     // 1) where you stand
-    var head = recommended ? '<div class="big" style="font-size:1.6rem;">Board result: Recommended</div><div class="sub">Keep your records and points current while you wait for the cutoff.</div>'
+    var notRec = dToB != null && dToB < 0 && /\|Not recommended$/.test(Store.settings().boardResult || "");
+    var head = notRec ? '<div class="big" style="font-size:1.5rem;">Next board: you\u2019ve got this</div><div class="sub">Your plan for the next board is below. Board-ready now: ' + rs.ready + '%.</div>' : recommended ? '<div class="big" style="font-size:1.6rem;">Board result: Recommended</div><div class="sub">Keep your records and points current while you wait for the cutoff.</div>'
       : calm ? '<div class="big" style="font-size:1.6rem;">' + (dToB === 0 ? "Board day" : "Board tomorrow") + '</div><div class="sub">' + rs.seen + ' Board Core card' + (rs.seen === 1 ? '' : 's') + ' studied. Stay calm and report in sharp.</div>'
       : '<div class="big">' + rs.ready + '%</div><div class="sub">board-ready</div>';
     var freshBadges = checkBadges(coreIds, rs);
@@ -319,7 +322,7 @@
       '<div class="hero">' +
         '<div style="display:flex;justify-content:space-between;align-items:flex-end;"><div>' + head + '</div>' +
           '<div style="text-align:right;white-space:nowrap;"><div style="font-size:1.5rem;font-weight:800;">&#128293; ' + streak + '</div><div class="sub">day streak' + (Store.saverUsed() && Date.now() - Store.saverUsed() < 2 * 86400000 ? ' (1 missed day forgiven)' : '') + '</div></div></div>' +
-        (calm || recommended ? '' : '<div class="bar"><span style="width:' + rs.ready + '%"></span></div>' +
+        (calm || recommended || notRec ? '' : '<div class="bar"><span style="width:' + rs.ready + '%"></span></div>' +
           '<div class="sub" style="margin-top:6px;font-size:.85rem;">' + (daily.count >= dayTarget ? 'Done for today: ' + daily.count + ' cards &#10003;' : 'Today: ' + daily.count + ' of ' + dayTarget + ' cards') +
           ' • Board Core ' + rs.seen + ' of ' + coreIds.length + '</div>' +
           (rs.mockAvg == null && rs.seen >= 30 ? '<div class="sub" style="margin-top:4px;font-size:.85rem;">No Mock Boards yet: they are 40% of this score. <a href="#/board/core" style="color:inherit;text-decoration:underline;">Run one</a> to raise it.</div>' : '') +
@@ -560,6 +563,7 @@
       '</div>' +
       '<h2 class="section">Study reminders</h2><div class="card"><div class="muted" style="font-size:.85rem;">Add a daily study reminder' + (s.boardDate ? ' (until your board)' : '') + ' and a weekly "sponsor board" reminder to your phone\'s calendar.</div>' +
         '<label class="lbl" for="remT">Remind me at</label><input class="input" type="time" id="remT" value="19:00" />' +
+      (('Notification' in window) ? '<div class="spacer"></div><button class="btn ghost" id="notifyOn">' + (s.notify ? '&#128276; Daily reminder is on' : '&#128276; Turn on a daily reminder notification (installed Android app)') + '</button>' : '') +
         '<button class="btn green" id="remIcs" style="margin-top:10px;">&#128197; Add reminders to my calendar</button>' +
         '<div class="muted" style="font-size:.8rem;margin-top:6px;">Downloads a calendar file. Open it and your calendar app adds the reminders. Nothing is sent anywhere.</div></div>' +
       '<h2 class="section">Daily goal</h2>' +
@@ -591,6 +595,18 @@
         Store.setSetting("boardFor", b.getAttribute("data-r"));
         mount.querySelectorAll("#rankChips .chip").forEach(function (x) { x.classList.remove("on"); });
         b.classList.add("on");
+      });
+    });
+    var nb = mount.querySelector("#notifyOn");
+    if (nb) nb.addEventListener("click", function () {
+      if (!("Notification" in window) || !navigator.serviceWorker) { App.toast("This phone's browser can't show reminders. Use the calendar reminders instead.", 4000); return; }
+      Notification.requestPermission().then(function (p) {
+        if (p !== "granted") { App.toast("Notifications are off for this app. Use the calendar reminders instead.", 4000); return; }
+        navigator.serviceWorker.ready.then(function (reg) {
+          var done = function (ok) { Store.setSetting("notify", ok); App.toast(ok ? "Daily reminder on" : "Reminders need the installed app on Android. Use the calendar reminders instead.", 4000); screenSettings(); };
+          if (reg.periodicSync) reg.periodicSync.register("ncoboard-daily", { minInterval: 20 * 3600 * 1000 }).then(function () { done(true); }, function () { done(false); });
+          else done(false);
+        });
       });
     });
     mount.querySelector("#remIcs").addEventListener("click", function () {
@@ -686,6 +702,7 @@
     setTitle("My Cards", true);
     var cards = Store.userCards();
     var html = '<a class="btn gold lg" href="#/mycards/new">&#43; Add a card</a>' +
+      '<div class="spacer"></div><a class="btn ghost" href="#/mos">&#128295; Start my MOS cards (your job questions)</a>' +
       '<div class="card" style="margin-top:12px;"><div class="muted">Add your unit\'s smart-book items — chain of command, command policies, local SOPs — anything your board might ask that isn\'t in the manuals.</div></div>';
     if (cards.length) {
       html += '<h2 class="section">' + cards.length + ' custom card' + (cards.length > 1 ? "s" : "") + '</h2>';
@@ -712,6 +729,28 @@
     });
     mount.querySelectorAll("[data-edit]").forEach(function (r) {
       r.addEventListener("click", function () { App.go("#/mycards/edit/" + r.getAttribute("data-edit")); });
+    });
+  }
+
+  // ---- My MOS starter: turns a few answers into your own study cards (boards can ask about your job) ----
+  function screenMos() {
+    setTitle("Start My MOS Cards", true);
+    var F = [["code", "Your MOS (code and title)", "e.g. 25U, Signal Support Systems Specialist"], ["duties", "Your main duties, in a sentence or two", "e.g. what you do day to day, in your own words"],
+      ["t1", "An individual critical task from your STP (task name, then its standard)", "e.g. (task name): (its standard, copied from your STP)"], ["t2", "Another critical task and its standard", ""], ["t3", "One more (optional)", ""],
+      ["eq", "The main equipment you work on", "e.g. the radios, vehicles, or systems you operate or maintain"]];
+    mount.innerHTML = '<div class="card"><div class="muted">Boards can check your job knowledge. Fill in what you know (your Soldier\'s Manual, Digital Job Book, or squad leader can help), and the app makes study cards from it. They show up in My Cards and in your Board Core study.</div></div>' +
+      F.map(function (f) { return '<label class="lbl" for="mos-' + f[0] + '">' + esc(f[1]) + '</label><textarea class="input" id="mos-' + f[0] + '" rows="2" placeholder="' + escAttr(f[2]) + '"></textarea>'; }).join("") +
+      '<div class="spacer"></div><button class="btn gold lg" id="mosGo">Make my MOS cards</button>';
+    mount.querySelector("#mosGo").addEventListener("click", function () {
+      var v = {}; F.forEach(function (f) { v[f[0]] = (mount.querySelector("#mos-" + f[0]).value || "").trim().slice(0, 600); });
+      var made = [];
+      if (v.code) made.push({ q: "What is your MOS?", a: v.code });
+      if (v.duties) made.push({ q: "What are your main duties in your MOS?", a: v.duties });
+      ["t1", "t2", "t3"].forEach(function (k) { if (v[k]) { var parts = v[k].split(/:\s*/); made.push({ q: "Walk the board through this task from your MOS: " + parts[0] + ". What is the standard?", a: v[k] }); } });
+      if (v.eq) made.push({ q: "What equipment do you work on in your job?", a: v.eq });
+      if (!made.length) { App.toast("Fill in at least one box."); return; }
+      made.forEach(function (c) { Store.addUserCard({ q: c.q, a: c.a, topic: "My MOS", pub: "mine" }); });
+      App.toast("Made " + made.length + " MOS cards"); App.go("#/mycards");
     });
   }
 
@@ -1025,6 +1064,7 @@
   function shareProgress() {
     if (!Store.settings().displayName) { App.go("#/sendprogress"); App.toast("Add your name first, so your sponsor knows it's you.", 3500); return; }
     var url = APP_URL + "#/progress/" + b64e(snapshot());
+    Store.setChainRole("sent-progress", String(Date.now()));
     var text = (Store.settings().displayName) + "'s board prep progress. Open it to see my weak spots and run a board on them: " + url;
     if (navigator.share) navigator.share({ title: "My board prep progress", text: text }).catch(function () {});
     else if (navigator.clipboard) navigator.clipboard.writeText(text).then(function () { App.toast("Progress link copied", 3000); }, function () { App.toast(url, 6000); });
@@ -1038,9 +1078,9 @@
     var who = x.n ? esc(x.n) : "This Soldier", days = null;
     if (/^\d{4}-\d{2}-\d{2}$/.test(x.bd || "")) { var p = x.bd.split("-"), t = new Date(); days = Math.round((new Date(+p[0], +p[1] - 1, +p[2]) - new Date(t.getFullYear(), t.getMonth(), t.getDate())) / 86400000); }
     var weakIds = [];
-    var twinSeen = {};
-    (x.w || []).forEach(function (pub) { STUDY.cards.filter(function (c) { if (!c.core || c.pub !== pub) return false; if (c.twin) { if (twinSeen[c.twin]) return false; twinSeen[c.twin] = 1; } return true; }).slice(0, 4).forEach(function (c) { weakIds.push(c.id); }); });
-    var sit = STUDY.cards.filter(function (c) { return c.core && c.pub === "sit"; }).map(function (c) { return c.id; }).sort(function () { return Math.random() - 0.5; }).slice(0, 2);
+    var twinSeen = {}, rankFit = function (c) { return !c.rank || !x.bf || x.bf === "BOTH" || c.rank === x.bf; };
+    (x.w || []).forEach(function (pub) { STUDY.cards.filter(function (c) { if (!c.core || c.pub !== pub || !rankFit(c)) return false; if (c.twin) { if (twinSeen[c.twin]) return false; twinSeen[c.twin] = 1; } return true; }).slice(0, 4).forEach(function (c) { weakIds.push(c.id); }); });
+    var sit = STUDY.cards.filter(function (c) { return c.core && c.pub === "sit" && rankFit(c); }).map(function (c) { return c.id; }).sort(function () { return Math.random() - 0.5; }).slice(0, 2);
     var board = weakIds.slice(0, 8).concat(sit);
     mount.innerHTML =
       '<div class="hero"><div class="big">' + x.r + '%</div><div class="sub">' + who + ' • board-ready</div>' +
@@ -1233,9 +1273,10 @@
       var gap = cut == null ? "" : blank ? '<div class="muted" style="margin-top:6px;">Fill in all four categories (0 is fine) to compare with the cutoff.</div>' : total >= cut ? '<div style="margin-top:6px;" class="badge-good"><b>' + (total - cut) + ' points over the cutoff.</b></div>'
         : '<div style="margin-top:6px;"><b>' + (cut - total) + ' points short of the cutoff.</b> <span class="muted">The categories with the most room left are the fastest gains.</span></div>';
       var room = PTS.map(function (p) { return { t: p.t, left: p.max[rank] - Math.min(n("pt-" + p.k) || 0, p.max[rank]) }; }).sort(function (x, y) { return y.left - x.left; }).slice(0, 2);
+      var calm = (rank === "SGT" && !mount.querySelector("#ptxschool").checked) ? '<div class="muted" style="font-size:.85rem;margin-top:6px;">Don\u2019t panic if you\u2019re well short: that\u2019s normal before BLC. You don’t need BLC to pin on SGT (AR 600-8-19, para 1-34a), but graduating adds 150 points, the biggest single jump.</div>' : '';
       mount.querySelector("#ptTotal").innerHTML = '<div class="flash-tag">Your estimate for ' + rank + '</div><div style="font-size:1.8rem;font-weight:800;">' + total + ' <span class="muted" style="font-size:1rem;">of 800</span></div>' + gap +
         '<div class="muted" style="font-size:.85rem;margin-top:6px;">Most room left: ' + room.map(function (r) { return esc(r.t.toLowerCase()) + ' (' + r.left + ')'; }).join(", ") + '.</div>' +
-        (over.length ? '<div class="muted" style="font-size:.8rem;margin-top:6px;">Note: ' + esc(over.join("; ")) + '.</div>' : '');
+        (over.length ? '<div class="muted" style="font-size:.8rem;margin-top:6px;">Note: ' + esc(over.join("; ")) + '.</div>' : '') + calm;
     }
     PTS.forEach(function (p) { mount.querySelector("#pt-" + p.k).addEventListener("input", update); });
     mount.querySelector("#pt-cut").addEventListener("input", update);
@@ -1333,7 +1374,7 @@
   // ---- Know your Army & your job: things boards ask that depend on YOUR unit and the news (not flashcard facts) ----
   var KNOW_PROMPTS = [
     { id: "unit", t: "Your unit", h: "Battalion, brigade, and division: name, motto, what the patch means, mission, and a little history." },
-    { id: "job", t: "Your job", h: "Your MOS title and main duties, and a few of the individual tasks you perform. Boards can check your job proficiency: look up your MOS Soldier's Manual (STP) and your individual critical task list on the Central Army Registry or your Digital Job Book, and ask your squad leader which tasks your board likes to ask." },
+    { id: "job", t: "Your job", h: "Tip: More > My Cards > Start my MOS cards turns this into study cards. Your MOS title and main duties, and a few of the individual tasks you perform. Boards can check your job proficiency: look up your MOS Soldier's Manual (STP) and your individual critical task list on the Central Army Registry or your Digital Job Book, and ask your squad leader which tasks your board likes to ask." },
     { id: "post", t: "Your installation", h: "Installation commander and CSM; where ACS, AER, the SHARP office, and behavioral health are; the SHARP and suicide hotlines." },
     { id: "army", t: "What's changing in the Army", h: "Recent changes you should be able to talk about: the AFT and Combat Field Test, waist-to-height ratio, grooming rules. See What Changed Recently for the details and sources." },
     { id: "news", t: "Current events", h: "A few national and world headlines from this month, from a reliable news source, and how they could affect the Army or your unit." }
@@ -1382,6 +1423,7 @@
     if (head === "settings") return screenSettings(), tab("more");
     if (head === "backup") return screenBackup(), tab("more");
     if (head === "share") return screenShare(), tab("more");
+    if (head === "mos") return screenMos(), tab("more");
     if (head === "takecards") return screenTakeCards(parts[1] || ""), tab("more");
     if (head === "mycards") {
       if (parts[1] === "new") return screenMyCardForm(null), tab("more");
@@ -1443,7 +1485,25 @@
   }
 
   // ---------------- public helpers ----------------
+  // Off-script board questions from the Soldier's own notes (Mock Board's "your unit and your Army" member)
+  function localQuestions(n) {
+    var ch = Store.chain(), out = [];
+    var LOOK = "Not filled in yet. Look it up and add it under Board Day Prep";
+    var mine = shuffle(CHAIN_ROLES.filter(function (r) { return r.your && ["teamleader", "squadleader"].indexOf(r.k) < 0; }))[0];
+    var army = shuffle(CHAIN_ROLES.filter(function (r) { return !r.your; }))[0];
+    var KQ = { unit: "Tell the board about your unit: its mission, its motto, and a little of its history.", post: "Who is your installation commander, and where on post would you send a Soldier who needs help?", news: "What is in the news this month that could affect the Army or your unit?" };
+    var kid = shuffle(["unit", "post", "news"])[0];
+    var pool = [
+      { id: "chain-" + mine.k, pub: "chain", topic: "Chain of Command", q: "Who is your " + mine.label + "?", a: ch[mine.k] || LOOK + " > Chain of Command.", ref: "Your roster (Board Day Prep > Chain of Command)", flashOnly: true, custom: true },
+      { id: "chain-" + army.k, pub: "chain", topic: "Chain of Command", q: "Who is the " + army.label + "?", a: ch[army.k] || LOOK + " > Chain of Command (check army.mil).", ref: "Your roster (Board Day Prep > Chain of Command)", flashOnly: true, custom: true },
+      { id: "know-" + kid, pub: "chain", topic: "Know your Army", q: KQ[kid], a: ch["know-" + kid] || LOOK + " > Know Your Army & Your Job.", ref: "Your notes (Board Day Prep > Know Your Army & Your Job)", flashOnly: true, custom: true }
+    ];
+    out = shuffle(pool).slice(0, n || 2);
+    return out;
+  }
+
   var App = {
+    localQuestions: localQuestions,
     go: function (h) { location.hash = h; },
     appUrl: APP_URL,
     allCards: allCards,

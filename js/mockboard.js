@@ -89,9 +89,13 @@
 
   // Choose a board: about 20% scenarios (at least 2), spread across subjects and themes. Going to a SGT board?
   // "Advanced" cards (more likely at an SSG board) go to the back of the line.
+  var REGNAME = /\b(which|what)\b[^?]{0,30}\b(regulation|AR|publication|manual)\b[^?]{0,50}\b(covers?|governs?|prescribes?|outlines?)\b/i;
   function dedupeTwins(list) {
     var seen = {};
-    return list.filter(function (c) { if (!c.twin) return true; if (seen[c.twin]) return false; seen[c.twin] = 1; return true; });
+    return list.filter(function (c) {
+      var key = c.twin || (REGNAME.test(c.oral || c.q || "") ? "_regname" : "");
+      if (!key) return true; if (seen[key]) return false; seen[key] = 1; return true;
+    });
   }
   function drawDeck(pool, length) {
     pool = dedupeTwins(shuffle(pool.slice()));
@@ -137,7 +141,7 @@
       var deck = opts.fixed ? pool.slice(0, length) : drawDeck(pool, length);
 
       // The board as a queue of steps. Follow-ups are inserted right after their question once it's graded.
-      var steps = [];
+      var steps = [], sponsorMode = !!opts.sponsor;
       if (opts.full) {
         // Real boards split subjects among members. Group questions by subject, then hand each member a share,
         // with the Board President asking last (scenarios stay mixed in with each member's questions).
@@ -159,6 +163,13 @@
           steps.push({ kind: "member", label: last ? "The Board President" : "Board member " + (m + 1), subs: subs, style: style });
           ch.forEach(function (c) { steps.push({ kind: "q", c: c, style: style, mi: last ? 3 : m % 3 }); });
         });
+        var local = (!sponsorMode && !opts.fixed && window.App && App.localQuestions) ? App.localQuestions(2) : [];
+        if (local.length) {   // goes in just before the Board President
+          var pi = steps.map(function (x) { return x.kind; }).lastIndexOf("member");
+          var ins = [{ kind: "member", label: "Board member " + M, subs: ["your unit and your Army"], style: "standard" }].concat(local.map(function (c) { return { kind: "q", c: c, style: "standard", mi: 2 }; }));
+          Array.prototype.splice.apply(steps, [pi, 0].concat(ins));
+          chunks.splice(chunks.length - 1, 0, local);
+        }
         steps.push({ kind: "reportOut" });
         deck = [].concat.apply([], chunks);
       } else deck.forEach(function (c) { steps.push({ kind: "q", c: c }); });
@@ -361,7 +372,7 @@
               '<div class="muted">Listen for: "Sergeant Major, (rank) (last name) reports to the President of the Board," a sharp salute held until you return it, and their correct rank.</div></div>'
             : '<div class="q-text" style="margin-top:8px;">You are called in. Stand up, walk in, and report — out loud, for real.</div>' +
               (Store.chain()["memo-report"] ? '<div class="muted">Your memo\'s wording: <b>"' + esc(Store.chain()["memo-report"]) + '"</b></div></div>'
-                : '<div class="muted">"Sergeant Major, (your rank) (your last name) reports to the President of the Board." Use your own rank and your board memo\'s exact wording. <a href="#/memo">Add your memo\'s wording</a>.</div></div>')) +
+                : '<div class="muted">"Sergeant Major, ' + esc(Store.settings().displayName || "(your rank) (your last name)") + ' reports to the President of the Board." Use your board memo\'s exact wording. <a href="#/memo">Add your memo\'s wording</a>.</div></div>')) +
           '<button class="btn ghost" id="showSteps">Show the reporting steps</button><div id="stepsBox" hidden>' + stepsList(all.slice(1, 5)) + '</div>' +
           mirrorButton() + '<p class="center muted">' + (sponsor ? 'Did they halt about two steps in front of you, salute and hold it, say their correct rank, and sit only when told?' : 'Honest check: halted two steps in front of the president, saluted and held it until returned, said your correct rank, sat only when told?') + '</p>' +
           gradeButtons("Needs work", "Reported in clean");
@@ -464,7 +475,7 @@
             var r = new SR(); r.lang = "en-US"; r.continuous = true; r.interimResults = false;
             r.onresult = function (e) { for (var k = e.resultIndex; k < e.results.length; k++) if (e.results[k].isFinal) voice.text += " " + e.results[k][0].transcript; };
             r.onerror = function () { if (voiceFail) return; voiceFail = true; App.toast("Voice check isn't available right now (it may need a connection). Grade yourself as usual.", 4000); };
-            r.start(); voice.rec = r;
+            r.start(); voice.rec = r; voice.t0 = Date.now();
             b.textContent = "⏺ Listening… (stops when you reveal)"; b.classList.add("on"); b.disabled = true;
             // (tapping Record pauses the voice check; see wireRec)
           } catch (err) { App.toast("Voice check isn't supported in this browser.", 3500); }
@@ -483,6 +494,12 @@
         var said = voice.text.trim();
         if (!said) { box.innerHTML = '<div class="muted" style="font-size:.85rem;">Voice check didn\'t catch anything. Grade yourself below.</div>'; return; }
         var html = '<div class="card"><div class="flash-tag">Voice check heard</div><div class="muted" style="font-size:.9rem;">"' + esc(said) + '"</div>';
+        var words = said.split(/\s+/).filter(Boolean).length, secsV = voice.t0 ? Math.max(1, Math.round((Date.now() - voice.t0) / 1000) - 1) : 0;
+        var fill = (said.toLowerCase().match(/\b(um+|uh+|er+|like|you know|basically|kind of|sort of)\b/g) || []).length;
+        if (secsV >= 5) { var wpm = Math.round(words * 60 / secsV);
+          html += '<div style="font-size:.9rem;margin-top:6px;"><b>Delivery:</b> about ' + words + ' words in ' + secsV + ' seconds (' + wpm + ' a minute)' +
+            (wpm > 190 ? ', a little fast: slow down and breathe' : wpm < 90 ? ', a little slow or halting: lead with the answer' : ', a good pace') +
+            (fill ? '; ' + fill + ' filler word' + (fill > 1 ? 's' : '') + ' ("um", "like")' : '; no filler words heard') + '.</div>'; }
         if (c.points) {
           var n = 0;
           container.querySelectorAll(".kp").forEach(function (cb, k) { if (hitRate(c.points[k], said) >= 0.5) { cb.checked = true; n++; } });

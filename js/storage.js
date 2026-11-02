@@ -93,6 +93,7 @@
       s.settings.remindersAdded = !!d.settings.remindersAdded;
       s.settings.displayName = str(d.settings.displayName, "").replace(/[<>]/g, "").slice(0, 30);
       s.settings.voiceOff = !!d.settings.voiceOff;
+      s.settings.notify = !!d.settings.notify;
       s.settings.boardResult = /^\d{4}-\d{2}-\d{2}\|(Recommended|Not recommended|Board postponed)$/.test(d.settings.boardResult || "") ? d.settings.boardResult : "";
     }
     return s;

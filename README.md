@@ -10,6 +10,20 @@ no account, no app store, nothing to sign up for.
 
 ---
 
+## What's new in 3.18
+
+- **A board member who asks about YOUR unit and your Army**: your chain of command, your unit's history, your
+  installation, current events. Graded against what you've written in Board Day Prep.
+- **Delivery feedback**: with the voice check on, see your pace (words a minute) and filler words.
+- **Start my MOS cards** (My Cards): a few questions about your job become study cards.
+- **Sponsor boards stay on your board level** (no Staff Sergeant scenarios for a SGT board), and never two
+  "which regulation covers..." questions in one board.
+- **Points worksheet**: you don't need BLC to pin on SGT (AR 600-8-19, para 1-34a), but it's worth 150 points.
+- New cards: resilience (R2, CSF2/MRT, mental and spiritual readiness), BOSS, the Army Family Action Plan, Total Army
+  Sponsorship, the SPOTREP, and BLC/ALC and promotion. Court-martial detail moved out of the main deck.
+- Optional daily reminder notification (installed Android app), a weekly "send your progress" nudge, and your name in the
+  reporting wording.
+
 ## What's new in 3.17
 
 - **25 Sergeant / team-leader scenarios** for SGT boards: first counseling, PCIs, heat and cold injuries, AFT retests,
@@ -160,9 +174,9 @@ no account, no app store, nothing to sign up for.
 - **Staple board subjects** — customs & courtesies (AR 600-25, 2026), flags & streamers (AR 840-10, 2025),
   drill & ceremony (TC 3-21.5), awards (AR 600-8-22, 2026), the NCOER (AR 623-3, 2025), and NCO history &
   duties (TC 7-22.7, 2025 + The Army Blue Book).
-- **Board Core (start here)** — about 530 must-know questions boards ask most, each with a one-line **why it matters**, pulled from every
+- **Board Core (start here)** — about 540 must-know questions boards ask most, each with a one-line **why it matters**, pulled from every
   publication. Mock Board, the night-before cram, and Learn Mode's Board Core track use it by default;
-  "All Publications" keeps the full deep set (about 2,130 cards) for when you want detail.
+  "All Publications" keeps the full deep set (about 2,140 cards) for when you want detail.
 - **Learn Mode (start from scratch)** — a guided path of bite-sized lessons that **teach** the material
   first (with a plain-English overview of each publication), then **practice** it. Begins with the
   fundamentals (Army Values, ranks, chain of command, creeds, Code of Conduct), then each publication.
@@ -184,7 +198,7 @@ no account, no app store, nothing to sign up for.
 - **Daily goal & streak**, **Browse** by publication, full-text **Search**, and **Backup/restore**
   (export your progress to a file and move it to a new phone).
 
-Content covers **39 subjects from 35+ publications plus the 2019–2026 Army Directives** with **about 2,130 cards** — most fact-checked page-by-page against the
+Content covers **39 subjects from 35+ publications plus the 2019–2026 Army Directives** with **about 2,140 cards** — most fact-checked page-by-page against the
 source PDFs, with a page citation on each card (the Army Values, Code of Conduct, MDMP/TLP, warfighting
 functions, SHARP reporting, the AFT and Combat Field Test, the General Orders, the Soldier's & NCO Creeds, and much more).
 

@@ -1,6 +1,6 @@
 /* Service worker — caches the app for full offline use.
    Bump CACHE when you change app files or content so phones update. */
-var CACHE = "ncoboard-v37";
+var CACHE = "ncoboard-v38";
 var ASSETS = [
   "./",
   "./index.html",
@@ -68,4 +68,14 @@ self.addEventListener("fetch", function (e) {
       });
     })
   );
+});
+
+// Daily reminder (installed Android app, Periodic Background Sync). Opens the app on tap.
+self.addEventListener("periodicsync", function (e) {
+  if (e.tag !== "ncoboard-daily") return;
+  e.waitUntil(self.registration.showNotification("NCO Board", { body: "Today's board cards are waiting. Ten minutes keeps your streak.", icon: "./icons/icon-192.png", tag: "ncoboard-daily" }));
+});
+self.addEventListener("notificationclick", function (e) {
+  e.notification.close();
+  e.waitUntil(self.clients.matchAll({ type: "window" }).then(function (cs) { return cs.length ? cs[0].focus() : self.clients.openWindow("./"); }));
 });
