@@ -119,7 +119,7 @@
     if (Store.settings().boardFor) return "";
     return '<div class="card" style="border-color:var(--gold);"><div class="flash-tag">First, which board are you going to?</div>' +
       '<div class="muted" style="font-size:.85rem;margin-bottom:8px;">So the app only shows the numbers for your rank. You can change it in Settings.</div>' +
-      '<div class="chip-row" id="rankAsk"><button class="chip" data-r="SGT">Sergeant (E-5)</button><button class="chip" data-r="SSG">Staff Sergeant (E-6)</button><button class="chip" data-r="BOTH">Not sure</button></div></div>';
+      '<div class="chip-row" id="rankAsk" class="chip-row seg3"><button class="chip" data-r="SGT">SGT (E-5)</button><button class="chip" data-r="SSG">SSG (E-6)</button><button class="chip" data-r="BOTH">Not sure</button></div></div>';
   }
   function allCards() { return STUDY.cards.filter(rankOk).concat(Store.userCards()).concat(chainCards()); }
   function daysToBoard() {
@@ -290,10 +290,10 @@
     var remind = (!Store.settings().remindersAdded && (days == null || days > 1)) ? '<div style="margin-top:8px;font-size:.85rem;"><a href="#/settings">&#128276; Add study reminders to my calendar</a></div>' : '';
     planExtras = (sponsorNote || remind) ? '<div class="card">' + sponsorNote.replace("margin-top:8px;", "") + remind + '</div>' : '';
     var startBtn = lastPlan.length >= 2 ? '<button class="btn gold lg" id="startSess" style="margin-top:8px;">&#9654; Start today&#39;s session</button>' +
-      '<button class="textlink" id="tenMin">&#9201;&#65039; Only have 10 minutes?</button>' : '';
+      '<button class="btn ghost" id="tenMin" style="margin-top:8px;">Only have 10 minutes?</button>' : '';
     var steps = '<div class="plan-steps">' + items.join("") + '</div>';
     return '<div class="card"><div class="flash-tag">' + esc(title) + '</div>' + startBtn +
-      (startBtn ? '<details class="plan-more"><summary>Today\u2019s steps (' + items.length + ')</summary>' + steps + '</details>' : steps) + blank + triageNote + '</div>';
+      (startBtn ? '<details class="plan-more"><summary>See today\u2019s steps</summary>' + steps + '</details>' : steps) + blank + triageNote + '</div>';
   }
   // "Ready?" check: based on what you actually REMEMBERED (last grade was a hit), plus recent Mock Boards.
   // Cards merely seen don't count. Shows the weakest subjects by misses.
@@ -424,10 +424,11 @@
       if ((p.id === "mine" || p.id === "chain" || p.id === "sgtdeck" || p.id === "ssgdeck") && !cardsForDeck(p.id).length) return;
       (cats[p.cat] = cats[p.cat] || []).push(p);
     });
-    Object.keys(cats).forEach(function (cat) {
-      html += group(esc(cat), cats[cat].map(function (p) { return liDeck("#/pub/" + p.id, esc(p.code), p.code === p.title ? "" : esc(p.title), cardsForDeck(p.id).length, ""); }));
+    html += jumpChips(Object.keys(cats));
+    Object.keys(cats).forEach(function (cat, k) {
+      html += group(esc(cat), cats[cat].map(function (p) { return liDeck("#/pub/" + p.id, esc(p.code), p.code === p.title ? "" : esc(p.title), cardsForDeck(p.id).length, ""); }), "cat" + k);
     });
-    mount.innerHTML = html;
+    mount.innerHTML = html; wireJumps();
   }
 
   function screenPub(id) {
@@ -454,9 +455,9 @@
   function screenRead(id) {
     var p = STUDY.pubsById[id]; if (!p) return screenHome();
     setTitle(p.code, true);
-    var pc = cardsForDeck(id).slice().sort(function (x, y) { return (y.core ? 1 : 0) - (x.core ? 1 : 0); });
+    var pc = cardsForDeck(id).slice().sort(function (x, y) { return (y.core ? 1 : 0) - (x.core ? 1 : 0); }), shownCoreH = false, shownMoreH = false;
     mount.innerHTML = '<div class="card"><div class="muted">All ' + pc.length + ' cards in ' + esc(p.title) + ', Board Core first. Reading helps you learn it; saying the answer before you look (Flashcards) helps you remember it.</div></div>' +
-      pc.map(function (c) { return '<div class="card">' + (c.core ? '<span class="pill core-pill">Board Core</span>' : '') + '<div style="font-weight:600;">' + esc(c.q) + '</div>' +
+      pc.map(function (c) { return (c.core && !shownCoreH ? (shownCoreH = true, '<div class="lg-h">Board Core</div>') : !c.core && !shownMoreH ? (shownMoreH = true, '<div class="lg-h">More detail</div>') : '') + '<div class="card"><div style="font-weight:600;">' + esc(c.q) + '</div>' +
         '<div style="margin-top:6px;">' + esc(c.a).replace(/\n/g, "<br>") + '</div>' + (c.changed ? '<div class="flash-ref" style="color:var(--gold);">&#9888;&#65039; ' + esc(c.changed) + '</div>' : '') +
         (c.ref ? '<div class="flash-ref">' + esc(c.ref) + '</div>' : '') + '</div>'; }).join("");
   }
@@ -482,7 +483,9 @@
       if (!n) return;
       (pcats[p.cat] = pcats[p.cat] || []).push(liDeck(route + p.id, esc(p.code), p.code === p.title ? "" : esc(p.title), n, p.id));
     });
+    html += '<details class="set-fold"><summary>Or pick one subject</summary>';
     Object.keys(pcats).forEach(function (cat) { html += group(esc(cat), pcats[cat]); });
+    html += '</details>';
     mount.innerHTML = html;
     if (mode === "flash")
       mount.querySelectorAll("#modeToggle .chip").forEach(function (b) {
@@ -500,7 +503,7 @@
   function screenType(deck) { setTitle("Type answers", true); Flashcards.render(mount, cardsForDeck(deck), deckTitle(deck), { typed: true }); }
 
   function screenLearn() { setTitle("Learn", false); Learn.hub(mount); }
-  function screenTrack(id) { setTitle("Learn", true); Learn.track(mount, id); }
+  function screenTrack(id) { var TT = { board101: "Board 101", fundamentals: "Fundamentals", core: "Board Core", sit: "Scenarios", personal: "Personal Questions" }; var p = STUDY.pubsById[id]; setTitle(TT[id] || (p ? p.code : "Learn"), true); Learn.track(mount, id); }
   function screenLesson(id) { setTitle("Lesson", true); Learn.lesson(mount, id); }
 
   function screenFlash(deck) {
@@ -528,7 +531,7 @@
     var cards = cardsForDeck(deck), title = deckTitle(deck);
     var timer = Store.settings().timer;
     mount.innerHTML =
-      '<div class="setup-head"><div class="t">&#127894; ' + esc(title) + '</div><div class="muted">Answer out loud \u2022 ' + (timer > 0 ? timer + 's a question, more for long ones' : 'no timer') + ' (<a href="#/settings">change</a>)</div></div>' +
+      '<div class="setup-head"><div class="t">&#127894; ' + esc(title) + '</div><div class="muted">Answer out loud \u2022 ' + (timer > 0 ? timer + 's a question, more for long ones' : 'no timer') + ' <a class="pill" href="#/settings">change</a></div></div>' +
       '<div class="lg opts">' +
         '<label class="switch li"><input type="checkbox" id="fullBoard"' + (Store.settings().fullBoard !== false ? " checked" : "") + '> <span class="grow"><span class="t">Full board</span><span class="s">Report in, drill, introduce yourself</span></span></label>' +
         (window.speechSynthesis ? '<label class="switch li"><input type="checkbox" id="listenOnly"' + (Store.settings().listenOnly ? " checked" : "") + '> <span class="grow"><span class="t">Listen-only</span><span class="s">Hear each question, don\u2019t read it</span></span></label>' : '') +
@@ -536,7 +539,7 @@
       '</div>' +
       '<button class="btn gold lg" data-n="10">&#9654; Start a 10-question board</button>' +
       '<div class="muted center" style="font-size:.8rem;margin:6px 0 10px;" id="lenNote"></div>' +
-      '<div class="len-row"><button class="chip" data-n="5" data-quick="1">5 min</button><button class="chip" data-n="15">15 questions</button><button class="chip" data-n="25">25</button></div>' +
+      '<div class="len-row"><button class="chip" data-n="5" data-quick="1">5 min</button><button class="chip" data-n="15">15 Qs</button><button class="chip" data-n="25">25 Qs</button></div>' +
       (/^(core|top|final)$/.test(deck) ? '<details class="plan-more" style="margin-top:14px;"><summary>Practice with your sponsor</summary>' +
         '<button class="btn ghost" id="sendSponsor" style="margin-top:8px;">&#128228; Send a board to my sponsor</button>' +
         '<div class="muted center" style="font-size:.8rem;margin:6px 0;">They open the link and run the same board on their phone, with the answers and checklists.</div>' +
@@ -585,7 +588,7 @@
       var hl = function (s) { return esc(s).replace(new RegExp("(" + safe + ")", "ig"), "<mark>$1</mark>"); };
       results.innerHTML = hits.length ? '<div class="muted" style="font-size:.85rem;margin:4px 4px 8px;">' + all.length + ' result' + (all.length === 1 ? '' : 's') + '</div>' + note + hits.map(function (c) {
         var p = STUDY.pubsById[c.pub];
-        return '<a class="card" style="display:block;text-decoration:none;color:inherit;" href="#/pub/' + escAttr(c.pub) + '"><div class="flash-tag">' + esc(p ? p.code : "") + (c.topic ? " • " + esc(c.topic) : "") + '</div>' + (c.core ? '<span class="pill core-pill">Board Core</span>' : '') +
+        return '<a class="card" style="display:block;text-decoration:none;color:inherit;" href="#/pub/' + escAttr(c.pub) + '"><div class="flash-tag tag-row">' + esc(p ? p.code : "") + (c.topic ? " • " + esc(c.topic) : "") + (c.core ? '<span class="pill core-pill inline">Core</span>' : '') + '</div>' +
           '<div style="font-weight:600;margin-bottom:6px;">' + hl(c.q) + '</div><div class="muted">' + hl(c.a) + '</div></a>';
       }).join("") : '<div class="empty">No matches. Try a shorter word, like "counsel" or "SHARP".</div>';
     }
@@ -623,7 +626,7 @@
         '<div class="muted" style="font-size:.85rem;margin-top:8px;">Home shows a countdown and how many new Board Core cards to learn each day.</div>' +
         (s.boardDate ? '<button class="textlink" id="bClear" style="text-align:left;padding-left:0;">Clear board date</button>' : '') + '</div>' +
       '<h2 class="section">Which board are you going to?</h2><div class="muted" style="font-size:.85rem;margin:0 4px 8px;">Hides the few facts that only apply to the other rank (like SSG time-in-service numbers).</div><div class="chip-row" id="rankChips">' +
-        [["SGT", "Sergeant (E-5)"], ["SSG", "Staff Sergeant (E-6)"], ["BOTH", "Not sure / both"]].map(function (r) { return '<button class="chip' + ((s.boardFor || "BOTH") === r[0] ? ' on' : '') + '" data-r="' + r[0] + '">' + r[1] + '</button>'; }).join("") +
+        [["SGT", "Sergeant (E-5)"], ["SSG", "Staff Sergeant (E-6)"], ["BOTH", "Not sure"]].map(function (r) { return '<button class="chip' + ((s.boardFor || "BOTH") === r[0] ? ' on' : '') + '" data-r="' + r[0] + '">' + r[1] + '</button>'; }).join("") +
       '</div>' +
       '<h2 class="section">Study reminders</h2><div class="card"><div class="muted" style="font-size:.85rem;">Add a daily study reminder' + (s.boardDate ? ' (until your board)' : '') + ' and a weekly "sponsor board" reminder to your phone\'s calendar.</div>' +
         '<label class="lbl" for="remT">Remind me at</label><input class="input" type="time" id="remT" value="19:00" />' +
@@ -720,7 +723,7 @@
       '<input type="file" id="impFile" accept="application/json,.json" hidden>' +
       '<h2 class="section">Reset</h2>' +
       '<button class="btn danger" id="resetCards">Reset card progress only</button><div class="spacer"></div>' +
-      '<button class="btn danger" id="resetAll">Erase everything (progress and your own cards)</button>';
+      '<button class="btn danger" id="resetAll">Erase everything</button><div class="muted center" style="font-size:.8rem;margin-top:6px;">Deletes your progress and your own cards on this phone.</div>';
     mount.querySelector("#exp").addEventListener("click", function () {
       var d = new Date(), name = "nco-board-progress-" + d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0") + ".json";
       download(name, Store.exportData()); App.toast("Backup downloaded");
@@ -763,7 +766,7 @@
         '<img src="./icons/qr.png" alt="QR code to open the app" style="width:200px;height:200px;border-radius:12px;background:#fff;padding:8px;" />' +
         '<div class="muted url-line">' + esc(APP_URL.replace(/^https?:\/\//, "").replace(/\/$/, "")) + '</div></div>' +
       '<div class="btn-row"><button class="btn gold lg" id="share">&#128279; Share link</button><button class="btn ghost lg" id="copy">Copy</button></div>' +
-      '<a class="textlink" href="#/kit">&#128424;&#65039; Print a one-page share kit (QR + install steps)</a>' +
+      '<div class="spacer"></div><a class="btn ghost" href="#/kit">&#128424;&#65039; Print a share kit</a>' +
       '<h2 class="section">Install it on your phone</h2>' +
       '<div class="card"><div class="ttl"><b>Android (Chrome):</b> Chrome menu &#8942; &#8594; Install app (or Add to Home screen). Or use More &#8594; Install the app.</div>' +
         '<div class="ttl" style="margin-top:8px;"><b>iPhone (Safari):</b> open the link in Safari, tap Share &#11014;&#65039;, then Add to Home Screen, then Add. Open it from the new icon; it works offline after the first visit.</div></div>' +
@@ -786,7 +789,7 @@
     setTitle("My Cards", true);
     var cards = Store.userCards();
     var html = '<a class="btn gold lg" href="#/mycards/new">&#43; Add a card</a>' +
-      '<div class="spacer"></div><a class="btn ghost" href="#/mos">&#128295; Start my MOS cards (your job questions)</a>' +
+      group("", [li("#/mos", "&#128295;", "Start my MOS cards", "Your job questions")]) +
       '<div class="card" style="margin-top:12px;"><div class="muted">Add your unit\'s smart-book items — chain of command, command policies, local SOPs — anything your board might ask that isn\'t in the manuals.</div></div>';
     if (cards.length) {
       html += '<h2 class="section">' + cards.length + ' custom card' + (cards.length > 1 ? "s" : "") + '</h2>';
@@ -939,14 +942,20 @@
   // grouped list: one card, divided rows (icon, title, one short line)
   function li(href, ic, t, s) { return '<a class="li" href="' + href + '"><span class="ic" aria-hidden="true">' + ic + '</span><span class="grow"><span class="t">' + t + '</span>' + (s ? '<span class="s">' + s + '</span>' : '') + '</span><span class="chev" aria-hidden="true">&#8250;</span></a>'; }
   function liDeck(href, code, title, n, deck, extra) { return '<a class="li deck" ' + (deck ? 'data-deck="' + deck + '" ' : '') + 'href="' + href + '"' + (extra || '') + '><span class="grow"><span class="t" style="color:var(--gold);">' + code + '</span>' + (title ? '<span class="s">' + title + '</span>' : '') + '</span><span class="pill">' + n + '</span><span class="chev" aria-hidden="true">&#8250;</span></a>'; }
-  function group(title, rows) { return (title ? '<div class="lg-h">' + title + '</div>' : '') + '<div class="lg">' + rows.join("") + '</div>'; }
+  // autosave feedback: a small "Saved" line that fades
+  function flashSaved() { var s = document.getElementById("savedTick"); if (!s) { s = document.createElement("div"); s.id = "savedTick"; s.className = "saved-tick"; document.body.appendChild(s); } s.textContent = "Saved \u2713"; s.classList.add("on"); clearTimeout(flashSaved.t); flashSaved.t = setTimeout(function () { s.classList.remove("on"); }, 1200); }
+  // "Haircut neat; clean-shaven..." -> bold first clause, the rest smaller
+  function checkText(t) { var m = String(t).match(/^([^;:]{6,60}?)([;:])\s*([\s\S]+)$/); return m ? '<b>' + esc(m[1]) + '</b><span class="ck-d">' + esc(m[3]) + '</span>' : esc(t); }
+  function group(title, rows, id) { return (title ? '<div class="lg-h"' + (id ? ' id="' + id + '"' : '') + '>' + title + '</div>' : '') + '<div class="lg">' + rows.join("") + '</div>'; }
+  function jumpChips(cats) { return '<div class="chip-row jump-row">' + cats.map(function (c, k) { return '<button class="chip" data-jump="cat' + k + '">' + esc(c.replace(/ &amp; .*| & .*/, "")) + '</button>'; }).join("") + '</div>'; }
+  function wireJumps() { mount.querySelectorAll("[data-jump]").forEach(function (b) { b.addEventListener("click", function () { var t = document.getElementById(b.getAttribute("data-jump")); if (t) t.scrollIntoView({ behavior: "smooth", block: "start" }); }); }); }
 
   function screenBoardDay() {
     setTitle("Board Day Prep", true);
     mount.innerHTML =
       '<div class="muted" style="font-size:.85rem;margin:2px 4px 6px;">Your board memo and local SOP always come first.</div>' +
       group("The board itself", [li("#/room", "&#127963;&#65039;", "What the board room is like", "Who sits on it and how they decide"), li("#/reporting", "&#127894;", "How to report to the board", "The sequence and your bearing"), li("#/statement", "&#128221;", "Opening statement", "Draft your “tell us about yourself”"), li("#/pub/boardskills", "&#129504;", "Board know-how", "If you freeze, how to answer")]) +
-      group("Get ready", [li("#/memo", "&#128220;", "My board memo", "Your memo's wording; Mock Board uses it"), li("#/uniform", "&#129509;", "Uniform inspection", "Check it before you walk in"), li("#/records", "&#128193;", "Records &amp; what to bring", "SRB, points, pockets"), li("#/points", "&#128200;", "Promotion points worksheet", "Where you stand on points")]) +
+      group("Get ready", [li("#/memo", "&#128220;", "My board memo", "Reporting wording, uniform, time"), li("#/uniform", "&#129509;", "Uniform inspection", "Check it before you walk in"), li("#/records", "&#128193;", "Records &amp; what to bring", "SRB, points, pockets"), li("#/points", "&#128200;", "Promotion points worksheet", "Where you stand on points")]) +
       group("Know your Army", [li("#/chain", "&#129333;", "Chain of command", "Fill it in, then quiz yourself"), li("#/knowledge", "&#127758;", "Your unit, your job, current events", ""), li("#/changes", "&#128260;", "What changed recently", "AFT, waist-to-height, grooming")]);
   }
 
@@ -980,7 +989,7 @@
     var html = '<div class="card no-print"><div class="muted">Print this (or save it as a PDF) and hand it to your sponsor. They read each question aloud, tick what you said, and grade your bearing. No app needed on their side.</div>' +
       '<div class="spacer"></div><button class="btn gold lg" id="doPrint">&#128424;&#65039; Print or save as PDF</button>' +
       '<div class="spacer"></div><a class="btn ghost" href="#/sheetin/' + escAttr(want.join(",")) + '">&#9997;&#65039; After the board: enter the paper results</a></div>' +
-      '<div class="sheet"><h2 style="margin:6px 0;">Practice Promotion Board</h2><div class="muted">Soldier: ____________________ &nbsp; Date: __________ &nbsp; Sponsor: ____________________</div>' +
+      '<div class="sheet"><h2 style="margin:6px 0;">Practice Promotion Board</h2><div class="muted"><div>Soldier: ______________________</div><div>Sponsor: ______________________</div><div>Date: ____________</div></div>' +
       '<h3>Bearing (tick if clean)</h3>' + ["Reporting in", "Facing movements", "Tell us about yourself (about 90 seconds)", "Reporting out"].map(function (b) { return '<div>' + box + ' ' + esc(b) + '</div>'; }).join("");
     cards.forEach(function (c, k) {
       html += '<div class="card sheet-q"><div><b>' + (k + 1) + '. ' + esc(c.oral || c.q) + '</b></div>' +
@@ -1064,7 +1073,7 @@
       (bear.length ? '<h2 class="section">Bearing &amp; delivery (your sponsor\'s grades)</h2>' + bear.map(function (b) { return '<div class="row"><div class="grow"><div class="ttl">' + esc(b.label) + '</div></div><div class="' + (b.ok ? "badge-good" : "badge-bad") + '" style="font-weight:700;">' + (b.ok ? "\u2713 clean" : "\u2717 needs work") + '</div></div>'; }).join("") : '') +
       (note ? '<div class="card" style="border-color:var(--gold);"><div class="flash-tag">Your sponsor\'s notes</div><div style="white-space:pre-wrap;">' + esc(note) + '</div></div>' : '') +
       '<p class="center muted">' + (fresh ? "Saved to your history. " : "Already saved. ") + (ids.length ? "The questions you missed will come back sooner in your reviews:" : "No misses. Nice work.") + '</p>' +
-      ids.map(function (id) { var c = byId[id]; return c ? '<div class="card"><div style="font-weight:600;margin-bottom:6px;">' + esc(c.q) + '</div><div class="muted">' + esc(c.a) + '</div></div>' : ""; }).join("") +
+      ids.map(function (id) { var c = byId[id]; return c ? '<details class="set-fold"><summary>' + esc(c.q) + '</summary><div style="padding:0 2px 10px;">' + esc(c.a) + '</div></details>' : ""; }).join("") +
       '<div class="spacer"></div><a class="btn gold lg" href="#/">Home</a>';
   }
 
@@ -1100,7 +1109,7 @@
     var PROG = { "core-50": [fB.seen, 50], "core-150": [fB.seen, 150], "core-all": [fB.seen, fB.total], "boards-5": [fB.boards, 5], "streak-7": [fB.streak, 7], "ready-50": [fB.ready, 50], "ready-80": [fB.ready, 80] };
     var row = function (b) {
       var on = !!got[b.id], when = on && got[b.id] > 946684800000 ? ' • ' + new Date(got[b.id]).toLocaleDateString() : '';
-      return '<div class="li"' + (on ? '' : ' style="opacity:.6;"') + '><span class="ic" aria-hidden="true">' + (b.ic || "&#127941;") + '</span><span class="grow"><span class="t">' + esc(b.t) + '</span><span class="s">' + esc(b.d) + when + '</span></span>' + (!on && PROG[b.id] ? '<span class="pill">' + Math.min(PROG[b.id][0], PROG[b.id][1]) + '/' + PROG[b.id][1] + (/ready/.test(b.id) ? '%' : '') + '</span>' : '') + '</div>';
+      return '<div class="li"' + (on ? '' : ' style="opacity:.6;"') + '><span class="ic" aria-hidden="true">' + (b.ic || "&#127941;") + '</span><span class="grow"><span class="t">' + esc(b.t) + '</span><span class="s">' + esc(b.d) + when + '</span></span>' + (!on && PROG[b.id] ? '<span class="pill">' + (/ready/.test(b.id) ? Math.min(PROG[b.id][0], PROG[b.id][1]) + '% of ' + PROG[b.id][1] + '%' : Math.min(PROG[b.id][0], PROG[b.id][1]) + ' / ' + PROG[b.id][1]) + '</span>' : '') + '</div>';
     };
     var earned = BADGES.filter(function (b) { return got[b.id]; }), left = BADGES.filter(function (b) { return !got[b.id]; });
     mount.innerHTML = '<div class="muted" style="font-size:.85rem;margin:2px 4px 8px;">Small wins on the way to your board. They stay on this phone.</div>' +
@@ -1126,7 +1135,7 @@
         (cal.unsureN >= 5 ? ' When unsure: ' + Math.round(100 * cal.unsureRight / cal.unsureN) + '%.' : '') + '</div>';
     }
     return '<div class="card"><div class="flash-tag">Your last 7 days</div><div style="display:flex;align-items:flex-end;height:52px;margin:6px 0;" aria-hidden="true">' + bars + '</div>' +
-      '<div class="muted" style="font-size:.85rem;">' + total + ' cards on ' + days + ' day' + (days === 1 ? '' : 's') + ' • ' + boards + ' Mock Board' + (boards === 1 ? '' : 's') + ' • <a href="#/sendprogress">Send to my sponsor</a> • <a href="#/badges">Badges</a></div>' + calLine + '</div>';
+      '<div class="muted" style="font-size:.85rem;">' + total + ' cards on ' + days + ' day' + (days === 1 ? '' : 's') + ' • ' + boards + ' Mock Board' + (boards === 1 ? '' : 's') + '</div><div class="chip-row" style="margin-top:8px;"><a class="chip" href="#/sendprogress">Send to my sponsor</a><a class="chip" href="#/badges">Badges</a></div>' + calLine + '</div>';
   }
   // ---- progress snapshot: encoded into a link, shown on the sponsor's phone ----
   function b64e(o) { return btoa(unescape(encodeURIComponent(JSON.stringify(o)))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, ""); }
@@ -1203,7 +1212,7 @@
     mount.innerHTML = '<div class="card"><div class="muted">Each subject&#39;s edition, and how many cards cite it. Last checked ' + esc(STUDY.meta.updated || "") + '. Unofficial study aid; your board memo and SOP come first.</div></div>' +
       '<div class="lg">' + rows.map(function (k) {
         var eds = Object.keys(by[k].ed).sort(function (x, y) { return by[k].ed[y] - by[k].ed[x]; });
-        return '<div class="li"><span class="grow"><span class="t" style="color:var(--gold);">' + esc(k) + '</span><span class="s">' + esc(eds[0]) + '</span></span><span class="pill">' + by[k].n + '</span></div>';
+        return '<div class="li"><span class="grow"><span class="t" style="color:var(--gold);">' + esc(k) + '</span><span class="s">' + esc(eds[0]) + ' \u2022 cited by ' + by[k].n + ' card' + (by[k].n === 1 ? '' : 's') + '</span></span></div>';
       }).join("") + '</div>' +
       '<div class="muted center" style="font-size:.8rem;margin-top:12px;">Spot a problem? Use the flag on any card.</div>';
   }
@@ -1233,13 +1242,14 @@
     [["Your unit", true], ["Army &amp; national", false]].forEach(function (g) {
       html += '<div class="lg-h">' + g[0] + '</div><div class="lg">';
       CHAIN_ROLES.filter(function (r) { return r.your === g[1]; }).forEach(function (r) {
-        html += '<label class="li ch-row" for="ch-' + r.k + '"><span class="ch-l">' + esc(r.label) + '</span><input class="input chainin" id="ch-' + r.k + '" data-k="' + r.k + '" placeholder="RANK Name" value="' + (chain[r.k] ? escAttr(chain[r.k]) : "") + '"></label>';
+        html += '<label class="li ch-row" for="ch-' + r.k + '"><span class="ch-l">' + esc(r.label) + '</span><input class="input chainin" id="ch-' + r.k + '" data-k="' + r.k + '" placeholder="e.g. SSG Lee" value="' + (chain[r.k] ? escAttr(chain[r.k]) : "") + '"></label>';
       });
       html += '</div>';
     });
-    html += '<div class="spacer"></div><button class="btn gold lg" id="saveChain">Save roster</button>';
+    html += '<div class="spacer"></div><button class="btn gold lg" id="saveChain">Done</button>';
     if (filledN) html += '<div class="spacer"></div><a class="btn green" href="#/flash/chain">Study these ' + filledN + ' as flashcards</a>';
     mount.innerHTML = html;
+    mount.querySelectorAll(".chainin").forEach(function (inp) { inp.addEventListener("input", function () { Store.setChainRole(inp.getAttribute("data-k"), inp.value.trim()); flashSaved(); }); });
     mount.querySelector("#saveChain").addEventListener("click", function () {
       mount.querySelectorAll(".chainin").forEach(function (inp) { Store.setChainRole(inp.getAttribute("data-k"), inp.value.trim()); });
       App.toast("Roster saved"); screenChain();
@@ -1254,9 +1264,9 @@
         '<div class="muted" style="font-size:.8rem;margin-top:6px;">Simple sketch, not to scale, shown as you face the Soldier (their right is on your left). From DA PAM 670-1 and AD 2025-18; your board memo and local SOP have the final say.</div><div style="height:8px;"></div></details>';
     UNIFORM_CHECKS.forEach(function (u) {
       var on = !!checks[u.id];
-      html += '<button class="row check' + (on ? " checked" : "") + '" data-id="' + u.id + '" role="checkbox" aria-checked="' + (on ? "true" : "false") + '"><div class="checkbox">' + (on ? "&#10003;" : "") + '</div><div class="grow"><div class="ttl">' + esc(u.t) + '</div></div></button>';
+      html += '<button class="row check' + (on ? " checked" : "") + '" data-id="' + u.id + '" role="checkbox" aria-checked="' + (on ? "true" : "false") + '"><div class="checkbox">' + (on ? "&#10003;" : "") + '</div><div class="grow"><div class="ttl">' + checkText(u.t) + '</div></div></button>';
     });
-    html += '<div class="spacer"></div><a class="btn green" href="#/flash/pam670-1">Study the uniform placement cards (DA PAM 670-1)</a>' +
+    html += '<div class="spacer"></div><a class="btn ghost" href="#/flash/pam670-1">Study the uniform placement cards (DA PAM 670-1)</a>' +
       '<div class="spacer"></div><button class="btn ghost" id="clear">Clear all checkmarks</button>';
     var doneN = UNIFORM_CHECKS.filter(function (u) { return checks[u.id]; }).length;
     html = '<div class="check-prog"><b>' + doneN + ' of ' + UNIFORM_CHECKS.length + '</b> checked<div class="bar"><span style="width:' + Math.round(100 * doneN / UNIFORM_CHECKS.length) + '%"></span></div></div>' + html;
@@ -1291,8 +1301,9 @@
     MEMO_FIELDS.forEach(function (f) {
       html += '<label class="lbl" for="memo-' + f.k + '"><b>' + esc(f.t) + '</b>: ' + esc(f.h) + '</label><textarea class="input" id="memo-' + f.k + '" rows="2" placeholder="' + escAttr(f.ph) + '">' + esc(m["memo-" + f.k] || "") + '</textarea>';
     });
-    html += '<div class="spacer"></div><button class="btn gold lg" id="memoSave">Save memo</button>';
+    html += '<div class="spacer"></div><button class="btn gold lg" id="memoSave">Done</button>';
     mount.innerHTML = html;
+    mount.querySelectorAll("textarea").forEach(function (t) { t.addEventListener("input", function () { var k = t.id.replace(/^memo-/, ""); Store.setChainRole("memo-" + k, t.value.trim().slice(0, 400)); flashSaved(); }); });
     mount.querySelector("#memoSave").addEventListener("click", function () {
       MEMO_FIELDS.forEach(function (f) { Store.setChainRole("memo-" + f.k, mount.querySelector("#memo-" + f.k).value.trim().slice(0, 400)); });
       App.toast("Memo saved");
@@ -1391,7 +1402,7 @@
     var html = '<div class="card"><div class="muted">Do this the week before your board. Your board memo and local SOP always come first.</div></div>';
     RECORD_CHECKS.forEach(function (u) {
       var on = !!checks[u.id];
-      html += '<button class="row check' + (on ? " checked" : "") + '" data-id="' + u.id + '" role="checkbox" aria-checked="' + (on ? "true" : "false") + '"><div class="checkbox">' + (on ? "&#10003;" : "") + '</div><div class="grow"><div class="ttl">' + esc(u.t) + '</div></div></button>';
+      html += '<button class="row check' + (on ? " checked" : "") + '" data-id="' + u.id + '" role="checkbox" aria-checked="' + (on ? "true" : "false") + '"><div class="checkbox">' + (on ? "&#10003;" : "") + '</div><div class="grow"><div class="ttl">' + checkText(u.t) + '</div></div></button>';
     });
     html += '<div class="spacer"></div><a class="btn ghost" href="#/pub/boardskills">Board Know-How cards</a>';
     var doneN = RECORD_CHECKS.filter(function (u) { return checks[u.id]; }).length;
@@ -1451,14 +1462,16 @@
       "Each board member asks questions in turn: leadership, Army programs, basic Soldiering, world affairs, and required situational questions on things like harassment, assault, abuse, and suicide.",
       "The president asks last and closes the board. When dismissed: stand, salute, hold until returned, face about, and march out.",
       "After: each voting member votes yes or no and the majority decides. The promotion authority makes the final call. If you aren't recommended, your first-line leader counsels you in writing on how to improve (AR 600-8-19, para 1-33)." ]
-      .forEach(function (t, i) { html += '<div class="row"><div class="numbubble">' + (i + 1) + '</div><div class="grow"><div class="ttl">' + esc(t) + '</div></div></div>'; });
+      .forEach(function (t, i) { html += (i ? '' : '<div class="lg">') + '<div class="li steps-li"><span class="numbubble">' + (i + 1) + '</span><span class="grow" style="font-size:.9rem;">' + esc(t) + '</span></div>'; });
+    html += '</div>';
     ROOM_SECTIONS.forEach(function (sec) {
-      html += '<h2 class="section">' + esc(sec.h) + '</h2>';
+      html += '<details class="set-fold"><summary>' + esc(sec.h) + '</summary>';
       sec.ids.forEach(function (id) {
         var c = byId[id]; if (!c) return;
-        html += '<div class="card"><div style="font-weight:600;margin-bottom:4px;">' + esc(c.q) + '</div><div>' + esc(c.a) + '</div>' +
+        html += '<div class="chg"><div style="font-weight:600;margin-bottom:4px;">' + esc(c.q) + '</div><div>' + esc(c.a) + '</div>' +
           (c.ref ? '<div class="flash-ref">' + esc(c.ref) + '</div>' : '') + '</div>';
       });
+      html += '</details>';
     });
     html += '<div class="spacer"></div><a class="btn gold lg" href="#/reporting">How to report to the board</a><div class="spacer"></div>' +
       '<a class="btn green lg" href="#/pick/board">Rehearse it: Full board Mock Board</a>';
@@ -1487,12 +1500,13 @@
     html += '<div class="lg-h">Your notes</div>';
     KNOW_PROMPTS.forEach(function (k) {
       var done = !!notes["know-" + k.id];
-      html += '<details class="set-fold know-fold"' + (done ? '' : '') + '><summary>' + esc(k.t) + ' <span class="' + (done ? 'badge-good' : 'muted') + '" style="font-weight:600;font-size:.8rem;">' + (done ? '&#10003; done' : 'to do') + '</span></summary>' +
+      html += '<details class="set-fold know-fold"' + (done ? '' : '') + '><summary>' + esc(k.t) + '<span class="pill' + (done ? ' pill-done' : '') + '">' + (done ? '&#10003; done' : 'to do') + '</span></summary>' +
         '<div class="muted" style="font-size:.85rem;margin:0 2px 8px;">' + esc(k.h) + '</div>' +
         '<textarea class="input" id="kn-' + k.id + '" rows="4" placeholder="Your notes...">' + esc(notes["know-" + k.id] || "") + '</textarea><div style="height:8px;"></div></details>';
     });
-    html += '<div class="spacer"></div><button class="btn gold lg" id="knSave">Save notes</button>';
+    html += '<div class="spacer"></div><button class="btn gold lg" id="knSave">Done</button>';
     mount.innerHTML = html;
+    KNOW_PROMPTS.forEach(function (k) { var t = mount.querySelector("#kn-" + k.id); t.addEventListener("input", function () { Store.setChainRole("know-" + k.id, t.value.trim()); flashSaved(); }); });
     mount.querySelector("#knSave").addEventListener("click", function () {
       KNOW_PROMPTS.forEach(function (k) { Store.setChainRole("know-" + k.id, mount.querySelector("#kn-" + k.id).value.trim()); });
       App.toast("Notes saved");

@@ -231,7 +231,7 @@
           }).catch(function () { App.toast("Can't use the camera. Allow camera access to use the mirror.", 4000); });
         });
       }
-      function recButton() { return canRec && !sponsor ? '<button class="btn ghost" id="recBtn">&#127897; Record my answer</button><div class="spacer"></div>' : ""; }
+      function recButton() { return canRec && !sponsor ? '<button class="btn ghost" id="recBtn">&#127897; Record</button><div class="spacer"></div>' : ""; }
       // Record takes the microphone from the voice check (one microphone user at a time)
       function wireRec() { var b = container.querySelector("#recBtn"); if (b) b.addEventListener("click", function () {
         if (voice.rec) { stopVoice(); voice.paused = true; var vb = container.querySelector("#voiceBtn"); if (vb) { vb.textContent = "Voice check paused while you record"; vb.disabled = true; } }
@@ -461,7 +461,7 @@
             '<button class="mini" id="mReport" aria-label="Report card">&#9873;</button></span></div>' +
             qShow(qt(c)) + '</div>' +
           (sponsor ? sponsorBox(c.a, c.ref, whyHtml(c)) + '<p class="center muted">Read the question aloud, listen, then grade.</p>' + (c.points ? rubricHtml(c, "Sponsor: tick what the Soldier covered") : gradeButtons())
-                   : '<p class="center muted">' + (c.why && c.pub !== "sit" && c.pub !== "personal" && curStyle !== "rapid" ? 'Answer out loud, then say why it matters. Then reveal.' : 'Answer out loud, then reveal.') + '</p>' + recButton() + voiceButton() + '<button class="btn gold lg" id="reveal">Reveal answer</button>');
+                   : '<p class="center muted">' + (c.why && c.pub !== "sit" && c.pub !== "personal" && curStyle !== "rapid" ? 'Answer out loud, then say why it matters. Then reveal.' : 'Answer out loud, then reveal.') + '</p>' + '<div class="rv-row">' + recButton() + voiceButton() + '</div>' + '<button class="btn gold lg" id="reveal">Reveal answer</button>');
         container.querySelector("#mSpeak").addEventListener("click", function () { Speech.speak(qt(c), curVoice); });
         container.querySelector("#mReport").addEventListener("click", function () { App.reportCard(c); });
         sayQ(qt(c));
@@ -477,7 +477,7 @@
 
       // ---- voice check: hear what you said, pre-tick the key points it heard (you can still change any box) ----
       var voice = { rec: null, text: "" };
-      function voiceButton() { return SR ? '<button class="btn ghost" id="voiceBtn">&#128483;&#65039; Voice check (optional)</button><div class="muted center" style="font-size:.75rem;margin:-4px 0 8px;">Uses your phone\u2019s speech service (Google or Apple); needs a connection</div><div class="spacer"></div>' : ""; }
+      function voiceButton() { return SR ? '<button class="btn ghost" id="voiceBtn" title="Uses your phone\u2019s speech service (Google or Apple); needs a connection">&#128483;&#65039; Voice check</button><div class="spacer"></div>' : ""; }
       function wireVoice(c) {
         voice.text = ""; voice.paused = false;
         var b = container.querySelector("#voiceBtn"); if (!b) return;
@@ -550,7 +550,9 @@
         if (c.points) onRubric(function (fr, left) { markQ(c, fr, left); }, c); else onGrade(function (ok) { markQ(c, ok ? 1 : 0); });
       }
 
-      function markQ(c, score, left) {          // score: 1 = got it, 0 = missed, fractions from the key-point rubric
+      var qScores = [];
+      function markQ(c, score, left) {
+        if (!c.local) qScores.push(score);          // score: 1 = got it, 0 = missed, fractions from the key-point rubric
         var ok = score >= 0.66;   // two of three key points is a pass; the key fact alone (kp1) is 0.75
         Store.grade(c.id, ok ? "good" : "again");
         var pp = perPub[c.pub] || (perPub[c.pub] = { n: 0, miss: 0, code: pubLabel(c) });
@@ -665,7 +667,12 @@
         var html = (notReady ? '<div class="card" style="border-color:var(--gold);text-align:center;"><div style="font-size:1.3rem;font-weight:800;">' + esc(V.title) + '</div><div class="muted" style="margin-top:6px;">' + esc(msg) + '</div>' +
               (bearingMiss.length && !sponsor ? '<div class="btn-row" style="margin-top:10px;"><a class="btn ghost" href="#/reporting">Practice reporting</a><a class="btn ghost" href="#/flash/tc3-21-5">Drill cards</a></div>' : '') + '</div>' : '') +
           '<div class="ring-wrap"><div class="ring">' + pct + '%<small>score</small></div></div>' +
-          '<p class="center muted" style="font-size:.85rem;">' + countLine + ' (partial credit counted)</p>' + (notReady ? '' : '<p class="center muted">' + msg + '</p>') +
+          (function () {
+            var full = qScores.filter(function (x) { return x >= 0.99; }).length, part = qScores.filter(function (x) { return x >= 0.66 && x < 0.99; }).length, miss = qScores.length - full - part;
+            return '<div class="dots" aria-hidden="true">' + qScores.map(function (x) { return '<span class="dot ' + (x >= 0.99 ? 'g' : x >= 0.66 ? 'a' : 'r') + '"></span>'; }).join("") + '</div>' +
+              '<p class="center muted" style="font-size:.85rem;">' + full + ' full \u2022 ' + part + ' partial \u2022 ' + miss + ' missed' + (nF ? ' \u2022 plus ' + nF + ' follow-up' + (nF === 1 ? '' : 's') : '') + '</p>' +
+              (pct >= 75 && !notReady ? '<p class="center" style="font-weight:700;color:var(--gold);">&#127881; Strong board. Keep it sharp.</p>' : '');
+          })() + (notReady ? '' : '<p class="center muted">' + msg + '</p>') +
           // the next step first: drill the misses (or run another), then the details
           (missed.length && !sponsor ? '<button class="btn gold lg" id="drillMiss">&#128260; Drill your ' + missed.length + ' miss' + (missed.length === 1 ? '' : 'es') + ' now</button><div class="spacer"></div>' : '');
         if (bearing.length) {

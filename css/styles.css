@@ -526,3 +526,52 @@ details.fb-fold > summary, details.hero-more > summary { display: list-item; min
 
 .chg { padding: 10px 2px; border-top: 1px solid var(--line); font-size: .93rem; }
 details.set-fold .row { margin-bottom: 6px; }
+
+/* ---------- v3.29 polish round 2 ---------- */
+/* one fold component everywhere: full-width row, title left, pill + chevron right */
+details > summary { display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 10px 4px; cursor: pointer; list-style: none; font-weight: 700; color: var(--text); }
+details > summary::-webkit-details-marker { display: none; }
+details > summary::before { content: none !important; }
+details > summary::after { content: ""; flex: none; margin-left: auto; width: 8px; height: 8px; border-right: 2px solid var(--text-dim); border-bottom: 2px solid var(--text-dim); transform: rotate(45deg) translateY(-2px); transition: transform .15s; }
+details[open] > summary::after { transform: rotate(-135deg) translateY(-2px); }
+details > summary:has(> .pill)::after { margin-left: 10px; }
+details > summary > .pill { margin-left: auto; flex: none; }
+details.hero-more > summary { font-weight: 600; font-size: .85rem; min-height: 36px; padding: 6px 0; color: inherit; }
+details.fb-fold > summary { font-size: .88rem; color: var(--text-dim); min-height: 44px; padding: 8px 0; }
+details.plan-more > summary { color: var(--text-dim); font-weight: 600; font-size: .9rem; }
+.pill.pill-done { color: var(--good); border-color: var(--good); }
+/* states */
+.btn:disabled, .btn[disabled] { opacity: .45; filter: grayscale(.7); cursor: not-allowed; }
+.saved-tick { position: fixed; left: 50%; bottom: calc(84px + env(safe-area-inset-bottom)); transform: translateX(-50%); background: var(--surface-2); border: 1px solid var(--good); color: var(--good); font-weight: 700; font-size: .85rem; padding: 6px 14px; border-radius: 999px; opacity: 0; pointer-events: none; transition: opacity .2s; z-index: 60; }
+.saved-tick.on { opacity: 1; }
+/* Mock Board: Record + Voice side by side; Reveal / Score fixed above the safe area */
+.rv-row { display: flex; gap: 8px; }
+.rv-row > .btn { flex: 1; min-width: 0; padding-left: 8px; padding-right: 8px; }
+.rv-row .spacer { display: none; }
+.rv-row + .btn { margin-top: 12px; }
+body.session #reveal, body.session #rubricDone { position: fixed; left: 16px; right: 16px; bottom: calc(12px + env(safe-area-inset-bottom)); width: auto; z-index: 8; }
+body.session .screen { padding-bottom: 104px; }
+.dots { display: flex; justify-content: center; gap: 6px; margin: 4px 0 6px; }
+.dot { width: 12px; height: 12px; border-radius: 50%; background: var(--line); }
+.dot.g { background: var(--good); } .dot.a { background: var(--gold); } .dot.r { background: #e5726e; }
+/* checkboxes: one style everywhere */
+label.switch input[type=checkbox] { appearance: none; -webkit-appearance: none; width: 24px; height: 24px; flex: none; border: 2px solid var(--text-dim); border-radius: 6px; background: transparent; display: inline-grid; place-content: center; margin: 0; cursor: pointer; }
+label.switch input[type=checkbox]:checked { background: var(--gold); border-color: var(--gold); }
+label.switch input[type=checkbox]:checked::after { content: "\2713"; color: #1a1a0e; font-weight: 900; font-size: 15px; line-height: 1; }
+.checkbox { border-color: var(--text-dim) !important; }
+.sheet-box { width: 18px; height: 18px; }
+.ck-d { display: block; font-size: .82rem; color: var(--text-dim); margin-top: 2px; font-weight: 400; }
+/* lists, chips, misc */
+.seg3 { display: grid !important; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.seg3 .chip { text-align: center; padding-left: 4px; padding-right: 4px; }
+.jump-row { flex-wrap: nowrap; overflow-x: auto; margin: 0 -4px 6px; padding: 0 4px 4px; }
+.jump-row .chip { flex: none; }
+.steps-li { align-items: flex-start; }
+.steps-li .numbubble { flex: none; }
+.tag-row { display: flex; align-items: center; gap: 8px; }
+.pill.core-pill.inline { margin: 0 0 0 auto; }
+.learn-q { color: var(--text) !important; font-size: 1.12rem !important; font-weight: 700 !important; }
+.learn-a { font-size: 1rem !important; font-weight: 400 !important; line-height: 1.5; }
+textarea.input { resize: none; }
+a.btn { justify-content: center; text-align: center; }
+a.pill { text-decoration: none; color: var(--gold); }
