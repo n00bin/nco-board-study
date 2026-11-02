@@ -522,11 +522,13 @@
             (c.changed ? '<div class="flash-ref" style="color:var(--gold);margin-top:8px;">&#9888;&#65039; ' + esc(c.changed) + '</div>' : '') +
             (c.ref ? '<div class="flash-ref">Reference: ' + esc(c.ref) + '</div>' : '') + (curStyle === "why" && c.pub !== "sit" && c.pub !== "personal" ? '' : whyHtml(c)) +
             (c.sample ? '<div class="flash-ref" style="color:var(--text);margin-top:10px;"><b>Example answer (fictional Soldier):</b> ' + esc(c.sample) + '</div>' : '') + '</div>' +
+          (window.Speech && Speech.supported() ? '<button class="btn ghost" id="hearA" style="margin-bottom:8px;">&#128266; Hear a model answer</button>' : '') +
           (listened ? '<div id="heard"><div class="muted center" style="font-size:.85rem;">Checking what you said…</div></div>' : '') +
           '<div id="playback"></div>' +
           (c.unfilled ? '<div class="card"><div class="muted">You haven\'t filled this in yet, so it isn\'t scored. Boards do ask it: look it up and add it under Board Day Prep, then it counts.</div></div><button class="btn gold lg" id="skipLocal">Next question</button>'
             : c.points ? rubricHtml(c) : '<p class="center muted">How did you do?</p>' + gradeButtons());
         playback();
+        var ha = container.querySelector("#hearA"); if (ha) ha.addEventListener("click", function () { Speech.speak(c.sample || c.a, { rate: 0.95 }); });
         if (listened) setTimeout(function () { applyVoice(c); }, 900);
         if (c.unfilled) { container.querySelector("#skipLocal").addEventListener("click", function () { next(); }); return; }
         if (c.points) onRubric(function (fr, left) { markQ(c, fr, left); }, c); else onGrade(function (ok) { markQ(c, ok ? 1 : 0); });

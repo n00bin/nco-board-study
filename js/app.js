@@ -28,6 +28,10 @@
     STUDY.pubs.push({ id: "mine", code: "My Cards", title: "My Smart Book (your own cards)", cat: "My Cards" });
   if (!STUDY.pubs.some(function (p) { return p.id === "chain"; }))
     STUDY.pubs.push({ id: "chain", code: "Chain of Command", title: "Your leaders (board day)", cat: "Board Day" });
+  if (!STUDY.pubs.some(function (p) { return p.id === "sgtdeck"; })) {
+    STUDY.pubs.push({ id: "sgtdeck", code: "Sergeant scenarios", title: "Sergeant / team leader scenarios (SGT board)", cat: "Board Skills" });
+    STUDY.pubs.push({ id: "ssgdeck", code: "Staff Sergeant scenarios", title: "Staff Sergeant / squad leader scenarios (SSG board)", cat: "Board Skills" });
+  }
   // "Version 3.0.0 · Updated 31 Oct 2026 · 1,556 cards" (from data/content.js meta)
   var MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
   function versionLine() {
@@ -137,6 +141,8 @@
     }
     // Board Core: the tagged must-know cards, plus your own cards and chain-of-command roster
     if (deck === "core") return all.filter(function (c) { return c.core || c.custom; });
+    if (deck === "sgtdeck") return all.filter(function (c) { return c.rank === "SGT"; });
+    if (deck === "ssgdeck") return all.filter(function (c) { return c.rank === "SSG"; });
     // Final-week review: Board Core cards you've studied, weakest first (most misses, then soonest due), then the rest
     if (deck === "final") {
       var core = all.filter(function (c) { return c.core; });
@@ -257,7 +263,8 @@
     var recallPct = coreIds.length ? Math.round(100 * recalled / coreIds.length) : 0;
     // Mock Board scores only count in proportion to how much of Board Core you've covered (acing 10 cards isn't readiness).
     var coverage = Math.min(1, seen / (0.5 * Math.max(1, coreIds.length)));
-    var ready = Math.round(0.6 * recallPct + 0.4 * (mockAvg == null ? 0 : mockAvg) * coverage);
+    var boardWeight = Math.min(1, boards.length / 3);   // one great board shouldn't swing the score
+    var ready = Math.round(0.6 * recallPct + 0.4 * (mockAvg == null ? 0 : mockAvg) * coverage * boardWeight);
     var weak = Object.keys(lapsesByPub).sort(function (a, b) { return lapsesByPub[b] - lapsesByPub[a]; }).slice(0, 3)
       .map(function (k) { var p = STUDY.pubsById[k]; return p ? (p.code === p.title ? p.code : p.title) : k; });
     return { ready: ready, seen: seen, recalled: recalled, mockAvg: mockAvg, weak: weak };
@@ -268,7 +275,7 @@
     if (dd != null && dd < 0 && /Recommended$/.test(Store.settings().boardResult || "") && !/Not recommended/.test(Store.settings().boardResult)) return "";
     return '<div class="card">' + (rs.weak.length ? '<div class="flash-tag">Work on</div><div style="font-weight:600;">' + esc(rs.weak.join(", ")) + '</div>' : '<div class="flash-tag">Your score</div>') +
       '<details style="margin-top:6px;"><summary class="muted" style="font-size:.85rem;">How is board-ready figured?</summary><div class="muted" style="font-size:.85rem;margin-top:4px;">60% Board Core cards you got right last time (' + rs.recalled + ' of ' + coreIds.length + ') + 40% your last 3 Mock Boards (' +
-      (rs.mockAvg == null ? 'none yet' : rs.mockAvg + '%') + '). The Mock Board part counts more as you cover more of Board Core.</div></details></div>';
+      (rs.mockAvg == null ? 'none yet' : rs.mockAvg + '%') + '). The Mock Board part counts fully once you have run 3 boards and covered half of Board Core.</div></details></div>';
   }
 
   // Board-date countdown + a simple daily pace for Board Core (set the date under More > Settings).
@@ -327,9 +334,10 @@
           ' • Board Core ' + rs.seen + ' of ' + coreIds.length + '</div>' +
           (rs.mockAvg == null && rs.seen >= 30 ? '<div class="sub" style="margin-top:4px;font-size:.85rem;">No Mock Boards yet: they are 40% of this score. <a href="#/board/core" style="color:inherit;text-decoration:underline;">Run one</a> to raise it.</div>' : '') +
           (rs.weak.length ? '<div class="sub" style="margin-top:4px;font-size:.85rem;">Work on: <b>' + esc(rs.weak.join(", ")) + '</b></div>' : '') +
-          (rs.seen ? '<details style="margin-top:4px;"><summary class="sub" style="font-size:.8rem;">How is board-ready figured?</summary><div class="sub" style="font-size:.8rem;margin-top:4px;">60% Board Core cards you got right last time (' + rs.recalled + ' of ' + coreIds.length + ') + 40% your last 3 Mock Boards (' + (rs.mockAvg == null ? 'none yet' : rs.mockAvg + '%') + '), counted more as you cover Board Core.</div></details>' : '')) +
+          (rs.seen ? '<details style="margin-top:4px;"><summary class="sub" style="font-size:.8rem;">How is board-ready figured?</summary><div class="sub" style="font-size:.8rem;margin-top:4px;">60% Board Core cards you got right last time (' + rs.recalled + ' of ' + coreIds.length + ') + 40% your last 3 Mock Boards (' + (rs.mockAvg == null ? 'none yet' : rs.mockAvg + '%') + '), counted fully once you have 3 Mock Boards and have covered half of Board Core.</div></details>' : '')) +
       '</div>' +
       (freshBadges.length ? '<a class="row" href="#/badges" style="border-color:var(--gold);"><div class="grow"><div class="code">&#127941; New badge' + (freshBadges.length > 1 ? 's' : '') + ': ' + esc(freshBadges.length > 2 ? freshBadges.slice(0, 2).join(", ") + " and " + (freshBadges.length - 2) + " more" : freshBadges.join(" and ")) + '</div><div class="ttl">See all your badges</div></div><div class="chev">&#8250;</div></a>' : '') +
+      ((/iPhone|iPad|iPod/.test(navigator.userAgent) && !navigator.standalone && !Store.settings().iosTipDone) ? '<div class="card" id="iosTip" style="border-color:var(--gold);"><div class="flash-tag">Put it on your home screen</div><div style="font-size:.95rem;">In Safari, tap Share (the square with the arrow), then <b>Add to Home Screen</b>, then <b>Add</b>. It opens like an app and works offline.</div><button class="btn ghost" id="iosOk" style="margin-top:8px;">Got it</button></div>' : '') +
       rankAsk() + boardCountdown(coreIds) + boardResultAsk(rs) +
       // 2) what to do today (one list; board-week extras are folded in)
       todayPlan(coreIds, dueN, Store.leeches(ids).length) +
@@ -347,6 +355,7 @@
       weeklyRecap();
     mount.innerHTML = html;
     wireBoardResult(rs);
+    var iok = mount.querySelector("#iosOk"); if (iok) iok.addEventListener("click", function () { Store.setSetting("iosTipDone", true); mount.querySelector("#iosTip").remove(); });
     mount.querySelectorAll("#rankAsk .chip").forEach(function (b) {
       b.addEventListener("click", function () { Store.setSetting("boardFor", b.getAttribute("data-r")); screenHome(); });
     });
@@ -356,7 +365,7 @@
     setTitle("Browse", true);
     var html = "", cats = {};
     STUDY.pubs.forEach(function (p) {
-      if ((p.id === "mine" || p.id === "chain") && !cardsForDeck(p.id).length) return;
+      if ((p.id === "mine" || p.id === "chain" || p.id === "sgtdeck" || p.id === "ssgdeck") && !cardsForDeck(p.id).length) return;
       (cats[p.cat] = cats[p.cat] || []).push(p);
     });
     Object.keys(cats).forEach(function (cat) {
@@ -479,6 +488,7 @@
         '<label class="switch" style="margin-top:12px;"><input type="checkbox" id="sponsorMode"> <span><b>My sponsor is holding the phone</b>: they read each question, see the answer, and grade you</span></label></div>' +
       '<h2 class="section">How many questions?</h2>' +
       '<div class="muted" style="font-size:.85rem;margin:0 4px 8px;" id="lenNote"></div>' +
+      '<button class="btn ghost lg" data-n="5" data-quick="1">&#9201;&#65039; 5-minute board (5 questions, no drill)</button><div class="spacer"></div>' +
       '<button class="btn gold lg" data-n="10">10 questions</button><div class="spacer"></div>' +
       '<button class="btn green lg" data-n="15">15 questions</button><div class="spacer"></div>' +
       '<button class="btn ghost" data-n="25">25 questions</button>' +
@@ -499,8 +509,9 @@
     });
     mount.querySelectorAll("[data-n]").forEach(function (b) {
       b.addEventListener("click", function () {
-        var full = mount.querySelector("#fullBoard").checked, sponsor = mount.querySelector("#sponsorMode").checked;
-        Store.setSetting("fullBoard", full);
+        var quick = b.getAttribute("data-quick") === "1";
+        var full = !quick && mount.querySelector("#fullBoard").checked, sponsor = mount.querySelector("#sponsorMode").checked;
+        if (!quick) Store.setSetting("fullBoard", full);
         MockBoard.render(mount, cards, parseInt(b.getAttribute("data-n"), 10), { full: full, sponsor: sponsor });
       });
     });
@@ -1360,7 +1371,7 @@
     var skeleton = "Good (morning/afternoon), Sergeant Major and members of the board.\nI am (Rank Last Name), serving as (duty position) in (unit).\nI have (X) years in service and (Y) time in grade.\nSome of my accomplishments include ...\nI am prepared for promotion because ...\nMy goals as an NCO are ...\nThank you.";
     var cur = Store.statement();
     mount.innerHTML =
-      '<div class="card"><div class="muted">Some boards ask for a brief self-introduction. Draft yours here and tap Save. It stays on this phone.</div></div>' +
+      '<div class="card"><div class="muted">Most boards open with \u201cTell the board about yourself.\u201d Draft your answer here and tap Save. It stays on this phone.</div></div>' +
       '<label class="lbl" for="stmt">Your opening statement</label>' +
       '<textarea class="input" id="stmt" rows="12" placeholder="Write your statement...">' + (cur ? esc(cur) : "") + '</textarea>' +
       '<div class="btn-row" style="margin-top:10px;"><button class="btn gold" id="save">Save</button><button class="btn ghost" id="tmpl">Fill-in template</button></div>' +
@@ -1524,16 +1535,18 @@
   function localQuestions(n) {
     var ch = Store.chain(), out = [];
     var LOOK = "Not filled in yet. Look it up and add it under Board Day Prep";
-    var mine = shuffle(CHAIN_ROLES.filter(function (r) { return r.your && ["teamleader", "squadleader"].indexOf(r.k) < 0; }))[0];
-    var army = shuffle(CHAIN_ROLES.filter(function (r) { return !r.your; }))[0];
+    var pick = function (list) { var f = list.filter(function (r) { return ch[r.k]; }); return shuffle(f.length ? f : list)[0]; };
+    var mine = pick(CHAIN_ROLES.filter(function (r) { return r.your && ["teamleader", "squadleader"].indexOf(r.k) < 0; }));
+    var army = pick(CHAIN_ROLES.filter(function (r) { return !r.your; }));
     var KQ = { unit: "Tell the board about your unit: its mission, its motto, and a little of its history.", post: "Who is your installation commander, and where on post would you send a Soldier who needs help?", news: "What is in the news this month that could affect the Army or your unit?" };
-    var kid = shuffle(["unit", "post", "news"])[0];
+    var kf = ["unit", "post", "news"].filter(function (k) { return ch["know-" + k]; });
+    var kid = shuffle(kf.length ? kf : ["unit", "post", "news"])[0];
     var pool = [
       { id: "chain-" + mine.k, pub: "chain", topic: "Chain of Command", q: "Who is your " + mine.label + "?", a: ch[mine.k] || LOOK + " > Chain of Command.", ref: "Your roster (Board Day Prep > Chain of Command)", flashOnly: true, custom: true },
       { id: "chain-" + army.k, pub: "chain", topic: "Chain of Command", q: "Who is the " + army.label + "?", a: ch[army.k] || LOOK + " > Chain of Command (check army.mil).", ref: "Your roster (Board Day Prep > Chain of Command)", flashOnly: true, custom: true },
       { id: "know-" + kid, pub: "chain", topic: "Know your Army", q: KQ[kid], a: ch["know-" + kid] || LOOK + " > Know Your Army & Your Job.", ref: "Your notes (Board Day Prep > Know Your Army & Your Job)", flashOnly: true, custom: true }
     ];
-    out = shuffle(pool).slice(0, n || 2);
+    out = pool.filter(function (c) { return c.a.indexOf(LOOK) !== 0; }).concat(shuffle(pool.filter(function (c) { return c.a.indexOf(LOOK) === 0; }))).slice(0, n || 2);
     out.forEach(function (c) { c.local = true; if (c.a.indexOf(LOOK) === 0) c.unfilled = true; });
     return out;
   }

@@ -163,7 +163,7 @@
       var tracks = buildTracks();
       var t = tracks.filter(function (x) { return x.id === trackId; })[0];
       if (!t) return Learn.hub(container);
-      var html = '<div class="card"><div class="muted">' + esc(t.overview || "") + '</div></div>';
+      var html = t.overview ? '<div class="card"><div class="muted">' + esc(t.overview) + '</div></div>' : '';
       t.lessons.forEach(function (l) {
         var done = isDone(l);
         html += '<a class="row" href="#/lesson/' + l.id + '"><div class="checkbox' + (done ? " checked" : "") + '" style="' + (done ? "border-color:var(--good);" : "") + '">' + (done ? "&#10003;" : "") + '</div>' +
