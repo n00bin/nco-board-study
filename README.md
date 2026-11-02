@@ -8,6 +8,16 @@ no account, no app store, nothing to sign up for.
 
 ---
 
+## What's new in 3.13
+
+- **Squad Board and sponsor progress**: send your progress link; your sponsor sees your weak spots and can run a board on
+  them, and your squad can compare weekly progress. No accounts, nothing stored online.
+- **Badges** and a **weekly recap** on Home.
+- **Board members with styles**: rapid-fire and "why does that matter?" members, plus a voice check that's on by default.
+- **Say why it matters** before you reveal: the checklist grades it.
+- **BOSS** and **METL / battle tasks** cards.
+- **Unit Pilot** page and [PILOT_KIT.md](PILOT_KIT.md) for leaders who want to measure results.
+
 ## What's new in 3.12
 
 - **The Soldier's Rules** (FM 6-27) and **leader development** (FM 6-22) added.

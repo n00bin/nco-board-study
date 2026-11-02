@@ -103,7 +103,7 @@
     var sh = mount.querySelector("#brShare");
     if (sh) sh.addEventListener("click", function () {
       var br = Store.settings().boardResult.split("|"), boards = Store.quizzes().filter(function (q) { return /^Mock Board/.test(q.deck); }).length;
-      var text = "NCO Board app result (anonymous): " + br[1] + ". Board: " + (Store.settings().boardFor || "not set") + ". Board-ready score before the board: " + rs.ready + "%. Board Core cards studied: " + rs.seen + ". Mock Boards run: " + boards + ". App " + (STUDY.meta.version || "") + ".";
+      var text = "NCO Board app result (anonymous)" + (Store.settings().pilotCode ? " [pilot " + Store.settings().pilotCode + "]" : "") + ": " + br[1] + ". Board: " + (Store.settings().boardFor || "not set") + ". Board-ready score before the board: " + rs.ready + "%. Board Core cards studied: " + rs.seen + ". Mock Boards run: " + boards + ". App " + (STUDY.meta.version || "") + ".";
       if (navigator.share) navigator.share({ title: "NCO Board app result", text: text }).catch(function () {});
       else window.open("https://github.com/" + REPO + "/issues/new?title=" + encodeURIComponent("Board result: " + br[1]) + "&body=" + encodeURIComponent(text), "_blank");
     });
@@ -300,7 +300,7 @@
         '<div class="sub" style="margin-top:6px;font-size:.8rem;">Board Core: ' + rs.seen + ' of ' + coreIds.length + ' studied' + (/^(SGT|SSG)$/.test(Store.settings().boardFor) ? ' (' + Store.settings().boardFor + ' cards only)' : '') + '</div>' +
         (dToB === 0 || dToB === 1 ? '' : '<div class="sub" style="margin-top:8px;">' + (daily.count >= daily.goal ? 'Done for today: ' + daily.count + ' cards &#10003;' : 'Today: ' + daily.count + ' of ' + daily.goal + ' cards') + '</div>') +
       '</div>' +
-      rankAsk() + boardCountdown(coreIds) + boardResultAsk(rs) + todayPlan(coreIds, dueN) + readyCheck(coreIds, rs) +
+      rankAsk() + boardCountdown(coreIds) + boardResultAsk(rs) + todayPlan(coreIds, dueN) + weeklyRecap() + readyCheck(coreIds, rs) +
       // the "start from scratch" nudge is for the early weeks, not board week
       ((dToB == null || dToB > 7) && rs.seen < 10 ? '<a class="btn lg learn-cta" href="#/learn">&#128214; New to this? Start with Learn Mode</a>' +
       '<div class="muted center" style="font-size:.8rem;margin:6px 0 12px;">Learn Mode teaches first, then drills. <b>Your goal: Board Core.</b></div>' : '<div class="spacer"></div>') +
@@ -344,6 +344,7 @@
     });
     mount.innerHTML = html;
     wireBoardResult(rs);
+    checkBadges(coreIds, rs);
     mount.querySelectorAll("#rankAsk .chip").forEach(function (b) {
       b.addEventListener("click", function () { Store.setSetting("boardFor", b.getAttribute("data-r")); screenHome(); });
     });
@@ -524,9 +525,12 @@
       '<a class="row" href="#/learn"><div class="grow"><div class="code">&#128214; Learn Mode</div><div class="ttl">Guided lessons — learn it from scratch</div></div><div class="chev">&#8250;</div></a>' +
       '<a class="row" href="#/pick/board"><div class="grow"><div class="code">&#127894; Mock Board</div><div class="ttl">Simulate the oral board</div></div><div class="chev">&#8250;</div></a>' +
       '<a class="row" href="#/boardday"><div class="grow"><div class="code">&#128203; Board Day Prep</div><div class="ttl">Chain of command, uniform, reporting</div></div><div class="chev">&#8250;</div></a>' +
+      '<a class="row" href="#/squad"><div class="grow"><div class="code">&#128101; Squad Board &amp; Sponsor</div><div class="ttl">Send your progress; compare with your squad</div></div><div class="chev">&#8250;</div></a>' +
+      '<a class="row" href="#/badges"><div class="grow"><div class="code">&#127941; Badges</div><div class="ttl">Small wins on the way to your board</div></div><div class="chev">&#8250;</div></a>' +
       '<a class="row" href="#/mycards"><div class="grow"><div class="code">&#128221; My Cards</div><div class="ttl">Add your unit\'s smart-book questions</div></div><div class="chev">&#8250;</div></a>' +
       '<a class="row" href="#/share"><div class="grow"><div class="code">&#128279; Share &amp; QR code</div><div class="ttl">Send the app to other Soldiers</div></div><div class="chev">&#8250;</div></a>' +
       '<a class="row" href="#/settings"><div class="grow"><div class="code">&#9881;&#65039; Settings</div><div class="ttl">Daily goal, board timer, read-aloud</div></div><div class="chev">&#8250;</div></a>' +
+      '<a class="row" href="#/pilot"><div class="grow"><div class="code">&#128203; Unit Pilot (for leaders)</div><div class="ttl">See whether the app helps your Soldiers</div></div><div class="chev">&#8250;</div></a>' +
       '<a class="row" href="#/backup"><div class="grow"><div class="code">&#128190; Backup &amp; restore</div><div class="ttl">Save or move your progress</div></div><div class="chev">&#8250;</div></a>' +
       '<div class="muted center" style="font-size:.8rem;margin-top:18px;">NCO Board Study Guide<br>' + esc(versionLine()) + '</div>';
     html += '<h2 class="section">Recent quizzes &amp; boards</h2>';
@@ -571,7 +575,7 @@
       html += '<h2 class="section">Read-aloud</h2><div class="card"><label class="switch"><input type="checkbox" id="autoRead"' + (s.autoRead ? ' checked' : '') + '> <span>Automatically read questions &amp; answers aloud</span></label></div>';
     if (Speech.supported()) html += '<div class="spacer"></div><button class="btn ghost" id="speakTest">&#128266; Test the voice</button>';
     if (window.SpeechRecognition || window.webkitSpeechRecognition)
-      html += '<h2 class="section">Mock Board voice check</h2><div class="card"><label class="switch"><input type="checkbox" id="voiceAuto"' + (s.voiceAuto ? ' checked' : '') + '> <span>Listen to my answers and pre-tick the key points I said</span></label></div>';
+      html += '<h2 class="section">Mock Board voice check</h2><div class="card"><label class="switch"><input type="checkbox" id="voiceAuto"' + (!s.voiceOff ? ' checked' : '') + '> <span>Listen to my answers and pre-tick the key points I said (needs the microphone; may need a connection)</span></label></div>';
     mount.innerHTML = html;
 
     mount.querySelector("#bDate").addEventListener("change", function (e) {
@@ -610,7 +614,7 @@
       });
     });
     var va = mount.querySelector("#voiceAuto");
-    if (va) va.addEventListener("change", function () { Store.setSetting("voiceAuto", va.checked); });
+    if (va) va.addEventListener("change", function () { Store.setSetting("voiceOff", !va.checked); });
     var ar = mount.querySelector("#autoRead");
     if (ar) ar.addEventListener("change", function () { Store.setSetting("autoRead", ar.checked); });
     mount.querySelector("#speakTest").addEventListener("click", function () {
@@ -859,6 +863,147 @@
       '<div class="spacer"></div><a class="btn gold lg" href="#/">Home</a>';
   }
 
+
+  // ---------------- motivation: badges, weekly recap, progress links, squad board ----------------
+  var BADGES = [
+    { id: "first-card", t: "First steps", d: "Studied your first card", test: function (x) { return x.seen >= 1; } },
+    { id: "core-50", t: "50 Board Core cards", d: "Studied 50 Board Core cards", test: function (x) { return x.seen >= 50; } },
+    { id: "core-150", t: "150 Board Core cards", d: "Studied 150 Board Core cards", test: function (x) { return x.seen >= 150; } },
+    { id: "core-all", t: "All of Board Core", d: "Studied every Board Core card", test: function (x) { return x.total && x.seen >= x.total; } },
+    { id: "board101", t: "Board 101", d: "Finished the Board 101 lessons", test: function (x) { return x.b101; } },
+    { id: "first-board", t: "First Mock Board", d: "Ran your first Mock Board", test: function (x) { return x.boards >= 1; } },
+    { id: "boards-5", t: "Five Mock Boards", d: "Ran five Mock Boards", test: function (x) { return x.boards >= 5; } },
+    { id: "sponsor-board", t: "Sponsor board", d: "Ran a board with your sponsor", test: function (x) { return x.sponsored; } },
+    { id: "streak-7", t: "7-day streak", d: "Studied seven days in a row", test: function (x) { return x.streak >= 7; } },
+    { id: "ready-50", t: "Halfway ready", d: "Board-ready score of 50%", test: function (x) { return x.ready >= 50; } },
+    { id: "ready-80", t: "Board-ready", d: "Board-ready score of 80%", test: function (x) { return x.ready >= 80; } }
+  ];
+  function badgeFacts(coreIds, rs) {
+    var q = Store.quizzes(), b101 = window.Learn && Learn.nextBoardLesson ? !/^board101/.test((Learn.nextBoardLesson().next || { id: "x" }).id) : false;
+    return { seen: rs.seen, total: coreIds.length, ready: rs.ready, streak: Store.streak(), b101: b101,
+      boards: q.filter(function (x) { return /^Mock Board/.test(x.deck); }).length, sponsored: q.some(function (x) { return /with sponsor/.test(x.deck); }) };
+  }
+  function checkBadges(coreIds, rs) {
+    var f = badgeFacts(coreIds, rs), fresh = [];
+    BADGES.forEach(function (b) { if (b.test(f) && Store.earnBadge(b.id)) fresh.push(b.t); });
+    if (fresh.length) setTimeout(function () { App.toast("🏅 Badge earned: " + fresh.join(", "), 4000); }, 600);
+  }
+  function screenBadges() {
+    setTitle("Badges", true);
+    var got = Store.badges();
+    var html = '<div class="card"><div class="muted">Small wins on the way to your board. They stay on this phone.</div></div>';
+    BADGES.forEach(function (b) {
+      var on = !!got[b.id];
+      html += '<div class="row" style="' + (on ? '' : 'opacity:.55;') + '"><div class="numbubble" aria-hidden="true">' + (on ? "🏅" : "•") + '</div><div class="grow"><div class="code">' + esc(b.t) + '</div><div class="ttl">' + esc(b.d) +
+        (on ? ' • earned ' + new Date(got[b.id]).toLocaleDateString() : '') + '</div></div></div>';
+    });
+    mount.innerHTML = html;
+  }
+  // last 7 days at a glance
+  function weeklyRecap() {
+    var log = Store.dayLog(7), total = 0, days = 0, max = 1;
+    log.forEach(function (d) { total += d.count; if (d.count) days++; if (d.count > max) max = d.count; });
+    if (!total) return "";
+    var weekAgo = Date.now() - 7 * 86400000, boards = Store.quizzes().filter(function (q) { return /^Mock Board/.test(q.deck) && q.date > weekAgo; }).length;
+    var bars = log.map(function (d) {
+      var h = Math.max(3, Math.round(36 * d.count / max)), dn = new Date(d.day + "T12:00:00").toLocaleDateString(undefined, { weekday: "narrow" });
+      return '<div style="flex:1;text-align:center;"><div title="' + d.count + ' cards" style="height:' + h + 'px;background:' + (d.count ? 'var(--gold)' : 'var(--line, #3a3f2e)') + ';border-radius:3px;margin:0 2px;"></div><div class="muted" style="font-size:.7rem;margin-top:2px;">' + dn + '</div></div>';
+    }).join("");
+    return '<div class="card"><div class="flash-tag">Your last 7 days</div><div style="display:flex;align-items:flex-end;height:52px;margin:6px 0;" aria-hidden="true">' + bars + '</div>' +
+      '<div class="muted" style="font-size:.85rem;">' + total + ' cards on ' + days + ' day' + (days === 1 ? '' : 's') + ' • ' + boards + ' Mock Board' + (boards === 1 ? '' : 's') + ' • <a href="#/squad">Squad board</a> • <a href="#/badges">Badges</a></div></div>';
+  }
+  // ---- progress snapshot: encoded into a link, shown on the sponsor's (or a squad mate's) phone ----
+  function b64e(o) { return btoa(unescape(encodeURIComponent(JSON.stringify(o)))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, ""); }
+  function b64d(s) { s = String(s).replace(/-/g, "+").replace(/_/g, "/"); while (s.length % 4) s += "="; return JSON.parse(decodeURIComponent(escape(atob(s)))); }
+  function snapshot() {
+    var coreIds = STUDY.cards.filter(function (c) { return c.core && rankOk(c); }).map(function (c) { return c.id; });
+    var rs = readyScore(coreIds), q = Store.quizzes();
+    var weekAgo = Date.now() - 7 * 86400000;
+    var weakPubs = []; var lp = {}; STUDY.cards.forEach(function (c) { if (c.core) lp[c.id] = c.pub; });
+    coreIds.forEach(function (id) { var r = Store.recOf(id); if (r && r.lapses) lp["_" + lp[id]] = (lp["_" + lp[id]] || 0) + r.lapses; });
+    Object.keys(lp).filter(function (k) { return k.charAt(0) === "_"; }).sort(function (a, b) { return lp[b] - lp[a]; }).slice(0, 3).forEach(function (k) { weakPubs.push(k.slice(1)); });
+    return { v: 1, id: Store.uid(), n: (Store.settings().displayName || "").slice(0, 30), bd: Store.settings().boardDate || "", bf: Store.settings().boardFor || "",
+      r: rs.ready, s: rs.seen, t: coreIds.length, rc: rs.recalled, st: Store.streak(),
+      wk: Store.dayLog(7).reduce(function (a, d) { return a + d.count; }, 0),
+      m: q.filter(function (x) { return /^Mock Board/.test(x.deck) && x.total; }).slice(0, 3).map(function (x) { return Math.round(100 * x.score / x.total); }),
+      mw: q.filter(function (x) { return /^Mock Board/.test(x.deck) && x.date > weekAgo; }).length, w: weakPubs, at: Date.now() };
+  }
+  function shareProgress() {
+    if (!Store.settings().displayName) { App.go("#/squad"); App.toast("Add your name first, so your sponsor or squad knows it's you.", 3500); return; }
+    var url = APP_URL + "#/progress/" + b64e(snapshot());
+    var text = (Store.settings().displayName) + "'s board prep progress. Open to see it (and add me to your squad board): " + url;
+    if (navigator.share) navigator.share({ title: "My board prep progress", text: text }).catch(function () {});
+    else if (navigator.clipboard) navigator.clipboard.writeText(text).then(function () { App.toast("Progress link copied", 3000); }, function () { App.toast(url, 6000); });
+    else App.toast(url, 6000);
+  }
+  function pubName(id) { var p = STUDY.pubsById[id]; return p ? (p.code === p.title || /^[A-Z][a-z]/.test(p.code) ? p.code : p.title) : id; }
+  function screenProgress(data) {
+    setTitle("Board Prep Progress", true);
+    var x; try { x = b64d(data); } catch (e) { x = null; }
+    if (!x || x.v !== 1 || typeof x.r !== "number") { mount.innerHTML = '<div class="empty">This progress link is incomplete. Ask the Soldier to send it again.</div>'; return; }
+    var who = x.n ? esc(x.n) : "This Soldier", days = null;
+    if (/^\d{4}-\d{2}-\d{2}$/.test(x.bd || "")) { var p = x.bd.split("-"), t = new Date(); days = Math.round((new Date(+p[0], +p[1] - 1, +p[2]) - new Date(t.getFullYear(), t.getMonth(), t.getDate())) / 86400000); }
+    var weakIds = [];
+    (x.w || []).forEach(function (pub) { STUDY.cards.filter(function (c) { return c.core && c.pub === pub; }).slice(0, 4).forEach(function (c) { weakIds.push(c.id); }); });
+    var sit = STUDY.cards.filter(function (c) { return c.core && c.pub === "sit"; }).map(function (c) { return c.id; }).sort(function () { return Math.random() - 0.5; }).slice(0, 2);
+    var board = weakIds.slice(0, 8).concat(sit);
+    mount.innerHTML =
+      '<div class="hero"><div class="big">' + x.r + '%</div><div class="sub">' + who + ' • board-ready</div>' +
+        '<div class="bar"><span style="width:' + Math.min(100, x.r) + '%"></span></div>' +
+        '<div class="sub" style="margin-top:6px;font-size:.8rem;">Sent ' + new Date(x.at).toLocaleDateString() + (days != null ? ' • ' + (days > 0 ? 'board in ' + days + ' days' : days === 0 ? 'board today' : 'board date passed') : '') + (x.bf ? ' • ' + esc(x.bf) + ' board' : '') + '</div></div>' +
+      '<div class="card"><div class="muted">Board Core studied: <b>' + x.s + ' of ' + x.t + '</b> (right last time: ' + x.rc + ')<br>Last 7 days: <b>' + x.wk + ' cards</b>, ' + x.mw + ' Mock Board' + (x.mw === 1 ? '' : 's') + '<br>Streak: <b>' + x.st + ' days</b>' +
+        (x.m && x.m.length ? '<br>Recent Mock Boards: <b>' + x.m.join('%, ') + '%</b>' : '<br>No Mock Boards yet') + '</div></div>' +
+      ((x.w || []).length ? '<div class="card"><div class="flash-tag">Weakest subjects</div><div style="font-weight:600;">' + esc(x.w.map(pubName).join(", ")) + '</div></div>' : '') +
+      (board.length >= 3 ? '<a class="btn gold lg" href="#/sponsor/' + board.join(",") + '">&#127894; Run a sponsor board on these weak spots</a><div class="spacer"></div>' : '') +
+      '<button class="btn green lg" id="addSquad">&#128101; Add ' + who + ' to my squad board</button>' +
+      '<div class="muted center" style="font-size:.8rem;margin-top:8px;">Nothing is sent anywhere: this page was built from the link itself.</div>';
+    mount.querySelector("#addSquad").addEventListener("click", function () {
+      if (x.id === Store.uid()) { App.toast("That's your own progress."); return; }
+      Store.upsertSquad({ id: String(x.id || "").replace(/[^a-z0-9]/g, "").slice(0, 16), name: String(x.n || "Soldier").slice(0, 30), ready: x.r | 0, core: x.s | 0, week: x.wk | 0, streak: x.st | 0, mocks: x.mw | 0, at: x.at | 0 });
+      App.toast("Added to your squad board"); App.go("#/squad");
+    });
+  }
+  function screenSquad() {
+    setTitle("Squad Board", true);
+    var me = snapshot(), name = Store.settings().displayName || "";
+    var rows = Store.squad().concat([{ id: me.id, name: (name || "You") + " (you)", ready: me.r, core: me.s, week: me.wk, streak: me.st, mocks: me.mw, at: Date.now(), me: true }]);
+    rows.sort(function (a, b) { return (b.week - a.week) || (b.ready - a.ready); });
+    var html = '<div class="card"><div class="muted">Study with your battle buddies. Everyone sends their progress link to the group chat; open each link and tap "Add to my squad board." Ranked by cards studied in the last 7 days. Stays on this phone.</div></div>' +
+      '<label class="lbl" for="dName">Your name on the board</label><input class="input" id="dName" maxlength="30" placeholder="e.g. SPC Rivera" value="' + escAttr(name) + '">' +
+      '<div class="spacer"></div><button class="btn gold lg" id="shareMine">&#128228; Send my progress (sponsor or squad)</button>' +
+      '<h2 class="section">This week</h2>';
+    rows.forEach(function (r, k) {
+      var age = r.me ? "" : ' • updated ' + new Date(r.at).toLocaleDateString();
+      html += '<div class="row"' + (r.me ? ' style="border-color:var(--gold);"' : '') + '><div class="numbubble">' + (k + 1) + '</div><div class="grow"><div class="code">' + esc(r.name) + '</div>' +
+        '<div class="ttl">' + r.week + ' cards this week • ' + r.ready + '% ready • ' + r.streak + '-day streak' + age + '</div></div>' +
+        (r.me ? '' : '<button class="mini" data-rm="' + escAttr(r.id) + '" aria-label="Remove ' + escAttr(r.name) + ' from the squad board">&#10005;</button>') + '</div>';
+    });
+    if (rows.length === 1) html += '<div class="empty">Just you so far. Send your link to your squad and add theirs.</div>';
+    mount.innerHTML = html;
+    var dn = mount.querySelector("#dName");
+    dn.addEventListener("change", function () { Store.setSetting("displayName", dn.value.replace(/[<>]/g, "").trim().slice(0, 30)); App.toast("Name saved"); });
+    mount.querySelector("#shareMine").addEventListener("click", function () { Store.setSetting("displayName", dn.value.replace(/[<>]/g, "").trim().slice(0, 30)); shareProgress(); });
+    mount.querySelectorAll("[data-rm]").forEach(function (b) { b.addEventListener("click", function () { Store.removeSquad(b.getAttribute("data-rm")); screenSquad(); }); });
+  }
+  // ---- unit pilot kit: for a leader who wants to see whether the app helps ----
+  function screenPilot() {
+    setTitle("Unit Pilot (for leaders)", true);
+    var code = Store.settings().pilotCode || "";
+    mount.innerHTML =
+      '<div class="card"><div class="muted">Want to know if this helps your Soldiers? Run a simple pilot with the Soldiers going to your next boards. Nothing is collected automatically: Soldiers choose to share their result.</div></div>' +
+      '<h2 class="section">How to run it</h2>' +
+      ['Pick a short pilot code (for example 2-505-NOV) and give it to each Soldier.',
+       'Each Soldier installs the app, enters the code below, sets their board date and which board, and studies with Today\'s plan.',
+       'Encourage at least two sponsor boards (Mock Board > send a board to my sponsor).',
+       'After the board, each Soldier taps their result on Home ("How did your board go?") and then "Share it": the shared text includes the pilot code, board-ready score, cards studied, and Mock Boards run.',
+       'Collect the shared results (group chat, email) and compare recommendation rates with Soldiers who didn\'t use the app.']
+        .map(function (t, i) { return '<div class="row"><div class="numbubble">' + (i + 1) + '</div><div class="grow"><div class="ttl">' + esc(t) + '</div></div></div>'; }).join("") +
+      '<label class="lbl" for="pCode">Pilot code (optional)</label><input class="input" id="pCode" maxlength="20" placeholder="e.g. 2-505-NOV" value="' + escAttr(code) + '">' +
+      '<div class="muted" style="font-size:.8rem;margin-top:6px;">Letters, numbers and dashes. It is added only to results you choose to share.</div>';
+    var pc = mount.querySelector("#pCode");
+    pc.addEventListener("change", function () { Store.setSetting("pilotCode", pc.value.replace(/[^A-Za-z0-9-]/g, "").slice(0, 20)); App.toast("Pilot code saved"); });
+  }
+
   function screenChanges() {
     setTitle("What Changed Recently", true);
     var all = allCards();
@@ -1065,6 +1210,10 @@
     if (head === "room") return screenRoom(), tab("home");
     if (head === "records") return screenRecords(), tab("home");
     if (head === "changes") return screenChanges(), tab("home");
+    if (head === "badges") return screenBadges(), tab("more");
+    if (head === "squad") return screenSquad(), tab("more");
+    if (head === "progress") return screenProgress(parts[1] || ""), tab("home");
+    if (head === "pilot") return screenPilot(), tab("more");
     if (head === "sponsor") return screenSponsorBoard(parts[1] || ""), tab("home");
     if (head === "sbresult") return screenSponsorResult(parts.slice(1)), tab("home");
     if (head === "pub") return screenPub(parts[1]), tab("browse");

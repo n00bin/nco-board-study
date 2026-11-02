@@ -60,7 +60,7 @@
         front.setAttribute("aria-hidden", flipped ? "true" : "false");
         back.setAttribute("aria-hidden", flipped ? "false" : "true");
         grades.hidden = !flipped;
-        hint.textContent = flipped ? GRADE_HINT : "Tap card to flip";
+        hint.textContent = flipped ? GRADE_HINT : (queue[i] && queue[i].why ? "Say the answer and why it matters, then tap to flip" : "Say the answer, then tap to flip");
       }
 
       function paint() {

@@ -23,6 +23,10 @@
     goal: 20,
     streak: 0,
     lastStudyDate: "",
+    days: {},       // study log: "YYYY-MM-DD" -> cards graded that day (last 60 days), for the weekly recap and squad board
+    badges: {},     // badgeId -> date earned
+    squad: [],      // squad board entries from shared progress links: { id, name, ready, core, week, streak, mocks, at }
+    uid: "",        // random id so a Soldier's shared progress updates the same squad row
     settings: { autoRead: false, timer: 30, driveGap: 5, boardDate: "", fullBoard: true, boardFor: "" }   // boardDate: "YYYY-MM-DD" or ""; boardFor: "SGT", "SSG" or ""
   };
 
@@ -70,6 +74,13 @@
     if (isObj(d.checks)) for (k in d.checks) if (okKey(k)) s.checks[k] = !!d.checks[k];
     s.statement = str(d.statement, "");
     if (isObj(d.daily)) s.daily = { date: str(d.daily.date, ""), count: num(d.daily.count, 0) };
+    if (isObj(d.days)) for (k in d.days) if (/^\d{4}-\d{2}-\d{2}$/.test(k)) s.days[k] = Math.max(0, num(d.days[k], 0) | 0);
+    if (isObj(d.badges)) for (k in d.badges) if (okKey(k) && /^[a-z0-9-]{1,30}$/.test(k)) s.badges[k] = num(d.badges[k], 0);
+    if (Array.isArray(d.squad)) s.squad = d.squad.filter(isObj).slice(0, 30).map(function (e) {
+      return { id: str(e.id, "").replace(/[^a-z0-9]/g, "").slice(0, 16), name: str(e.name, "").slice(0, 30), ready: num(e.ready, 0) | 0, core: num(e.core, 0) | 0,
+        week: num(e.week, 0) | 0, streak: num(e.streak, 0) | 0, mocks: num(e.mocks, 0) | 0, at: num(e.at, 0) };
+    }).filter(function (e) { return e.id; });
+    s.uid = /^[a-z0-9]{6,16}$/.test(d.uid || "") ? d.uid : "";
     s.goal = Math.max(5, num(d.goal, DEFAULT.goal) | 0);
     s.streak = num(d.streak, 0);
     s.lastStudyDate = str(d.lastStudyDate, "");
@@ -82,6 +93,9 @@
       s.settings.boardFor = (d.settings.boardFor === "SGT" || d.settings.boardFor === "SSG" || d.settings.boardFor === "BOTH") ? d.settings.boardFor : "";
       s.settings.voiceAuto = !!d.settings.voiceAuto;
       s.settings.remindersAdded = !!d.settings.remindersAdded;
+      s.settings.displayName = str(d.settings.displayName, "").replace(/[<>]/g, "").slice(0, 30);
+      s.settings.pilotCode = str(d.settings.pilotCode, "").replace(/[^A-Za-z0-9-]/g, "").slice(0, 20);
+      s.settings.voiceOff = !!d.settings.voiceOff;
       s.settings.boardResult = /^\d{4}-\d{2}-\d{2}\|(Recommended|Not recommended|Board postponed)$/.test(d.settings.boardResult || "") ? d.settings.boardResult : "";
     }
     return s;
@@ -144,6 +158,9 @@
     }
     if (state.daily.date !== today) state.daily = { date: today, count: 0 };
     state.daily.count++;
+    if (!state.days) state.days = {};
+    state.days[today] = (state.days[today] || 0) + 1;
+    var keys = Object.keys(state.days).sort(); while (keys.length > 60) delete state.days[keys.shift()];
   }
 
   // the board date (local midnight, ms) or 0 if none is set
@@ -323,6 +340,22 @@
 
     // ---- backup ----
     exportData: function () { return JSON.stringify(state); },
+    // cards graded on each of the last n days (oldest first)
+    dayLog: function (n) {
+      var out = [], d = new Date(); d.setHours(12, 0, 0, 0);
+      for (var i = n - 1; i >= 0; i--) { var x = new Date(d.getTime() - i * 86400000); var k = localDay(x.getTime()); out.push({ day: k, count: (state.days && state.days[k]) || 0 }); }
+      return out;
+    },
+    badges: function () { return Object.assign({}, state.badges || {}); },
+    earnBadge: function (id) { if (!state.badges) state.badges = {}; if (state.badges[id]) return false; state.badges[id] = Date.now(); save(); return true; },
+    uid: function () { if (!state.uid) { state.uid = Math.random().toString(36).slice(2, 12); save(); } return state.uid; },
+    squad: function () { return (state.squad || []).slice(); },
+    upsertSquad: function (e) {
+      if (!state.squad) state.squad = [];
+      state.squad = state.squad.filter(function (x) { return x.id !== e.id; }); state.squad.push(e);
+      state.squad = state.squad.slice(-30); save();
+    },
+    removeSquad: function (id) { state.squad = (state.squad || []).filter(function (x) { return x.id !== id; }); save(); },
     importData: function (json) {
       var d = JSON.parse(json);            // throws on bad JSON -> caller catches
       if (!isObj(d) || !isObj(d.cards)) throw new Error("Not a valid backup file.");

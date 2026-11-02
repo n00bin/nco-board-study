@@ -76,7 +76,11 @@
   // Voice check: optional speech-to-text that pre-ticks the key points you actually said (Chrome on Android/desktop).
   var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   var STOPW = { that: 1, this: 1, with: 1, from: 1, they: 1, them: 1, their: 1, have: 1, will: 1, your: 1, into: 1, also: 1, only: 1, when: 1, what: 1, which: 1, than: 1, then: 1, each: 1, more: 1, must: 1, does: 1, about: 1, there: 1, were: 1, been: 1, being: 1, should: 1, could: 1, would: 1 };
-  function words(s) { return String(s).toLowerCase().replace(/[^a-z0-9 ]+/g, " ").split(/\s+/).filter(function (w) { return w.length >= 4 && !STOPW[w]; }).map(function (w) { return w.slice(0, 5); }); }
+  var NUMW = { one: "1", two: "2", three: "3", four: "4", five: "5", six: "6", seven: "7", eight: "8", nine: "9", ten: "10", eleven: "11", twelve: "12", fifteen: "15", twenty: "20", thirty: "30", sixty: "60", ninety: "90", hundred: "100", first: "1", second: "2", third: "3" };
+  function words(s) {
+    return String(s).toLowerCase().replace(/[^a-z0-9 ]+/g, " ").split(/\s+/).map(function (w) { return NUMW[w] || w; })
+      .filter(function (w) { return /^\d+$/.test(w) || (w.length >= 4 && !STOPW[w]); }).map(function (w) { return /^\d+$/.test(w) ? w : w.slice(0, 5); });
+  }
   function hitRate(point, said) {
     var pw = words(point); if (!pw.length) return 0;
     var set = {}; words(said).forEach(function (w) { set[w] = 1; });
@@ -97,7 +101,7 @@
     return shuffle(pickBoard([], spread(basicsFirst(shuffle(pool)), length), 0, length));
   }
 
-  var timer = null, releaseMic = null;
+  var timer = null, releaseMic = null, voiceFail = false;
   function clearTimer() { if (timer) { clearInterval(timer); timer = null; } }
 
   var MockBoard = {
@@ -133,8 +137,9 @@
           var subs = []; ch.forEach(function (c) { var nm = subjectName(c); if (subs.indexOf(nm) < 0) subs.push(nm); });
           // "a situation" reads best last
           subs.sort(function (a, b) { return (a === "a situation") - (b === "a situation"); });
-          steps.push({ kind: "member", label: last ? "The Board President" : "Board member " + (m + 1), subs: subs });
-          ch.forEach(function (c) { steps.push({ kind: "q", c: c }); });
+          var style = last ? "standard" : ["standard", "rapid", "why"][m % 3];
+          steps.push({ kind: "member", label: last ? "The Board President" : "Board member " + (m + 1), subs: subs, style: style });
+          ch.forEach(function (c) { steps.push({ kind: "q", c: c, style: style }); });
         });
         steps.push({ kind: "reportOut" });
         deck = [].concat.apply([], chunks);
@@ -170,7 +175,10 @@
         rec = { stream: null, mr: null, chunks: [], url: null };
       };
       function recButton() { return canRec && !sponsor ? '<button class="btn ghost" id="recBtn">&#127897; Record my answer</button><div class="spacer"></div>' : ""; }
-      function wireRec() { var b = container.querySelector("#recBtn"); if (b) b.addEventListener("click", function () { startRec(b); }); }
+      // Record takes the microphone from the voice check (one microphone user at a time)
+      function wireRec() { var b = container.querySelector("#recBtn"); if (b) b.addEventListener("click", function () {
+        if (voice.rec) { stopVoice(); voice.paused = true; var vb = container.querySelector("#voiceBtn"); if (vb) { vb.textContent = "Voice check paused while you record"; vb.disabled = true; } }
+        startRec(b); }); }
       // call right after a reveal screen is drawn: fills #playback once the recording is ready
       function playback() {
         stopRec(function (url) {
@@ -255,7 +263,7 @@
       function show() {
         clearTimer();
         var st = steps[s];
-        if (st.kind === "q") return question(st.c);
+        if (st.kind === "q") { curStyle = st.style || "standard"; return question(st.c); }
         if (st.kind === "follow") return followUp(st);
         if (st.kind === "comeback") return comeback(st.c);
         if (st.kind === "reportIn") return reportIn();
@@ -356,19 +364,24 @@
         onGrade(function (ok) { bearing.push({ label: "Reporting out", ok: ok }); next(); });
       }
 
+      var STYLE_NOTE = { rapid: "Rapid-fire: short, quick questions. 20 seconds each, no follow-ups. Answer crisply and stop.",
+        why: "Asks \"why?\": after a good answer, expect \"Why does that matter?\" Be ready to explain, not just recite.", standard: "" };
       function member(st) {
         container.innerHTML = header() +
           '<div class="card" style="border-color:var(--gold);"><div class="flash-tag">' + esc(st.label) + '</div>' +
             '<div class="q-text" style="margin-top:8px;">' + esc(st.label) + ' will ask about ' + esc(listJoin(st.subs)) + '.</div>' +
+            (STYLE_NOTE[st.style] ? '<div style="margin:6px 0;font-weight:600;color:var(--gold);">' + esc(STYLE_NOTE[st.style]) + '</div>' : '') +
             '<div class="muted">' + (sponsor ? 'Speak as this board member. The Soldier should turn to face you, keep their bearing, and answer to you.' : 'Turn to face this member, keep your bearing, and answer to them.') + '</div></div>' +
           '<button class="btn gold lg" id="ready">Ready</button>';
         container.querySelector("#ready").addEventListener("click", next);
       }
 
       // ---- questions ----
+      var curStyle = "standard";
       function question(c) {
         qNum++;
         var cs = timeFor(c);
+        if (curStyle === "rapid" && secs) cs = Math.min(cs || 20, 20);
         container.innerHTML = header() + timerHtml(cs) +
           // Only the publication is shown on the question side: topic labels can give the answer away.
           '<div class="card"><div class="flash-toprow"><span class="flash-tag">' + esc(pubCode(c)) + (c.adv ? ' \u2022 Advanced' : '') + '</span>' +
@@ -376,7 +389,7 @@
             '<button class="mini" id="mReport" aria-label="Report card">&#9873;</button></span></div>' +
             '<div class="q-text" style="margin-top:8px;">' + esc(qt(c)) + '</div></div>' +
           (sponsor ? sponsorBox(c.a, c.ref, whyHtml(c)) + '<p class="center muted">Read the question aloud, listen, then grade.</p>' + (c.points ? rubricHtml(c, "Sponsor: tick what the Soldier covered") : gradeButtons())
-                   : '<p class="center muted">Answer out loud, then reveal.</p>' + voiceButton() + recButton() + '<button class="btn gold lg" id="reveal">Reveal answer</button>');
+                   : '<p class="center muted">' + (c.why && c.pub !== "sit" && c.pub !== "personal" ? 'Answer out loud, then say why it matters. Then reveal.' : 'Answer out loud, then reveal.') + '</p>' + voiceButton() + recButton() + '<button class="btn gold lg" id="reveal">Reveal answer</button>');
         container.querySelector("#mSpeak").addEventListener("click", function () { Speech.speak(qt(c)); });
         container.querySelector("#mReport").addEventListener("click", function () { App.reportCard(c); });
         if (autoRead) Speech.speak(qt(c));
@@ -394,21 +407,21 @@
       var voice = { rec: null, text: "" };
       function voiceButton() { return SR ? '<button class="btn ghost" id="voiceBtn">&#128483;&#65039; Voice check (optional): the app listens</button><div class="spacer"></div>' : ""; }
       function wireVoice() {
-        voice.text = "";
+        voice.text = ""; voice.paused = false;
         var b = container.querySelector("#voiceBtn"); if (!b) return;
         var start = function () {
           Store.setSetting("voiceAuto", true);
           try {
             var r = new SR(); r.lang = "en-US"; r.continuous = true; r.interimResults = false;
             r.onresult = function (e) { for (var k = e.resultIndex; k < e.results.length; k++) if (e.results[k].isFinal) voice.text += " " + e.results[k][0].transcript; };
-            r.onerror = function () { App.toast("Voice check isn't available right now (it may need a connection). Grade yourself as usual.", 4000); };
+            r.onerror = function () { if (voiceFail) return; voiceFail = true; App.toast("Voice check isn't available right now (it may need a connection). Grade yourself as usual.", 4000); };
             r.start(); voice.rec = r;
             b.textContent = "⏺ Listening… (stops when you reveal)"; b.classList.add("on"); b.disabled = true;
-            var rb = container.querySelector("#recBtn"); if (rb) rb.disabled = true;   // one microphone user at a time
+            // (tapping Record pauses the voice check; see wireRec)
           } catch (err) { App.toast("Voice check isn't supported in this browser.", 3500); }
         };
         b.addEventListener("click", start);
-        if (Store.settings().voiceAuto) start();
+        if (!Store.settings().voiceOff && !voiceFail) start();
       }
       function stopVoice() { if (voice.rec) { try { voice.rec.stop(); } catch (e) {} voice.rec = null; } }
       // after reveal: show what it heard and pre-tick matching points (results can arrive a moment after stop)
@@ -432,7 +445,7 @@
       function reveal(c) {
         clearTimer();
         if (autoRead) Speech.speak(c.a);
-        var listened = SR && container.querySelector("#voiceBtn") && container.querySelector("#voiceBtn").disabled;
+        var listened = SR && !voice.paused && container.querySelector("#voiceBtn") && container.querySelector("#voiceBtn").disabled;
         container.innerHTML = header() +
           '<div class="card"><div class="flash-tag">' + esc(pubCode(c)) + (c.topic ? " • " + esc(c.topic) : "") + '</div>' +
             '<div class="q-text" style="margin:6px 0 12px;">' + esc(qt(c)) + '</div>' +
@@ -455,8 +468,11 @@
         if (!ok) { missedIds.push(c.id); pp.miss++; missed.push({ q: qt(c), a: c.a, code: pubCode(c) + (score > 0 && score < 1 ? " \u2022 " + Math.round(score * 100) + "% of key points" : "") }); }
         // Like a real board: a good answer earns a harder follow-up; a miss means the board comes back to it
         // later in that member's turn (or at the end), so you get a second chance to get it right.
-        if (score >= 0.5 && c.follow && c.follow.length) {
-          var fu = c.follow.map(function (f) { return { kind: "follow", f: f, parent: c }; });
+        var fups = (c.follow || []).slice();
+        if (curStyle === "why" && c.why && c.pub !== "sit" && c.pub !== "personal") fups = [{ q: "Why does that matter?", a: c.why, ref: c.ref }];
+        if (curStyle === "rapid") fups = [];
+        if (score >= 0.5 && fups.length) {
+          var fu = fups.map(function (f) { return { kind: "follow", f: f, parent: c }; });
           Array.prototype.splice.apply(steps, [s + 1, 0].concat(fu));
         } else if (score < 0.5) {
           var at = s + 1;
