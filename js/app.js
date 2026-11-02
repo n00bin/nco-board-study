@@ -178,7 +178,7 @@
   // One daily plan so Learn, reviews, and Mock Board stop competing.
   // One daily plan so Learn, reviews, and Mock Board stop competing. It changes as the board gets close:
   // the last day is about calm and bearing (no new material), the last week is review, a late start gets the Top 100.
-  function todayPlan(coreIds, dueN) {
+  function todayPlan(coreIds, dueN, leechN) {
     var days = daysToBoard(), items = [];
     var seenN = coreIds.filter(seenOf).length, unseen = coreIds.length - seenN, seenPct = coreIds.length ? seenN / coreIds.length : 0;
     var lateStart = days != null && days >= 2 && days <= 10 && seenPct < 0.5;
@@ -204,7 +204,7 @@
     } else {
       if (lateStart) {
         var lp0 = window.Learn && Learn.nextBoardLesson ? Learn.nextBoardLesson() : null;
-        if (lp0 && lp0.next && /^board101/.test(lp0.next.id)) items.push('<a href="#/lesson/' + escAttr(lp0.next.id) + '">&#128214; First, 5 minutes on what a board is: ' + esc(lp0.next.title) + '</a>');
+        if (lp0 && lp0.next && /^board101/.test(lp0.next.id)) items.push('<a href="#/lesson/' + escAttr(lp0.next.id) + '">&#128214; First, 5 minutes on what a board is: ' + esc(lp0.next.title.replace(/^.*:\s*/, "")) + '</a>');
         items.push('<a href="#/flash/top">&#127919; Top 100: the highest-yield Board Core cards first (late start)</a>');
       }
       else if (days != null && days >= 2 && days <= 7) items.push('<a href="#/flash/final">&#127919; Final-Week Review: your weakest Board Core cards first</a>');
@@ -215,6 +215,7 @@
         if (unseen) { var pace = (days != null && days > 7) ? Math.ceil(unseen / Math.max(1, days - 7)) : 0;
           items.push('<a href="#/flash/core">&#11088; ' + (pace ? 'Learn ' + pace + ' new Board Core cards' : 'New Board Core cards') + ' (' + unseen + ' left)</a>'); }
       }
+      if (leechN > 0) items.push('<a href="#/flash/leeches">&#9888;&#65039; Practice ' + leechN + ' card' + (leechN > 1 ? "s" : "") + ' you keep missing</a>');
       items.push('<a href="#/board/core">&#127894; One 10-question Mock Board</a>');
       // once a week, a real person: a sponsor board beats any app
       var weekAgo = Date.now() - 7 * 86400000;
@@ -223,8 +224,9 @@
     }
     // style each item as a full-width button (default links are unreadable dark blue on this background)
     items = items.map(function (h) { return h.replace('<a href=', '<a class="btn ghost plan-item" href='); });
-    var sponsorNote = items.some(function (h) { return /sponsor/.test(h); }) ? '<div class="muted" style="font-size:.8rem;margin-top:8px;">Your board sponsor is the NCO who gets you ready, usually your first-line leader. Not sure who yours is? Ask your squad leader. <a href="#/pub/boardskills">More in Board Know-How</a>.</div>' : '';
-    return '<div class="card"><div class="flash-tag">' + esc(title) + '</div><div style="display:flex;flex-direction:column;gap:8px;margin-top:8px;">' + items.join("") + '</div>' + sponsorNote + '</div>';
+    var sponsorNote = items.some(function (h) { return /sponsor/.test(h); }) ? '<div class="muted" style="font-size:.8rem;margin-top:8px;">Your sponsor is the NCO who preps you, usually your first-line leader. <a href="#/pub/boardskills">More</a></div>' : '';
+    var remind = (!Store.settings().remindersAdded && (days == null || days > 1)) ? '<div style="margin-top:8px;font-size:.85rem;"><a href="#/settings">&#128276; Add study reminders to my calendar</a></div>' : '';
+    return '<div class="card"><div class="flash-tag">' + esc(title) + '</div><div style="display:flex;flex-direction:column;gap:8px;margin-top:8px;">' + items.join("") + '</div>' + sponsorNote + remind + '</div>';
   }
   // "Ready?" check: based on what you actually REMEMBERED (last grade was a hit), plus recent Mock Boards.
   // Cards merely seen don't count. Shows the weakest subjects by misses.
@@ -278,73 +280,48 @@
       '<div class="ttl">' + esc(tip) + '</div></div><div class="chev">&#8250;</div></a>';
   }
 
+  // Home = five things: where you stand, what to do today, the four tools, board-day prep, your week.
   function screenHome() {
     setTitle("NCO Board", false);
     var all = allCards();
     var ids = all.map(function (c) { return c.id; });
-    var counts = Store.counts(ids);
     var daily = Store.daily(), streak = Store.streak(), dueN = Store.dueCount(ids);
-    // Lead with Board Core (what the board asks most), not the whole 1,500-card library.
     var coreIds = STUDY.cards.filter(function (c) { return c.core && rankOk(c); }).map(function (c) { return c.id; });
-    var rs = readyScore(coreIds), dToB = daysToBoard();
+    var rs = readyScore(coreIds), dToB = daysToBoard(), calm = dToB === 0 || dToB === 1;
     // today's target = the plan (reviews due + paced new cards), never less than the daily goal
     var unseenN = coreIds.length - rs.seen, paceN = (dToB != null && dToB > 7) ? Math.ceil(unseenN / Math.max(1, dToB - 7)) : 0;
-    var dayTarget = Math.max(daily.goal, Math.min(Store.dueCount(ids), 40) + paceN);
+    var dayTarget = Math.max(daily.goal, Math.min(dueN, 40) + paceN);
+    var recommended = dToB != null && dToB < 0 && /\|Recommended$/.test(Store.settings().boardResult || "");
 
+    // 1) where you stand
+    var head = recommended ? '<div class="big" style="font-size:1.6rem;">Board result: Recommended</div><div class="sub">Keep your records and points current while you wait for the cutoff.</div>'
+      : calm ? '<div class="big" style="font-size:1.6rem;">' + (dToB === 0 ? "Board day" : "Board tomorrow") + '</div><div class="sub">' + rs.seen + ' Board Core card' + (rs.seen === 1 ? '' : 's') + ' studied. Stay calm and report in sharp.</div>'
+      : '<div class="big">' + rs.ready + '%</div><div class="sub">board-ready</div>';
     var html =
       '<div class="hero">' +
-        '<div style="display:flex;justify-content:space-between;align-items:flex-end;">' +
-          (dToB != null && dToB < 0 && /\|Recommended$/.test(Store.settings().boardResult || "") ? '<div><div class="big" style="font-size:1.6rem;">Board result: Recommended</div><div class="sub">Keep your records and points current while you wait for the cutoff.</div></div>' :
-           dToB === 0 || dToB === 1 ? '<div><div class="big" style="font-size:1.6rem;">' + (dToB === 0 ? "Board day" : "Board tomorrow") + '</div><div class="sub">You\'ve studied ' + rs.seen + ' Board Core card' + (rs.seen === 1 ? '' : 's') + '. Stay calm and report in sharp.</div></div>'
-            : '<div><div class="big">' + rs.ready + '%</div><div class="sub">board-ready</div></div>') +
-          '<div style="text-align:right;white-space:nowrap;"><div style="font-size:1.5rem;font-weight:800;">&#128293; ' + streak + '</div><div class="sub">day streak</div></div>' +
-        '</div>' +
-        (dToB === 0 || dToB === 1 ? '' : '<div class="bar"><span style="width:' + rs.ready + '%"></span></div>') +
-        '<div class="sub" style="margin-top:6px;font-size:.8rem;">Board Core: ' + rs.seen + ' of ' + coreIds.length + ' studied' + (/^(SGT|SSG)$/.test(Store.settings().boardFor) ? ' (' + Store.settings().boardFor + ' cards only)' : '') + '</div>' +
-        (dToB === 0 || dToB === 1 ? '' : '<div class="sub" style="margin-top:8px;">' + (daily.count >= dayTarget ? 'Done for today: ' + daily.count + ' cards &#10003;' : 'Today: ' + daily.count + ' of ' + dayTarget + ' cards') + '</div>') +
+        '<div style="display:flex;justify-content:space-between;align-items:flex-end;"><div>' + head + '</div>' +
+          '<div style="text-align:right;white-space:nowrap;"><div style="font-size:1.5rem;font-weight:800;">&#128293; ' + streak + '</div><div class="sub">day streak</div></div></div>' +
+        (calm || recommended ? '' : '<div class="bar"><span style="width:' + rs.ready + '%"></span></div>' +
+          '<div class="sub" style="margin-top:6px;font-size:.85rem;">' + (daily.count >= dayTarget ? 'Done for today: ' + daily.count + ' cards &#10003;' : 'Today: ' + daily.count + ' of ' + dayTarget + ' cards') +
+          ' • Board Core ' + rs.seen + ' of ' + coreIds.length + '</div>' +
+          (rs.weak.length ? '<div class="sub" style="margin-top:4px;font-size:.85rem;">Work on: <b>' + esc(rs.weak.join(", ")) + '</b></div>' : '') +
+          (rs.seen ? '<details style="margin-top:4px;"><summary class="sub" style="font-size:.8rem;">How is board-ready figured?</summary><div class="sub" style="font-size:.8rem;margin-top:4px;">60% Board Core cards you got right last time (' + rs.recalled + ' of ' + coreIds.length + ') + 40% your last 3 Mock Boards (' + (rs.mockAvg == null ? 'none yet' : rs.mockAvg + '%') + '), counted more as you cover Board Core.</div></details>' : '')) +
       '</div>' +
-      rankAsk() + boardCountdown(coreIds) + boardResultAsk(rs) + todayPlan(coreIds, dueN) + weeklyRecap() + readyCheck(coreIds, rs) +
-      // the "start from scratch" nudge is for the early weeks, not board week
-      ((dToB == null || dToB > 7) && rs.seen < 10 ? '<a class="btn lg learn-cta" href="#/learn">&#128214; New to this? Start with Learn Mode</a>' +
-      '<div class="muted center" style="font-size:.8rem;margin:6px 0 12px;">Learn Mode teaches first, then drills. <b>Your goal: Board Core.</b></div>' : '<div class="spacer"></div>') +
-      '<div class="btn-row">' +
-        '<a class="btn gold lg" href="#/pick/flash">Flashcards</a>' +
-        '<a class="btn green lg" href="#/pick/quiz">Quiz</a>' +
+      rankAsk() + boardCountdown(coreIds) + boardResultAsk(rs) +
+      // 2) what to do today (one list; board-week extras are folded in)
+      todayPlan(coreIds, dueN, Store.leeches(ids).length) +
+      // 3) the four tools
+      '<div class="tool-grid">' +
+        '<a class="btn gold" href="#/pick/flash">&#128196; Flashcards</a>' +
+        '<a class="btn green" href="#/pick/quiz">&#9989; Quiz</a>' +
+        '<a class="btn board-btn" href="#/board/core">&#127894; Mock Board</a>' +
+        '<a class="btn drive-btn" href="#/pick/drive">&#128663; Drive Mode</a>' +
       '</div>' +
-      '<div class="spacer"></div>' +
-      '<div class="btn-row">' +
-        '<a class="btn lg board-btn" href="#/board/core">&#127894; Mock Board</a>' +
-        '<a class="btn lg drive-btn" href="#/pick/drive">&#128663; Drive Mode</a>' +
-      '</div>';
-    var extras = [], calm = dToB === 0 || dToB === 1;   // board day / night before: no pile of reviews on Home
-    // (the review button lives in Today's plan)
-    var leechN = Store.leeches(ids).length;
-    if (leechN > 0 && !calm) extras.push('<a class="btn ghost" href="#/flash/leeches">&#9888;&#65039; Practice ' + leechN + ' card' + (leechN > 1 ? "s" : "") + ' you keep missing</a>');
-    if (dToB != null && dToB >= 1 && dToB <= 3) extras.push('<a class="btn ghost" href="#/flash/cram">&#128367;&#65039; Night-before cram</a>');
-    if (dToB != null && dToB >= 2 && dToB <= 14) extras.push('<a class="btn ghost" href="#/flash/top">&#127919; Top 100 cards (the ones boards ask most)</a>');
-    if (!Store.settings().remindersAdded && (dToB == null || dToB > 1)) extras.push('<a class="btn ghost" href="#/settings">&#128276; Add study reminders to my calendar</a>');
-    extras.forEach(function (e) { html += '<div class="spacer"></div>' + e; });
-    html += '<div class="spacer"></div><a class="row board-row" href="#/boardday"><div class="grow"><div class="code">&#127894; Board Day Prep</div><div class="ttl">Chain of command, uniform check, how to report</div></div><div class="chev">&#8250;</div></a>';
-
-    html += '<div class="spacer"></div><a class="row" href="#/browse"><div class="grow"><div class="code">&#128218; All subjects</div><div class="ttl">Browse every publication and topic</div></div><div class="chev">&#8250;</div></a>';
-    if (false) html += '<h2 class="section">Subjects</h2>';
-    var cats = {};
-    STUDY.pubs.forEach(function (p) {
-      if ((p.id === "mine" || p.id === "chain") && !cardsForDeck(p.id).length) return; // hide if empty
-      (cats[p.cat] = cats[p.cat] || []).push(p);
-    });
-    Object.keys(cats).forEach(function (cat) {
-      html += '<div class="muted" style="margin:10px 4px 4px;font-size:.8rem;">' + cat + '</div>';
-      cats[cat].forEach(function (p) {
-        var pc = cardsForDeck(p.id);
-        var pm = Math.round(Store.mastery(pc.map(function (c) { return c.id; })) * 100);
-        html +=
-          '<a class="row" href="#/pub/' + p.id + '">' +
-            '<div class="grow"><div class="code">' + esc(p.code) + '</div><div class="ttl">' + esc(p.title) + '</div>' +
-            '<div class="bar"><span style="width:' + pm + '%"></span></div></div>' +
-            '<div class="pill">' + pc.length + '</div><div class="chev">&#8250;</div></a>';
-      });
-    });
+      // 4) board-day prep and everything else
+      '<a class="row board-row" href="#/boardday"><div class="grow"><div class="code">&#127894; Board Day Prep</div><div class="ttl">Room, reporting, uniform, records, your memo</div></div><div class="chev">&#8250;</div></a>' +
+      '<a class="row" href="#/browse"><div class="grow"><div class="code">&#128218; All subjects</div><div class="ttl">Browse every publication and topic</div></div><div class="chev">&#8250;</div></a>' +
+      // 5) your week
+      weeklyRecap();
     mount.innerHTML = html;
     wireBoardResult(rs);
     checkBadges(coreIds, rs);
@@ -794,6 +771,7 @@
       menuRow("#/room", "&#127963;&#65039; What the Board Room Is Like", "Who sits on it, what happens, how they decide") +
       menuRow("#/chain", "&#129333; Chain of Command", "Fill in your leaders — then quiz yourself") +
       menuRow("#/uniform", "&#129509; Uniform Inspection", "Check your uniform before you walk in") +
+      menuRow("#/memo", "&#128220; My Board Memo", "Type in your memo's reporting wording, uniform, time, and place; Mock Board uses it") +
       menuRow("#/records", "&#128193; Records & What to Bring", "Check your SRB, points, and board memo; what goes in your pockets") +
       menuRow("#/reporting", "&#127894; How to Report to the Board", "Reporting sequence & bearing") +
       menuRow("#/statement", "&#128221; Opening Statement", "Draft and save your self-introduction") +
@@ -889,7 +867,7 @@
   function checkBadges(coreIds, rs) {
     var f = badgeFacts(coreIds, rs), fresh = [];
     BADGES.forEach(function (b) { if (b.test(f) && Store.earnBadge(b.id)) fresh.push(b.t); });
-    if (fresh.length) setTimeout(function () { App.toast("🏅 Badge earned: " + fresh.join(", "), 4000); }, 600);
+    if (fresh.length) setTimeout(function () { App.toast("🏅 Badge earned: " + fresh.join(", "), 2500); }, 600);
   }
   function screenBadges() {
     setTitle("Badges", true);
@@ -1069,6 +1047,29 @@
     { id: "r7", t: "Carry only what the memo requires (usually your ID card). Phone left outside, pockets flat" },
     { id: "r8", t: "Arrive early; know the board members' names and ranks" }
   ];
+  // Your actual board memo: the local SOP beats any app, so let the Soldier practice with it
+  var MEMO_FIELDS = [
+    { k: "report", t: "Exact reporting wording", h: "Copy it word for word from your memo or SOP.", ph: "e.g. Sergeant Major, Specialist Rivera reports to the President of the Board." },
+    { k: "uniform", t: "Uniform", h: "What the memo says to wear.", ph: "e.g. AGSU with garrison cap" },
+    { k: "when", t: "Date, time, and place", h: "And what time to arrive.", ph: "e.g. 15 Dec, 0900, Bldg 2-1101 conference room; arrive 0830" },
+    { k: "president", t: "Board president and members", h: "Names and ranks, if the memo lists them.", ph: "e.g. CSM Harris; 1SG Lee; 1SG Ortiz" },
+    { k: "notes", t: "Anything else", h: "Local rules: knocking, where to sit, what to bring.", ph: "e.g. Knock once; bring ID card only" }
+  ];
+  function screenMemo() {
+    setTitle("My Board Memo", true);
+    var m = Store.chain();
+    var html = '<div class="card"><div class="muted">Your board memo and local SOP always come first. Type the key parts here. When you report in on a Full Mock Board, the app shows your memo\'s exact wording.</div></div>';
+    MEMO_FIELDS.forEach(function (f) {
+      html += '<label class="lbl" for="memo-' + f.k + '"><b>' + esc(f.t) + '</b>: ' + esc(f.h) + '</label><textarea class="input" id="memo-' + f.k + '" rows="2" placeholder="' + escAttr(f.ph) + '">' + esc(m["memo-" + f.k] || "") + '</textarea>';
+    });
+    html += '<div class="spacer"></div><button class="btn gold lg" id="memoSave">Save memo</button>';
+    mount.innerHTML = html;
+    mount.querySelector("#memoSave").addEventListener("click", function () {
+      MEMO_FIELDS.forEach(function (f) { Store.setChainRole("memo-" + f.k, mount.querySelector("#memo-" + f.k).value.trim().slice(0, 400)); });
+      App.toast("Memo saved");
+    });
+  }
+
   function screenRecords() {
     setTitle("Records & What to Bring", true);
     var checks = Store.checks();
@@ -1212,6 +1213,7 @@
     if (head === "knowledge") return screenKnowledge(), tab("home");
     if (head === "room") return screenRoom(), tab("home");
     if (head === "records") return screenRecords(), tab("home");
+    if (head === "memo") return screenMemo(), tab("home");
     if (head === "changes") return screenChanges(), tab("home");
     if (head === "badges") return screenBadges(), tab("more");
     if (head === "squad") return screenSquad(), tab("more");

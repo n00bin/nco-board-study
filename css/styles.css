@@ -403,3 +403,7 @@ label.btn { cursor: pointer; }
 
 /* v3.8: long subject names (Counseling/Coaching/Mentoring) wrap instead of running off the card */
 .q-text, .ttl, .code, .flash-a { overflow-wrap: anywhere; }
+
+/* v3.14: Home tools as one compact 2x2 grid */
+.tool-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 12px 0; }
+.tool-grid .btn { min-height: 56px; display: flex; align-items: center; justify-content: center; font-size: 1rem; }
