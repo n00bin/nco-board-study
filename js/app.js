@@ -378,7 +378,6 @@
           (rs.weak.length ? '<div class="sub" style="margin-top:4px;font-size:.85rem;">Work on: <b>' + esc(rs.weak.join(", ")) + '</b></div>' : '') +
           (rs.seen ? '<div class="sub" style="font-size:.8rem;margin-top:6px;">Board Core studied: ' + rs.seen + ' of ' + coreIds.length + '.<br><b>How it\u2019s figured:</b> 60% Board Core cards you got right last time (' + rs.recalled + ' of ' + coreIds.length + ') + 40% your last 3 Mock Boards (' + (rs.mockAvg == null ? 'none yet' : rs.mockAvg + '%') + '), counted fully once you have 3 Mock Boards and have covered half of Board Core.</div>' : '') + '</details>') +
       '</div>' +
-      (false ? '<a class="row" href="#/badges" style="border-color:var(--gold);"><div class="grow"><div class="code">&#127941; New badge' + (freshBadges.length > 1 ? 's' : '') + ': ' + esc(freshBadges.length > 2 ? freshBadges.slice(0, 2).join(", ") + " and " + (freshBadges.length - 2) + " more" : freshBadges.join(" and ")) + '</div><div class="ttl">See all your badges</div></div><div class="chev">&#8250;</div></a>' : '') +
       ((/iPhone|iPad|iPod/.test(navigator.userAgent) && !navigator.standalone && !Store.settings().iosTipDone) ? '<div class="card" id="iosTip" style="border-color:var(--gold);"><div class="flash-tag">Put it on your home screen</div><div style="font-size:.95rem;">In Safari, tap Share (the square with the arrow), then <b>Add to Home Screen</b>, then <b>Add</b>. It opens like an app and works offline.</div><button class="btn ghost" id="iosOk" style="margin-top:8px;">Got it</button></div>' : '') +
       rankAsk() + (dToB != null && dToB > 7 ? '' : boardCountdown(coreIds)) + boardResultAsk(rs) +
       // 2) what to do today (one list; board-week extras are folded in)
@@ -417,12 +416,7 @@
       (cats[p.cat] = cats[p.cat] || []).push(p);
     });
     Object.keys(cats).forEach(function (cat) {
-      html += '<h2 class="section">' + cat + '</h2>';
-      cats[cat].forEach(function (p) {
-        var n = cardsForDeck(p.id).length;
-        html += '<a class="row" href="#/pub/' + p.id + '"><div class="grow"><div class="code">' + esc(p.code) +
-          '</div><div class="ttl">' + esc(p.title) + '</div></div><div class="pill">' + n + ' cards</div><div class="chev">&#8250;</div></a>';
-      });
+      html += group(esc(cat), cats[cat].map(function (p) { return liDeck("#/pub/" + p.id, esc(p.code), p.code === p.title ? "" : esc(p.title), cardsForDeck(p.id).length, ""); }));
     });
     mount.innerHTML = html;
   }
@@ -471,17 +465,15 @@
         '<div class="muted" style="font-size:.8rem;margin:0 4px 8px;">Flip cards: tap to see the answer. Type answers: write it first, then check.</div>';
     if (mode === "drive")
       html += '<div class="card"><div class="muted">Hands-free: the app reads each question, pauses for you to answer aloud, then reads the answer. Great for PT or the drive in — keep the screen on.</div></div>';
-    html += '<a class="row deck board-row" data-deck="core" href="' + route + 'core"><div class="grow"><div class="code">&#11088; Board Core (recommended)</div>' +
-      '<div class="ttl">The must-know questions boards ask most</div></div><div class="pill">' + cardsForDeck("core").length + '</div><div class="chev">&#8250;</div></a>' +
-      '<a class="row deck" data-deck="all" href="' + route + 'all"><div class="grow"><div class="code">Everything (all subjects)</div>' +
-      '<div class="ttl">Everything, including deep reference detail</div></div><div class="pill">' + allCards().length + '</div><div class="chev">&#8250;</div></a>' +
-      '<h2 class="section">Or pick a subject</h2>';
+    html += '<div class="lg pick-top">' + liDeck(route + "core", "&#11088; Board Core (recommended)", "The must-know questions boards ask most", cardsForDeck("core").length, "core") +
+      liDeck(route + "all", "Everything", "All subjects, including deep detail", allCards().length, "all") + '</div>';
+    var pcats = {};
     STUDY.pubs.forEach(function (p) {
       var n = cardsForDeck(p.id).length;
-      if ((p.id === "mine" || p.id === "chain") && !n) return;
-      html += '<a class="row deck" data-deck="' + p.id + '" href="' + route + p.id + '"><div class="grow"><div class="code">' + esc(p.code) +
-        '</div><div class="ttl">' + esc(p.title) + '</div></div><div class="pill">' + n + '</div><div class="chev">&#8250;</div></a>';
+      if (!n) return;
+      (pcats[p.cat] = pcats[p.cat] || []).push(liDeck(route + p.id, esc(p.code), p.code === p.title ? "" : esc(p.title), n, p.id));
     });
+    Object.keys(pcats).forEach(function (cat) { html += group(esc(cat), pcats[cat]); });
     mount.innerHTML = html;
     if (mode === "flash")
       mount.querySelectorAll("#modeToggle .chip").forEach(function (b) {
@@ -572,7 +564,9 @@
     var input = mount.querySelector("#q"), results = mount.querySelector("#results");
     function run() {
       var term = input.value.trim().toLowerCase();
-      if (term.length < 2) { results.innerHTML = '<div class="empty">Type at least 2 letters.</div>'; return; }
+      if (term.length < 2) { results.innerHTML = '<div class="muted" style="font-size:.85rem;margin:10px 4px 6px;">Try one of these:</div><div class="chip-row">' + ["SHARP", "AFT", "hazing", "counseling", "NCOER", "Article 15", "waist-to-height", "kratom", "land navigation", "Army Values"].map(function (w) { return '<button class="chip" data-try="' + w + '">' + w + '</button>'; }).join("") + '</div>';
+        results.querySelectorAll("[data-try]").forEach(function (b) { b.addEventListener("click", function () { input.value = b.getAttribute("data-try"); run(); }); });
+        return; }
       var all = allCards().filter(function (c) {
         return (c.q + " " + c.a + " " + (c.topic || "")).toLowerCase().indexOf(term) >= 0;
       });
@@ -588,7 +582,7 @@
           '<div style="font-weight:600;margin-bottom:6px;">' + esc(c.q) + '</div><div class="muted">' + esc(c.a) + '</div></a>';
       }).join("") : '<div class="empty">No matches. Try a shorter word, like "counsel" or "SHARP".</div>';
     }
-    input.addEventListener("input", run); input.focus();
+    input.addEventListener("input", run); input.focus(); run();
   }
 
   // ---- More menu (stats + links) ----
@@ -935,8 +929,8 @@
   ];
   // grouped list: one card, divided rows (icon, title, one short line)
   function li(href, ic, t, s) { return '<a class="li" href="' + href + '"><span class="ic" aria-hidden="true">' + ic + '</span><span class="grow"><span class="t">' + t + '</span>' + (s ? '<span class="s">' + s + '</span>' : '') + '</span><span class="chev" aria-hidden="true">&#8250;</span></a>'; }
+  function liDeck(href, code, title, n, deck, extra) { return '<a class="li deck" ' + (deck ? 'data-deck="' + deck + '" ' : '') + 'href="' + href + '"' + (extra || '') + '><span class="grow"><span class="t" style="color:var(--gold);">' + code + '</span>' + (title ? '<span class="s">' + title + '</span>' : '') + '</span><span class="pill">' + n + '</span><span class="chev" aria-hidden="true">&#8250;</span></a>'; }
   function group(title, rows) { return (title ? '<div class="lg-h">' + title + '</div>' : '') + '<div class="lg">' + rows.join("") + '</div>'; }
-  function menuRow(href, code, ttl) { return '<a class="row" href="' + href + '"><div class="grow"><div class="code">' + code + '</div><div class="ttl">' + ttl + '</div></div><div class="chev">&#8250;</div></a>'; }
 
   function screenBoardDay() {
     setTitle("Board Day Prep", true);
@@ -1093,14 +1087,16 @@
   function screenBadges() {
     setTitle("Badges", true);
     var got = Store.badges();
-    var html = '<div class="card"><div class="muted">Small wins on the way to your board. They stay on this phone.</div></div>';
-    BADGES.forEach(function (b) {
-      var on = !!got[b.id];
-      html += '<div class="row" style="' + (on ? '' : 'opacity:.55;') + '"><div class="numbubble" aria-hidden="true">' + (on ? "🏅" : "•") + '</div><div class="grow"><div class="code">' + esc(b.t) + '</div><div class="ttl">' + esc(b.d) +
-        (on ? ' • earned ' + new Date(got[b.id]).toLocaleDateString() : '') + '</div></div></div>';
-    });
-    mount.innerHTML = html;
+    var row = function (b) {
+      var on = !!got[b.id], when = on && got[b.id] > 946684800000 ? ' • ' + new Date(got[b.id]).toLocaleDateString() : '';
+      return '<div class="li"' + (on ? '' : ' style="opacity:.6;"') + '><span class="ic" aria-hidden="true">' + (on ? "&#127941;" : "&#9675;") + '</span><span class="grow"><span class="t">' + esc(b.t) + '</span><span class="s">' + esc(b.d) + when + '</span></span></div>';
+    };
+    var earned = BADGES.filter(function (b) { return got[b.id]; }), left = BADGES.filter(function (b) { return !got[b.id]; });
+    mount.innerHTML = '<div class="muted" style="font-size:.85rem;margin:2px 4px 8px;">Small wins on the way to your board. They stay on this phone.</div>' +
+      (earned.length ? group("Earned (" + earned.length + ")", earned.map(row)) : '') +
+      (left.length ? group("Still to earn (" + left.length + ")", left.map(row)) : '');
   }
+
   // last 7 days at a glance
   function weeklyRecap() {
     var log = Store.dayLog(7), total = 0, days = 0, max = 1;
@@ -1195,10 +1191,10 @@
     var rows = Object.keys(by).filter(function (k) { return by[k].n >= 2; }).sort(function (x, y) { return x.localeCompare(y, undefined, { numeric: true }); });
     mount.innerHTML = '<div class="card"><div class="muted">Every card cites its publication, edition and paragraph. Content was last checked against these editions on ' + esc(STUDY.meta.updated || "") +
       '. A weekly check compares them with the Army Publishing Directorate list. Unofficial study aid. Not endorsed by the U.S. Army or the Department of Defense. Your board memo and local SOP come first.</div></div>' +
-      rows.map(function (k) {
+      '<div class="lg">' + rows.map(function (k) {
         var eds = Object.keys(by[k].ed).sort(function (x, y) { return by[k].ed[y] - by[k].ed[x]; });
-        return '<div class="row"><div class="grow"><div class="code">' + esc(k) + '</div><div class="ttl">' + esc(eds[0]) + ' • ' + by[k].n + ' cards</div></div></div>';
-      }).join("") +
+        return '<div class="li"><span class="grow"><span class="t" style="color:var(--gold);">' + esc(k) + '</span><span class="s">' + esc(eds[0]) + '</span></span><span class="pill">' + by[k].n + '</span></div>';
+      }).join("") + '</div>' +
       '<div class="muted center" style="font-size:.8rem;margin-top:12px;">Spot a problem? Use the flag on any card.</div>';
   }
 

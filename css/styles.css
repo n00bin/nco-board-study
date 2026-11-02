@@ -492,3 +492,6 @@ a.textlink { text-align: center; }
 
 .row.check .grow .ttl { font-size: .88rem; line-height: 1.4; }
 .row.check { padding: 10px 12px; }
+
+.lg .pill { flex: none; }
+.lg.pick-top { border-color: var(--gold); }

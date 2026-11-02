@@ -10,6 +10,13 @@ no account, no app store, nothing to sign up for.
 
 ---
 
+## What's new in 3.26-3.27
+
+- **Mock Board results** lead with "Drill your misses now", then a short subject list; the missed questions fold away.
+- **Flashcard backs** fold the key-point checklist and follow-ups, and long answers use a calmer text size.
+- **Browse, the subject picker, Sources, Badges** are compact grouped lists; Search opens with suggestions.
+- Lighter page intros, headings and rows across the whole app; the AGSU picture on Uniform folds away.
+
 ## What's new in 3.25
 
 - **Cleaner screens.** Home is your score, one Start button, the four tools, and a short list. Today's steps fold
