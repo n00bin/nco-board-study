@@ -340,6 +340,9 @@ hr.div { border: none; border-top: 1px solid var(--line); margin: 18px 0; }
 .grade-row { display: flex; gap: 8px; }
 /* keep Again/Good/Easy in reach on long answers */
 #fGrades { position: sticky; bottom: calc(64px + env(safe-area-inset-bottom)); z-index: 5; background: var(--bg); padding: 8px 0; }
+.conf-row .btn { padding: 10px 8px; font-size: .95rem; }
+.follow-d summary { cursor: pointer; list-style: none; }
+.follow-d summary::-webkit-details-marker { display: none; }
 .follow-a { display: block; margin-top: 2px; padding-left: 10px; border-left: 2px solid var(--line); }
 .grade-row .btn { flex: 1; }
 .grade-again { background: #b3322e; }
@@ -410,3 +413,16 @@ label.btn { cursor: pointer; }
 /* v3.14: Home tools as one compact 2x2 grid */
 .tool-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 12px 0; }
 .tool-grid .btn { min-height: 56px; display: flex; align-items: center; justify-content: center; font-size: 1rem; }
+
+/* ---------- printable sponsor sheet ---------- */
+.sheet h3 { margin: 14px 0 6px; font-size: 1rem; }
+.sheet-box { display: inline-block; width: 14px; height: 14px; border: 1.5px solid currentColor; border-radius: 2px; vertical-align: -2px; margin-right: 4px; }
+.sheet-lines { height: 110px; background: repeating-linear-gradient(transparent, transparent 26px, var(--line) 27px); margin-bottom: 8px; }
+@media print {
+  .appbar, .tabbar, .no-print, .toast { display: none !important; }
+  body, .card { background: #fff !important; color: #000 !important; }
+  .muted { color: #333 !important; }
+  .card { border: 1px solid #999 !important; box-shadow: none !important; break-inside: avoid; }
+  main, #app { padding: 0 !important; margin: 0 !important; }
+  .sheet-lines { background: repeating-linear-gradient(transparent, transparent 26px, #999 27px); }
+}

@@ -26,8 +26,9 @@
       // due first, then new; big decks only feed in 30 new cards per session so it stays doable
       var queue = Store.buildQueue(cards, (cards.length > 60 && !(opts && opts.noCap)) ? 30 : undefined).slice();
       if (!queue.length) queue = cards.slice();           // (deck with nothing due) study all
-      var i = 0, reviewed = 0;
+      var i = 0, reviewed = 0, conf;
       var autoRead = Store.settings().autoRead;
+      var confRow;
 
       container.innerHTML =
         '<div class="flash-wrap">' +
@@ -46,12 +47,14 @@
             '</div>' +
           '</div></div>' +
           '<div class="flash-hint" id="fHint">Tap card to flip</div>' +
+          '<div class="grade-row conf-row" id="fConf"><button class="btn ghost" id="cSure">I know it</button><button class="btn ghost" id="cUnsure">Not sure</button></div>' +
           '<div class="grade-row" id="fGrades" hidden>' + GRADE_BTNS + '</div>' +
         '</div>';
 
       var cardEl = container.querySelector("#fCard");
       var grades = container.querySelector("#fGrades");
       var hint = container.querySelector("#fHint");
+      confRow = container.querySelector("#fConf");
       var front = container.querySelector("#fFront"), back = container.querySelector("#fBack");
 
       function pubCode(c) { if (c.label) return c.label; var p = STUDY.pubsById[c.pub]; return p ? p.code : ""; }
@@ -59,7 +62,7 @@
       function setFaces(flipped) {
         front.setAttribute("aria-hidden", flipped ? "true" : "false");
         back.setAttribute("aria-hidden", flipped ? "false" : "true");
-        grades.hidden = !flipped;
+        grades.hidden = !flipped; confRow.hidden = flipped;
         hint.textContent = flipped ? GRADE_HINT : (queue[i] && queue[i].why ? "Say the answer and why it matters, then tap to flip" : "Say the answer, then tap to flip");
       }
 
@@ -68,7 +71,9 @@
         var wasFlipped = cardEl.classList.contains("flipped");
         cardEl.classList.remove("flipped");
         setFaces(false);
-        container.querySelector("#fProg").textContent = "Reviewed " + reviewed + "  •  Left " + (queue.length - i);
+        conf = undefined;
+        var left = queue.length - i, mins = Math.max(1, Math.round(left * 15 / 60));
+        container.querySelector("#fProg").textContent = "Reviewed " + reviewed + "  •  Left " + left + " (about " + mins + " min)";
         container.querySelector("#fTagF").textContent = pubCode(c) + (c.adv ? " \u2022 Advanced" : "");   // topic only on the back: it can give the answer away
         container.querySelector("#fTagB").textContent = "Answer" + (c.topic ? " • " + c.topic : "");
         container.querySelector("#fQ").textContent = c.q;
@@ -81,7 +86,7 @@
             (c.sample ? '<div class="flash-ref" style="color:var(--text);margin-top:12px;"><b>Example answer (fictional Soldier, make it yours):</b> ' + esc(c.sample) + '</div>' : "") +
             (c.points && c.points.length > 1 ? '<div class="flash-ref" style="color:var(--text);margin-top:12px;"><b>Did you cover these?</b>' + c.points.map(function (p) { return '<div style="margin-top:4px;">\u2022 ' + esc(p) + '</div>'; }).join("") + '</div>' : "") +
             (c.follow && c.follow.length ? '<div class="flash-ref" style="margin-top:12px;"><b>Board follow-ups:</b>' +
-              c.follow.map(function (f) { return '<div style="margin-top:8px;"><b style="color:var(--text);">Q: ' + esc(f.q) + '</b><span class="muted follow-a">A: ' + esc(f.a) + '</span></div>'; }).join("") + '</div>' : "");
+              c.follow.map(function (f) { return '<details class="follow-d" style="margin-top:8px;"><summary><b style="color:var(--text);">Q: ' + esc(f.q) + '</b> <span class="muted" style="font-size:.8rem;">(say it, then tap)</span></summary><span class="muted follow-a">A: ' + esc(f.a) + '</span></details>'; }).join("") + '</div>' : "");
           container.querySelector("#fRef").textContent = c.ref ? "Reference: " + c.ref : "";
           var inner = cardEl.querySelector(".flash-inner");
           inner.style.minHeight = ""; cardEl.style.minHeight = "";
@@ -101,7 +106,7 @@
 
       function grade(g) {
         var c = queue[i];
-        Store.grade(c.id, g);
+        Store.grade(c.id, g, conf);
         reviewed++;
         if (g === "again") queue.push(c);   // loop back later this session
         i++;
@@ -121,7 +126,7 @@
         container.querySelector("#home").addEventListener("click", function () { App.go("#/"); });
       }
 
-      cardEl.addEventListener("click", flip);
+      cardEl.addEventListener("click", function (e) { if (e.target.closest && e.target.closest("details")) return; flip(); });
       cardEl.addEventListener("keydown", function (e) {
         if (e.target === cardEl && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); flip(); }
       });
@@ -129,6 +134,8 @@
         e.stopPropagation(); var c = queue[i]; Speech.speak(cardEl.classList.contains("flipped") ? c.a : c.q);
       });
       container.querySelector("#fReport").addEventListener("click", function (e) { e.stopPropagation(); App.reportCard(queue[i]); });
+      container.querySelector("#cSure").addEventListener("click", function (e) { e.stopPropagation(); conf = "sure"; flip(); });
+      container.querySelector("#cUnsure").addEventListener("click", function (e) { e.stopPropagation(); conf = "unsure"; flip(); });
       container.querySelector("#gAgain").addEventListener("click", function (e) { e.stopPropagation(); grade("again"); });
       container.querySelector("#gGood").addEventListener("click", function (e) { e.stopPropagation(); grade("good"); });
       container.querySelector("#gEasy").addEventListener("click", function (e) { e.stopPropagation(); grade("easy"); });

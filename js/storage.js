@@ -25,6 +25,7 @@
     lastStudyDate: "",
     days: {},       // study log: "YYYY-MM-DD" -> cards graded that day (last 60 days), for the weekly recap
     badges: {},     // badgeId -> date earned
+    calib: { sureN: 0, sureRight: 0, unsureN: 0, unsureRight: 0 },   // "Sure"/"Not sure" taps before the flip, and how they turned out
     uid: "",        // random id for shared progress links
     settings: { autoRead: false, timer: 30, driveGap: 5, boardDate: "", fullBoard: true, boardFor: "" }   // boardDate: "YYYY-MM-DD" or ""; boardFor: "SGT", "SSG" or ""
   };
@@ -44,7 +45,7 @@
     return {
       reps: num(r.reps, 0), lapses: num(r.lapses, 0), ease: num(r.ease, 2.3), interval: num(r.interval, 0),
       due: num(r.due, 0), status: Object.prototype.hasOwnProperty.call(STATUSES, r.status) ? r.status : "new",
-      seen: num(r.seen, 0), correct: num(r.correct, 0), wrong: num(r.wrong, 0)
+      seen: num(r.seen, 0), correct: num(r.correct, 0), wrong: num(r.wrong, 0), cw: num(r.cw, 0) ? 1 : 0
     };
   }
   function cleanUserCard(c, i) {
@@ -75,6 +76,7 @@
     if (isObj(d.daily)) s.daily = { date: str(d.daily.date, ""), count: num(d.daily.count, 0) };
     if (isObj(d.days)) for (k in d.days) if (/^\d{4}-\d{2}-\d{2}$/.test(k)) s.days[k] = Math.max(0, num(d.days[k], 0) | 0);
     if (isObj(d.badges)) for (k in d.badges) if (okKey(k) && /^[a-z0-9-]{1,30}$/.test(k)) s.badges[k] = num(d.badges[k], 0);
+    if (isObj(d.calib)) ['sureN', 'sureRight', 'unsureN', 'unsureRight'].forEach(function (k) { s.calib[k] = Math.max(0, num(d.calib[k], 0) | 0); });
     s.uid = /^[a-z0-9]{6,16}$/.test(d.uid || "") ? d.uid : "";
     s.goal = Math.max(5, num(d.goal, DEFAULT.goal) | 0);
     s.streak = num(d.streak, 0);
@@ -198,7 +200,17 @@
 
   var Store = {
     // ---- flashcards / SRS ----
-    grade: function (id, g) { return applyGrade(id, g); },
+    // conf: "sure" | "unsure" | undefined (the Soldier's tap before flipping). A confident miss is flagged so it comes back first.
+    grade: function (id, g, conf) {
+      if (conf === "sure" || conf === "unsure") {
+        if (!state.calib) state.calib = { sureN: 0, sureRight: 0, unsureN: 0, unsureRight: 0 };
+        var right = g !== "again";
+        if (conf === "sure") { state.calib.sureN++; if (right) state.calib.sureRight++; } else { state.calib.unsureN++; if (right) state.calib.unsureRight++; }
+        var rr = rec(id); rr.cw = (conf === "sure" && !right) ? 1 : (right ? 0 : rr.cw || 0);
+      } else if (g !== "again" && state.cards[id]) state.cards[id].cw = 0;
+      return applyGrade(id, g);
+    },
+    calib: function () { return state.calib || { sureN: 0, sureRight: 0, unsureN: 0, unsureRight: 0 }; },
     markKnown: function (id) { applyGrade(id, "good"); },   // back-compat
     markReview: function (id) { applyGrade(id, "again"); }, // back-compat
     statusOf: function (id) { return state.cards[id] ? state.cards[id].status : "new"; },
@@ -226,7 +238,8 @@
         else if (r.due <= now) due.push(c);
         else rest.push(c);
       });
-      due.sort(function (a, b) { return state.cards[a.id].due - state.cards[b.id].due; });
+      // confident misses first (you thought you knew it), then oldest due first
+      due.sort(function (a, b) { var ca = state.cards[a.id], cb = state.cards[b.id]; return ((cb.cw || 0) - (ca.cw || 0)) || (ca.due - cb.due); });
       // Interleave new cards across subjects (round-robin by publication) instead of one subject at a time:
       // mixing related topics makes you work out which idea applies, which sticks better than blocked practice.
       var byPub = {}, order = [];

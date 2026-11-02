@@ -40,9 +40,9 @@
   // Board 101: what a promotion board is and how it works, from AR 600-8-19 (6 Mar 2026). First track in Learn.
   var B101_OVERVIEW = "Never been to a board? Start here. See what happens in the room and how to answer, then how you get eligible, who sits on the board, how they vote, and how points turn a \"yes\" into stripes.";
   var BOARD101 = [
-    { id: "board101-room", title: "What happens in the board room", ids: ["ar600-8-19-24", "ar600-8-19-26", "ar600-8-19-27", "bk-06", "bk-02", "bk-01", "personal-11"] },
+    { id: "board101-room", title: "What happens in the board room", ids: ["ar600-8-19-24", "ar600-8-19-26", "bk-06", "bk-02", "bk-01", "personal-11"] },
     { title: "Getting to the board", ids: ["ar600-8-19-05", "ar600-8-19-06", "ar600-8-19-15", "ar600-8-19-16", "ar600-8-19-08"] },
-    { title: "Board day, points, and promotion", ids: ["ar600-8-19-24", "ar600-8-19-25", "ar600-8-19-28", "ar600-8-19-30", "ar600-8-19-32", "ar600-8-19-37", "ar600-8-19-40"] }
+    { title: "Board day, points, and promotion", ids: ["ar600-8-19-24", "ar600-8-19-25", "ar600-8-19-28", "ar600-8-19-30", "ar600-8-19-32", "ar600-8-19-37", "ar600-8-19-40", "ar600-8-19-27"] }
   ];
 
   var FUNDAMENTALS = [

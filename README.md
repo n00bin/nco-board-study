@@ -8,6 +8,19 @@ no account, no app store, nothing to sign up for.
 
 ---
 
+## What's new in 3.16
+
+- **"I know it" or "Not sure"** before you flip a flashcard. Cards you were sure of and still missed come back first,
+  and your weekly recap shows how often "I know it" was right.
+- **Late start? Max 20 new cards a day**, Top 100 first, with an honest note about what you can skip.
+- **Points worksheet does the math**: type your rifle hits, AFT score, awards, BLC/ALC and college hours.
+- **Print a paper board for your sponsor** (questions, answers, checkboxes, bearing, notes).
+- **Share My Cards** with a link, so your unit's smart book can go phone to phone.
+- Mock Board: record your answer first and get a "too long / too short" cue; "Drill just these misses";
+  the checklist says what passes; no near-duplicate questions in one board.
+- Follow-up answers on flashcards stay hidden until you tap; sessions show about how long they take.
+- Content: problem-solving steps updated to ADP 5-0, 78 checklists split into short points, heavy cards made lighter.
+
 ## What's new in 3.15
 
 - **Promotion Points Worksheet** (Board Day Prep): estimate your points by category and see how far you are from the cutoff.

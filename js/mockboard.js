@@ -89,7 +89,12 @@
 
   // Choose a board: about 20% scenarios (at least 2), spread across subjects and themes. Going to a SGT board?
   // "Advanced" cards (more likely at an SSG board) go to the back of the line.
+  function dedupeTwins(list) {
+    var seen = {};
+    return list.filter(function (c) { if (!c.twin) return true; if (seen[c.twin]) return false; seen[c.twin] = 1; return true; });
+  }
   function drawDeck(pool, length) {
+    pool = dedupeTwins(shuffle(pool.slice()));
     var sgt = window.Store && Store.settings().boardFor !== "SSG";
     var basicsFirst = function (list) { return sgt ? list.filter(function (c) { return !c.adv; }).concat(list.filter(function (c) { return c.adv; })) : list; };
     var sit = shuffle(pool.filter(function (c) { return c.pub === "sit"; }));
@@ -155,7 +160,7 @@
         getStream().then(function (st) {
           rec.chunks = []; rec.mr = new MediaRecorder(st);
           rec.mr.ondataavailable = function (e) { if (e.data && e.data.size) rec.chunks.push(e.data); };
-          rec.mr.start(); btn.textContent = "⏺ Recording… (stops when you reveal)"; btn.classList.add("on"); btn.disabled = true;
+          rec.mr.start(); rec.t0 = Date.now(); btn.textContent = "⏺ Recording… (stops when you reveal)"; btn.classList.add("on"); btn.disabled = true;
         }).catch(function () { App.toast("Can't use the microphone. Allow mic access for this app to record.", 4500); });
       }
       function stopRec(cb) {
@@ -163,7 +168,7 @@
         rec.mr.onstop = function () {
           var b = new Blob(rec.chunks, { type: rec.mr.mimeType || "audio/webm" });
           if (rec.url) URL.revokeObjectURL(rec.url);
-          rec.url = URL.createObjectURL(b); rec.mr = null; cb(rec.url);
+          rec.url = URL.createObjectURL(b); rec.mr = null; rec.secs = rec.t0 ? Math.round((Date.now() - rec.t0) / 1000) : 0; rec.t0 = 0; cb(rec.url);
         };
         rec.mr.stop();
       }
@@ -184,8 +189,16 @@
         stopRec(function (url) {
           var box = container.querySelector("#playback");
           if (url && box) box.innerHTML = '<div class="card"><div class="flash-tag">Your answer</div><audio controls src="' + url + '" style="width:100%;margin-top:6px;"></audio>' +
+            lengthCue(rec.secs) +
             '<div class="muted" style="font-size:.85rem;margin-top:6px;">Listen for filler words ("um," "like"), pace, and whether you answered the question asked.</div></div>';
         });
+      }
+      var curLimit = 0;   // seconds allowed for the question on screen
+      function lengthCue(secs) {
+        if (!secs) return "";
+        var cue = secs < 8 ? "Too short: give the answer in a full sentence, then say why it matters." :
+          (curLimit && secs > curLimit) ? "Too long: lead with the answer, give the reason, then stop." : "Good length.";
+        return '<div style="font-size:.9rem;margin-top:6px;"><b>You talked for ' + secs + ' seconds.</b> ' + cue + '</div>';
       }
       function whyHtml(c) { return c.why ? '<div class="flash-ref" style="color:var(--text);margin-top:10px;"><b>Why it matters:</b> ' + esc(c.why) + '</div>' : ""; }
       function sponsorBox(a, ref, why) {
@@ -242,9 +255,12 @@
 
       // Key-point rubric (scenario cards with `points`): tick what the answer actually covered; partial credit.
       function rubricHtml(c, who) {
+        var rule = c.kp1 && c.points.length > 1 ? 'The key fact alone is a pass (75%). Each other box adds a little more.' : 'Tick only what was actually said out loud.';
         return '<div class="card" style="border-color:var(--gold);"><div class="flash-tag">' + (who || "Did you cover these?") + '</div>' +
+          '<div class="muted" style="font-size:.8rem;margin-top:4px;">' + rule + '</div>' +
           c.points.map(function (pt, k) {
-            return '<label class="switch" style="margin-top:10px;"><input type="checkbox" class="kp" data-k="' + k + '"> <span>' + (c.kp1 && k === 0 ? '<b>' + esc(pt) + '</b> <span class="muted" style="font-size:.8rem;">(the key fact)</span>' : esc(pt)) + '</span></label>';
+            var bonus = /^Said why it matters/i.test(pt);
+            return '<label class="switch" style="margin-top:10px;"><input type="checkbox" class="kp" data-k="' + k + '"> <span>' + (c.kp1 && k === 0 ? '<b>' + esc(pt) + '</b> <span class="muted" style="font-size:.8rem;">(the key fact)</span>' : esc(pt) + (bonus ? ' <span class="muted" style="font-size:.8rem;">(bonus)</span>' : '')) + '</span></label>';
           }).join("") + '</div><button class="btn gold lg" id="rubricDone">Score this answer</button>';
       }
       function onRubric(fn, c) {
@@ -381,7 +397,7 @@
       var curStyle = "standard";
       function question(c) {
         qNum++;
-        var cs = timeFor(c);
+        var cs = timeFor(c); curLimit = cs || 0;
         if (curStyle === "rapid" && secs && c.pub !== "sit" && c.pub !== "personal") cs = Math.min(cs || 20, 20);
         container.innerHTML = header() + timerHtml(cs) +
           // Only the publication is shown on the question side: topic labels can give the answer away.
@@ -390,7 +406,7 @@
             '<button class="mini" id="mReport" aria-label="Report card">&#9873;</button></span></div>' +
             '<div class="q-text" style="margin-top:8px;">' + esc(qt(c)) + '</div></div>' +
           (sponsor ? sponsorBox(c.a, c.ref, whyHtml(c)) + '<p class="center muted">Read the question aloud, listen, then grade.</p>' + (c.points ? rubricHtml(c, "Sponsor: tick what the Soldier covered") : gradeButtons())
-                   : '<p class="center muted">' + (c.why && c.pub !== "sit" && c.pub !== "personal" ? 'Answer out loud, then say why it matters. Then reveal.' : 'Answer out loud, then reveal.') + '</p>' + voiceButton() + recButton() + '<button class="btn gold lg" id="reveal">Reveal answer</button>');
+                   : '<p class="center muted">' + (c.why && c.pub !== "sit" && c.pub !== "personal" ? 'Answer out loud, then say why it matters. Then reveal.' : 'Answer out loud, then reveal.') + '</p>' + recButton() + voiceButton() + '<button class="btn gold lg" id="reveal">Reveal answer</button>');
         container.querySelector("#mSpeak").addEventListener("click", function () { Speech.speak(qt(c)); });
         container.querySelector("#mReport").addEventListener("click", function () { App.reportCard(c); });
         if (autoRead) Speech.speak(qt(c));
@@ -425,7 +441,7 @@
           b.textContent = "Voice check needs a connection. Use Record to hear yourself instead."; b.disabled = true; return;
         }
         b.addEventListener("click", start);
-        if (!Store.settings().voiceOff && !voiceFail) start();
+        if (Store.settings().voiceAuto && !Store.settings().voiceOff && !voiceFail) start();   // only after you've turned it on once
       }
       function stopVoice() { if (voice.rec) { try { voice.rec.stop(); } catch (e) {} voice.rec = null; } }
       // after reveal: show what it heard and pre-tick matching points (results can arrive a moment after stop)
@@ -579,7 +595,7 @@
           weak.forEach(function (p) { html += '<div class="row"><div class="grow"><div class="code">' + esc(p.code) + '</div></div><div class="badge-bad" style="font-weight:700;">missed ' + p.miss + '/' + p.n + '</div></div>'; });
         }
         if (missed.length) {
-          html += '<h2 class="section">Review your misses</h2>';
+          html += '<h2 class="section">Review your misses</h2>' + (sponsor ? '' : '<button class="btn gold" id="drillMiss" style="margin-bottom:10px;">&#128260; Drill just these misses now</button>');
           missed.forEach(function (m) {
             html += '<div class="card"><div class="flash-tag">' + esc(m.code) + '</div><div style="font-weight:600;margin-bottom:6px;">' + esc(m.q) + '</div><div class="muted">' + esc(m.a) + '</div></div>';
           });
@@ -591,6 +607,11 @@
         container.innerHTML = html;
         container.querySelector("#again").addEventListener("click", function () { MockBoard.render(container, cards, length, opts); });
         container.querySelector("#home").addEventListener("click", function () { App.go("#/"); });
+        var dm = container.querySelector("#drillMiss");
+        if (dm) dm.addEventListener("click", function () {
+          Store.setChainRole("last-misses", missedIds.filter(function (id, k) { return missedIds.indexOf(id) === k; }).slice(0, 40).join(","));
+          App.go("#/flash/misses");
+        });
         var sb = container.querySelector("#sendBack");
         if (sb) sb.addEventListener("click", function () {
           var ids = missedIds.filter(function (id, k) { return missedIds.indexOf(id) === k; }).slice(0, 40);
