@@ -10,6 +10,12 @@ no account, no app store, nothing to sign up for.
 
 ---
 
+## What's new in 3.22
+
+- **The board asks it different ways.** 453 Board Core questions now have 2-3 alternate wordings ("Explain to the board…",
+  "A Soldier asks you… what do you tell them?"), and the Mock Board rotates them, so you practice recalling the answer,
+  not recognizing the card.
+
 ## What's new in 3.21
 
 - **Start today's session**: one button on Home runs your plan in order; each finished step offers the next one.

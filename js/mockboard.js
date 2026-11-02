@@ -54,8 +54,11 @@
   }
   // spoken-style wording when the card has one ("Which set lists..." reads like a quiz, not a board)
   var LOWER = /^(What|Who|How|When|Where|Why|Which|Name|List|Define|Explain|Describe|Is|Are|Can|Do|Does|Should|May|In|On|At|Your|You|A|An|The|If|After|Before|During|Under|Recite|Give|Tell|Walk)\b/;
+  // a board asks the same thing different ways: one wording per card per board (kept for the reveal and the misses list)
+  var askPick = {};
   function qt(c) {
-    var q = c.oral || c.q;
+    if (!Object.prototype.hasOwnProperty.call(askPick, c.id)) { var ws = [c.oral || c.q].concat(Array.isArray(c.asks) ? c.asks : []); askPick[c.id] = ws[Math.floor(Math.random() * ws.length)]; }
+    var q = askPick[c.id];
     if (c.pub === "sit" || c.pub === "personal" || /^(Sergeant|Specialist|Staff Sergeant),/.test(q)) return q;
     var h = 0; for (var i = 0; i < c.id.length; i++) h = (h * 31 + c.id.charCodeAt(i)) >>> 0;
     var who = window.Store && Store.settings().boardFor === "SSG" ? "Sergeant" : "Specialist";
@@ -135,6 +138,7 @@
 
     render: function (container, cards, length, opts) {
       opts = opts || {};
+      askPick = {};
       var pool = cards.filter(function (c) { return c.q && c.a && !(opts.full && c.id === "personal-11"); });
       if (pool.length < 3) { container.innerHTML = '<div class="empty">A Mock Board needs at least 3 cards. Pick a bigger subject, or Board Core.</div>'; return; }
       length = Math.min(length || 15, pool.length);
