@@ -183,7 +183,7 @@
       // listen-only: like a real board, you hear the question; the words show only when you reveal
       var listen = !sponsor && !!opts.listen && !!(window.Speech && Speech.supported());
       function qShow(text) {
-        return listen ? '<div class="q-text" style="margin-top:8px;">&#127911; Listen&hellip;</div><div class="muted" style="font-size:.85rem;">Tap &#128266; to hear it again. The words show when you reveal.</div>'
+        return listen ? '<div class="q-text" style="margin-top:8px;"><svg class=ic aria-hidden=true><use href=#i-headphones></use></svg> Listen&hellip;</div><div class="muted" style="font-size:.85rem;">Tap <svg class=ic aria-hidden=true><use href=#i-speaker></use></svg> to hear it again. The words show when you reveal.</div>'
                       : '<div class="q-text" style="margin-top:8px;">' + esc(text) + '</div>';
       }
       function sayQ(text) { if (autoRead || listen) Speech.speak(text, curVoice); }   // the sponsor holds the phone: answer shown with the question, sponsor grades
@@ -217,12 +217,12 @@
         stopMirror();
       };
       var mirror = { stream: null };
-      function mirrorButton() { return (!sponsor && navigator.mediaDevices && navigator.mediaDevices.getUserMedia) ? '<button class="btn ghost" id="mirrorBtn">&#129694; Mirror: check your bearing (front camera)</button><div id="mirrorBox"></div><div class="spacer"></div>' : ''; }
+      function mirrorButton() { return (!sponsor && navigator.mediaDevices && navigator.mediaDevices.getUserMedia) ? '<button class="btn ghost" id="mirrorBtn"><svg class=ic aria-hidden=true><use href=#i-mirror></use></svg> Mirror (front camera)</button><div id="mirrorBox"></div><div class="spacer"></div>' : ''; }
       function stopMirror() { if (mirror.stream) { mirror.stream.getTracks().forEach(function (t) { t.stop(); }); mirror.stream = null; } }
       function wireMirror() {
         var b = container.querySelector("#mirrorBtn"); if (!b) return;
         b.addEventListener("click", function () {
-          if (mirror.stream) { stopMirror(); container.querySelector("#mirrorBox").innerHTML = ""; b.textContent = "Mirror: check your bearing (front camera)"; return; }
+          if (mirror.stream) { stopMirror(); container.querySelector("#mirrorBox").innerHTML = ""; b.textContent = "Mirror (front camera)"; return; }
           navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false }).then(function (st) {
             mirror.stream = st;
             var box = container.querySelector("#mirrorBox"); if (!box) { stopMirror(); return; }
@@ -231,7 +231,7 @@
           }).catch(function () { App.toast("Can't use the camera. Allow camera access to use the mirror.", 4000); });
         });
       }
-      function recButton() { return canRec && !sponsor ? '<button class="btn ghost" id="recBtn"><span class="ic">&#127897;</span> Record</button><div class="spacer"></div>' : ""; }
+      function recButton() { return canRec && !sponsor ? '<button class="btn ghost" id="recBtn"><span class="ic"><svg class=ic aria-hidden=true><use href=#i-mic></use></svg></span> Record</button><div class="spacer"></div>' : ""; }
       // Record takes the microphone from the voice check (one microphone user at a time)
       function wireRec() { var b = container.querySelector("#recBtn"); if (b) b.addEventListener("click", function () {
         if (voice.rec) { stopVoice(); voice.paused = true; var vb = container.querySelector("#voiceBtn"); if (vb) { vb.textContent = "Voice check paused while you record"; vb.disabled = true; } }
@@ -250,7 +250,7 @@
         if (!secs) return "";
         var cue = secs < 8 ? "Too short: give the answer in a full sentence, then say why it matters." :
           (curLimit && secs > curLimit) ? "Too long: lead with the answer, give the reason, then stop." : "Good length.";
-        return '<div style="font-size:.9rem;margin-top:6px;"><b>You talked for ' + secs + ' seconds.</b> ' + cue + '</div>';
+        return '<div style="font-size:.92rem;margin-top:6px;"><b>You talked for ' + secs + ' seconds.</b> ' + cue + '</div>';
       }
       function whyHtml(c) { return c.why ? '<div class="flash-ref" style="color:var(--text);margin-top:10px;"><b>Why it matters:</b> ' + esc(c.why) + '</div>' : ""; }
       function sponsorBox(a, ref, why) {
@@ -271,7 +271,7 @@
         if (!secs) return 0;
         var L = String(c.a || "").length;
         if (L > 600) return 0;
-        return (L > 200 || c.follow) ? secs * 2 : secs;
+        return (L > 200 || (c.points && c.points.length > 1)) ? secs * 2 : secs;
       }
       function header(label) {
         var localN = deck.filter(function (c) { return c.local; }).length, totalQ = deck.length - localN;
@@ -279,8 +279,8 @@
       }
       function timerHtml(t, why) {
         // say why the clock isn't the Settings value (long answers and scenarios get double time; the intro gets 90 s)
-        var note = why ? why : (t > secs && secs ? "Extra time: long answer" : "");
-        return t > 0 ? '<div class="bar timer-bar"><span id="tBar" style="width:100%"></span></div><div class="center muted" id="tNum"></div>' + (note ? '<div class="center muted" style="font-size:.75rem;">' + note + '</div>' : '')
+        var note = why ? why : (t > secs && secs ? "Double time: long answer or scenario" : "");
+        return t > 0 ? '<div class="timer-big"><span id="tNum"></span>' + (note ? '<small>' + note + '</small>' : '') + '</div><div class="bar timer-bar"><span id="tBar" style="width:100%"></span></div>'
           : (secs ? '<div class="center muted" style="font-size:.85rem;">No timer on this one: take it at your own pace.</div>' : '');
       }
       function runTimer(t, onEnd) {
@@ -309,10 +309,10 @@
       function rubricHtml(c, who) {
         var rule = c.kp1 && c.points.length > 1 ? 'The key fact alone is a pass (75%). Each other box adds a little more.' : 'Tick only what was actually said out loud.';
         return '<div class="card" style="border-color:var(--gold);"><div class="flash-tag">' + (who || "Did you cover these?") + '</div>' +
-          '<div class="muted" style="font-size:.8rem;margin-top:4px;">' + rule + '</div>' +
+          '<div class="muted" style="font-size:.85rem;margin-top:4px;">' + rule + '</div>' +
           c.points.map(function (pt, k) {
             var bonus = /^Said why it matters/i.test(pt);
-            return '<label class="switch" style="margin-top:10px;"><input type="checkbox" class="kp" data-k="' + k + '"> <span>' + (c.kp1 && k === 0 ? '<b>' + esc(pt) + '</b> <span class="muted" style="font-size:.8rem;">(the key fact)</span>' : esc(pt) + (bonus ? ' <span class="muted" style="font-size:.8rem;">(bonus)</span>' : '')) + '</span></label>';
+            return '<label class="switch" style="margin-top:10px;"><input type="checkbox" class="kp" data-k="' + k + '"> <span>' + (c.kp1 && k === 0 ? '<b>' + esc(pt) + '</b> <span class="muted" style="font-size:.85rem;">(the key fact)</span>' : esc(pt) + (bonus ? ' <span class="muted" style="font-size:.85rem;">(bonus)</span>' : '')) + '</span></label>';
           }).join("") + '</div><button class="btn gold lg" id="rubricDone">Score this answer</button>';
       }
       function onRubric(fn, c) {
@@ -357,7 +357,7 @@
             '<div class="muted">' + (sponsor ? 'Call each command out loud. Watch for a sharp movement on the command of execution, then they hold the position until your next command.' : 'Stand up and do each command, sharply, on the command of execution. Hold each position until the next command.') + '</div></div>' +
           '<div class="card">' + cmds.map(function (t, k) { return '<div class="row" style="margin-bottom:6px;"><div class="numbubble">' + (k + 1) + '</div><div class="grow"><div class="ttl" style="font-size:1.15rem;font-weight:700;">' + esc(t) + '</div></div></div>'; }).join("") +
             '<div class="muted" style="font-size:.85rem;margin-top:6px;">' + drillHints(cmds) + 'Then ' + (sponsor ? 'tell the Soldier to take their seat.' : 'wait for the president to tell you to take your seat.') + '</div></div>' +
-          (sponsor ? '' : '<button class="btn ghost" id="sayIt">&#128266; Call the commands for me</button><div class="spacer"></div>') +
+          (sponsor ? '' : '<button class="btn ghost" id="sayIt"><svg class=ic aria-hidden=true><use href=#i-speaker></use></svg> Call the commands for me</button><div class="spacer"></div>') +
           '<p class="center muted">' + (sponsor ? 'Were the movements crisp, on the command of execution, back to attention each time?' : 'Honest check: crisp, on the command of execution, back to attention each time?') + '</p>' +
           (sponsor ? '' : '<a class="btn ghost" href="#/flash/tc3-21-5" style="margin-bottom:10px;">Study drill cards (TC 3-21.5)</a>') + mirrorButton() +
           gradeButtons("Needs work", "Drill was sharp");
@@ -394,10 +394,10 @@
       }
       function intro() {
         var t = secs ? 90 : 0, stmt = Store.statement();
-        container.innerHTML = header() + timerHtml(t, "90 seconds for your introduction") +
+        container.innerHTML = header() + timerHtml(t, "Aim for about a minute (90 seconds max)") +
           '<div class="card"><div class="flash-tag">The board president</div>' +
             '<div class="q-text" style="margin-top:8px;">"Tell the board a little about yourself."</div></div>' +
-          '<div class="card"><div class="muted" style="font-size:.9rem;">' + (sponsor ? 'Ask the Soldier to tell you about themselves. Listen for about a minute: who they are, job and unit, time in service, a real accomplishment or two, and their goals as an NCO. Are they saying it, not reciting it?' :
+          '<div class="card"><div class="muted" style="font-size:.92rem;">' + (sponsor ? 'Ask the Soldier to tell you about themselves. Listen for about a minute: who they are, job and unit, time in service, a real accomplishment or two, and their goals as an NCO. Are they saying it, not reciting it?' :
             'Answer out loud in about a minute, eyes on the president: who you are, your job and unit, time in service, a real accomplishment or two, and your goals as an NCO. Say it, don\'t read it.' +
             (stmt ? '' : ' <a href="#/statement">Draft your opening statement first</a> (there\'s an example), then come back.')) + '</div></div>' +
           recButton() + '<button class="btn gold lg" id="reveal">I\'m done</button>';
@@ -457,8 +457,8 @@
         container.innerHTML = header() + timerHtml(cs) +
           // Only the publication is shown on the question side: topic labels can give the answer away.
           '<div class="card"><div class="flash-toprow"><span class="flash-tag">' + esc(pubCode(c)) + (c.adv ? ' \u2022 Advanced' : '') + '</span>' +
-            '<span><button class="mini" id="mSpeak" aria-label="Read aloud">&#128266;</button>' +
-            '<button class="mini" id="mReport" aria-label="Report card">&#9873;</button></span></div>' +
+            '<span><button class="mini" id="mSpeak" aria-label="Read aloud"><svg class=ic aria-hidden=true><use href=#i-speaker></use></svg></button>' +
+            '<button class="mini" id="mReport" aria-label="Report card"><svg class=ic aria-hidden=true><use href=#i-flag></use></svg></button></span></div>' +
             qShow(qt(c)) + '</div>' +
           (sponsor ? sponsorBox(c.a, c.ref, whyHtml(c)) + '<p class="center muted">Read the question aloud, listen, then grade.</p>' + (c.points ? rubricHtml(c, "Sponsor: tick what the Soldier covered") : gradeButtons())
                    : '<p class="center muted">' + (c.why && c.pub !== "sit" && c.pub !== "personal" && curStyle !== "rapid" ? 'Answer out loud, then say why it matters. Then reveal.' : 'Answer out loud, then reveal.') + '</p>' + '<div class="rv-row">' + recButton() + voiceButton() + '</div>' + '<button class="btn gold lg" id="reveal">Reveal answer</button>');
@@ -477,7 +477,7 @@
 
       // ---- voice check: hear what you said, pre-tick the key points it heard (you can still change any box) ----
       var voice = { rec: null, text: "" };
-      function voiceButton() { return SR ? '<button class="btn ghost" id="voiceBtn" title="Uses your phone\u2019s speech service (Google or Apple); needs a connection"><span class="ic">&#128483;&#65039;</span> Voice check</button><div class="spacer"></div>' : ""; }
+      function voiceButton() { return SR ? '<button class="btn ghost" id="voiceBtn" title="Uses your phone\u2019s speech service (Google or Apple); needs a connection"><span class="ic"><svg class=ic aria-hidden=true><use href=#i-voice></use></svg></span> Voice check</button><div class="spacer"></div>' : ""; }
       function wireVoice(c) {
         voice.text = ""; voice.paused = false;
         var b = container.querySelector("#voiceBtn"); if (!b) return;
@@ -508,11 +508,11 @@
         var box = container.querySelector("#heard"); if (!box) return;
         var said = voice.text.trim();
         if (!said) { box.innerHTML = '<div class="muted" style="font-size:.85rem;">Voice check didn\'t catch anything. Grade yourself below.</div>'; return; }
-        var html = '<div class="card"><div class="flash-tag">Voice check heard</div><div class="muted" style="font-size:.9rem;">"' + esc(said) + '"</div>';
+        var html = '<div class="card"><div class="flash-tag">Voice check heard</div><div class="muted" style="font-size:.92rem;">"' + esc(said) + '"</div>';
         var words = said.split(/\s+/).filter(Boolean).length, secsV = voice.t0 ? Math.max(1, Math.round((Date.now() - voice.t0) / 1000) - 1) : 0;
         var fill = (said.toLowerCase().match(/\b(um+|uh+|er+|like|you know|basically|kind of|sort of)\b/g) || []).length;
         if (secsV >= 5) { var wpm = Math.round(words * 60 / secsV);
-          html += '<div style="font-size:.9rem;margin-top:6px;"><b>Delivery:</b> about ' + words + ' words in ' + secsV + ' seconds (' + wpm + ' a minute)' +
+          html += '<div style="font-size:.92rem;margin-top:6px;"><b>Delivery:</b> about ' + words + ' words in ' + secsV + ' seconds (' + wpm + ' a minute)' +
             (wpm > 190 ? ', a little fast: slow down and breathe' : wpm < 90 ? ', a little slow or halting: lead with the answer' : ', a good pace') +
             (fill ? '; ' + fill + ' filler word' + (fill > 1 ? 's' : '') + ' ("um", "like")' : '; no filler words heard') + '.</div>'; }
         if (c.points) {
@@ -534,11 +534,11 @@
           '<div class="card"><div class="flash-tag">' + esc(pubCode(c)) + (c.topic ? " • " + esc(c.topic) : "") + '</div>' +
             '<div class="q-text" style="margin:6px 0 12px;">' + esc(qt(c)) + '</div>' +
             '<div class="flash-tag">Answer</div><div class="flash-a">' + esc(c.a).replace(/\n/g, "<br>") + '</div>' +
-            (c.changed ? '<div class="flash-ref" style="color:var(--gold);margin-top:8px;">&#9888;&#65039; ' + esc(c.changed) + '</div>' : '') +
+            (c.changed ? '<div class="flash-ref" style="color:var(--gold);margin-top:8px;"><svg class=ic aria-hidden=true><use href=#i-alert></use></svg> ' + esc(c.changed) + '</div>' : '') +
             (curStyle === "why" && c.pub !== "sit" && c.pub !== "personal" ? '' : whyHtml(c)) +
             (c.ref ? '<div class="flash-ref">Reference: ' + esc(c.ref) + '</div>' : '') +
             (c.sample && c.pub === "personal" ? '<div class="flash-ref" style="color:var(--text);margin-top:10px;"><b>Example answer (fictional Soldier):</b> ' + esc(c.sample) + '</div>' : '') + '</div>' +
-          (window.Speech && Speech.supported() ? '<button class="btn ghost" id="hearA" style="margin-bottom:8px;">&#128266; Hear a model answer</button>' : '') +
+          (window.Speech && Speech.supported() ? '<button class="btn ghost" id="hearA" style="margin-bottom:8px;"><svg class=ic aria-hidden=true><use href=#i-speaker></use></svg> Hear a model answer</button>' : '') +
           (listened ? '<div id="heard"><div class="muted center" style="font-size:.85rem;">Checking what you said…</div></div>' : '') +
           '<div id="playback"></div>' +
           (c.unfilled ? '<div class="card"><div class="muted">You haven\'t filled this in yet, so it isn\'t scored. Boards do ask it: look it up and add it under Board Day Prep, then it counts.</div></div><button class="btn gold lg" id="skipLocal">Next question</button>'
@@ -590,7 +590,7 @@
         container.innerHTML = header("Second try") + timerHtml(t) +
           '<div class="card" style="border-color:var(--gold);"><div class="flash-tag">The board comes back to it</div>' +
             '<div class="muted" style="font-size:.85rem;margin-top:6px;">"Let\'s go back to an earlier question."</div>' +
-            qShow(qt(c)) + (listen ? '<button class="mini" id="cbSpeak" aria-label="Hear it again" style="margin-top:6px;">&#128266;</button>' : '') + '</div>' +
+            qShow(qt(c)) + (listen ? '<button class="mini" id="cbSpeak" aria-label="Hear it again" style="margin-top:6px;"><svg class=ic aria-hidden=true><use href=#i-speaker></use></svg></button>' : '') + '</div>' +
           (sponsor ? sponsorBox(c.a, c.ref, "") + '<p class="center muted">Ask it again, listen, then grade.</p>' + gradeButtons()
                    : '<p class="center muted">You saw the answer a few minutes ago. Say it out loud now, in your own words, then reveal.</p><button class="btn gold lg" id="reveal">Reveal answer</button>');
         sayQ(qt(c));
@@ -618,7 +618,7 @@
         container.innerHTML = header() + timerHtml(t) +
           '<div class="card" style="border-color:var(--gold);"><div class="flash-tag">The board follows up</div>' +
             '<div class="muted" style="font-size:.85rem;margin-top:6px;">About: ' + esc(String(qt(c)).length > 110 ? String(qt(c)).slice(0, 107) + "\u2026" : qt(c)) + '</div>' +
-            qShow(f.q) + (listen ? '<button class="mini" id="fuSpeak" aria-label="Hear it again" style="margin-top:6px;">&#128266;</button>' : '') + '</div>' +
+            qShow(f.q) + (listen ? '<button class="mini" id="fuSpeak" aria-label="Hear it again" style="margin-top:6px;"><svg class=ic aria-hidden=true><use href=#i-speaker></use></svg></button>' : '') + '</div>' +
           (sponsor ? sponsorBox(f.a, f.ref, "") + '<p class="center muted">Ask the follow-up, listen, then grade.</p>' + gradeButtons()
                    : '<p class="center muted">Answer out loud, then reveal.</p>' + recButton() + '<button class="btn gold lg" id="reveal">Reveal answer</button>');
         sayQ(f.q);
@@ -664,18 +664,18 @@
         if (deck.length < 8 && V.level !== "work") { V = { level: "work", title: "Good practice", msg: pct + "% on a short board. Board-ready takes a full board of 10 or more questions." }; msg = V.msg; }
         var nQ = deck.length, nF = Math.max(0, asked - nQ);
         var countLine = nQ + " question" + (nQ === 1 ? "" : "s") + (nF ? ", " + nF + " follow-up" + (nF === 1 ? "" : "s") + " or second tries" : "");
-        var html = (notReady ? '<div class="card" style="border-color:var(--gold);text-align:center;"><div style="font-size:1.3rem;font-weight:800;">' + esc(V.title) + '</div><div class="muted" style="margin-top:6px;">' + esc(msg) + '</div>' +
+        var html = (notReady ? '<div class="card" style="border-color:var(--gold);text-align:center;"><div style="font-size:1.35rem;font-weight:800;">' + esc(V.title) + '</div><div class="muted" style="margin-top:6px;">' + esc(msg) + '</div>' +
               (bearingMiss.length && !sponsor ? '<div class="btn-row" style="margin-top:10px;"><a class="btn ghost" href="#/reporting">Practice reporting</a><a class="btn ghost" href="#/flash/tc3-21-5">Drill cards</a></div>' : '') + '</div>' : '') +
           '<div class="ring-wrap"><div class="ring">' + pct + '%<small>score</small></div></div>' +
           (function () {
             var full = qScores.filter(function (x) { return x >= 0.99; }).length, part = qScores.filter(function (x) { return x >= 0.66 && x < 0.99; }).length, miss = qScores.length - full - part;
             var legend = '<div class="dot-legend"><span><span class="dot g"></span>full</span><span><span class="dot a"></span>with gaps</span><span><span class="dot r"></span>missed</span></div>';
             return legend + '<div class="dots" aria-hidden="true">' + qScores.map(function (x) { return '<span class="dot ' + (x >= 0.99 ? 'g' : x >= 0.66 ? 'a' : 'r') + '"></span>'; }).join("") + '</div>' +
-              '<p class="center muted" style="font-size:.85rem;">' + full + ' full \u2022 ' + part + ' with gaps • ' + miss + ' missed' + (nF ? ' \u2022 plus ' + nF + ' follow-up' + (nF === 1 ? '' : 's') : '') + '</p>' +
-              (pct >= 75 && !notReady ? '<p class="center" style="font-weight:700;color:var(--gold);">&#127881; Strong board. Keep it sharp.</p>' : '');
+              '<p class="center muted" style="font-size:.85rem;">' + full + ' full \u2022 ' + part + ' with gaps • ' + miss + ' missed' + (nF ? ' \u2022 plus ' + nF + ' follow-up' + (nF === 1 ? '' : 's') : '') + '<br>Answers with some key points still earn part credit.</p>' +
+              (pct >= 75 && !notReady ? '<p class="center" style="font-weight:700;color:var(--gold);"><svg class=ic aria-hidden=true><use href=#i-trophy></use></svg> Strong board. Keep it sharp.</p>' : '');
           })() + (notReady ? '' : '<p class="center muted">' + msg + '</p>') +
           // the next step first: drill the misses (or run another), then the details
-          (missed.length && !sponsor ? '<button class="btn gold lg" id="drillMiss">&#128260; Drill your ' + missed.length + ' miss' + (missed.length === 1 ? '' : 'es') + ' now</button><div class="spacer"></div>' : '');
+          (missed.length && !sponsor ? '<button class="btn gold lg" id="drillMiss"><svg class=ic aria-hidden=true><use href=#i-refresh></use></svg> Drill your ' + missed.length + ' miss' + (missed.length === 1 ? '' : 'es') + ' now</button><div class="spacer"></div>' : '');
         if (bearing.length) {
           html += '<h2 class="section">Bearing &amp; delivery</h2><div class="lg">';
           bearing.forEach(function (b) {
@@ -685,7 +685,7 @@
         }
         if (weak.length) {
           html += '<h2 class="section">Weakest subjects</h2><div class="lg">';
-          weak.forEach(function (p) { html += '<div class="li"><span class="grow"><span class="t" style="font-weight:600;font-size:.9rem;">' + esc(p.code) + '</span></span><b class="badge-bad" style="white-space:nowrap;">missed ' + p.miss + ' of ' + p.n + '</b></div>'; });
+          weak.forEach(function (p) { html += '<div class="li"><span class="grow"><span class="t" style="font-weight:600;font-size:.92rem;">' + esc(p.code) + '</span></span><b class="badge-bad" style="white-space:nowrap;">missed ' + p.miss + ' of ' + p.n + '</b></div>'; });
           html += '</div>';
         }
         if (missed.length) {
@@ -696,8 +696,8 @@
           html += '</details>';
         }
         if (sponsor) html += '<h2 class="section">Your notes for the Soldier (optional)</h2><textarea class="input" id="sbNote" rows="3" maxlength="300" placeholder="e.g. Good bearing. Rambled on the intro; slow down on SHARP answers."></textarea>' +
-          '<div class="spacer"></div><button class="btn green lg" id="sendBack">&#128228; Send these results to the Soldier</button>' +
-          '<div class="muted center" style="font-size:.8rem;margin-top:6px;">They open the link on their phone: the score goes into their history and the questions they missed come back sooner.</div>';
+          '<div class="spacer"></div><button class="btn green lg" id="sendBack"><svg class=ic aria-hidden=true><use href=#i-send></use></svg> Send these results to the Soldier</button>' +
+          '<div class="muted center" style="font-size:.85rem;margin-top:6px;">They open the link on their phone: the score goes into their history and the questions they missed come back sooner.</div>';
         html += (window.App && App.sessionNextHtml ? App.sessionNextHtml() : '') + '<div class="spacer"></div><button class="btn ' + (missed.length && !sponsor ? 'ghost' : 'gold') + ' lg" id="again">Run another board</button><div class="spacer"></div><button class="btn ghost" id="home">Back to Home</button>';
         container.innerHTML = html;
         container.querySelector("#again").addEventListener("click", function () { MockBoard.render(container, cards, length, opts); });

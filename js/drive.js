@@ -67,23 +67,23 @@
       function paint(phase) {
         var c = deck[i];
         var p = STUDY.pubsById[c.pub];
-        var phaseLabel = !playing ? "&#10073;&#10073; Paused" : phase === "q" ? "&#128266; Question…" : phase === "listen" ? "&#127908; Your turn — answer aloud" : "&#9989; Answer";
+        var phaseLabel = !playing ? "<svg class=ic aria-hidden=true><use href=#i-pause></use></svg> Paused" : phase === "q" ? "<svg class=ic aria-hidden=true><use href=#i-speaker></use></svg> Question…" : phase === "listen" ? "<svg class=ic aria-hidden=true><use href=#i-mic></use></svg> Your turn — answer aloud" : "<svg class=ic aria-hidden=true><use href=#i-check></use></svg> Answer";
         container.innerHTML =
-          '<div class="flash-progress">Drive Mode • ' + esc(title) + ' • ' + (i + 1) + ' / ' + deck.length + (i === 0 ? '<br><span style="font-size:.8rem;">Cards due for review play first, then new ones. Stop any time.</span>' : '') + '</div>' +
+          '<div class="flash-progress">Drive Mode • ' + esc(title) + ' • card ' + (i + 1) + ' of ' + deck.length + (i === 0 ? '<br><span style="font-size:.85rem;">Due and new cards only. Due ones play first. Stop any time.</span>' : '') + '</div>' +
           '<div class="card drive-card"><div class="flash-tag">' + esc(p ? p.code : "") + '</div>' +
             '<div class="phase" id="phase">' + phaseLabel + '</div>' +
             '<div class="flash-q" style="margin:10px 0;font-size:1.3em;line-height:1.4;">' + esc(c.oral || c.q) + '</div>' +
             (phase === "a" ? '<hr class="div"><div class="flash-a" style="font-size:1.2em;line-height:1.4;">' + esc(c.a).replace(/\n/g, "<br>") + '</div>' : '') +
           '</div>' +
           '<div class="btn-row">' +
-            '<button class="btn lg" id="dPause">' + (playing ? "&#10073;&#10073; Pause" : "&#9658; Resume") + '</button>' +
-            '<button class="btn lg" id="dNext">Next &#9197;</button>' +
+            '<button class="btn lg" id="dPause">' + (playing ? "<svg class=ic aria-hidden=true><use href=#i-pause></use></svg> Pause" : "<svg class=ic aria-hidden=true><use href=#i-play></use></svg> Resume") + '</button>' +
+            '<button class="btn lg" id="dNext">Next <svg class=ic aria-hidden=true><use href=#i-next></use></svg></button>' +
           '</div><div class="spacer"></div>' +
-          '<button class="btn ' + (loop ? 'green' : 'ghost') + '" id="dLoop">' + (loop ? "&#128257; Repeat: on" : "&#128257; Repeat: off") + '</button>' +
-          '<div class="spacer"></div><button class="btn ghost" id="dStop">&#9209; Stop Drive Mode</button>';
+          '<button class="btn ' + (loop ? 'green' : 'ghost') + '" id="dLoop">' + (loop ? "<svg class=ic aria-hidden=true><use href=#i-refresh></use></svg> Repeat: on" : "<svg class=ic aria-hidden=true><use href=#i-refresh></use></svg> Repeat: off") + '</button>' +
+          '<div class="spacer"></div><button class="btn ghost" id="dStop"><svg class=ic aria-hidden=true><use href=#i-stop></use></svg> Stop Drive Mode</button>';
         container.querySelector("#dPause").addEventListener("click", function () { playing ? pause() : resume(); });
         container.querySelector("#dNext").addEventListener("click", function () { skip(); });
-        container.querySelector("#dLoop").addEventListener("click", function () { loop = !loop; container.querySelector("#dLoop").className = "btn " + (loop ? "green" : "ghost"); container.querySelector("#dLoop").innerHTML = loop ? "&#128257; Repeat: on" : "&#128257; Repeat: off"; });
+        container.querySelector("#dLoop").addEventListener("click", function () { loop = !loop; container.querySelector("#dLoop").className = "btn " + (loop ? "green" : "ghost"); container.querySelector("#dLoop").innerHTML = loop ? "<svg class=ic aria-hidden=true><use href=#i-refresh></use></svg> Repeat: on" : "<svg class=ic aria-hidden=true><use href=#i-refresh></use></svg> Repeat: off"; });
         container.querySelector("#dStop").addEventListener("click", function () { Drive.stop(); App.go("#/"); });
       }
 
@@ -117,7 +117,7 @@
       function finish() {
         Drive.stop();
         container.innerHTML =
-          '<div class="ring-wrap"><div class="ring">&#9989;<small>Played ' + deck.length + ' cards</small></div></div>' +
+          '<div class="ring-wrap"><div class="ring"><svg class=ic aria-hidden=true><use href=#i-check></use></svg><small>Played ' + deck.length + ' cards</small></div></div>' +
           '<p class="center muted">Drive Mode complete.</p><div class="spacer"></div>' +
           '<button class="btn gold lg" id="again">Play again</button><div class="spacer"></div>' +
           '<button class="btn ghost" id="home">Back to Home</button>';

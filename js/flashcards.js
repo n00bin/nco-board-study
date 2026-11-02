@@ -26,7 +26,7 @@
       // due first, then new; big decks only feed in 30 new cards per session so it stays doable
       var queue = Store.buildQueue(cards, (cards.length > 60 && !(opts && opts.noCap)) ? 30 : undefined).slice();
       if (!queue.length) queue = cards.slice();           // (deck with nothing due) study all
-      var i = 0, reviewed = 0, conf;
+      var i = 0, reviewed = 0, passed = 0, conf;
       var autoRead = Store.settings().autoRead;
       var confRow;
 
@@ -36,8 +36,8 @@
           '<div class="flashcard" id="fCard" role="button" tabindex="0" aria-label="Flashcard. Tap or press Enter to flip."><div class="flash-inner">' +
             '<div class="flash-face flash-front" id="fFront">' +
               '<div class="flash-toprow"><span class="flash-tag" id="fTagF"></span>' +
-                '<span><button class="mini" id="fSpeak" aria-label="Read aloud">&#128266;</button>' +
-                '<button class="mini" id="fReport" aria-label="Report card">&#9873;</button></span></div>' +
+                '<span><button class="mini" id="fSpeak" aria-label="Read aloud"><svg class=ic aria-hidden=true><use href=#i-speaker></use></svg></button>' +
+                '<button class="mini" id="fReport" aria-label="Report card"><svg class=ic aria-hidden=true><use href=#i-flag></use></svg></button></span></div>' +
               '<div class="flash-q" id="fQ"></div>' +
               '<div class="flip-cue" aria-hidden="true">&#8635; tap the card to flip</div>' +
             '</div>' +
@@ -48,7 +48,7 @@
             '</div>' +
           '</div></div>' +
           '<div class="flash-hint" id="fHint">Tap card to flip</div>' +
-          '<div class="grade-row conf-row" id="fConf"><button class="btn gold" id="cSure">I know it</button><button class="btn ghost" id="cUnsure">Not sure</button></div>' +
+          '<div class="grade-row conf-row" id="fConf"><button class="btn ghost" id="cUnsure">Not sure</button><button class="btn gold" id="cSure">I know it</button></div>' +
           '<div class="grade-row" id="fGrades" hidden>' + GRADE_BTNS + '</div>' +
         '</div>';
 
@@ -74,7 +74,7 @@
         setFaces(false);
         conf = undefined;
         var left = queue.length - i, mins = Math.max(1, Math.round(left * 15 / 60));
-        container.querySelector("#fProg").textContent = reviewed + " done  •  " + left + " to go in this session (about " + mins + " min)";
+        container.querySelector("#fProg").textContent = passed + " done  •  " + left + " to go (about " + mins + " min)" + (reviewed > passed ? "  •  misses come back" : "");
         container.querySelector("#fTagF").textContent = pubCode(c) + (c.adv ? " \u2022 Advanced" : "");   // topic only on the back: it can give the answer away
         container.querySelector("#fTagB").textContent = "Answer" + (c.topic ? " • " + c.topic : "");
         container.querySelector("#fQ").textContent = c.q;
@@ -84,12 +84,12 @@
           container.querySelector("#fA").style.fontSize = String(c.a).length > 220 ? "1rem" : "";   // long answers: calmer size
           container.querySelector("#fA").innerHTML = '<div class="muted" style="font-size:.85rem;margin-bottom:8px;">' + esc(c.q) + '</div>' +
             esc(c.a).replace(/\n/g, "<br>") +
-            (c.changed ? '<div class="flash-ref" style="color:var(--gold);margin-top:10px;">&#9888;&#65039; ' + esc(c.changed) + '</div>' : "") +
+            (c.changed ? '<div class="flash-ref" style="color:var(--gold);margin-top:10px;"><svg class=ic aria-hidden=true><use href=#i-alert></use></svg> ' + esc(c.changed) + '</div>' : "") +
             (c.why ? '<div class="flash-ref" style="color:var(--text);margin-top:12px;"><b>Why it matters:</b> ' + esc(c.why) + '</div>' : "") +
             (c.sample && c.pub === "personal" ? '<div class="flash-ref" style="color:var(--text);margin-top:12px;"><b>Example answer (fictional Soldier, make it yours):</b> ' + esc(c.sample) + '</div>' : "") +
             (c.points && c.points.length > 1 ? '<details class="fb-fold"><summary>Did you cover these? (' + c.points.length + ' key points)</summary>' + c.points.map(function (p) { return '<div style="margin-top:4px;">\u2022 ' + esc(p) + '</div>'; }).join("") + '</details>' : "") +
             (c.follow && c.follow.length ? '<details class="fb-fold"><summary>Board follow-ups (' + c.follow.length + ')</summary>' +
-              c.follow.map(function (f) { return '<details class="follow-d" style="margin-top:8px;"><summary><b style="color:var(--text);">Q: ' + esc(f.q) + '</b> <span class="muted" style="font-size:.8rem;">(say it, then tap)</span></summary><span class="muted follow-a">A: ' + esc(f.a) + '</span></details>'; }).join("") + '</details>' : "");
+              c.follow.map(function (f) { return '<details class="follow-d" style="margin-top:8px;"><summary><b style="color:var(--text);">Q: ' + esc(f.q) + '</b> <span class="muted" style="font-size:.85rem;">(say it, then tap)</span></summary><span class="muted follow-a">A: ' + esc(f.a) + '</span></details>'; }).join("") + '</details>' : "");
           container.querySelector("#fRef").textContent = c.ref ? "Reference: " + c.ref : "";
           var inner = cardEl.querySelector(".flash-inner");
           inner.style.minHeight = ""; cardEl.style.minHeight = "";
@@ -118,6 +118,7 @@
         Store.grade(c.id, g, conf);
         reviewed++;
         if (g === "again") queue.push(c);   // loop back later this session
+        else passed++;
         i++;
         if (i >= queue.length) return done();
         paint();

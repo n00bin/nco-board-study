@@ -101,7 +101,7 @@
       '<button class="btn ghost" id="brShare" style="margin-top:8px;">Share it with your sponsor</button></div>'; }
     return '<div class="card" style="border-color:var(--gold);"><div class="flash-tag">How did your board go?</div><div class="chip-row" id="brAsk">' +
       ["Recommended", "Not recommended", "Board postponed"].map(function (t) { return '<button class="chip" data-r="' + t + '">' + t + '</button>'; }).join("") + '</div>' +
-      '<div class="muted" style="font-size:.8rem;margin-top:6px;">Saved on this phone only. You can choose to share it after.</div></div>';
+      '<div class="muted" style="font-size:.85rem;margin-top:6px;">Saved on this phone only. You can choose to share it after.</div></div>';
   }
   function wireBoardResult(rs) {
     mount.querySelectorAll("#brAsk .chip").forEach(function (b) {
@@ -122,7 +122,7 @@
     if (Store.settings().boardFor) return "";
     return '<div class="card" style="border-color:var(--gold);"><div class="flash-tag">First, which board are you going to?</div>' +
       '<div class="muted" style="font-size:.85rem;margin-bottom:8px;">So the app only shows the numbers for your rank. You can change it in Settings.</div>' +
-      '<div class="chip-row" id="rankAsk" class="chip-row seg3"><button class="chip" data-r="SGT">SGT (E-5)</button><button class="chip" data-r="SSG">SSG (E-6)</button><button class="chip" data-r="BOTH">Not sure</button></div></div>';
+      '<div class="chip-row seg3" id="rankAsk"><button class="chip" data-r="SGT">SGT (E-5)</button><button class="chip" data-r="SSG">SSG (E-6)</button><button class="chip" data-r="BOTH">Not sure</button></div></div>';
   }
   function allCards() { return STUDY.cards.filter(rankOk).concat(Store.userCards()).concat(chainCards()); }
   function daysToBoard() {
@@ -241,58 +241,58 @@
     if (days != null && days < 0) {
       var br = (Store.settings().boardResult || "").split("|")[1] || "";
       title = br === "Recommended" ? "Next steps after your board" : br === "Not recommended" ? "Your plan for the next board" : "After your board";
-      if (br === "Not recommended") items.push('<a href="#/flash/leeches">&#9888;&#65039; Work on the cards you kept missing</a>', '<a href="#/board/core">&#127894; Run a Mock Board each week until your next board</a>');
-      else if (br === "Recommended") items.push('<a href="#/points">&#128200; Estimate your promotion points against the cutoff</a>', '<a href="#/pub/ar350-1">&#127891; Get ready for ' + (Store.settings().boardFor === "SSG" ? "ALC" : "BLC") + ': NCO professional development (AR 350-1)</a>');
-      items.push('<a href="#/settings">&#128197; Set your next board date</a>');
+      if (br === "Not recommended") items.push('<a href="#/flash/leeches"><svg class=ic aria-hidden=true><use href=#i-alert></use></svg> Work on the cards you kept missing</a>', '<a href="#/board/core"><svg class=ic aria-hidden=true><use href=#i-users></use></svg> Run a Mock Board each week until your next board</a>');
+      else if (br === "Recommended") items.push('<a href="#/points"><svg class=ic aria-hidden=true><use href=#i-chart></use></svg> Estimate your promotion points against the cutoff</a>', '<a href="#/pub/ar350-1"><svg class=ic aria-hidden=true><use href=#i-cap></use></svg> Get ready for ' + (Store.settings().boardFor === "SSG" ? "ALC" : "BLC") + ': NCO professional development (AR 350-1)</a>');
+      items.push('<a href="#/settings"><svg class=ic aria-hidden=true><use href=#i-calendar></use></svg> Set your next board date</a>');
     } else if (days === 0) {
       title = "Board day: no new studying";
-      items.push('<a href="#/reporting">&#127894; Walk through reporting in, out loud</a>',
-        '<a href="#/uniform">&#129509; Final uniform check</a>',
-        '<a href="#/statement">&#128221; Say your opening statement twice</a>',
-        '<a href="#/board/core">&#9749; Optional warm-up: a short Mock Board (5 to 10 questions)</a>');
+      items.push('<a href="#/reporting"><svg class=ic aria-hidden=true><use href=#i-flag></use></svg> Walk through reporting in, out loud</a>',
+        '<a href="#/uniform"><svg class=ic aria-hidden=true><use href=#i-shirt></use></svg> Final uniform check</a>',
+        '<a href="#/statement"><svg class=ic aria-hidden=true><use href=#i-quote></use></svg> Say your opening statement twice</a>',
+        '<a href="#/board/core"><svg class=ic aria-hidden=true><use href=#i-coffee></use></svg> Optional warm-up: a short Mock Board (5 to 10 questions)</a>');
     } else if (days === 1) {
       title = "Tonight: light review, then sleep";
-      items.push('<a href="#/flash/cram">&#128367;&#65039; Night-before cram: just your misses (about 20 minutes)</a>',
-        '<a href="#/board/core">&#127894; Optional: one quick Mock Board (turn Full board off)</a>',
-        '<a href="#/uniform">&#129509; Lay out and inspect your uniform</a>',
-        '<a href="#/statement">&#128221; Run your opening statement</a>');
+      items.push('<a href="#/flash/cram"><svg class=ic aria-hidden=true><use href=#i-moon></use></svg> Night-before cram: just your misses (about 20 minutes)</a>',
+        '<a href="#/board/core"><svg class=ic aria-hidden=true><use href=#i-users></use></svg> Optional: one quick Mock Board (turn Full board off)</a>',
+        '<a href="#/uniform"><svg class=ic aria-hidden=true><use href=#i-shirt></use></svg> Lay out and inspect your uniform</a>',
+        '<a href="#/statement"><svg class=ic aria-hidden=true><use href=#i-quote></use></svg> Run your opening statement</a>');
     } else {
       if (lateStart) {
         var lp0 = window.Learn && Learn.nextBoardLesson ? Learn.nextBoardLesson() : null;
-        if (lp0 && lp0.next && /^board101/.test(lp0.next.id)) items.push('<a href="#/lesson/' + escAttr(lp0.next.id) + '">&#128214; First, 5 minutes on what a board is: ' + esc(lp0.next.title.replace(/^.*:\s*/, "")) + '</a>');
-        items.push('<a href="#/flash/top">&#127919; Top 100: the highest-yield Board Core cards first (late start)</a>');
+        if (lp0 && lp0.next && /^board101/.test(lp0.next.id)) items.push('<a href="#/lesson/' + escAttr(lp0.next.id) + '"><svg class=ic aria-hidden=true><use href=#i-book></use></svg> First, 5 minutes on what a board is: ' + esc(lp0.next.title.replace(/^.*:\s*/, "")) + '</a>');
+        items.push('<a href="#/flash/top"><svg class=ic aria-hidden=true><use href=#i-target></use></svg> Top 100: the highest-yield Board Core cards first (late start)</a>');
       }
-      else if (days != null && days >= 2 && days <= 7) items.push('<a href="#/flash/final">&#127919; Final-Week Review: your weakest Board Core cards first</a>');
+      else if (days != null && days >= 2 && days <= 7) items.push('<a href="#/flash/final"><svg class=ic aria-hidden=true><use href=#i-target></use></svg> Final-Week Review: your weakest Board Core cards first</a>');
       else {
         var lp = window.Learn && Learn.nextBoardLesson ? Learn.nextBoardLesson() : null;
-        if (lp && lp.next) items.push('<a href="#/lesson/' + escAttr(lp.next.id) + '">&#128214; Lesson: ' + esc(lp.next.title.replace(/^.*:\s*/, "")) + '</a>');
+        if (lp && lp.next) items.push('<a href="#/lesson/' + escAttr(lp.next.id) + '"><svg class=ic aria-hidden=true><use href=#i-book></use></svg> Lesson: ' + esc(lp.next.title.replace(/^.*:\s*/, "")) + '</a>');
         if (dueN > 0) items.push('<a href="#/flash/due">&#8635; Review ' + Math.min(dueN, 20) + (dueN > 20 ? ' of ' + dueN : '') + ' card' + (dueN > 1 ? "s" : "") + ' due today</a>');
         if (unseen) { var pp = pacePlan(unseen, days), tl = pp.triage ? topLeft() : 0;
-          if (pp.triage && tl) items.push('<a href="#/flash/top">&#127919; Learn ' + pp.pace + ' new cards from the Top 100 first (' + tl + ' left)</a>');
-          else items.push('<a href="#/flash/core">&#11088; ' + (pp.pace ? 'Learn ' + pp.pace + ' new Board Core cards' : 'New Board Core cards') + ' (' + unseen + ' left)</a>'); }
+          if (pp.triage && tl) items.push('<a href="#/flash/top"><svg class=ic aria-hidden=true><use href=#i-target></use></svg> Learn ' + pp.pace + ' new cards from the Top 100 first (' + tl + ' left)</a>');
+          else items.push('<a href="#/flash/core"><svg class=ic aria-hidden=true><use href=#i-star></use></svg> ' + (pp.pace ? 'Learn ' + pp.pace + ' new Board Core cards' : 'New Board Core cards') + ' (' + unseen + ' left)</a>'); }
       }
-      if (leechN > 0) items.push('<a href="#/flash/leeches">&#9888;&#65039; Practice ' + leechN + ' card' + (leechN > 1 ? "s" : "") + ' you keep missing</a>');
-      items.push('<a href="#/board/core">&#127894; One Mock Board (the 5-minute one is fine on a busy day)</a>');
+      if (leechN > 0) items.push('<a href="#/flash/leeches"><svg class=ic aria-hidden=true><use href=#i-alert></use></svg> Practice ' + leechN + ' card' + (leechN > 1 ? "s" : "") + ' you keep missing</a>');
+      items.push('<a href="#/board/core"><svg class=ic aria-hidden=true><use href=#i-users></use></svg> One Mock Board (the 5-minute one is fine on a busy day)</a>');
       // once a week, a real person: a sponsor board beats any app
       var weekAgo = Date.now() - 7 * 86400000;
       var sponsored = Store.quizzes().some(function (q) { return /with sponsor/.test(q.deck) && q.date > weekAgo; });
-      if (!sponsored && (days == null || days > 7)) items.push('<a href="#/board/core">&#129309; This week: ask your sponsor to run a board with you (sponsor mode)</a>');
+      if (!sponsored && (days == null || days > 7)) items.push('<a href="#/board/core"><svg class=ic aria-hidden=true><use href=#i-handshake></use></svg> This week: ask your sponsor to run a board with you (sponsor mode)</a>');
       var sentAt = +(Store.chain()["sent-progress"] || 0);
-      if (sponsored && Date.now() - sentAt > 7 * 86400000 && (days == null || days > 1)) items.push('<a href="#/sendprogress">&#128228; Send your sponsor this week\u2019s progress</a>');
+      if (sponsored && Date.now() - sentAt > 7 * 86400000 && (days == null || days > 1)) items.push('<a href="#/sendprogress"><svg class=ic aria-hidden=true><use href=#i-send></use></svg> Send your sponsor this week\u2019s progress</a>');
     }
     // remember today's plan for the one-button session (skip the sponsor/settings nudges)
     lastPlan = items.map(function (h) { var mm = h.match(/href="([^"]+)">([\s\S]*?)<\/a>/); return mm ? { href: mm[1], label: mm[2].replace(/<[^>]+>/g, "").replace(/&[#\w]+;/g, "").trim() } : null; })
       .filter(function (x) { return x && !/sponsor|sendprogress|settings/.test(x.href + x.label); });
     // style each item as a full-width button (default links are unreadable dark blue on this background)
     items = items.map(function (h) { return h.replace('<a href=', '<a class="btn ghost plan-item" href='); });
-    var sponsorNote = items.some(function (h) { return /sponsor/.test(h); }) ? '<div class="muted" style="font-size:.8rem;margin-top:8px;">Your sponsor is the NCO who preps you, usually your first-line leader. <a href="#/pub/boardskills">More</a></div>' : '';
+    var sponsorNote = items.some(function (h) { return /sponsor/.test(h); }) ? '<div class="muted" style="font-size:.85rem;margin-top:8px;">Your sponsor is the NCO who preps you, usually your first-line leader. <a href="#/pub/boardskills">More</a></div>' : '';
     var bk = (days === 0 || days === 1) ? STUDY.cards.filter(function (c) { return c.id === "bk-01"; })[0] : null;
-    var blank = bk ? '<div class="card" style="margin:10px 0 0;border-color:var(--gold);"><div class="flash-tag">If you go blank or don&#39;t know</div><div style="font-size:.95rem;">' + esc(bk.a) + '</div></div>' : '';
+    var blank = bk ? '<div class="card" style="margin:10px 0 0;border-color:var(--gold);"><div class="flash-tag">If you go blank or don&#39;t know</div><div style="font-size:1rem;">' + esc(bk.a) + '</div></div>' : '';
     var pp2 = pacePlan(unseen, days);
-    var triageNote = (pp2.triage && days > 7) ? '<div class="muted" style="font-size:.8rem;margin-top:8px;">Short on time: at ' + NEW_CAP + ' a day you\u2019ll reach about ' + pp2.reach + ' of ' + unseen + ' new cards before board week. That\u2019s OK. Top 100 and the scenarios first; skip cards marked Advanced.</div>' : '';
-    var remind = (!Store.settings().remindersAdded && (days == null || days > 1)) ? '<div style="margin-top:8px;font-size:.85rem;"><a href="#/settings">&#128276; Add study reminders to my calendar</a></div>' : '';
+    var triageNote = (pp2.triage && days > 7) ? '<div class="muted" style="font-size:.85rem;margin-top:8px;">Short on time: at ' + NEW_CAP + ' a day you\u2019ll reach about ' + pp2.reach + ' of ' + unseen + ' new cards before board week. That\u2019s OK. Top 100 and the scenarios first; skip cards marked Advanced.</div>' : '';
+    var remind = (!Store.settings().remindersAdded && (days == null || days > 1)) ? '<div style="margin-top:8px;font-size:.85rem;"><a href="#/settings"><svg class=ic aria-hidden=true><use href=#i-bell></use></svg> Add study reminders to my calendar</a></div>' : '';
     planExtras = (sponsorNote || remind) ? '<div class="card">' + sponsorNote.replace("margin-top:8px;", "") + remind + '</div>' : '';
-    var startBtn = lastPlan.length >= 2 ? '<button class="btn gold lg" id="startSess" style="margin-top:8px;">&#9654; Start today&#39;s session</button>' +
+    var startBtn = lastPlan.length >= 2 ? '<button class="btn gold lg" id="startSess" style="margin-top:8px;"><svg class=ic aria-hidden=true><use href=#i-play></use></svg> Start today&#39;s session</button>' +
       '<button class="btn ghost" id="tenMin" style="margin-top:8px;">Only have 10 minutes?</button>' : '';
     var steps = '<div class="plan-steps">' + items.join("") + '</div>';
     return '<div class="card"><div class="flash-tag">' + esc(title) + '</div>' + startBtn +
@@ -329,7 +329,7 @@
   // Board-date countdown + a simple daily pace for Board Core (set the date under More > Settings).
   function boardCountdown(coreIds) {
     var bd = Store.settings().boardDate;
-    if (!bd) return '<a class="row" href="#/settings"><div class="grow"><div class="code">&#128197; Set your board date</div>' +
+    if (!bd) return '<a class="row" href="#/settings"><div class="grow"><div class="code"><svg class=ic aria-hidden=true><use href=#i-calendar></use></svg> Set your board date</div>' +
       '<div class="ttl">Get a countdown and a daily study pace</div></div><div class="chev">&#8250;</div></a>';
     var days = daysToBoard();
     var unseen = coreIds.filter(function (id) { return !seenOf(id); }).length;
@@ -350,7 +350,7 @@
         "Learn about " + perDay + " new Board Core card" + (perDay > 1 ? "s" : "") + " a day to see all " + coreIds.length + " with a week to spare.") :
         "You've seen every Board Core card. Keep up your reviews and run Mock Boards.";
     }
-    return '<a class="row board-row" href="' + (days >= 0 && days <= 7 ? "#/boardday" : "#/settings") + '"><div class="grow"><div class="code">&#128197; ' + esc(head) + '</div>' +
+    return '<a class="row board-row" href="' + (days >= 0 && days <= 7 ? "#/boardday" : "#/settings") + '"><div class="grow"><div class="code"><svg class=ic aria-hidden=true><use href=#i-calendar></use></svg> ' + esc(head) + '</div>' +
       '<div class="ttl">' + esc(tip) + '</div></div><div class="chev">&#8250;</div></a>';
   }
 
@@ -369,16 +369,16 @@
 
     // 1) where you stand
     var notRec = dToB != null && dToB < 0 && /\|Not recommended$/.test(Store.settings().boardResult || "");
-    var head = notRec ? '<div class="big" style="font-size:1.5rem;">Next board: you\u2019ve got this</div><div class="sub">Your plan for the next board is below. Board-ready now: ' + rs.ready + '%.</div>' : recommended ? '<div class="big" style="font-size:1.6rem;">Board result: Recommended</div><div class="sub">Keep your records and points current while you wait for the cutoff.</div>'
+    var head = notRec ? '<div class="big" style="font-size:1.6rem;">Next board: you\u2019ve got this</div><div class="sub">Your plan for the next board is below. Board-ready now: ' + rs.ready + '%.</div>' : recommended ? '<div class="big" style="font-size:1.6rem;">Board result: Recommended</div><div class="sub">Keep your records and points current while you wait for the cutoff.</div>'
       : calm ? '<div class="big" style="font-size:1.6rem;">' + (dToB === 0 ? "Board day" : "Board tomorrow") + '</div><div class="sub">' + rs.seen + ' Board Core card' + (rs.seen === 1 ? '' : 's') + ' studied. Stay calm and report in sharp.</div>'
       : '<div class="big">' + rs.ready + '%</div><div class="sub">board-ready</div>';
     var freshBadges = checkBadges(coreIds, rs);
-    var html =
+    var html = rankAsk() +
       '<div class="hero">' +
         '<div style="display:flex;justify-content:space-between;align-items:flex-end;"><div>' + head + '</div>' +
-          '<div style="text-align:right;white-space:nowrap;"><div style="font-size:1.5rem;font-weight:800;">&#128293; ' + streak + '</div><div class="sub">day streak' + (Store.saverUsed() && Date.now() - Store.saverUsed() < 2 * 86400000 ? ' (1 missed day forgiven)' : '') + '</div></div></div>' +
+          '<div style="text-align:right;white-space:nowrap;"><div style="font-size:1.6rem;font-weight:800;"><svg class=ic aria-hidden=true><use href=#i-flame></use></svg> ' + streak + '</div><div class="sub">day streak' + (Store.saverUsed() && Date.now() - Store.saverUsed() < 2 * 86400000 ? ' (1 missed day forgiven)' : '') + '</div></div></div>' +
         (calm || recommended || notRec ? '' : '<div class="bar"><span style="width:' + rs.ready + '%"></span></div>' +
-          '<div class="sub" style="margin-top:6px;font-size:.85rem;">' + (dToB != null && dToB > 7 ? 'Board in ' + dToB + ' days \u2022 ' : '') + (daily.count >= dayTarget ? 'Today\u2019s goal done &#10003;' : 'Today\u2019s goal: ' + daily.count + ' of ' + dayTarget + ' cards') + '</div>' +
+          '<div class="sub" style="margin-top:6px;font-size:.85rem;">' + (dToB != null && dToB > 7 ? 'Board in ' + dToB + ' days \u2022 ' : '') + (daily.count >= dayTarget ? 'Today\u2019s cards done &#10003;' : 'Today: ' + daily.count + ' of ' + dayTarget + ' cards') + '</div>' +
           '<details class="hero-more"><summary class="sub">' + (rs.weak.length ? 'Work on: ' + esc(rs.weak[0]) + (rs.weak.length > 1 ? ' +' + (rs.weak.length - 1) : '') : 'How your score works') + '</summary>' +
           (function () {
             var q = Store.quizzes(), sp = q.filter(function (x) { return /with sponsor/.test(x.deck) && x.total; })[0], me = q.filter(function (x) { return /^Mock Board/.test(x.deck) && !/with sponsor/.test(x.deck) && x.total; }).slice(0, 5);
@@ -387,26 +387,28 @@
             return gap >= 10 ? '<div class="sub" style="margin-top:4px;font-size:.85rem;">You grade yourself about ' + gap + ' points higher than your sponsor does. Tick only what you said out loud.</div>' : '';
           })() +
           (rs.mockAvg == null && rs.seen >= 30 ? '<div class="sub" style="margin-top:4px;font-size:.85rem;">No Mock Boards yet: they are 40% of this score. <a href="#/board/core" style="color:inherit;text-decoration:underline;">Run one</a> to raise it.</div>' : '') +
-          (rs.weak.length ? '<div class="sub" style="margin-top:4px;font-size:.85rem;">Work on: <b>' + esc(rs.weak.join(", ")) + '</b></div>' : '') +
-          (rs.seen ? '<div class="sub" style="font-size:.8rem;margin-top:6px;">Board Core studied: ' + rs.seen + ' of ' + coreIds.length + '.<br><b>How it\u2019s figured:</b> 60% Board Core cards you got right last time (' + rs.recalled + ' of ' + coreIds.length + ') + 40% your last 3 Mock Boards (' + (rs.mockAvg == null ? 'none yet' : rs.mockAvg + '%') + '), counted fully once you have 3 Mock Boards and have covered half of Board Core.</div>' : '') + '</details>') +
+          (rs.weak.length > 1 ? '<div class="sub" style="margin-top:4px;font-size:.85rem;">Also: <b>' + esc(rs.weak.slice(1).join(", ")) + '</b></div>' : '') +
+          (dayTarget > daily.goal ? '<div class="sub" style="margin-top:4px;font-size:.85rem;">Today&#39;s ' + dayTarget + ' cards = reviews due + new cards to stay on pace' + (dToB != null && dToB > 0 ? ' for your board' : '') + '. Your minimum goal is ' + daily.goal + '.</div>' : '') +
+          (rs.seen ? '<div class="sub" style="font-size:.85rem;margin-top:6px;">Board Core studied: ' + rs.seen + ' of ' + coreIds.length + '.<br><b>How it\u2019s figured:</b> 60% Board Core cards you got right last time (' + rs.recalled + ' of ' + coreIds.length + ') + 40% your last 3 Mock Boards (' + (rs.mockAvg == null ? 'none yet' : rs.mockAvg + '%') + '), counted fully once you have 3 Mock Boards and have covered half of Board Core.</div>' : '') + '</details>') +
       '</div>' +
-      ((/iPhone|iPad|iPod/.test(navigator.userAgent) && !navigator.standalone && !Store.settings().iosTipDone) ? '<div class="card" id="iosTip" style="border-color:var(--gold);"><div class="flash-tag">Put it on your home screen</div><div style="font-size:.95rem;">In Safari, tap Share (the square with the arrow), then <b>Add to Home Screen</b>, then <b>Add</b>. It opens like an app and works offline.</div><button class="btn ghost" id="iosOk" style="margin-top:8px;">Got it</button></div>' : '') +
-      rankAsk() + (dToB != null && dToB > 7 ? '' : boardCountdown(coreIds)) + boardResultAsk(rs) +
+      ((/iPhone|iPad|iPod/.test(navigator.userAgent) && !navigator.standalone && !Store.settings().iosTipDone) ? '<div class="card" id="iosTip" style="border-color:var(--gold);"><div class="flash-tag">Put it on your home screen</div><div style="font-size:1rem;">In Safari, tap Share (the square with the arrow), then <b>Add to Home Screen</b>, then <b>Add</b>. It opens like an app and works offline.</div><button class="btn ghost" id="iosOk" style="margin-top:8px;">Got it</button></div>' : '') +
+      (dToB != null && dToB > 7 ? '' : boardCountdown(coreIds)) + boardResultAsk(rs) +
       // 2) what to do today (one list; board-week extras are folded in)
       todayPlan(coreIds, dueN, Store.leeches(ids).length) +
       // 3) the four tools
       '<div class="tool-grid">' +
-        '<a class="btn gold" href="#/pick/flash"><span class="ic">&#128196;</span> Flashcards</a>' +
-        '<a class="btn green" href="#/pick/quiz"><span class="ic">&#10004;&#65038;</span> Quiz</a>' +
-        '<a class="btn board-btn" href="#/board/core"><span class="ic">&#127894;</span> Mock Board</a>' +
-        '<a class="btn drive-btn" href="#/pick/drive"><span class="ic">&#128663;</span> Drive Mode</a>' +
+        '<a class="btn gold" href="#/pick/flash"><span class="ic"><svg class=ic aria-hidden=true><use href=#i-cards></use></svg></span> Flashcards</a>' +
+        '<a class="btn green" href="#/pick/quiz"><span class="ic"><svg class=ic aria-hidden=true><use href=#i-check></use></svg></span> Quiz</a>' +
+        '<a class="btn board-btn" href="#/board/core"><span class="ic"><svg class=ic aria-hidden=true><use href=#i-users></use></svg></span> Mock Board</a>' +
+        '<a class="btn drive-btn" href="#/pick/drive"><span class="ic"><svg class=ic aria-hidden=true><use href=#i-headphones></use></svg></span> Drive Mode</a>' +
       '</div>' +
       // 4) everything else, in one short list
-      group("", [li("#/boardday", "&#127894;", "Board Day Prep", "Room, reporting, uniform, records, your memo"), li("#/browse", "&#128218;", "All subjects", "Every publication and topic")]
-        .concat(freshBadges.length ? [li("#/badges", "&#127941;", "New badge" + (freshBadges.length > 1 ? "s" : ""), esc(freshBadges.length > 2 ? freshBadges.slice(0, 2).join(", ") + " and " + (freshBadges.length - 2) + " more" : freshBadges.join(" and ")))] : [])
-        .concat(!Store.settings().remindersAdded && (dToB == null || dToB > 1) ? [li("#/settings", "&#128276;", "Study reminders", "Add them to your calendar")] : [])) +
-      // 5) your week
-      weeklyRecap();
+      // 4) new badges and board week stay in view; the rest folds into one row
+      (freshBadges.length || (dToB != null && dToB >= 0 && dToB <= 7) ? group("", (dToB != null && dToB >= 0 && dToB <= 7 ? [li("#/boardday", "<svg class=ic aria-hidden=true><use href=#i-clipboard></use></svg>", "Board Day Prep", "Room, reporting, uniform, records, your memo")] : [])
+        .concat(freshBadges.length ? [li("#/badges", "<svg class=ic aria-hidden=true><use href=#i-medal></use></svg>", "New badge" + (freshBadges.length > 1 ? "s" : ""), esc(freshBadges.length > 2 ? freshBadges.slice(0, 2).join(", ") + " and " + (freshBadges.length - 2) + " more" : freshBadges.join(" and ")))] : [])) : '') +
+      '<details class="set-fold home-more"><summary>More: your week, board prep, subjects</summary>' + weeklyRecap() +
+      group("", (dToB != null && dToB >= 0 && dToB <= 7 ? [] : [li("#/boardday", "<svg class=ic aria-hidden=true><use href=#i-clipboard></use></svg>", "Board Day Prep", "Room, reporting, uniform, records, your memo")]).concat([li("#/browse", "<svg class=ic aria-hidden=true><use href=#i-books></use></svg>", "All subjects", "Every publication and topic")])
+        .concat(!Store.settings().remindersAdded && (dToB == null || dToB > 1) ? [li("#/settings", "<svg class=ic aria-hidden=true><use href=#i-bell></use></svg>", "Study reminders", "Add them to your calendar")] : [])) + '</details>';
     mount.innerHTML = html;
     wireBoardResult(rs);
     var ss0 = mount.querySelector("#startSess"); if (ss0) ss0.addEventListener("click", startSession);
@@ -442,14 +444,14 @@
     var m = Math.round(Store.mastery(ids) * 100), counts = Store.counts(ids);
     mount.innerHTML =
       '<div class="hero"><div class="sub" style="color:var(--gold);font-weight:700;">' + esc(p.code) + '</div>' +
-        '<div style="font-size:1.2rem;font-weight:700;margin:4px 0;">' + esc(p.title) + '</div>' +
+        '<div style="font-size:1.15rem;font-weight:700;margin:4px 0;">' + esc(p.title) + '</div>' +
         '<div class="sub">' + pc.length + ' cards • ' + m + '% mastered</div>' +
         '<div class="bar"><span style="width:' + m + '%"></span></div></div>' +
       '<div class="btn-row">' +
         '<a class="btn gold lg" href="#/flash/' + id + '">Flashcards</a>' +
         (pc.filter(function (c) { return !c.flashOnly && ((c.choices && c.choices.length >= 2) || (c.a && String(c.a).length <= 90)); }).length >= 4 ? '<a class="btn green lg" href="#/quiz/' + id + '">Quiz</a>' : '<a class="btn green lg" href="#/board/' + id + '">Practice out loud</a>') + '</div>' +
-      '<div class="spacer"></div><a class="btn ghost" href="#/board/' + id + '">&#127894; Mock Board on this subject</a>' +
-      '<div class="spacer"></div><a class="btn ghost" href="#/read/' + id + '">&#128214; Read all ' + pc.length + ' cards in a list</a>' +
+      '<div class="spacer"></div><a class="btn ghost" href="#/board/' + id + '"><svg class=ic aria-hidden=true><use href=#i-users></use></svg> Mock Board on this subject</a>' +
+      '<div class="spacer"></div><a class="btn ghost" href="#/read/' + id + '"><svg class=ic aria-hidden=true><use href=#i-book></use></svg> Read all ' + pc.length + ' cards in a list</a>' +
       '<div class="card" style="margin-top:16px;"><div class="muted" style="font-size:.85rem;">Known ' + counts.known +
         ' • Review ' + counts.review + ' • New ' + counts.new + '</div></div>';
   }
@@ -461,7 +463,7 @@
     var pc = cardsForDeck(id).slice().sort(function (x, y) { return (y.core ? 1 : 0) - (x.core ? 1 : 0); }), shownCoreH = false, shownMoreH = false;
     mount.innerHTML = '<div class="card"><div class="muted">All ' + pc.length + ' cards in ' + esc(p.title) + ', Board Core first. Reading helps you learn it; saying the answer before you look (Flashcards) helps you remember it.</div></div>' +
       pc.map(function (c) { return (c.core && !shownCoreH ? (shownCoreH = true, '<div class="lg-h">Board Core</div>') : !c.core && !shownMoreH ? (shownMoreH = true, '<div class="lg-h">More detail</div>') : '') + '<div class="card"><div style="font-weight:600;">' + esc(c.q) + '</div>' +
-        '<div style="margin-top:6px;">' + esc(c.a).replace(/\n/g, "<br>") + '</div>' + (c.changed ? '<div class="flash-ref" style="color:var(--gold);">&#9888;&#65039; ' + esc(c.changed) + '</div>' : '') +
+        '<div style="margin-top:6px;">' + esc(c.a).replace(/\n/g, "<br>") + '</div>' + (c.changed ? '<div class="flash-ref" style="color:var(--gold);"><svg class=ic aria-hidden=true><use href=#i-alert></use></svg> ' + esc(c.changed) + '</div>' : '') +
         (c.ref ? '<div class="flash-ref">' + esc(c.ref) + '</div>' : '') + '</div>'; }).join("");
   }
 
@@ -473,16 +475,19 @@
     var html = "";
     if (mode === "flash")
       html += '<div class="chip-row" id="modeToggle" style="margin-bottom:12px;">' +
-        '<button class="chip on" data-r="#/flash/" aria-pressed="true">&#128196; Flip cards</button>' +
-        '<button class="chip" data-r="#/type/" aria-pressed="false">&#9000;&#65039; Type answers</button></div>' +
-        '<div class="muted" style="font-size:.8rem;margin:0 4px 8px;">Flip cards: tap to see the answer. Type answers: write it first, then check.</div>';
+        '<button class="chip on" data-r="#/flash/" aria-pressed="true"><svg class=ic aria-hidden=true><use href=#i-cards></use></svg> Flip cards</button>' +
+        '<button class="chip" data-r="#/type/" aria-pressed="false"><svg class=ic aria-hidden=true><use href=#i-keyboard></use></svg> Type answers</button></div>' +
+        '<div class="muted" style="font-size:.85rem;margin:0 4px 8px;">Flip cards: tap to see the answer. Type answers: write it first, then check.</div>';
     if (mode === "drive")
       html += '<div class="card"><div class="muted">Hands-free: the app reads each question, pauses for you to answer aloud, then reads the answer. Great for PT or the drive in — keep the screen on.</div></div>';
-    html += '<div class="lg pick-top">' + liDeck(route + "core", "&#11088; Board Core (recommended)", "The must-know questions boards ask most", cardsForDeck("core").length, "core") +
-      liDeck(route + "all", "Everything", "All subjects, including deep detail", allCards().length, "all") + '</div>';
+    var quizOk = function (c) { return !c.flashOnly && ((c.choices && c.choices.length >= 2) || (c.a && String(c.a).length <= 90)); };
+    var cnt = function (cs) { return mode === "quiz" ? cs.filter(quizOk).length : mode === "drive" ? (Store.buildQueue(cs).length || cs.length) : cs.length; };
+    html += '<div class="muted" style="font-size:.85rem;margin:0 4px 8px;">' + (mode === "quiz" ? "Numbers are quiz questions (cards with a short answer)." : mode === "drive" ? "Numbers are cards due or new for you today." : "Numbers are cards in each set.") + '</div>';
+    html += '<div class="lg pick-top">' + liDeck(route + "core", "<svg class=ic aria-hidden=true><use href=#i-star></use></svg> Board Core", "Recommended: the must-know questions boards ask most", cnt(cardsForDeck("core")), "core") +
+      liDeck(route + "all", "Everything", "All subjects, including deep detail", cnt(cardsForDeck("all")), "all") + '</div>';
     var pcats = {};
     STUDY.pubs.forEach(function (p) {
-      var n = cardsForDeck(p.id).length;
+      var n = cnt(cardsForDeck(p.id));
       if (!n) return;
       (pcats[p.cat] = pcats[p.cat] || []).push(liDeck(route + p.id, esc(p.code), p.code === p.title ? "" : esc(p.title), n, p.id));
     });
@@ -521,9 +526,14 @@
     // same rule quiz.js uses: long-answer and flash-only cards are not quizzed
     var quizN = cards.filter(function (c) { return !c.flashOnly && ((c.choices && c.choices.length >= 2) || (c.a && String(c.a).length <= 90)); }).length;
     mount.innerHTML =
-      '<div class="setup-head"><div class="t">&#9989; ' + esc(title) + '</div><div class="muted">' + quizN + ' multiple-choice questions in this set</div></div>' +
-      '<button class="btn gold lg" data-n="10">&#9654; Start 10 questions</button>' +
-      '<div class="len-row" style="grid-template-columns:1fr 1fr;margin-top:10px;"><button class="chip" data-n="20">20 questions</button><button class="chip" data-n="999">All ' + quizN + '</button></div>';
+      '<div class="setup-head"><div class="t"><svg class=ic aria-hidden=true><use href=#i-check></use></svg> ' + esc(title) + '</div><div class="muted">' + quizN + ' quiz questions</div></div>' +
+      '<button class="btn gold lg" data-n="10"><svg class=ic aria-hidden=true><use href=#i-play></use></svg> Start 10 questions</button>' +
+      '<div class="len-row" style="grid-template-columns:1fr 1fr;margin-top:10px;"><button class="chip" data-n="20">20 questions</button><button class="chip" data-n="999">All ' + quizN + '</button></div>' +
+      (function () {
+        var past = Store.quizzes().filter(function (x) { return x.deck === title && x.total; }).slice(0, 3);
+        return '<h2 class="section">What&#39;s in this quiz</h2><div class="card"><div class="muted" style="font-size:.92rem;">' + quizN + ' of the ' + cards.length + ' cards in ' + esc(title) + ' have a short answer you can pick from four choices. Long answers (creeds, scenarios) stay in Flashcards and the Mock Board.</div></div>' +
+          (past.length ? '<h2 class="section">Your last quizzes here</h2><div class="lg">' + past.map(function (x) { var p = Math.round(100 * x.score / x.total); return '<div class="li"><span class="grow"><span class="t">' + niceDate(x.date) + '</span></span><b style="color:' + (p >= 75 ? 'var(--good)' : 'var(--gold)') + ';">' + p + '%</b></div>'; }).join("") + '</div>' : '');
+      })();
     mount.querySelectorAll("[data-n]").forEach(function (b) {
       b.addEventListener("click", function () { Quiz.render(mount, cards, title, parseInt(b.getAttribute("data-n"), 10)); });
     });
@@ -534,19 +544,20 @@
     var cards = cardsForDeck(deck), title = deckTitle(deck);
     var timer = Store.settings().timer;
     mount.innerHTML =
-      '<div class="setup-head"><div class="t">&#127894; ' + esc(title) + '</div><div class="muted">Answer out loud \u2022 ' + (timer > 0 ? timer + 's a question, more for long ones' : 'no timer') + ' <a class="pill" href="#/settings">change</a></div></div>' +
+      '<div class="setup-head"><div class="t"><svg class=ic aria-hidden=true><use href=#i-users></use></svg> ' + esc(title) + '</div><div class="muted">Answer out loud, like the real board</div></div>' +
       '<div class="lg opts">' +
+        '<a class="li" href="#/settings"><span class="grow"><span class="t">Timer: ' + (timer > 0 ? timer + ' seconds a question' : 'off') + '</span><span class="s">' + (timer > 0 ? 'Double for long answers and scenarios' : 'Answer at your own pace') + '</span></span><span class="pill">Change</span></a>' +
         '<label class="switch li"><input type="checkbox" id="fullBoard"' + (Store.settings().fullBoard !== false ? " checked" : "") + '> <span class="grow"><span class="t">Full board</span><span class="s">Report in, drill, introduce yourself</span></span></label>' +
         (window.speechSynthesis ? '<label class="switch li"><input type="checkbox" id="listenOnly"' + (Store.settings().listenOnly ? " checked" : "") + '> <span class="grow"><span class="t">Listen-only</span><span class="s">Hear each question, don\u2019t read it</span></span></label>' : '') +
         '<label class="switch li"><input type="checkbox" id="sponsorMode"> <span class="grow"><span class="t">Sponsor holds the phone</span><span class="s">They read, see the answer, and grade you</span></span></label>' +
       '</div>' +
-      '<button class="btn gold lg" data-n="10">&#9654; Start a 10-question board</button>' +
-      '<div class="muted center" style="font-size:.8rem;margin:6px 0 10px;" id="lenNote"></div>' +
-      '<div class="len-row"><button class="chip" data-n="5" data-quick="1">5 min</button><button class="chip" data-n="15">15 Qs</button><button class="chip" data-n="25">25 Qs</button></div>' +
+      '<button class="btn gold lg" data-n="10"><svg class=ic aria-hidden=true><use href=#i-play></use></svg> Start a 10-question board</button>' +
+      '<div class="muted center" style="font-size:.85rem;margin:6px 0 10px;" id="lenNote"></div>' +
+      '<div class="len-row"><button class="chip" data-n="5" data-quick="1"><b>5</b><small>quick board</small></button><button class="chip" data-n="15"><b>15</b><small>questions</small></button><button class="chip" data-n="25"><b>25</b><small>questions</small></button></div>' +
       (/^(core|top|final)$/.test(deck) ? '<details class="plan-more" style="margin-top:14px;"><summary>Practice with your sponsor</summary>' +
-        '<button class="btn ghost" id="sendSponsor" style="margin-top:8px;">&#128228; Send a board to my sponsor</button>' +
-        '<div class="muted center" style="font-size:.8rem;margin:6px 0;">They open the link and run the same board on their phone, with the answers and checklists.</div>' +
-        '<button class="btn ghost" id="printSheet">&#128424;&#65039; Print a paper board instead</button></details>' : '');
+        '<button class="btn ghost" id="sendSponsor" style="margin-top:8px;"><svg class=ic aria-hidden=true><use href=#i-send></use></svg> Send a board to my sponsor</button>' +
+        '<div class="muted center" style="font-size:.85rem;margin:6px 0;">They open the link and run the same board on their phone, with the answers and checklists.</div>' +
+        '<button class="btn ghost" id="printSheet"><svg class=ic aria-hidden=true><use href=#i-print></use></svg> Print a paper board instead</button></details>' : '');
     var lenNote = function () { mount.querySelector("#lenNote").textContent = mount.querySelector("#fullBoard").checked ? "Full board, 10 questions: about 15 to 20 minutes. On a bus? Turn Full board off." : "Questions only: about 5 to 8 minutes for 10."; };
     mount.querySelector("#fullBoard").addEventListener("change", lenNote); lenNote();
     var ps = mount.querySelector("#printSheet");
@@ -572,13 +583,12 @@
 
   function screenSearch() {
     setTitle("Search", true);
-    mount.innerHTML = '<input class="input" id="q" type="search" aria-label="Search questions and answers" placeholder="Search questions & answers..." autocomplete="off" /><div id="results" class="spacer" aria-live="polite"></div>';
+    mount.innerHTML = '<div class="search-wrap"><input class="input" id="q" type="search" aria-label="Search questions and answers" placeholder="Search questions & answers..." autocomplete="off" /><button class="search-x" id="qx" aria-label="Clear search" hidden>&#10005;</button></div><div id="results" class="spacer" aria-live="polite"></div>';
     var input = mount.querySelector("#q"), results = mount.querySelector("#results");
     function run() {
       var term = input.value.trim().toLowerCase();
-      if (term.length < 2) { results.innerHTML = '<div class="muted" style="font-size:.85rem;margin:10px 4px 6px;">Try one of these:</div><div class="chip-row">' + ["SHARP", "AFT", "hazing", "counseling", "NCOER", "Article 15", "waist-to-height", "kratom", "land navigation", "Army Values"].map(function (w) { return '<button class="chip" data-try="' + w + '">' + w + '</button>'; }).join("") + '</div>';
-        results.querySelectorAll("[data-try]").forEach(function (b) { b.addEventListener("click", function () { input.value = b.getAttribute("data-try"); run(); }); });
-        return; }
+      mount.querySelector("#qx").hidden = !input.value;
+      if (term.length < 2) { results.innerHTML = '<div class="muted" style="font-size:.85rem;margin:10px 4px 6px;">Try one of these:</div>' + tryChips(); return; }
       var all = allCards().filter(function (c) {
         return (c.q + " " + c.a + " " + (c.topic || "")).toLowerCase().indexOf(term) >= 0;
       });
@@ -593,8 +603,11 @@
         var p = STUDY.pubsById[c.pub];
         return '<a class="card" style="display:block;text-decoration:none;color:inherit;" href="#/pub/' + escAttr(c.pub) + '"><div class="flash-tag tag-row">' + esc(p ? p.code : "") + (c.topic ? " • " + esc(c.topic) : "") + (c.core ? '<span class="pill core-pill inline">Core</span>' : '') + '</div>' +
           '<div style="font-weight:600;margin-bottom:6px;">' + hl(c.q) + '</div><div class="muted">' + hl(c.a) + '</div></a>';
-      }).join("") : '<div class="empty">No matches. Try a shorter word, like "counsel" or "SHARP".</div>';
+      }).join("") : '<div class="empty">No matches. Try a shorter word, or one of these:</div>' + tryChips();
     }
+    function tryChips() { return '<div class="chip-row">' + ["SHARP", "AFT", "hazing", "counseling", "NCOER", "Article 15", "waist-to-height", "kratom", "land navigation", "Army Values"].map(function (w) { return '<button class="chip" data-try="' + w + '">' + w + '</button>'; }).join("") + '</div>'; }
+    results.addEventListener("click", function (e) { var b = e.target.closest("[data-try]"); if (b) { input.value = b.getAttribute("data-try"); run(); } });
+    mount.querySelector("#qx").addEventListener("click", function () { input.value = ""; run(); input.focus(); });
     input.addEventListener("input", run); input.focus(); run();
   }
 
@@ -603,16 +616,16 @@
     setTitle("More", true);
     var quizzes = Store.quizzes();
     var html =
-      group("Study", [li("#/learn", "&#128214;", "Learn Mode", "Guided lessons, from scratch"), li("#/pick/board", "&#127894;", "Mock Board", "Practice the oral board"), li("#/boardday", "&#128203;", "Board Day Prep", "Room, uniform, reporting, memo")]) +
-      group("You and your sponsor", [li("#/sendprogress", "&#128228;", "Send my progress", "Your sponsor sees your weak spots"), li("#/mycards", "&#128221;", "My Cards", "Your unit's smart book, your MOS"), li("#/badges", "&#127941;", "Badges", "")]) +
-      (deferredPrompt ? '<div class="lg"><a class="li" href="#/more" id="installRow"><span class="ic" aria-hidden="true">&#11015;&#65039;</span><span class="grow"><span class="t">Install the app</span><span class="s">Opens like an app and works offline</span></span><span class="chev">&#8250;</span></a></div>' : '') +
-      group("App", [li("#/settings", "&#9881;&#65039;", "Settings", "Board date, goal, timer, reminders"), li("#/share", "&#128279;", "Share &amp; QR code", ""), li("#/backup", "&#128190;", "Backup &amp; restore", ""), li("#/sources", "&#128218;", "Sources &amp; editions", "")]);
+      group("Study", [li("#/learn", "<svg class=ic aria-hidden=true><use href=#i-book></use></svg>", "Learn Mode", "Guided lessons, from scratch"), li("#/pick/board", "<svg class=ic aria-hidden=true><use href=#i-users></use></svg>", "Mock Board", "Practice the oral board"), li("#/boardday", "<svg class=ic aria-hidden=true><use href=#i-clipboard></use></svg>", "Board Day Prep", "Room, uniform, reporting, memo")]) +
+      group("You and your sponsor", [li("#/sendprogress", "<svg class=ic aria-hidden=true><use href=#i-send></use></svg>", "Send my progress", "Your sponsor sees your weak spots"), li("#/mycards", "<svg class=ic aria-hidden=true><use href=#i-pen></use></svg>", "My Cards", "Your unit's smart book, your MOS"), li("#/badges", "<svg class=ic aria-hidden=true><use href=#i-medal></use></svg>", "Badges", "")]) +
+      (deferredPrompt ? '<div class="lg"><a class="li" href="#/more" id="installRow"><span class="li-ic" aria-hidden="true"><svg class=ic aria-hidden=true><use href=#i-download></use></svg></span><span class="grow"><span class="t">Install the app</span><span class="s">Opens like an app and works offline</span></span><span class="chev">&#8250;</span></a></div>' : '') +
+      group("App", [li("#/settings", "<svg class=ic aria-hidden=true><use href=#i-sliders></use></svg>", "Settings", "Board date, goal, timer, reminders"), li("#/share", "<svg class=ic aria-hidden=true><use href=#i-share></use></svg>", "Share &amp; QR code", ""), li("#/backup", "<svg class=ic aria-hidden=true><use href=#i-download></use></svg>", "Backup &amp; restore", ""), li("#/sources", "<svg class=ic aria-hidden=true><use href=#i-bookmark></use></svg>", "Sources &amp; editions", "")]);
     html += '<details class="plan-more"><summary>Recent quizzes &amp; boards (' + Math.min(10, quizzes.length) + ')</summary>' + (quizzes.length ? quizzes.slice(0, 10).map(function (q) {
       var pct = Math.round((q.score / q.total) * 100), cls = pct >= 75 ? "badge-good" : pct >= 60 ? "" : "badge-bad";
       var nm = STUDY.pubsById[q.deck] ? STUDY.pubsById[q.deck].code : q.deck === "core" ? "Board Core" : q.deck;
       return '<div class="qrow"><span class="grow">' + esc(nm) + ' <span class="muted">' + (Math.round(q.score * 10) / 10) + '/' + q.total + '</span></span><b class="' + cls + '"' + (cls ? '' : ' style="color:var(--gold);"') + '>' + pct + '%</b></div>';
     }).join("") : '<div class="muted" style="padding:8px 4px;">Nothing yet. Finish a quiz or Mock Board and it shows up here.</div>') + '</details>';
-    html += '<div class="muted center" style="font-size:.78rem;margin-top:18px;">NCO Board Study Guide • ' + esc(versionLine()) + '<br>Unofficial study aid. Not endorsed by the U.S. Army or the Department of Defense. Your board memo and local SOP come first.</div>';
+    html += '<div class="muted center" style="font-size:.8rem;margin-top:18px;">NCO Board Study Guide • ' + esc(versionLine()) + '<br>Unofficial study aid. Not endorsed by the U.S. Army or the Department of Defense. Your board memo and local SOP come first.</div>';
     mount.innerHTML = html;
     var ir = mount.querySelector("#installRow"); if (ir) ir.addEventListener("click", function (e) { e.preventDefault(); installBtn.click(); });
   }
@@ -633,15 +646,15 @@
       '</div>' +
       '<h2 class="section">Study reminders</h2><div class="card"><div class="muted" style="font-size:.85rem;">Add a daily study reminder' + (s.boardDate ? ' (until your board)' : '') + ' and a weekly "sponsor board" reminder to your phone\'s calendar.</div>' +
         '<label class="lbl" for="remT">Remind me at</label><input class="input" type="time" id="remT" value="19:00" />' +
-      (('Notification' in window) ? '<div class="spacer"></div><button class="btn ghost" id="notifyOn">' + (s.notify ? '&#128276; Daily reminder is on' : '&#128276; Turn on a daily reminder notification (installed Android app)') + '</button>' : '') +
-        '<button class="btn green" id="remIcs" style="margin-top:10px;">&#128197; Add reminders to my calendar</button>' +
-        '<div class="muted" style="font-size:.8rem;margin-top:6px;">Downloads a calendar file. Open it and your calendar app adds the reminders. Nothing is sent anywhere.</div></div>' +
-      '<h2 class="section">Daily goal</h2>' +
+      (('Notification' in window) ? '<div class="spacer"></div><button class="btn ghost" id="notifyOn">' + (s.notify ? '<svg class=ic aria-hidden=true><use href=#i-bell></use></svg> Daily reminder is on' : '<svg class=ic aria-hidden=true><use href=#i-bell></use></svg> Turn on a daily reminder') + '</button><div class="muted" style="font-size:.85rem;margin-top:4px;">Notifications work in the installed Android app.</div>' : '') +
+        '<button class="btn ghost" id="remIcs" style="margin-top:10px;"><svg class=ic aria-hidden=true><use href=#i-calendar></use></svg> Add reminders to my calendar</button>' +
+        '<div class="muted" style="font-size:.85rem;margin-top:6px;">Downloads a calendar file. Open it and your calendar app adds the reminders. Nothing is sent anywhere.</div></div>' +
+      '<h2 class="section">Daily goal (minimum)</h2>' +
       '<div class="card"><div class="stepper"><button class="mini big" id="gMinus" aria-label="Lower daily goal">&#8722;</button>' +
         '<span id="goalVal" aria-live="polite">' + daily.goal + '</span><button class="mini big" id="gPlus" aria-label="Raise daily goal">+</button>' +
         '<span class="muted" style="margin-left:8px;">cards / day</span></div>' +
-        '<div class="muted" style="font-size:.85rem;margin-top:8px;">Every card you grade or answer counts toward today. Hit it each day to build your streak.</div></div>' +
-      '<h2 class="section">Mock Board timer</h2><div class="muted" style="font-size:.85rem;margin:0 4px 8px;">Seconds you get to answer out loud before the answer is shown.</div><div class="chip-row" id="timerChips">' +
+        '<div class="muted" style="font-size:.85rem;margin-top:8px;">Every card you grade or answer counts. Home can ask for more on days you have reviews due or a board coming up, so it may show a bigger number.</div></div>' +
+      '<h2 class="section">Mock Board timer</h2><div class="muted" style="font-size:.85rem;margin:0 4px 8px;">Seconds you get to answer out loud before the answer is shown.</div><div class="chip-row seg5" id="timerChips">' +
         timers.map(function (t) { return '<button class="chip' + (t === s.timer ? ' on' : '') + '" data-t="' + t + '">' + (t === 0 ? 'Off' : t + 's') + '</button>'; }).join("") +
       '</div>' +
       '<h2 class="section">Drive Mode answer pause</h2><div class="muted" style="font-size:.85rem;margin:0 4px 8px;">How long Drive Mode waits for you to answer before it reads the answer.</div><div class="chip-row" id="gapChips">' +
@@ -649,11 +662,11 @@
       '</div>';
     if (Speech.supported())
       html += '<h2 class="section">Read-aloud</h2><div class="card"><label class="switch"><input type="checkbox" id="autoRead"' + (s.autoRead ? ' checked' : '') + '> <span>Automatically read questions &amp; answers aloud</span></label></div>';
-    if (Speech.supported()) html += '<div class="spacer"></div><button class="btn ghost" id="speakTest">&#128266; Test the voice</button>';
+    if (Speech.supported()) html += '<div class="spacer"></div><button class="btn ghost" id="speakTest"><svg class=ic aria-hidden=true><use href=#i-speaker></use></svg> Test the voice</button>';
     if (window.SpeechRecognition || window.webkitSpeechRecognition)
-      html += '<h2 class="section">Mock Board voice check</h2><div class="card"><label class="switch"><input type="checkbox" id="voiceAuto"' + (!s.voiceOff ? ' checked' : '') + '> <span>Listen to my answers and pre-tick the key points I said (needs the microphone; may need a connection)</span></label><div class="muted" style="font-size:.8rem;margin-top:6px;">Voice check uses your phone\u2019s speech service (Google or Apple), so your spoken answer leaves the phone while it listens. It stays off for personal and your-unit questions. Record my answer stays on the phone.</div></div>';
+      html += '<h2 class="section">Mock Board voice check</h2><div class="card"><label class="switch"><input type="checkbox" id="voiceAuto"' + (!s.voiceOff ? ' checked' : '') + '> <span>Listen to my answers and pre-tick the key points I said (needs the microphone; may need a connection)</span></label><div class="muted" style="font-size:.85rem;margin-top:6px;">Voice check uses your phone\u2019s speech service (Google or Apple), so your spoken answer leaves the phone while it listens. It stays off for personal and your-unit questions. Record my answer stays on the phone.</div></div>';
     // fold the sections people rarely change, so the page isn't one long scroll
-    var r0 = html.indexOf('<h2 class="section">Study reminders</h2>'), r1 = html.indexOf('<h2 class="section">Daily goal</h2>');
+    var r0 = html.indexOf('<h2 class="section">Study reminders</h2>'), r1 = html.indexOf('<h2 class="section">Daily goal (minimum)</h2>');
     if (r0 > 0 && r1 > r0) html = html.slice(0, r0) + '<details class="set-fold"><summary>Study reminders</summary>' + html.slice(r0, r1).replace('<h2 class="section">Study reminders</h2>', '') + '</details>' + html.slice(r1);
     var t0 = html.indexOf('<h2 class="section">Mock Board timer</h2>');
     if (t0 > 0) html = html.slice(0, t0) + '<details class="set-fold"><summary>Mock Board, Drive Mode &amp; voice</summary>' + html.slice(t0) + '</details>';
@@ -720,13 +733,13 @@
     setTitle("Backup & restore", true);
     mount.innerHTML =
       '<div class="card"><p>Your progress is stored only on this device. Export a backup so it survives clearing your browser or moving to a new phone.</p></div>' +
-      '<button class="btn gold lg" id="exp">&#11015; Export my progress</button>' +
+      '<button class="btn gold lg" id="exp"><svg class=ic aria-hidden=true><use href=#i-download></use></svg> Export my progress</button>' +
       '<div class="spacer"></div>' +
-      '<label class="btn green lg" for="impFile">&#11014; Import a backup</label>' +
+      '<label class="btn green lg" for="impFile"><svg class=ic aria-hidden=true><use href=#i-upload></use></svg> Import a backup</label>' +
       '<input type="file" id="impFile" accept="application/json,.json" hidden>' +
       '<h2 class="section">Reset</h2>' +
       '<button class="btn danger" id="resetCards">Reset card progress only</button><div class="spacer"></div>' +
-      '<button class="btn danger" id="resetAll">Erase everything</button><div class="muted center" style="font-size:.8rem;margin-top:6px;">Deletes your progress and your own cards on this phone.</div>';
+      '<button class="btn danger" id="resetAll">Erase everything</button><div class="muted center" style="font-size:.85rem;margin-top:6px;">Deletes your progress and your own cards on this phone.</div>';
     mount.querySelector("#exp").addEventListener("click", function () {
       var d = new Date(), name = "nco-board-progress-" + d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0") + ".json";
       download(name, Store.exportData()); App.toast("Backup downloaded");
@@ -750,7 +763,7 @@
   // ---- one-page share kit: QR, link, install steps, and a note for the sponsor (print or save as PDF) ----
   function screenKit() {
     setTitle("Share Kit", true);
-    mount.innerHTML = '<div class="card no-print"><div class="muted">Print this page (or save it as a PDF) for your squad, your sponsor, or a board-prep table.</div><div class="spacer"></div><button class="btn gold lg" id="kPrint">&#128424;&#65039; Print or save as PDF</button></div>' +
+    mount.innerHTML = '<div class="card no-print"><div class="muted">Print this page (or save it as a PDF) for your squad, your sponsor, or a board-prep table.</div><div class="spacer"></div><button class="btn gold lg" id="kPrint"><svg class=ic aria-hidden=true><use href=#i-print></use></svg> Print or save as PDF</button></div>' +
       '<div class="sheet center"><h2 style="margin:6px 0;">NCO Board Study Guide</h2><div class="muted">Free E-5/E-6 promotion board prep. Works offline. No account.</div>' +
       '<img src="./icons/qr.png" alt="QR code to open the app" style="width:180px;height:180px;background:#fff;padding:8px;border-radius:8px;margin:12px auto;display:block;">' +
       '<div class="url-line" style="font-weight:700;">' + esc(APP_URL.replace(/^https?:\/\//, "").replace(/\/$/, "")) + '</div></div>' +
@@ -758,7 +771,7 @@
       '<div style="margin-top:6px;"><b>iPhone (Safari):</b> open the link in Safari, tap Share, then Add to Home Screen, then Add.</div>' +
       '<h3>First five minutes</h3><div>1. Pick your board (SGT or SSG). 2. Set your board date in Settings. 3. Do Today\'s plan on Home.</div>' +
       '<h3>For your sponsor</h3><div>Your Soldier can send you a progress link or a practice board. Open it on your phone: you\'ll see each question with the answer and a checklist, and you can send the results back. No install needed. Prefer paper? Ask them to print the board sheet.</div>' +
-      '<div class="muted" style="font-size:.8rem;margin-top:10px;">Unofficial study aid. Not endorsed by the U.S. Army or DoD. The board memo and local SOP come first.</div></div>';
+      '<div class="muted" style="font-size:.85rem;margin-top:10px;">Unofficial study aid. Not endorsed by the U.S. Army or DoD. The board memo and local SOP come first.</div></div>';
     mount.querySelector("#kPrint").addEventListener("click", function () { window.print(); });
   }
 
@@ -768,13 +781,13 @@
       '<div class="card center"><p>Share this app with other Soldiers — it works on any phone, free.</p>' +
         '<img src="./icons/qr.png" alt="QR code to open the app" style="width:200px;height:200px;border-radius:12px;background:#fff;padding:8px;" />' +
         '<div class="muted url-line">' + esc(APP_URL.replace(/^https?:\/\//, "").replace(/\/$/, "")) + '</div></div>' +
-      '<div class="btn-row"><button class="btn gold lg" id="share">&#128279; Share link</button><button class="btn ghost lg" id="copy">Copy</button></div>' +
-      '<div class="spacer"></div><a class="btn ghost" href="#/kit">&#128424;&#65039; Print a share kit</a>' +
+      '<div class="btn-row"><button class="btn gold lg" id="share"><svg class=ic aria-hidden=true><use href=#i-share></use></svg> Share link</button><button class="btn ghost lg" id="copy">Copy</button></div>' +
+      '<div class="spacer"></div><a class="btn ghost" href="#/kit"><svg class=ic aria-hidden=true><use href=#i-print></use></svg> Print a share kit</a>' +
       '<h2 class="section">Install it on your phone</h2>' +
       '<div class="card"><div class="ttl"><b>Android (Chrome):</b> Chrome menu &#8942; &#8594; Install app (or Add to Home screen). Or use More &#8594; Install the app.</div>' +
-        '<div class="ttl" style="margin-top:8px;"><b>iPhone (Safari):</b> open the link in Safari, tap Share &#11014;&#65039;, then Add to Home Screen, then Add. Open it from the new icon; it works offline after the first visit.</div></div>' +
+        '<div class="ttl" style="margin-top:8px;"><b>iPhone (Safari):</b> open the link in Safari, tap Share <svg class=ic aria-hidden=true><use href=#i-upload></use></svg>, then Add to Home Screen, then Add. Open it from the new icon; it works offline after the first visit.</div></div>' +
       '<h2 class="section">Spot an error?</h2>' +
-      '<div class="card"><div class="muted">Tap the &#9873; flag on any card. You can send the report from your phone (text, email, chat) or copy it. No account needed.</div></div>' +
+      '<div class="card"><div class="muted">Tap the <svg class=ic aria-hidden=true><use href=#i-flag></use></svg> flag on any card. You can send the report from your phone (text, email, chat) or copy it. No account needed.</div></div>' +
       '<a class="btn ghost" href="https://github.com/' + REPO + '/issues/new" target="_blank" rel="noopener">Or report it online (needs a free GitHub account)</a>';
     mount.querySelector("#share").addEventListener("click", function () {
       if (navigator.share) navigator.share({ title: "NCO Board Study Guide", text: "Study for the E-5/E-6 board:", url: APP_URL }).catch(function () {});
@@ -792,18 +805,18 @@
     setTitle("My Cards", true);
     var cards = Store.userCards();
     var html = '<a class="btn gold lg" href="#/mycards/new">&#43; Add a card</a>' +
-      group("", [li("#/mos", "&#128295;", "Start my MOS cards", "Your job questions")]) +
+      group("", [li("#/mos", "<svg class=ic aria-hidden=true><use href=#i-wrench></use></svg>", "Start my MOS cards", "Your job questions")]) +
       '<div class="card" style="margin-top:12px;"><div class="muted">Add your unit\'s smart-book items — chain of command, command policies, local SOPs — anything your board might ask that isn\'t in the manuals.</div></div>';
     if (cards.length) {
       html += '<h2 class="section">' + cards.length + ' custom card' + (cards.length > 1 ? "s" : "") + '</h2>';
       cards.forEach(function (c) {
         var p = STUDY.pubsById[c.pub];
         html += '<div class="row" data-edit="' + escAttr(c.id) + '"><div class="grow"><div class="code">' + esc(p ? p.code : "My Cards") + '</div>' +
-          '<div class="ttl">' + esc(c.q) + '</div></div><button class="mini" data-del="' + escAttr(c.id) + '" aria-label="Delete card: ' + escAttr(String(c.q).slice(0, 60)) + '">&#128465;</button><div class="chev">&#8250;</div></div>';
+          '<div class="ttl">' + esc(c.q) + '</div></div><button class="mini" data-del="' + escAttr(c.id) + '" aria-label="Delete card: ' + escAttr(String(c.q).slice(0, 60)) + '"><svg class=ic aria-hidden=true><use href=#i-trash></use></svg></button><div class="chev">&#8250;</div></div>';
       });
     } else html += '<div class="empty">No cards of your own yet. Tap Add a card above.</div>';
-    if (cards.length) html += '<div class="spacer"></div><button class="btn ghost" id="shareCards">&#128228; Share my cards (send a link)</button>' +
-      '<div class="muted center" style="font-size:.8rem;margin-top:6px;">Anyone with the app can open the link and add your cards to theirs. Up to 60 cards.</div>';
+    if (cards.length) html += '<div class="spacer"></div><button class="btn ghost" id="shareCards"><svg class=ic aria-hidden=true><use href=#i-send></use></svg> Share my cards (send a link)</button>' +
+      '<div class="muted center" style="font-size:.85rem;margin-top:6px;">Anyone with the app can open the link and add your cards to theirs. Up to 60 cards.</div>';
     mount.innerHTML = html;
     var shc = mount.querySelector("#shareCards");
     if (shc) shc.addEventListener("click", function () {
@@ -853,7 +866,7 @@
       .map(function (x) { return { q: x.q.slice(0, 500), a: x.a.slice(0, 1500), topic: String(x.t || "").slice(0, 80), pub: STUDY.pubsById[x.p] ? x.p : "mine", dup: !!have[x.q.trim().toLowerCase()] }; });
     var fresh = list.filter(function (x) { return !x.dup; });
     mount.innerHTML = '<div class="card"><div class="muted">Someone shared ' + list.length + ' study card' + (list.length === 1 ? '' : 's') + ' with you. Check them: they come from another Soldier, not from the Army publications.</div></div>' +
-      list.map(function (x) { return '<div class="card"' + (x.dup ? ' style="opacity:.55;"' : '') + '><div style="font-weight:600;">' + esc(x.q) + '</div><div class="muted" style="margin-top:4px;">' + esc(x.a) + '</div>' + (x.dup ? '<div class="muted" style="font-size:.8rem;">Already in your cards</div>' : '') + '</div>'; }).join("") +
+      list.map(function (x) { return '<div class="card"' + (x.dup ? ' style="opacity:.55;"' : '') + '><div style="font-weight:600;">' + esc(x.q) + '</div><div class="muted" style="margin-top:4px;">' + esc(x.a) + '</div>' + (x.dup ? '<div class="muted" style="font-size:.85rem;">Already in your cards</div>' : '') + '</div>'; }).join("") +
       (fresh.length ? '<button class="btn gold lg" id="takeAll">Add ' + fresh.length + ' card' + (fresh.length === 1 ? '' : 's') + ' to My Cards</button>' : '<div class="empty">You already have all of these.</div>');
     var t = mount.querySelector("#takeAll");
     if (t) t.addEventListener("click", function () {
@@ -943,7 +956,7 @@
     "When dismissed, stand at attention, render the hand salute, hold until returned, face about, and march out."
   ];
   // grouped list: one card, divided rows (icon, title, one short line)
-  function li(href, ic, t, s) { return '<a class="li" href="' + href + '"><span class="ic" aria-hidden="true">' + ic + '</span><span class="grow"><span class="t">' + t + '</span>' + (s ? '<span class="s">' + s + '</span>' : '') + '</span><span class="chev" aria-hidden="true">&#8250;</span></a>'; }
+  function li(href, ic, t, s) { return '<a class="li" href="' + href + '"><span class="li-ic" aria-hidden="true">' + ic + '</span><span class="grow"><span class="t">' + t + '</span>' + (s ? '<span class="s">' + s + '</span>' : '') + '</span><span class="chev" aria-hidden="true">&#8250;</span></a>'; }
   function liDeck(href, code, title, n, deck, extra) { return '<a class="li deck" ' + (deck ? 'data-deck="' + deck + '" ' : '') + 'href="' + href + '"' + (extra || '') + '><span class="grow"><span class="t" style="color:var(--gold);">' + code + '</span>' + (title ? '<span class="s">' + title + '</span>' : '') + '</span><span class="pill">' + n + '</span><span class="chev" aria-hidden="true">&#8250;</span></a>'; }
   // autosave feedback: a small "Saved" line that fades
   function flashSaved() { var s = document.getElementById("savedTick"); if (!s) { s = document.createElement("div"); s.id = "savedTick"; s.className = "saved-tick"; document.body.appendChild(s); } s.textContent = "Saved \u2713"; s.classList.add("on"); clearTimeout(flashSaved.t); flashSaved.t = setTimeout(function () { s.classList.remove("on"); }, 1200); }
@@ -961,9 +974,9 @@
     setTitle("Board Day Prep", true);
     mount.innerHTML =
       '<div class="muted" style="font-size:.85rem;margin:2px 4px 6px;">Your board memo and local SOP always come first.</div>' +
-      group("The board itself", [li("#/room", "&#127963;&#65039;", "What the board room is like", "Who sits on it and how they decide"), li("#/reporting", "&#127894;", "How to report to the board", "The sequence and your bearing"), li("#/statement", "&#128221;", "Opening statement", "Draft your “tell us about yourself”"), li("#/pub/boardskills", "&#129504;", "Board know-how", "If you freeze, how to answer")]) +
-      group("Get ready", [li("#/memo", "&#128220;", "My board memo", "Reporting wording, uniform, time"), li("#/uniform", "&#129509;", "Uniform inspection", "Check it before you walk in"), li("#/records", "&#128193;", "Records &amp; what to bring", "SRB, points, pockets"), li("#/points", "&#128200;", "Promotion points worksheet", "Where you stand on points")]) +
-      group("Know your Army", [li("#/chain", "&#129333;", "Chain of command", "Fill it in, then quiz yourself"), li("#/knowledge", "&#127758;", "Your unit, your job, current events", ""), li("#/changes", "&#128260;", "What's new", "AFT, waist-to-height, grooming")]);
+      group("The board itself", [li("#/room", "<svg class=ic aria-hidden=true><use href=#i-building></use></svg>", "What the board room is like", "Who sits on it and how they decide"), li("#/reporting", "<svg class=ic aria-hidden=true><use href=#i-flag></use></svg>", "How to report to the board", "The sequence and your bearing"), li("#/statement", "<svg class=ic aria-hidden=true><use href=#i-quote></use></svg>", "Opening statement", "Draft your “tell us about yourself”"), li("#/pub/boardskills", "<svg class=ic aria-hidden=true><use href=#i-brain></use></svg>", "Board know-how", "If you freeze, how to answer")]) +
+      group("Get ready", [li("#/memo", "<svg class=ic aria-hidden=true><use href=#i-doc></use></svg>", "My board memo", "Reporting wording, uniform, time"), li("#/uniform", "<svg class=ic aria-hidden=true><use href=#i-shirt></use></svg>", "Uniform inspection", "Check it before you walk in"), li("#/records", "<svg class=ic aria-hidden=true><use href=#i-folder></use></svg>", "Records &amp; what to bring", "SRB, points, pockets"), li("#/points", "<svg class=ic aria-hidden=true><use href=#i-chart></use></svg>", "Promotion points worksheet", "Where you stand on points")]) +
+      group("Know your Army", [li("#/chain", "<svg class=ic aria-hidden=true><use href=#i-sitemap></use></svg>", "Chain of command", "Fill it in, then quiz yourself"), li("#/knowledge", "<svg class=ic aria-hidden=true><use href=#i-globe></use></svg>", "Your unit, your job, current events", ""), li("#/changes", "<svg class=ic aria-hidden=true><use href=#i-spark></use></svg>", "What's new", "AFT, waist-to-height, grooming")]);
   }
 
   // ---- What changed recently: built from the cards, so the page and the cards always agree ----
@@ -994,18 +1007,18 @@
     if (cards.length < 3) { mount.innerHTML = '<div class="empty">This sheet link is incomplete.</div>'; return; }
     var box = '<span class="sheet-box"></span>';
     var html = '<div class="card no-print"><div class="muted">Print this (or save it as a PDF) and hand it to your sponsor. They read each question aloud, tick what you said, and grade your bearing. No app needed on their side.</div>' +
-      '<div class="spacer"></div><button class="btn gold lg" id="doPrint">&#128424;&#65039; Print or save as PDF</button>' +
-      '<div class="spacer"></div><a class="btn ghost" href="#/sheetin/' + escAttr(want.join(",")) + '">&#9997;&#65039; After the board: enter the paper results</a></div>' +
+      '<div class="spacer"></div><button class="btn gold lg" id="doPrint"><svg class=ic aria-hidden=true><use href=#i-print></use></svg> Print or save as PDF</button>' +
+      '<div class="spacer"></div><a class="btn ghost" href="#/sheetin/' + escAttr(want.join(",")) + '"><svg class=ic aria-hidden=true><use href=#i-pen></use></svg> After the board: enter the paper results</a></div>' +
       '<div class="sheet"><h2 style="margin:6px 0;">Practice Promotion Board</h2><div class="muted"><div>Soldier: ______________________</div><div>Sponsor: ______________________</div><div>Date: ____________</div></div>' +
-      '<h3>Bearing (tick if clean)</h3>' + ["Reporting in", "Facing movements", "Tell us about yourself (about 90 seconds)", "Reporting out"].map(function (b) { return '<div>' + box + ' ' + esc(b) + '</div>'; }).join("");
+      '<h3>Bearing (tick if clean)</h3>' + ["Reporting in", "Facing movements", "Tell us about yourself (about 90 seconds)", "Reporting out"].map(function (b) { return '<div class="sheet-ck">' + box + '<span>' + esc(b) + '</span></div>'; }).join("");
     cards.forEach(function (c, k) {
       html += '<div class="card sheet-q"><div><b>' + (k + 1) + '. ' + esc(c.oral || c.q) + '</b></div>' +
         '<div class="muted" style="margin-top:4px;">Answer: ' + esc(c.a) + '</div>' +
-        (c.points && c.points.length ? '<div style="margin-top:4px;">' + c.points.map(function (p) { return '<div>' + box + ' ' + esc(p) + '</div>'; }).join("") + '</div>' : '<div style="margin-top:4px;">' + box + ' Correct</div>') +
+        (c.points && c.points.length ? '<div style="margin-top:4px;">' + c.points.map(function (p) { return '<div class="sheet-ck">' + box + '<span>' + esc(p) + '</span></div>'; }).join("") + '</div>' : '<div style="margin-top:4px;">' + box + ' Correct</div>') +
         (c.follow && c.follow.length ? '<div class="muted" style="margin-top:4px;font-size:.85rem;">If they get it, follow up: ' + esc(c.follow[0].q) + ' (' + esc(c.follow[0].a) + ')</div>' : '') +
-        '<div class="muted" style="font-size:.75rem;margin-top:4px;">' + esc(c.ref || "") + '</div></div>';
+        '<div class="muted" style="font-size:.8rem;margin-top:4px;">' + esc(c.ref || "") + '</div></div>';
     });
-    html += '<div style="margin-top:10px;font-weight:700;">Questions correct: ______ of ' + cards.length + '</div><h3>Notes for the Soldier</h3><div class="sheet-lines"></div><div class="muted" style="font-size:.75rem;">From the NCO Board Study Guide app. The board memo and local SOP come first.</div></div>';
+    html += '<div style="margin-top:10px;font-weight:700;">Questions correct: ______ of ' + cards.length + '</div><h3>Notes for the Soldier</h3><div class="sheet-lines"></div><div class="muted" style="font-size:.8rem;">From the NCO Board Study Guide app. The board memo and local SOP come first.</div></div>';
     mount.innerHTML = html;
     mount.querySelector("#doPrint").addEventListener("click", function () { window.print(); });
   }
@@ -1043,7 +1056,7 @@
       'Read the question aloud, listen, then grade what they actually said. At the end, read them their score and their weakest subjects.</div></div>' +
       '<label class="switch card"><input type="checkbox" id="sbFull" checked> <span><b>Full board</b>: reporting in, drill, "tell us about yourself," then the questions</span></label>' +
       '<button class="btn gold lg" id="sbGo">Start the board (' + cards.length + ' questions)</button>' +
-      '<div class="spacer"></div><a class="btn ghost" href="#/sheet/' + escAttr(want.join(",")) + '">&#128424;&#65039; Rather use paper? Print this board</a>';
+      '<div class="spacer"></div><a class="btn ghost" href="#/sheet/' + escAttr(want.join(",")) + '"><svg class=ic aria-hidden=true><use href=#i-print></use></svg> Rather use paper? Print this board</a>';
     mount.querySelector("#sbGo").addEventListener("click", function () {
       MockBoard.render(mount, cards, cards.length, { full: mount.querySelector("#sbFull").checked, sponsor: true, fixed: true });
     });
@@ -1081,23 +1094,24 @@
       (note ? '<div class="card" style="border-color:var(--gold);"><div class="flash-tag">Your sponsor\'s notes</div><div style="white-space:pre-wrap;">' + esc(note) + '</div></div>' : '') +
       '<p class="center muted">' + (fresh ? "Saved to your history. " : "Already saved. ") + (ids.length ? "The questions you missed will come back sooner in your reviews:" : "No misses. Nice work.") + '</p>' +
       ids.map(function (id) { var c = byId[id]; return c ? '<details class="set-fold"><summary>' + esc(c.q) + '</summary><div style="padding:0 2px 10px;">' + esc(c.a) + '</div></details>' : ""; }).join("") +
-      '<div class="spacer"></div><a class="btn gold lg" href="#/">Home</a>';
+      (ids.length ? (Store.setChainRole("last-misses", ids.join(",")), '<div class="spacer"></div><a class="btn gold lg" href="#/flash/misses">Drill the ' + ids.length + ' you missed now</a><div class="spacer"></div><a class="btn ghost" href="#/">Back to Home</a>')
+        : '<div class="spacer"></div><a class="btn gold lg" href="#/board/core">Run a Mock Board on your own</a><div class="spacer"></div><a class="btn ghost" href="#/">Back to Home</a>');
   }
 
 
   // ---------------- motivation: badges, weekly recap, progress links ----------------
   var BADGES = [
-    { ic: "&#128218;", id: "first-card", t: "First steps", d: "Studied your first card", test: function (x) { return x.seen >= 1; } },
-    { ic: "&#11088;", id: "core-50", t: "50 Board Core cards", d: "Studied 50 Board Core cards", test: function (x) { return x.seen >= 50; } },
-    { ic: "&#127775;", id: "core-150", t: "150 Board Core cards", d: "Studied 150 Board Core cards", test: function (x) { return x.seen >= 150; } },
-    { ic: "&#127942;", id: "core-all", t: "All of Board Core", d: "Studied every Board Core card", test: function (x) { return x.total && x.seen >= x.total; } },
-    { ic: "&#127979;", id: "board101", t: "Board 101", d: "Finished the Board 101 lessons", test: function (x) { return x.b101; } },
-    { ic: "&#127894;", id: "first-board", t: "First Mock Board", d: "Ran your first Mock Board", test: function (x) { return x.boards >= 1; } },
-    { ic: "&#127941;", id: "boards-5", t: "Five Mock Boards", d: "Ran five Mock Boards", test: function (x) { return x.boards >= 5; } },
-    { ic: "&#129309;", id: "sponsor-board", t: "Sponsor board", d: "Ran a board with your sponsor", test: function (x) { return x.sponsored; } },
-    { ic: "&#128293;", id: "streak-7", t: "7-day streak", d: "Studied seven days in a row", test: function (x) { return x.streak >= 7; } },
-    { ic: "&#128200;", id: "ready-50", t: "Halfway ready", d: "Board-ready score of 50%", test: function (x) { return x.ready >= 50; } },
-    { ic: "&#127919;", id: "ready-80", t: "Board-ready", d: "Board-ready score of 80%", test: function (x) { return x.ready >= 80; } }
+    { ic: "<svg class=ic aria-hidden=true><use href=#i-books></use></svg>", id: "first-card", t: "First steps", d: "Studied your first card", test: function (x) { return x.seen >= 1; } },
+    { ic: "<svg class=ic aria-hidden=true><use href=#i-star></use></svg>", id: "core-50", t: "50 Board Core cards", d: "Studied 50 Board Core cards", test: function (x) { return x.seen >= 50; } },
+    { ic: "<svg class=ic aria-hidden=true><use href=#i-star></use></svg>", id: "core-150", t: "150 Board Core cards", d: "Studied 150 Board Core cards", test: function (x) { return x.seen >= 150; } },
+    { ic: "<svg class=ic aria-hidden=true><use href=#i-trophy></use></svg>", id: "core-all", t: "All of Board Core", d: "Studied every Board Core card", test: function (x) { return x.total && x.seen >= x.total; } },
+    { ic: "<svg class=ic aria-hidden=true><use href=#i-cap></use></svg>", id: "board101", t: "Board 101", d: "Finished the Board 101 lessons", test: function (x) { return x.b101; } },
+    { ic: "<svg class=ic aria-hidden=true><use href=#i-users></use></svg>", id: "first-board", t: "First Mock Board", d: "Ran your first Mock Board", test: function (x) { return x.boards >= 1; } },
+    { ic: "<svg class=ic aria-hidden=true><use href=#i-medal></use></svg>", id: "boards-5", t: "Five Mock Boards", d: "Ran five Mock Boards", test: function (x) { return x.boards >= 5; } },
+    { ic: "<svg class=ic aria-hidden=true><use href=#i-handshake></use></svg>", id: "sponsor-board", t: "Sponsor board", d: "Ran a board with your sponsor", test: function (x) { return x.sponsored; } },
+    { ic: "<svg class=ic aria-hidden=true><use href=#i-flame></use></svg>", id: "streak-7", t: "7-day streak", d: "Studied seven days in a row", test: function (x) { return x.streak >= 7; } },
+    { ic: "<svg class=ic aria-hidden=true><use href=#i-chart></use></svg>", id: "ready-50", t: "Halfway ready", d: "Board-ready score of 50%", test: function (x) { return x.ready >= 50; } },
+    { ic: "<svg class=ic aria-hidden=true><use href=#i-target></use></svg>", id: "ready-80", t: "Board-ready", d: "Board-ready score of 80%", test: function (x) { return x.ready >= 80; } }
   ];
   function badgeFacts(coreIds, rs) {
     var q = Store.quizzes(), b101 = window.Learn && Learn.nextBoardLesson ? !/^board101/.test((Learn.nextBoardLesson().next || { id: "x" }).id) : false;
@@ -1115,8 +1129,8 @@
     var coreB = STUDY.cards.filter(function (c) { return c.core && rankOk(c); }).map(function (c) { return c.id; }), fB = badgeFacts(coreB, readyScore(coreB));
     var PROG = { "core-50": [fB.seen, 50], "core-150": [fB.seen, 150], "core-all": [fB.seen, fB.total], "boards-5": [fB.boards, 5], "streak-7": [fB.streak, 7], "ready-50": [fB.ready, 50], "ready-80": [fB.ready, 80] };
     var row = function (b) {
-      var on = !!got[b.id], when = on && got[b.id] > 946684800000 ? ' • ' + new Date(got[b.id]).toLocaleDateString() : '';
-      return '<div class="li"' + (on ? '' : ' style="opacity:.6;"') + '><span class="ic" aria-hidden="true">' + (b.ic || "&#127941;") + '</span><span class="grow"><span class="t">' + esc(b.t) + '</span><span class="s">' + esc(b.d) + when + '</span></span>' + (!on && PROG[b.id] ? '<span class="pill">' + (/ready/.test(b.id) ? Math.min(PROG[b.id][0], PROG[b.id][1]) + '% of ' + PROG[b.id][1] + '%' : Math.min(PROG[b.id][0], PROG[b.id][1]) + ' / ' + PROG[b.id][1]) + '</span>' : '') + '</div>';
+      var on = !!got[b.id], when = on && got[b.id] > 946684800000 ? ' • ' + niceDate(got[b.id]) : '';
+      return '<div class="li"' + (on ? '' : ' style="opacity:.6;"') + '><span class="li-ic" aria-hidden="true">' + (b.ic || "<svg class=ic aria-hidden=true><use href=#i-medal></use></svg>") + '</span><span class="grow"><span class="t">' + esc(b.t) + '</span><span class="s">' + esc(b.d) + when + '</span></span>' + (!on && PROG[b.id] ? '<span class="pill">' + (/ready/.test(b.id) ? Math.min(PROG[b.id][0], PROG[b.id][1]) + '% of ' + PROG[b.id][1] + '%' : Math.min(PROG[b.id][0], PROG[b.id][1]) + ' / ' + PROG[b.id][1]) + '</span>' : '') + '</div>';
     };
     var earned = BADGES.filter(function (b) { return got[b.id]; }), left = BADGES.filter(function (b) { return !got[b.id]; });
     mount.innerHTML = '<div class="muted" style="font-size:.85rem;margin:2px 4px 8px;">Small wins on the way to your board. They stay on this phone.</div>' +
@@ -1132,7 +1146,7 @@
     var weekAgo = Date.now() - 7 * 86400000, boards = Store.quizzes().filter(function (q) { return /^Mock Board/.test(q.deck) && q.date > weekAgo; }).length;
     var bars = log.map(function (d) {
       var h = Math.max(3, Math.round(36 * d.count / max)), dn = new Date(d.day + "T12:00:00").toLocaleDateString(undefined, { weekday: "narrow" });
-      return '<div style="flex:1;text-align:center;"><div title="' + d.count + ' cards" style="height:' + h + 'px;background:' + (d.count ? 'var(--gold)' : 'var(--line, #3a3f2e)') + ';border-radius:3px;margin:0 2px;"></div><div class="muted" style="font-size:.7rem;margin-top:2px;">' + dn + '</div></div>';
+      return '<div style="flex:1;text-align:center;"><div title="' + d.count + ' cards" style="height:' + h + 'px;background:' + (d.count ? 'var(--gold)' : 'var(--line, #3a3f2e)') + ';border-radius:3px;margin:0 2px;"></div><div class="muted" style="font-size:.8rem;margin-top:2px;">' + dn + '</div></div>';
     }).join("");
     var cal = Store.calib(), calLine = '';
     if (cal.sureN >= 10) {
@@ -1189,19 +1203,19 @@
     mount.innerHTML =
       '<div class="hero"><div class="big">' + x.r + '%</div><div class="sub">' + who + ' • board-ready</div>' +
         '<div class="bar"><span style="width:' + Math.min(100, x.r) + '%"></span></div>' +
-        '<div class="sub" style="margin-top:6px;font-size:.8rem;">Sent ' + new Date(x.at).toLocaleDateString() + (days != null ? ' • ' + (days > 0 ? 'board in ' + days + ' days' : days === 0 ? 'board today' : 'board date passed') : '') + (x.bf ? ' • ' + esc(x.bf) + ' board' : '') + '</div></div>' +
+        '<div class="sub" style="margin-top:6px;font-size:.85rem;">Sent ' + niceDate(x.at) + (days != null ? ' • ' + (days > 0 ? 'board in ' + days + ' days' : days === 0 ? 'board today' : 'board date passed') : '') + (x.bf ? ' • ' + esc(x.bf) + ' board' : '') + '</div></div>' +
       '<div class="card"><div class="muted">Board Core studied: <b>' + x.s + ' of ' + x.t + '</b> (right last time: ' + x.rc + ')<br>Last 7 days: <b>' + x.wk + ' cards</b>, ' + x.mw + ' Mock Board' + (x.mw === 1 ? '' : 's') + '<br>Streak: <b>' + x.st + ' days</b>' +
         (x.m && x.m.length ? '<br>Recent Mock Boards: <b>' + x.m.join('%, ') + '%</b>' : '<br>No Mock Boards yet') + '</div></div>' +
       ((x.w || []).length ? '<div class="card"><div class="flash-tag">Weakest subjects</div><div style="font-weight:600;">' + esc(x.w.map(pubName).join(", ")) + '</div></div>' : '') +
-      (board.length >= 3 ? '<a class="btn gold lg" href="#/sponsor/' + board.join(",") + '">&#127894; Run a sponsor board on ' + ((x.mi || []).length ? 'the questions they missed' : 'these weak spots') + '</a><div class="spacer"></div>' : '') +
-      '<div class="muted center" style="font-size:.8rem;margin-top:8px;">Nothing is sent anywhere: this page was built from the link itself.</div>';
+      (board.length >= 3 ? '<a class="btn gold lg" href="#/sponsor/' + board.join(",") + '"><svg class=ic aria-hidden=true><use href=#i-users></use></svg> Run a sponsor board on ' + ((x.mi || []).length ? 'the questions they missed' : 'these weak spots') + '</a><div class="spacer"></div>' : '') +
+      '<div class="muted center" style="font-size:.85rem;margin-top:8px;">Nothing is sent anywhere: this page was built from the link itself.</div>';
   }
   function screenSendProgress() {
     setTitle("Send My Progress", true);
     var name = Store.settings().displayName || "";
     mount.innerHTML = '<div class="card"><div class="muted">Your sponsor gets a link with your score, cards studied, Mock Boards and weakest subjects, and can run a board on your weak spots. Nothing is stored online.</div></div>' +
       '<label class="lbl" for="dName">Your name</label><input class="input" id="dName" maxlength="30" placeholder="e.g. SPC Rivera" value="' + escAttr(name) + '">' +
-      '<div class="spacer"></div><button class="btn gold lg" id="shareMine">&#128228; Send my progress</button>';
+      '<div class="spacer"></div><button class="btn gold lg" id="shareMine"><svg class=ic aria-hidden=true><use href=#i-send></use></svg> Send my progress</button>';
     var dn = mount.querySelector("#dName");
     dn.addEventListener("change", function () { Store.setSetting("displayName", dn.value.replace(/[<>]/g, "").trim().slice(0, 30)); App.toast("Name saved"); });
     mount.querySelector("#shareMine").addEventListener("click", function () { Store.setSetting("displayName", dn.value.replace(/[<>]/g, "").trim().slice(0, 30)); shareProgress(); });
@@ -1221,7 +1235,7 @@
         var eds = Object.keys(by[k].ed).sort(function (x, y) { return by[k].ed[y] - by[k].ed[x]; });
         return '<div class="li"><span class="grow"><span class="t" style="color:var(--gold);">' + esc(k) + '</span><span class="s">' + esc(eds[0]) + ' \u2022 cited by ' + by[k].n + ' card' + (by[k].n === 1 ? '' : 's') + '</span></span></div>';
       }).join("") + '</div>' +
-      '<div class="muted center" style="font-size:.8rem;margin-top:12px;">Spot a problem? Use the flag on any card.</div>';
+      '<div class="muted center" style="font-size:.85rem;margin-top:12px;">Spot a problem? Use the flag on any card.</div>';
   }
 
   function screenChanges() {
@@ -1268,7 +1282,7 @@
     var checks = Store.checks();
     var html = '<div class="card"><div class="muted">Tap each item once you&#39;ve checked it. Your board memo and local SOP have the final say.</div></div>' +
       '<details class="set-fold" style="margin-top:0;"><summary>Picture: where the main items go on the AGSU coat</summary>' + UNIFORM_SVG +
-        '<div class="muted" style="font-size:.8rem;margin-top:6px;">Simple sketch, not to scale, shown as you face the Soldier (their right is on your left). From DA PAM 670-1 and AD 2025-18; your board memo and local SOP have the final say.</div><div style="height:8px;"></div></details>';
+        '<div class="muted" style="font-size:.85rem;margin-top:6px;">Simple sketch, not to scale, shown as you face the Soldier (their right is on your left). From DA PAM 670-1 and AD 2025-18; your board memo and local SOP have the final say.</div><div style="height:8px;"></div></details>';
     UNIFORM_CHECKS.forEach(function (u) {
       var on = !!checks[u.id];
       html += '<button class="row check' + (on ? " checked" : "") + '" data-id="' + u.id + '" role="checkbox" aria-checked="' + (on ? "true" : "false") + '"><div class="checkbox">' + (on ? "&#10003;" : "") + '</div><div class="grow"><div class="ttl">' + checkText(u.t) + '</div></div></button>';
@@ -1339,11 +1353,11 @@
       mil: '<label class="lbl" for="ptxhits">Rifle qualification hits (M4/M16/M249, out of 40)</label>' + inp("ptxhits", "e.g. 33", "140px") +
         '<label class="lbl" for="ptxaft">AFT total score (last record test)</label>' + inp("ptxaft", "e.g. 420", "140px") + '<div class="muted" id="ptxmilsplit" style="font-size:.85rem;margin-top:6px;"></div>',
       awd: AWARDS.map(function (w) { return '<label class="lbl" for="ptx' + w[0] + '">' + esc(w[1]) + ' (' + w[2] + ' each): how many?</label>' + inp("ptx" + w[0], "0", "100px"); }).join("") +
-        '<div class="muted" style="font-size:.8rem;margin-top:4px;">Badges and other awards (tables 3-5 and 3-6): add them in the box above.</div>',
+        '<div class="muted" style="font-size:.85rem;margin-top:4px;">Badges and other awards (tables 3-5 and 3-6): add them in the box above.</div>',
       med: '<label class="switch card" style="margin-top:6px;"><input type="checkbox" id="ptxschool"' + (m["pts-xschool"] ? " checked" : "") + '> <span>I graduated ' + school + ' (+150)</span></label>' +
         '<label class="lbl" for="ptxweeks">Resident military courses in ATRRS: total weeks (4 points a week, up to ' + (rank === "SSG" ? 115 : 110) + ')</label>' + inp("ptxweeks", "e.g. 2", "120px") +
         '<label class="lbl" for="ptxcbt">Online courses (ATRRS self-development, Army e-Learning): total hours (1 point per 5 hours, up to 90)</label>' + inp("ptxcbt", "e.g. 40", "120px") +
-        '<div class="chip-row" id="ptxhon">' + [["0", "No honors"], ["20", "Commandant's list (+20)"], ["40", "DHG or DLG (+40)"]].map(function (h) { return '<button class="chip' + ((m["pts-xhon"] || "0") === h[0] ? " on" : "") + '" data-h="' + h[0] + '">' + esc(h[1]) + '</button>'; }).join("") + '</div>',
+        '<div class="chip-row seg3" id="ptxhon">' + [["0", "None"], ["20", "Comdt&#39;s list<small>+20</small>"], ["40", "DHG / DLG<small>+40</small>"]].map(function (h) { return '<button class="chip' + ((m["pts-xhon"] || "0") === h[0] ? " on" : "") + '" data-h="' + h[0] + '">' + esc(h[1]) + '</button>'; }).join("") + '</div>',
       civ: '<label class="lbl" for="ptxhours">College semester hours (2 points each)</label>' + inp("ptxhours", "e.g. 15", "140px")
     };
     var html = '<div class="card"><div class="muted">A quick estimate. Tap <b>Figure it for me</b> to work out a category. Your real points come from your records (AR 600-8-19, para 3-14).</div></div>' +
@@ -1351,7 +1365,7 @@
     PTS.forEach(function (p) {
       html += '<label class="lbl" for="pt-' + p.k + '"><b>' + esc(p.t) + '</b> (max ' + p.max[rank] + ')</label>' +
         '<input class="input" id="pt-' + p.k + '" inputmode="numeric" maxlength="3" placeholder="0" value="' + escAttr(m["pts-" + p.k] || "") + '">' +
-        '<details class="pt-help"' + (m["pts-x" + p.k] ? " open" : "") + '><summary class="muted" style="font-size:.85rem;margin-top:4px;">&#129518; Figure it for me</summary><div class="muted" style="font-size:.8rem;margin:4px 0;">' + esc(p.h) + ' AR 600-8-19 (Mar 2026), ' + p.ref + '.</div>' + help[p.k] + '</details><div style="height:10px;"></div>';
+        '<details class="pt-help"' + (m["pts-x" + p.k] ? " open" : "") + '><summary class="muted" style="font-size:.85rem;margin-top:4px;"><svg class=ic aria-hidden=true><use href=#i-calc></use></svg> Figure it for me</summary><div class="muted" style="font-size:.85rem;margin:4px 0;">' + esc(p.h) + ' AR 600-8-19 (Mar 2026), ' + p.ref + '.</div>' + help[p.k] + '</details><div style="height:10px;"></div>';
     });
     html += '<label class="lbl" for="pt-cut">This month\'s cutoff score for your MOS (from your S1 or the HRC cutoff list)</label>' +
       '<input class="input" id="pt-cut" inputmode="numeric" maxlength="3" placeholder="e.g. 450" value="' + escAttr(m["pts-cut"] || "") + '">' +
@@ -1384,9 +1398,9 @@
         : '<div style="margin-top:6px;"><b>' + (cut - total) + ' points short of the cutoff.</b> <span class="muted">The categories with the most room left are the fastest gains.</span></div>';
       var room = PTS.map(function (p) { return { t: p.t, left: p.max[rank] - Math.min(n("pt-" + p.k) || 0, p.max[rank]) }; }).sort(function (x, y) { return y.left - x.left; }).slice(0, 2);
       var calm = (rank === "SGT" && !mount.querySelector("#ptxschool").checked) ? '<div class="muted" style="font-size:.85rem;margin-top:6px;">Don\u2019t panic if you\u2019re well short: that\u2019s normal before BLC. You don’t need BLC to pin on SGT (AR 600-8-19, para 1-34a), but graduating adds 150 points, the biggest single jump.</div>' : '';
-      mount.querySelector("#ptTotal").innerHTML = '<div class="flash-tag">Your estimate for ' + rank + '</div><div style="font-size:1.8rem;font-weight:800;">' + total + ' <span class="muted" style="font-size:1rem;">of 800</span></div>' + gap +
+      mount.querySelector("#ptTotal").innerHTML = '<div class="flash-tag">Your estimate for ' + rank + '</div><div style="font-size:1.6rem;font-weight:800;">' + total + ' <span class="muted" style="font-size:1rem;">of 800</span></div>' + gap +
         '<div class="muted" style="font-size:.85rem;margin-top:6px;">Most room left: ' + room.map(function (r) { return esc(r.t.toLowerCase()) + ' (' + r.left + ')'; }).join(", ") + '.</div>' +
-        (over.length ? '<div class="muted" style="font-size:.8rem;margin-top:6px;">Note: ' + esc(over.join("; ")) + '.</div>' : '') + calm;
+        (over.length ? '<div class="muted" style="font-size:.85rem;margin-top:6px;">Note: ' + esc(over.join("; ")) + '.</div>' : '') + calm;
     }
     PTS.forEach(function (p) { mount.querySelector("#pt-" + p.k).addEventListener("input", update); });
     mount.querySelector("#pt-cut").addEventListener("input", update);
@@ -1418,10 +1432,17 @@
     mount.querySelectorAll(".check").forEach(function (b) { b.addEventListener("click", function () { Store.toggleCheck(b.getAttribute("data-id")); screenRecords(); }); });
   }
 
+  // a numbered step: the first clause bold, anything the Soldier says out loud as a callout
+  function stepText(s) {
+    var h = esc(s), m = h.match(/^([^.:]{2,46}[^.:\s]{2}[.:])\s+(.*)$/);
+    if (m) h = '<b>' + m[1] + '</b> ' + m[2];
+    h = h.replace(/\s*—\s*e\.g\.\s*"/, ': "');
+    return h.replace(/"([^"]{6,})"/g, '<span class="say">\u201c$1\u201d</span>').replace(/\u201c([^\u201d]{6,})\u201d(?![^<]*<\/span>)/g, '<span class="say">\u201c$1\u201d</span>');
+  }
   function screenReporting() {
     setTitle("Report to the Board", true);
     var html = '<div class="card"><div class="muted">A general sequence — boards differ. Follow your local board SOP and appointment memo exactly.</div></div>';
-    html += '<div class="lg">' + REPORTING_STEPS.map(function (s, i) { return '<div class="li steps-li"><span class="numbubble">' + (i + 1) + '</span><span class="grow" style="font-size:.9rem;">' + esc(s) + '</span></div>'; }).join("") + '</div>';
+    html += '<div class="lg">' + REPORTING_STEPS.map(function (s, i) { return '<div class="li steps-li"><span class="numbubble">' + (i + 1) + '</span><span class="grow" style="font-size:.92rem;">' + stepText(s) + '</span></div>'; }).join("") + '</div>';
     html += '<h2 class="section">Bearing tips</h2><div class="card"><div class="muted">Stand and sit at attention. Make eye contact. Speak loudly and clearly. Don\'t fidget. If you don\'t know an answer, say so honestly — never bluff.</div></div>';
     mount.innerHTML = html;
   }
@@ -1469,7 +1490,7 @@
       "Each board member asks questions in turn: leadership, Army programs, basic Soldiering, world affairs, and required situational questions on things like harassment, assault, abuse, and suicide.",
       "The president asks last and closes the board. When dismissed: stand, salute, hold until returned, face about, and march out.",
       "After: each voting member votes yes or no and the majority decides. The promotion authority makes the final call. If you aren't recommended, your first-line leader counsels you in writing on how to improve (AR 600-8-19, para 1-33)." ]
-      .forEach(function (t, i) { html += (i ? '' : '<div class="lg">') + '<div class="li steps-li"><span class="numbubble">' + (i + 1) + '</span><span class="grow" style="font-size:.9rem;">' + esc(t) + '</span></div>'; });
+      .forEach(function (t, i) { html += (i ? '' : '<div class="lg">') + '<div class="li steps-li"><span class="numbubble">' + (i + 1) + '</span><span class="grow" style="font-size:.92rem;">' + stepText(t) + '</span></div>'; });
     html += '</div>';
     ROOM_SECTIONS.forEach(function (sec) {
       html += '<details class="set-fold"><summary>' + esc(sec.h) + '</summary>';
@@ -1500,10 +1521,15 @@
     var todo = CHAIN_ROLES.filter(function (r) { return !chainNow[r.k]; }).map(function (r) { return r.label; })
       .concat(KNOW_PROMPTS.filter(function (k) { return !notes["know-" + k.id]; }).map(function (k) { return k.t; }));
     var html = '<div class="muted" style="font-size:.85rem;margin:2px 4px 8px;">Boards ask about your unit, your job, and current events. Your notes stay on this phone.</div>' +
-      (todo.length ? '<div class="card"><details><summary>Still to look up <span class="pill">' + todo.length + '</span></summary><div class="muted" style="font-size:.9rem;margin-top:6px;">' + todo.map(esc).join(" • ") +
-        '</div></details><div class="muted" style="font-size:.8rem;margin-top:6px;">Names change: check army.mil, your unit\'s page, or your chain of command. Don\'t trust an old smart book.</div></div>'
+      (todo.length ? '<div class="card"><details><summary>Still to look up <span class="pill">' + todo.length + '</span></summary>' +
+        (function () {
+          var roles = CHAIN_ROLES.filter(function (r) { return !chainNow[r.k]; }), kps = KNOW_PROMPTS.filter(function (k) { return !notes["know-" + k.id]; });
+          return (roles.length ? '<div class="lg-h" style="margin-top:4px;">Leaders to name (' + roles.length + ')</div><div class="chip-row">' + roles.map(function (r) { return '<a class="chip" href="#/chain">' + esc(r.label) + '</a>'; }).join("") + '</div>' : '') +
+            (kps.length ? '<div class="lg-h">Notes to write (' + kps.length + ')</div><div class="chip-row">' + kps.map(function (k) { return '<button class="chip" data-open="' + k.id + '">' + esc(k.t) + '</button>'; }).join("") + '</div>' : '');
+        })() +
+        '</details><div class="muted" style="font-size:.85rem;margin-top:6px;">Names change: check army.mil, your unit\'s page, or your chain of command. Don\'t trust an old smart book.</div></div>'
         : '<div class="card"><div class="badge-good" style="font-weight:700;">&#10003; Everything filled in. Re-check names the week of your board.</div></div>') +
-      group("", [li("#/chain", "&#129333;", "Chain of Command roster", "Your leaders, up to the President"), li("#/changes", "&#128260;", "What's new", "AFT, waist-to-height, grooming")]);
+      group("", [li("#/chain", "<svg class=ic aria-hidden=true><use href=#i-sitemap></use></svg>", "Chain of Command roster", "Your leaders, up to the President"), li("#/changes", "<svg class=ic aria-hidden=true><use href=#i-spark></use></svg>", "What's new", "AFT, waist-to-height, grooming")]);
     html += '<div class="lg-h">Your notes</div>';
     KNOW_PROMPTS.forEach(function (k) {
       var done = !!notes["know-" + k.id];
@@ -1514,6 +1540,8 @@
     html += '<div class="spacer"></div><button class="btn gold lg" id="knSave">Done</button>';
     mount.innerHTML = html;
     KNOW_PROMPTS.forEach(function (k) { var t = mount.querySelector("#kn-" + k.id); t.addEventListener("input", function () { Store.setChainRole("know-" + k.id, t.value.trim()); flashSaved(); }); });
+    mount.querySelectorAll("[data-open]").forEach(function (b) { b.addEventListener("click", function () {
+      var t = mount.querySelector("#kn-" + b.getAttribute("data-open")); if (!t) return; var d = t.closest("details"); if (d) d.open = true; t.scrollIntoView({ block: "center" }); t.focus(); }); });
     mount.querySelector("#knSave").addEventListener("click", function () {
       KNOW_PROMPTS.forEach(function (k) { Store.setChainRole("know-" + k.id, mount.querySelector("#kn-" + k.id).value.trim()); });
       App.toast("Notes saved");
@@ -1552,17 +1580,17 @@
       if (parts[1] === "edit") return screenMyCardForm(parts.slice(2).join("/")), tab("more");
       return screenMyCards(), tab("more");
     }
-    if (head === "boardday") return screenBoardDay(), tab("home");
-    if (head === "chain") return screenChain(), tab("home");
-    if (head === "uniform") return screenUniform(), tab("home");
-    if (head === "reporting") return screenReporting(), tab("home");
-    if (head === "statement") return screenStatement(), tab("home");
-    if (head === "knowledge") return screenKnowledge(), tab("home");
-    if (head === "room") return screenRoom(), tab("home");
-    if (head === "records") return screenRecords(), tab("home");
-    if (head === "points") return screenPoints(), tab("home");
-    if (head === "memo") return screenMemo(), tab("home");
-    if (head === "changes") return screenChanges(), tab("home");
+    if (head === "boardday") return screenBoardDay(), tab("more");
+    if (head === "chain") return screenChain(), tab("more");
+    if (head === "uniform") return screenUniform(), tab("more");
+    if (head === "reporting") return screenReporting(), tab("more");
+    if (head === "statement") return screenStatement(), tab("more");
+    if (head === "knowledge") return screenKnowledge(), tab("more");
+    if (head === "room") return screenRoom(), tab("more");
+    if (head === "records") return screenRecords(), tab("more");
+    if (head === "points") return screenPoints(), tab("more");
+    if (head === "memo") return screenMemo(), tab("more");
+    if (head === "changes") return screenChanges(), tab("more");
     if (head === "sources") return screenSources(), tab("more");
     if (head === "badges") return screenBadges(), tab("more");
     if (head === "sendprogress" || head === "squad") return screenSendProgress(), tab("more");

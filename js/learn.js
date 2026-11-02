@@ -70,7 +70,7 @@
       cs.forEach(function (c) { var t = (c.topic || "").replace(/\s*\((?:AD|AR|TC) [^)]*\)\s*$/, ""); if (t && topics.indexOf(t) < 0) topics.push(t); });
       var title = topics.length ? (topics.length <= 3 ? topics.slice(0, -1).join(", ") + (topics.length > 1 ? " & " : "") + topics[topics.length - 1]
         : topics.slice(0, 3).join(", ") + " & more") : "Lesson " + (n + 1);
-      return { id: trackId + "-" + cs[0].id, alt: trackId + "-L" + (n + 1), title: title, cards: cs };
+      return { id: trackId + "-" + cs[0].id, alt: trackId + "-L" + (n + 1), title: title, topics: topics, cards: cs };
     });
   }
 
@@ -98,7 +98,7 @@
       var cs = all.filter(function (c) { return c.core && c.pub === pubId && !inFund[c.id]; });
       if (!p || !cs.length) return;
       var nm = (p.code === p.title || /^[A-Z][a-z]/.test(p.code) ? p.code : p.title).replace(/\s*\([^)]*\)\s*$/, "");
-      chunkLessons(cs, "core-" + pubId).forEach(function (l) { l.title = nm + (/[?!]$/.test(nm) ? " " : ": ") + l.title; coreLessons.push(l); });
+      chunkLessons(cs, "core-" + pubId).forEach(function (l) { l.title = nm + (/[?!]$/.test(nm) ? " " : ": ") + l.title; l.pubName = nm; coreLessons.push(l); });
     });
     if (coreLessons.length)
       tracks.push({ id: "core", title: "⭐ Board Core: the must-know questions", overview: CORE_OVERVIEW, lessons: coreLessons });
@@ -133,7 +133,7 @@
         '<div class="hero"><div class="big" style="font-size:1.6rem;">' + doneN + ' of ' + pathFlat.length + ' lessons</div><div class="sub">on your board path' + (extraDone > 0 ? ' (+' + extraDone + ' extra)' : '') + '</div>' +
           '<div class="bar"><span style="width:' + pct + '%"></span></div></div>' +
         '<div class="card"><div class="muted">Learn it, then practice it. <b>For your board: finish Board 101, Fundamentals and Board Core.</b></div></div>';
-      if (next) html += '<a class="btn gold lg" href="#/lesson/' + next.id + '">' + (doneN ? "&#9654; Continue learning" : "&#9654; Start learning") + '</a><div class="spacer"></div>';
+      if (next) html += '<a class="btn gold lg" href="#/lesson/' + next.id + '">' + (doneN ? "<svg class=ic aria-hidden=true><use href=#i-play></use></svg> Continue learning" : "<svg class=ic aria-hidden=true><use href=#i-play></use></svg> Start learning") + '</a><div class="spacer"></div>';
 
       var BOARD_PATH = { board101: 1, fundamentals: 1, core: 1, sit: 1, personal: 1 }, shownExtra = false;
       html += '<h2 class="section">Your board path</h2>';
@@ -165,11 +165,18 @@
       var t = tracks.filter(function (x) { return x.id === trackId; })[0];
       if (!t) return Learn.hub(container);
       var html = t.overview ? '<div class="card"><div class="muted">' + esc(t.overview) + '</div></div>' : '';
+      var seenLead = {};
       t.lessons.forEach(function (l, k) {
         var done = isDone(l);
-        var parts = String(l.title).replace(/ & more$/, "").split(/, | & /), short = parts[0] + (parts.length > 1 ? ' +' + (parts.length - 1) + ' more' : '');
+        // lead with one topic; the publication and the other topics go in the small line
+        var tp = l.topics && l.topics.length ? l.topics.slice() : null, lead = tp ? tp.shift() : String(l.title);
+        if (tp && seenLead[lead] && tp.length) lead = tp.shift();
+        else if (seenLead[lead]) lead += " (part " + (seenLead[lead] + 1) + ")";
+        seenLead[lead] = (seenLead[lead] || 0) + 1;
+        var short = lead, parts = [lead].concat(tp && tp.length && !l.pubName ? ["also " + tp[0] + (tp.length > 1 ? " and more" : "")] : []);
+        if (l.pubName) parts.splice(1, 0, l.pubName);
         html += (k ? '' : '<div class="lg">') + '<a class="li" href="#/lesson/' + l.id + '"><span class="numbubble' + (done ? ' done' : '') + '">' + (done ? "&#10003;" : (k + 1)) + '</span>' +
-          '<span class="grow"><span class="t" style="font-weight:600;">' + esc(short) + '</span><span class="s">' + l.cards.length + (l.cards[0] && l.cards[0].pub === "sit" ? " scenarios" : " facts") + (parts.length > 1 ? ' \u2022 ' + esc(parts.slice(1).join(", ")) : '') + '</span></span><span class="chev">&#8250;</span></a>';
+          '<span class="grow"><span class="t" style="font-weight:600;">' + esc(short) + '</span><span class="s">' + l.cards.length + (l.cards[0] && l.cards[0].pub === "sit" ? " scenarios" : " facts") + (parts.length > 1 ? ' \u2022 ' + esc(parts.slice(1).join(" \u2022 ")) : '') + '</span></span><span class="chev">&#8250;</span></a>';
       });
       if (t.lessons.length) html += '</div>';
       container.innerHTML = html;
@@ -192,7 +199,7 @@
         container.innerHTML =
           '<div class="flash-progress">Learn • ' + esc(lesson.title) + ' • ' + (i + 1) + ' / ' + lesson.cards.length + '</div>' +
           '<div class="card learn-card"><div class="flash-toprow"><span class="flash-tag">' + esc(p ? p.code : "") + (c.topic ? " • " + esc(c.topic) : "") + '</span>' +
-            '<button class="mini" id="lSpeak" aria-label="Read aloud">&#128266;</button></div>' +
+            '<button class="mini" id="lSpeak" aria-label="Read aloud"><svg class=ic aria-hidden=true><use href=#i-speaker></use></svg></button></div>' +
             '<div class="learn-q">' + esc(c.q) + '</div>' +
             '<div class="learn-a">' + esc(c.a).replace(/\n/g, "<br>") + '</div>' +
             (c.why ? '<div class="flash-ref" style="color:var(--text);margin-top:12px;"><b>Why it matters:</b> ' + esc(c.why) + '</div>' : '') +

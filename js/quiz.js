@@ -71,7 +71,7 @@
         : ((window.STUDY && window.STUDY.cards) ? window.STUDY.cards : cards);
       var questions = picked.map(function (c) { return buildQuestion(c, distractorPool); });
 
-      var i = 0, score = 0, misses = [];
+      var i = 0, score = 0, misses = [], res = [];
 
       var selected = null;
 
@@ -120,12 +120,16 @@
         var verdict = container.querySelector("#verdict");
         if (opt.correct) {
           btn.classList.add("correct"); mark(btn, true);
-          score++;
+          score++; res.push(1);
           if (verdict) { verdict.className = "verdict ok"; verdict.textContent = "✓ Correct"; }
         } else {
-          btn.classList.add("wrong"); mark(btn, false); misses.push(item.card);
+          btn.classList.add("wrong"); mark(btn, false); misses.push(item.card); res.push(0);
           all.forEach(function (b) { if (b._opt && b._opt.correct) { b.classList.add("correct"); mark(b, true); } });
-          if (verdict) { verdict.className = "verdict no"; verdict.textContent = "\u2717 Not quite: the right answer is marked"; }
+          if (verdict) {
+            verdict.className = "verdict no"; verdict.textContent = "\u2717 Not quite: the right answer is marked";
+            var why = item.card.why || (String(item.card.a || "").length <= 240 ? item.card.a : "");
+            if (why) { var w = document.createElement("div"); w.className = "verdict-why"; w.innerHTML = "<b>" + (item.card.why ? "Why it matters:" : "The answer:") + "</b> "; w.appendChild(document.createTextNode(why)); verdict.appendChild(w); }
+          }
         }
         var nav = document.createElement("button");
         nav.className = "btn gold lg"; nav.id = "qNext";
@@ -150,14 +154,18 @@
         if (opts && opts.onDone) return opts.onDone(score, questions.length);
         var pct = Math.round((score / questions.length) * 100);
         var missHtml = misses.length ? '<details class="set-fold"><summary>Review your ' + misses.length + ' miss' + (misses.length === 1 ? '' : 'es') + '</summary>' + misses.map(function (c) { return '<div class="chg"><div style="font-weight:600;margin-bottom:4px;">' + esc(c.q) + '</div><div>' + esc(c.a) + '</div></div>'; }).join("") + '</details>' : '';
+        var dots = '<div class="dots" aria-hidden="true">' + res.map(function (x) { return '<span class="dot ' + (x ? 'g' : 'r') + '"></span>'; }).join("") + '</div>' +
+          '<div class="dot-legend"><span><span class="dot g"></span>right</span><span><span class="dot r"></span>missed</span></div>';
+        var byPub = {}; misses.forEach(function (c) { var p = window.STUDY && STUDY.pubsById[c.pub]; var k = c.label || (p ? p.code : c.pub || "Your cards"); byPub[k] = (byPub[k] || 0) + 1; });
+        var weakK = Object.keys(byPub).sort(function (x, y) { return byPub[y] - byPub[x]; }).slice(0, 4);
+        var weakHtml = weakK.length ? '<h2 class="section">Weakest subjects</h2><div class="lg">' + weakK.map(function (k) { return '<div class="li"><span class="grow"><span class="t" style="font-weight:600;">' + esc(k) + '</span></span><b class="badge-bad" style="white-space:nowrap;">missed ' + byPub[k] + '</b></div>'; }).join("") + '</div>' : '';
         var msg = pct >= 90 ? "Outstanding." : pct >= 75 ? "Solid. Keep drilling." :
                   pct >= 60 ? "Passing, but review the misses." : "Needs work. Run it again.";
         container.innerHTML =
           '<div class="ring-wrap"><div class="ring">' + pct + '%' +
             '<small>' + score + " of " + questions.length + ' correct</small></div></div>' +
-          '<p class="center muted">' + msg + '</p>' + missHtml +
-          '<div class="spacer"></div>' +
-          '<button class="btn gold lg" id="again">Try another quiz</button>' +
+          dots + '<p class="center muted">' + msg + '</p>' +
+          '<button class="btn gold lg" id="again">Try another quiz</button>' + weakHtml + missHtml +
           '<div class="spacer"></div>' +
           '<button class="btn ghost" id="home">Back to Home</button>';
         container.querySelector("#again").addEventListener("click", function () {
