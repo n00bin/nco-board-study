@@ -10,6 +10,11 @@ no account, no app store, nothing to sign up for.
 
 ---
 
+## What's new in 3.23
+
+- **Listen-only Mock Board**: turn it on and you hear each question (and follow-up) instead of reading it, like the real
+  board. Tap the speaker to hear it again; the words show when you reveal.
+
 ## What's new in 3.22
 
 - **The board asks it different ways.** 453 Board Core questions now have 2-3 alternate wordings ("Explain to the board…",

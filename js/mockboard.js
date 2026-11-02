@@ -63,7 +63,7 @@
     var h = 0; for (var i = 0; i < c.id.length; i++) h = (h * 31 + c.id.charCodeAt(i)) >>> 0;
     var who = window.Store && Store.settings().boardFor === "SSG" ? "Sergeant" : "Specialist";
     var pre = ["", who + ", ", "", "Tell the board, "][h % 4];
-    if (!pre) return q;
+    if (!pre || !/^(What|Who|Whom|Whose|How|When|Which|Why|Where|Is|Are|Does|Do|Can|May|Should|Must|Under|Per|In|On|At|As|If)\b/.test(q)) return q;
     return pre + (LOWER.test(q) ? q.charAt(0).toLowerCase() + q.slice(1) : q);
   }
   // short subject names for "Board member 2 will ask about ..."
@@ -179,7 +179,14 @@
         deck = [].concat.apply([], chunks);
       } else deck.forEach(function (c) { steps.push({ kind: "q", c: c }); });
 
-      var sponsor = !!opts.sponsor;   // the sponsor holds the phone: answer shown with the question, sponsor grades
+      var sponsor = !!opts.sponsor;
+      // listen-only: like a real board, you hear the question; the words show only when you reveal
+      var listen = !sponsor && !!opts.listen && !!(window.Speech && Speech.supported());
+      function qShow(text) {
+        return listen ? '<div class="q-text" style="margin-top:8px;">&#127911; Listen&hellip;</div><div class="muted" style="font-size:.85rem;">Tap &#128266; to hear it again. The words show when you reveal.</div>'
+                      : '<div class="q-text" style="margin-top:8px;">' + esc(text) + '</div>';
+      }
+      function sayQ(text) { if (autoRead || listen) Speech.speak(text, curVoice); }   // the sponsor holds the phone: answer shown with the question, sponsor grades
 
       // ---- record-and-replay: hear your own delivery (audio stays on this phone, gone when the board ends) ----
       var rec = { stream: null, mr: null, chunks: [], url: null };
@@ -452,12 +459,12 @@
           '<div class="card"><div class="flash-toprow"><span class="flash-tag">' + esc(pubCode(c)) + (c.adv ? ' \u2022 Advanced' : '') + '</span>' +
             '<span><button class="mini" id="mSpeak" aria-label="Read aloud">&#128266;</button>' +
             '<button class="mini" id="mReport" aria-label="Report card">&#9873;</button></span></div>' +
-            '<div class="q-text" style="margin-top:8px;">' + esc(qt(c)) + '</div></div>' +
+            qShow(qt(c)) + '</div>' +
           (sponsor ? sponsorBox(c.a, c.ref, whyHtml(c)) + '<p class="center muted">Read the question aloud, listen, then grade.</p>' + (c.points ? rubricHtml(c, "Sponsor: tick what the Soldier covered") : gradeButtons())
                    : '<p class="center muted">' + (c.why && c.pub !== "sit" && c.pub !== "personal" && curStyle !== "rapid" ? 'Answer out loud, then say why it matters. Then reveal.' : 'Answer out loud, then reveal.') + '</p>' + recButton() + voiceButton() + '<button class="btn gold lg" id="reveal">Reveal answer</button>');
         container.querySelector("#mSpeak").addEventListener("click", function () { Speech.speak(qt(c), curVoice); });
         container.querySelector("#mReport").addEventListener("click", function () { App.reportCard(c); });
-        if (autoRead) Speech.speak(qt(c), curVoice);
+        sayQ(qt(c));
         if (sponsor) {
           if (c.points) onRubric(function (fr, left) { clearTimer(); markQ(c, fr, left); }, c); else onGrade(function (ok) { clearTimer(); markQ(c, ok ? 1 : 0); });
           runTimer(cs, function () { var n = container.querySelector("#tNum"); if (n) n.textContent = "Time!"; }); return;
@@ -577,10 +584,11 @@
         container.innerHTML = header("Second try") + timerHtml(t) +
           '<div class="card" style="border-color:var(--gold);"><div class="flash-tag">The board comes back to it</div>' +
             '<div class="muted" style="font-size:.85rem;margin-top:6px;">"Let\'s go back to an earlier question."</div>' +
-            '<div class="q-text" style="margin-top:8px;">' + esc(qt(c)) + '</div></div>' +
+            qShow(qt(c)) + (listen ? '<button class="mini" id="cbSpeak" aria-label="Hear it again" style="margin-top:6px;">&#128266;</button>' : '') + '</div>' +
           (sponsor ? sponsorBox(c.a, c.ref, "") + '<p class="center muted">Ask it again, listen, then grade.</p>' + gradeButtons()
                    : '<p class="center muted">You saw the answer a few minutes ago. Say it out loud now, in your own words, then reveal.</p><button class="btn gold lg" id="reveal">Reveal answer</button>');
-        if (autoRead) Speech.speak(qt(c), curVoice);
+        sayQ(qt(c));
+        var cbs = container.querySelector("#cbSpeak"); if (cbs) cbs.addEventListener("click", function () { Speech.speak(qt(c), curVoice); });
         var gradeIt = function (ok) {
           var pp = perPub[c.pub] || (perPub[c.pub] = { n: 0, miss: 0, code: pubLabel(c) });
           pp.n++; asked++; if (ok) got++; else pp.miss++;
@@ -604,10 +612,11 @@
         container.innerHTML = header() + timerHtml(t) +
           '<div class="card" style="border-color:var(--gold);"><div class="flash-tag">The board follows up</div>' +
             '<div class="muted" style="font-size:.85rem;margin-top:6px;">About: ' + esc(String(qt(c)).length > 110 ? String(qt(c)).slice(0, 107) + "\u2026" : qt(c)) + '</div>' +
-            '<div class="q-text" style="margin-top:8px;">' + esc(f.q) + '</div></div>' +
+            qShow(f.q) + (listen ? '<button class="mini" id="fuSpeak" aria-label="Hear it again" style="margin-top:6px;">&#128266;</button>' : '') + '</div>' +
           (sponsor ? sponsorBox(f.a, f.ref, "") + '<p class="center muted">Ask the follow-up, listen, then grade.</p>' + gradeButtons()
                    : '<p class="center muted">Answer out loud, then reveal.</p>' + recButton() + '<button class="btn gold lg" id="reveal">Reveal answer</button>');
-        if (autoRead) Speech.speak(f.q, curVoice);
+        sayQ(f.q);
+        var fus = container.querySelector("#fuSpeak"); if (fus) fus.addEventListener("click", function () { Speech.speak(f.q, curVoice); });
         var gradeFollow = function (ok) {
           var pp = perPub[c.pub] || (perPub[c.pub] = { n: 0, miss: 0, code: pubLabel(c) });
           pp.n++; asked++;

@@ -519,6 +519,7 @@
       '<div class="card center"><div class="code" style="font-size:1.1rem;">&#127894; ' + esc(title) + '</div>' +
         '<div class="muted">Answer out loud, like the real board. Timer: ' + (timer > 0 ? timer + 's/question' : 'off') + ' (<a href="#/settings">change</a>)</div></div>' +
       '<div class="card"><label class="switch"><input type="checkbox" id="fullBoard"' + (Store.settings().fullBoard !== false ? " checked" : "") + '> <span><b>Full board</b>: report in, drill, introduce yourself, the questions, report out. Turn off for a quick board (just the questions).</span></label>' +
+        (window.speechSynthesis ? '<label class="switch" style="margin-top:12px;"><input type="checkbox" id="listenOnly"' + (Store.settings().listenOnly ? " checked" : "") + '> <span><b>Listen-only</b>: hear each question instead of reading it, like the real board (turn the sound up)</span></label>' : '') +
         '<label class="switch" style="margin-top:12px;"><input type="checkbox" id="sponsorMode"> <span><b>My sponsor is holding the phone</b>: they read each question, see the answer, and grade you</span></label></div>' +
       '<h2 class="section">How many questions?</h2>' +
       '<div class="muted" style="font-size:.85rem;margin:0 4px 8px;" id="lenNote"></div>' +
@@ -546,7 +547,8 @@
         var quick = b.getAttribute("data-quick") === "1";
         var full = !quick && mount.querySelector("#fullBoard").checked, sponsor = mount.querySelector("#sponsorMode").checked;
         if (!quick) Store.setSetting("fullBoard", full);
-        MockBoard.render(mount, cards, parseInt(b.getAttribute("data-n"), 10), { full: full, sponsor: sponsor, quick: quick });
+        var lo = mount.querySelector("#listenOnly"), listen = !!(lo && lo.checked); Store.setSetting("listenOnly", listen);
+        MockBoard.render(mount, cards, parseInt(b.getAttribute("data-n"), 10), { full: full, sponsor: sponsor, quick: quick, listen: listen });
       });
     });
   }
