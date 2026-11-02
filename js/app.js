@@ -91,7 +91,7 @@
       "Not recommended": "It happens to good Soldiers, and it isn't the end. Your first-line leader must counsel you in writing on what to improve, with a development plan, and keep counseling you at least every 3 months (AR 600-8-19, para 1-33). Ask the board's feedback, fix those areas, and go back better.",
       "Board postponed": "Use the extra time: set the new date in Settings and the plan will pace you to it." };
     if (br) { var r = br.split("|")[1] || ""; return '<div class="card"><div class="flash-tag">Your board result: ' + esc(r) + '</div><div class="muted">' + esc(AFTER[r] || "") + '</div>' +
-      '<button class="btn ghost" id="brShare" style="margin-top:8px;">Share it (anonymous) to help other Soldiers</button></div>'; }
+      '<button class="btn ghost" id="brShare" style="margin-top:8px;">Share it with your sponsor</button></div>'; }
     return '<div class="card" style="border-color:var(--gold);"><div class="flash-tag">How did your board go?</div><div class="chip-row" id="brAsk">' +
       ["Recommended", "Not recommended", "Board postponed"].map(function (t) { return '<button class="chip" data-r="' + t + '">' + t + '</button>'; }).join("") + '</div>' +
       '<div class="muted" style="font-size:.8rem;margin-top:6px;">Saved on this phone only. You can choose to share it after.</div></div>';
@@ -103,9 +103,10 @@
     var sh = mount.querySelector("#brShare");
     if (sh) sh.addEventListener("click", function () {
       var br = Store.settings().boardResult.split("|"), boards = Store.quizzes().filter(function (q) { return /^Mock Board/.test(q.deck); }).length;
-      var text = "NCO Board app result (anonymous)" + (Store.settings().pilotCode ? " [pilot " + Store.settings().pilotCode + "]" : "") + ": " + br[1] + ". Board: " + (Store.settings().boardFor || "not set") + ". Board-ready score before the board: " + rs.ready + "%. Board Core cards studied: " + rs.seen + ". Mock Boards run: " + boards + ". App " + (STUDY.meta.version || "") + ".";
-      if (navigator.share) navigator.share({ title: "NCO Board app result", text: text }).catch(function () {});
-      else window.open("https://github.com/" + REPO + "/issues/new?title=" + encodeURIComponent("Board result: " + br[1]) + "&body=" + encodeURIComponent(text), "_blank");
+      var text = "My board result: " + br[1] + ". Board: " + (Store.settings().boardFor || "not set") + ". Board-ready score before the board: " + rs.ready + "%. Board Core cards studied: " + rs.seen + ". Mock Boards run: " + boards + ".";
+      if (navigator.share) navigator.share({ title: "My board result", text: text }).catch(function () {});
+      else if (navigator.clipboard) navigator.clipboard.writeText(text).then(function () { App.toast("Result copied", 3000); }, function () { App.toast(text, 6000); });
+      else App.toast(text, 6000);
     });
   }
 
@@ -505,12 +506,11 @@
       '<a class="row" href="#/learn"><div class="grow"><div class="code">&#128214; Learn Mode</div><div class="ttl">Guided lessons — learn it from scratch</div></div><div class="chev">&#8250;</div></a>' +
       '<a class="row" href="#/pick/board"><div class="grow"><div class="code">&#127894; Mock Board</div><div class="ttl">Simulate the oral board</div></div><div class="chev">&#8250;</div></a>' +
       '<a class="row" href="#/boardday"><div class="grow"><div class="code">&#128203; Board Day Prep</div><div class="ttl">Chain of command, uniform, reporting</div></div><div class="chev">&#8250;</div></a>' +
-      '<a class="row" href="#/squad"><div class="grow"><div class="code">&#128101; Squad Board &amp; Sponsor</div><div class="ttl">Send your progress; compare with your squad</div></div><div class="chev">&#8250;</div></a>' +
+      '<a class="row" href="#/sendprogress"><div class="grow"><div class="code">&#128228; Send my progress to my sponsor</div><div class="ttl">They see your weak spots and can run a board on them</div></div><div class="chev">&#8250;</div></a>' +
       '<a class="row" href="#/badges"><div class="grow"><div class="code">&#127941; Badges</div><div class="ttl">Small wins on the way to your board</div></div><div class="chev">&#8250;</div></a>' +
       '<a class="row" href="#/mycards"><div class="grow"><div class="code">&#128221; My Cards</div><div class="ttl">Add your unit\'s smart-book questions</div></div><div class="chev">&#8250;</div></a>' +
       '<a class="row" href="#/share"><div class="grow"><div class="code">&#128279; Share &amp; QR code</div><div class="ttl">Send the app to other Soldiers</div></div><div class="chev">&#8250;</div></a>' +
       '<a class="row" href="#/settings"><div class="grow"><div class="code">&#9881;&#65039; Settings</div><div class="ttl">Daily goal, board timer, read-aloud</div></div><div class="chev">&#8250;</div></a>' +
-      '<a class="row" href="#/pilot"><div class="grow"><div class="code">&#128203; Unit Pilot (for leaders)</div><div class="ttl">See whether the app helps your Soldiers</div></div><div class="chev">&#8250;</div></a>' +
       '<a class="row" href="#/backup"><div class="grow"><div class="code">&#128190; Backup &amp; restore</div><div class="ttl">Save or move your progress</div></div><div class="chev">&#8250;</div></a>' +
       '<div class="muted center" style="font-size:.8rem;margin-top:18px;">NCO Board Study Guide<br>' + esc(versionLine()) + '</div>';
     html += '<h2 class="section">Recent quizzes &amp; boards</h2>';
@@ -845,7 +845,7 @@
   }
 
 
-  // ---------------- motivation: badges, weekly recap, progress links, squad board ----------------
+  // ---------------- motivation: badges, weekly recap, progress links ----------------
   var BADGES = [
     { id: "first-card", t: "First steps", d: "Studied your first card", test: function (x) { return x.seen >= 1; } },
     { id: "core-50", t: "50 Board Core cards", d: "Studied 50 Board Core cards", test: function (x) { return x.seen >= 50; } },
@@ -891,9 +891,9 @@
       return '<div style="flex:1;text-align:center;"><div title="' + d.count + ' cards" style="height:' + h + 'px;background:' + (d.count ? 'var(--gold)' : 'var(--line, #3a3f2e)') + ';border-radius:3px;margin:0 2px;"></div><div class="muted" style="font-size:.7rem;margin-top:2px;">' + dn + '</div></div>';
     }).join("");
     return '<div class="card"><div class="flash-tag">Your last 7 days</div><div style="display:flex;align-items:flex-end;height:52px;margin:6px 0;" aria-hidden="true">' + bars + '</div>' +
-      '<div class="muted" style="font-size:.85rem;">' + total + ' cards on ' + days + ' day' + (days === 1 ? '' : 's') + ' • ' + boards + ' Mock Board' + (boards === 1 ? '' : 's') + ' • <a href="#/squad">Squad board</a> • <a href="#/badges">Badges</a></div></div>';
+      '<div class="muted" style="font-size:.85rem;">' + total + ' cards on ' + days + ' day' + (days === 1 ? '' : 's') + ' • ' + boards + ' Mock Board' + (boards === 1 ? '' : 's') + ' • <a href="#/sendprogress">Send to my sponsor</a> • <a href="#/badges">Badges</a></div></div>';
   }
-  // ---- progress snapshot: encoded into a link, shown on the sponsor's (or a squad mate's) phone ----
+  // ---- progress snapshot: encoded into a link, shown on the sponsor's phone ----
   function b64e(o) { return btoa(unescape(encodeURIComponent(JSON.stringify(o)))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, ""); }
   function b64d(s) { s = String(s).replace(/-/g, "+").replace(/_/g, "/"); while (s.length % 4) s += "="; return JSON.parse(decodeURIComponent(escape(atob(s)))); }
   function snapshot() {
@@ -910,9 +910,9 @@
       mw: q.filter(function (x) { return /^Mock Board/.test(x.deck) && x.date > weekAgo; }).length, w: weakPubs, at: Date.now() };
   }
   function shareProgress() {
-    if (!Store.settings().displayName) { App.go("#/squad"); App.toast("Add your name first, so your sponsor or squad knows it's you.", 3500); return; }
+    if (!Store.settings().displayName) { App.go("#/sendprogress"); App.toast("Add your name first, so your sponsor knows it's you.", 3500); return; }
     var url = APP_URL + "#/progress/" + b64e(snapshot());
-    var text = (Store.settings().displayName) + "'s board prep progress. Open to see it (and add me to your squad board): " + url;
+    var text = (Store.settings().displayName) + "'s board prep progress. Open it to see my weak spots and run a board on them: " + url;
     if (navigator.share) navigator.share({ title: "My board prep progress", text: text }).catch(function () {});
     else if (navigator.clipboard) navigator.clipboard.writeText(text).then(function () { App.toast("Progress link copied", 3000); }, function () { App.toast(url, 6000); });
     else App.toast(url, 6000);
@@ -936,53 +936,17 @@
         (x.m && x.m.length ? '<br>Recent Mock Boards: <b>' + x.m.join('%, ') + '%</b>' : '<br>No Mock Boards yet') + '</div></div>' +
       ((x.w || []).length ? '<div class="card"><div class="flash-tag">Weakest subjects</div><div style="font-weight:600;">' + esc(x.w.map(pubName).join(", ")) + '</div></div>' : '') +
       (board.length >= 3 ? '<a class="btn gold lg" href="#/sponsor/' + board.join(",") + '">&#127894; Run a sponsor board on these weak spots</a><div class="spacer"></div>' : '') +
-      '<button class="btn green lg" id="addSquad">&#128101; Add ' + who + ' to my squad board</button>' +
       '<div class="muted center" style="font-size:.8rem;margin-top:8px;">Nothing is sent anywhere: this page was built from the link itself.</div>';
-    mount.querySelector("#addSquad").addEventListener("click", function () {
-      if (x.id === Store.uid()) { App.toast("That's your own progress."); return; }
-      Store.upsertSquad({ id: String(x.id || "").replace(/[^a-z0-9]/g, "").slice(0, 16), name: String(x.n || "Soldier").slice(0, 30), ready: x.r | 0, core: x.s | 0, week: x.wk | 0, streak: x.st | 0, mocks: x.mw | 0, at: Number(x.at) || Date.now() });
-      App.toast("Added to your squad board"); App.go("#/squad");
-    });
   }
-  function screenSquad() {
-    setTitle("Squad Board", true);
-    var me = snapshot(), name = Store.settings().displayName || "";
-    var rows = Store.squad().concat([{ id: me.id, name: (name || "You") + " (you)", ready: me.r, core: me.s, week: me.wk, streak: me.st, mocks: me.mw, at: Date.now(), me: true }]);
-    rows.sort(function (a, b) { return (b.week - a.week) || (b.ready - a.ready); });
-    var html = '<div class="card"><div class="muted">Study with your battle buddies. Everyone sends their progress link to the group chat; open each link and tap "Add to my squad board." Ranked by cards studied in the last 7 days. Stays on this phone.</div></div>' +
-      '<label class="lbl" for="dName">Your name on the board</label><input class="input" id="dName" maxlength="30" placeholder="e.g. SPC Rivera" value="' + escAttr(name) + '">' +
-      '<div class="spacer"></div><button class="btn gold lg" id="shareMine">&#128228; Send my progress (sponsor or squad)</button>' +
-      '<h2 class="section">This week</h2>';
-    rows.forEach(function (r, k) {
-      var age = r.me ? "" : ' • updated ' + new Date(r.at).toLocaleDateString();
-      html += '<div class="row"' + (r.me ? ' style="border-color:var(--gold);"' : '') + '><div class="numbubble">' + (k + 1) + '</div><div class="grow"><div class="code">' + esc(r.name) + '</div>' +
-        '<div class="ttl">' + r.week + ' cards this week • ' + r.ready + '% ready • ' + r.streak + '-day streak' + age + '</div></div>' +
-        (r.me ? '' : '<button class="mini" data-rm="' + escAttr(r.id) + '" aria-label="Remove ' + escAttr(r.name) + ' from the squad board">&#10005;</button>') + '</div>';
-    });
-    if (rows.length === 1) html += '<div class="empty">Just you so far. Send your link to your squad and add theirs.</div>';
-    mount.innerHTML = html;
+  function screenSendProgress() {
+    setTitle("Send My Progress", true);
+    var name = Store.settings().displayName || "";
+    mount.innerHTML = '<div class="card"><div class="muted">Send your sponsor (or anyone helping you) a link to your progress: board-ready score, cards studied, Mock Board scores and your weakest subjects. They can run a board on your weak spots from their own phone. The link carries a snapshot; nothing is stored online.</div></div>' +
+      '<label class="lbl" for="dName">Your name</label><input class="input" id="dName" maxlength="30" placeholder="e.g. SPC Rivera" value="' + escAttr(name) + '">' +
+      '<div class="spacer"></div><button class="btn gold lg" id="shareMine">&#128228; Send my progress</button>';
     var dn = mount.querySelector("#dName");
     dn.addEventListener("change", function () { Store.setSetting("displayName", dn.value.replace(/[<>]/g, "").trim().slice(0, 30)); App.toast("Name saved"); });
     mount.querySelector("#shareMine").addEventListener("click", function () { Store.setSetting("displayName", dn.value.replace(/[<>]/g, "").trim().slice(0, 30)); shareProgress(); });
-    mount.querySelectorAll("[data-rm]").forEach(function (b) { b.addEventListener("click", function () { Store.removeSquad(b.getAttribute("data-rm")); screenSquad(); }); });
-  }
-  // ---- unit pilot kit: for a leader who wants to see whether the app helps ----
-  function screenPilot() {
-    setTitle("Unit Pilot (for leaders)", true);
-    var code = Store.settings().pilotCode || "";
-    mount.innerHTML =
-      '<div class="card"><div class="muted">Want to know if this helps your Soldiers? Run a simple pilot with the Soldiers going to your next boards. Nothing is collected automatically: Soldiers choose to share their result.</div></div>' +
-      '<h2 class="section">How to run it</h2>' +
-      ['Pick a short pilot code (for example 2-505-NOV) and give it to each Soldier.',
-       'Each Soldier installs the app, enters the code below, sets their board date and which board, and studies with Today\'s plan.',
-       'Encourage at least two sponsor boards (Mock Board > send a board to my sponsor).',
-       'After the board, each Soldier taps their result on Home ("How did your board go?") and then "Share it": the shared text includes the pilot code, board-ready score, cards studied, and Mock Boards run.',
-       'Collect the shared results (group chat, email) and compare recommendation rates with Soldiers who didn\'t use the app.']
-        .map(function (t, i) { return '<div class="row"><div class="numbubble">' + (i + 1) + '</div><div class="grow"><div class="ttl">' + esc(t) + '</div></div></div>'; }).join("") +
-      '<label class="lbl" for="pCode">Pilot code (optional)</label><input class="input" id="pCode" maxlength="20" placeholder="e.g. 2-505-NOV" value="' + escAttr(code) + '">' +
-      '<div class="muted" style="font-size:.8rem;margin-top:6px;">Letters, numbers and dashes. It is added only to results you choose to share.</div>';
-    var pc = mount.querySelector("#pCode");
-    pc.addEventListener("change", function () { Store.setSetting("pilotCode", pc.value.replace(/[^A-Za-z0-9-]/g, "").slice(0, 20)); App.toast("Pilot code saved"); });
   }
 
   function screenChanges() {
@@ -1216,9 +1180,8 @@
     if (head === "memo") return screenMemo(), tab("home");
     if (head === "changes") return screenChanges(), tab("home");
     if (head === "badges") return screenBadges(), tab("more");
-    if (head === "squad") return screenSquad(), tab("more");
+    if (head === "sendprogress" || head === "squad") return screenSendProgress(), tab("more");
     if (head === "progress") return screenProgress(parts[1] || ""), tab("home");
-    if (head === "pilot") return screenPilot(), tab("more");
     if (head === "sponsor") return screenSponsorBoard(parts[1] || ""), tab("home");
     if (head === "sbresult") return screenSponsorResult(parts.slice(1)), tab("home");
     if (head === "pub") return screenPub(parts[1]), tab("browse");
