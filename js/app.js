@@ -188,7 +188,7 @@
       var br = (Store.settings().boardResult || "").split("|")[1] || "";
       title = br === "Recommended" ? "Next steps after your board" : br === "Not recommended" ? "Your plan for the next board" : "After your board";
       if (br === "Not recommended") items.push('<a href="#/flash/leeches">&#9888;&#65039; Work on the cards you kept missing</a>', '<a href="#/board/core">&#127894; Run a Mock Board each week until your next board</a>');
-      else if (br === "Recommended") items.push('<a href="#/pub/ar600-8-19">&#128200; How points and cutoff scores work (AR 600-8-19)</a>', '<a href="#/pub/ar350-1">&#127891; Get ready for ' + (Store.settings().boardFor === "SSG" ? "ALC" : "BLC") + ': NCO professional development (AR 350-1)</a>');
+      else if (br === "Recommended") items.push('<a href="#/points">&#128200; Estimate your promotion points against the cutoff</a>', '<a href="#/pub/ar350-1">&#127891; Get ready for ' + (Store.settings().boardFor === "SSG" ? "ALC" : "BLC") + ': NCO professional development (AR 350-1)</a>');
       items.push('<a href="#/settings">&#128197; Set your next board date</a>');
     } else if (days === 0) {
       title = "Board day: no new studying";
@@ -212,7 +212,7 @@
       else {
         var lp = window.Learn && Learn.nextBoardLesson ? Learn.nextBoardLesson() : null;
         if (lp && lp.next) items.push('<a href="#/lesson/' + escAttr(lp.next.id) + '">&#128214; Lesson: ' + esc(lp.next.title.replace(/^.*:\s*/, "")) + '</a>');
-        if (dueN > 0) items.push('<a href="#/flash/due">&#8635; Review ' + Math.min(dueN, 40) + (dueN > 40 ? ' of ' + dueN : '') + ' card' + (dueN > 1 ? "s" : "") + ' due today</a>');
+        if (dueN > 0) items.push('<a href="#/flash/due">&#8635; Review ' + Math.min(dueN, 20) + (dueN > 20 ? ' of ' + dueN : '') + ' card' + (dueN > 1 ? "s" : "") + ' due today</a>');
         if (unseen) { var pace = (days != null && days > 7) ? Math.ceil(unseen / Math.max(1, days - 7)) : 0;
           items.push('<a href="#/flash/core">&#11088; ' + (pace ? 'Learn ' + pace + ' new Board Core cards' : 'New Board Core cards') + ' (' + unseen + ' left)</a>'); }
       }
@@ -226,8 +226,10 @@
     // style each item as a full-width button (default links are unreadable dark blue on this background)
     items = items.map(function (h) { return h.replace('<a href=', '<a class="btn ghost plan-item" href='); });
     var sponsorNote = items.some(function (h) { return /sponsor/.test(h); }) ? '<div class="muted" style="font-size:.8rem;margin-top:8px;">Your sponsor is the NCO who preps you, usually your first-line leader. <a href="#/pub/boardskills">More</a></div>' : '';
+    var bk = (days === 0 || days === 1) ? STUDY.cards.filter(function (c) { return c.id === "bk-01"; })[0] : null;
+    var blank = bk ? '<div class="card" style="margin:10px 0 0;border-color:var(--gold);"><div class="flash-tag">If you go blank or don&#39;t know</div><div style="font-size:.95rem;">' + esc(bk.a) + '</div></div>' : '';
     var remind = (!Store.settings().remindersAdded && (days == null || days > 1)) ? '<div style="margin-top:8px;font-size:.85rem;"><a href="#/settings">&#128276; Add study reminders to my calendar</a></div>' : '';
-    return '<div class="card"><div class="flash-tag">' + esc(title) + '</div><div style="display:flex;flex-direction:column;gap:8px;margin-top:8px;">' + items.join("") + '</div>' + sponsorNote + remind + '</div>';
+    return '<div class="card"><div class="flash-tag">' + esc(title) + '</div><div style="display:flex;flex-direction:column;gap:8px;margin-top:8px;">' + items.join("") + '</div>' + blank + sponsorNote + remind + '</div>';
   }
   // "Ready?" check: based on what you actually REMEMBERED (last grade was a hit), plus recent Mock Boards.
   // Cards merely seen don't count. Shows the weakest subjects by misses.
@@ -291,7 +293,7 @@
     var rs = readyScore(coreIds), dToB = daysToBoard(), calm = dToB === 0 || dToB === 1;
     // today's target = the plan (reviews due + paced new cards), never less than the daily goal
     var unseenN = coreIds.length - rs.seen, paceN = (dToB != null && dToB > 7) ? Math.ceil(unseenN / Math.max(1, dToB - 7)) : 0;
-    var dayTarget = Math.max(daily.goal, Math.min(dueN, 40) + paceN);
+    var dayTarget = Math.max(daily.goal, Math.min(dueN, 20) + paceN);
     var recommended = dToB != null && dToB < 0 && /\|Recommended$/.test(Store.settings().boardResult || "");
 
     // 1) where you stand
@@ -773,6 +775,7 @@
       menuRow("#/uniform", "&#129509; Uniform Inspection", "Check your uniform before you walk in") +
       menuRow("#/memo", "&#128220; My Board Memo", "Type in your memo's reporting wording, uniform, time, and place; Mock Board uses it") +
       menuRow("#/records", "&#128193; Records & What to Bring", "Check your SRB, points, and board memo; what goes in your pockets") +
+      menuRow("#/points", "&#128200; Promotion Points Worksheet", "Estimate your points and see how far you are from the cutoff") +
       menuRow("#/reporting", "&#127894; How to Report to the Board", "Reporting sequence & bearing") +
       menuRow("#/statement", "&#128221; Opening Statement", "Draft and save your self-introduction") +
       menuRow("#/pub/boardskills", "&#129504; Board Know-How", "If you freeze, asking for a repeat, what to bring, how to answer") +
@@ -827,6 +830,8 @@
     var note = ""; try { note = decodeURIComponent(rest.join("/") || "").slice(0, 300); } catch (e) { note = ""; }
     if (!(total > 0) || !(got >= 0) || got > total || !token) { mount.innerHTML = '<div class="empty">This results link is incomplete. Ask your sponsor to send it again.</div>'; return; }
     var seenKey = "sbr-" + token, fresh = !Store.chain()[seenKey];
+    var selfB = Store.quizzes().filter(function (q) { return /^Mock Board/.test(q.deck) && !/with sponsor/.test(q.deck) && q.total; }).slice(0, 5);
+    var selfPct = selfB.length ? Math.round(selfB.reduce(function (s, q) { return s + 100 * q.score / q.total; }, 0) / selfB.length) : null;
     var byId = {}; STUDY.cards.forEach(function (c) { byId[c.id] = c; });
     if (fresh) {
       Store.recordQuiz("Mock Board with sponsor", got, total);
@@ -835,8 +840,10 @@
     }
     var pct = Math.round(100 * got / total);
     mount.innerHTML = '<div class="ring-wrap"><div class="ring">' + pct + '%<small>from your sponsor\'s board</small></div></div>' +
-      (bear.some(function (b) { return !b.ok; }) ? '<div class="card" style="border-color:var(--bad);text-align:center;"><b>Not board-ready yet.</b> <span class="muted">Your answers were strong, but work on: ' +
+      (bear.some(function (b) { return !b.ok; }) ? '<div class="card" style="border-color:var(--bad);text-align:center;"><b>Not board-ready yet.</b> <span class="muted">' + (pct >= 75 ? 'Your answers were strong, but work on: ' : 'Work on your answers, and on: ') +
         esc(bear.filter(function (b) { return !b.ok; }).map(function (b) { return b.label.toLowerCase(); }).join(", ")) + '. A board weighs bearing as much as the facts.</span></div>' : '') +
+      (selfPct != null ? '<div class="card"><div class="flash-tag">You vs. your sponsor</div><div class="muted">Your own Mock Boards average <b>' + selfPct + '%</b>. Your sponsor scored you <b>' + pct + '%</b>. ' +
+        (selfPct - pct >= 10 ? 'You grade yourself about ' + (selfPct - pct) + ' points higher than your sponsor does. Next time, only give yourself a key point if you said it out loud, clearly.' : selfPct - pct <= -10 ? 'Your sponsor scored you higher than you score yourself. You know more than you think.' : 'Your own grading is close to your sponsor&#39;s. You can trust your practice scores.') + '</div></div>' : '') +
       (bear.length ? '<h2 class="section">Bearing &amp; delivery (your sponsor\'s grades)</h2>' + bear.map(function (b) { return '<div class="row"><div class="grow"><div class="ttl">' + esc(b.label) + '</div></div><div class="' + (b.ok ? "badge-good" : "badge-bad") + '" style="font-weight:700;">' + (b.ok ? "\u2713 clean" : "\u2717 needs work") + '</div></div>'; }).join("") : '') +
       (note ? '<div class="card" style="border-color:var(--gold);"><div class="flash-tag">Your sponsor\'s notes</div><div style="white-space:pre-wrap;">' + esc(note) + '</div></div>' : '') +
       '<p class="center muted">' + (fresh ? "Saved to your history. " : "Already saved. ") + (ids.length ? "The questions you missed will come back sooner in your reviews:" : "No misses. Nice work.") + '</p>' +
@@ -1034,6 +1041,50 @@
     });
   }
 
+  // ---- promotion points worksheet: an estimate. Official points come from your records in IPPS-A. ----
+  var PTS = [
+    { k: "mil", t: "Military training", max: { SGT: 280, SSG: 230 }, h: "Weapons qualification (up to 160 for SGT, 110 for SSG) plus your AFT score (up to 120).", ref: "para 3-15" },
+    { k: "awd", t: "Awards, decorations and achievements", max: { SGT: 145, SSG: 165 }, h: "Awards, badges and other achievements in your records.", ref: "para 3-16" },
+    { k: "med", t: "Military education", max: { SGT: 240, SSG: 245 }, h: "BLC (for SGT) or ALC (for SSG) adds 150, plus 20 for commandant's list or 40 for DHG/DLG. Resident courses and online training add more, up to their own limits.", ref: "para 3-17" },
+    { k: "civ", t: "Civilian education", max: { SGT: 135, SSG: 160 }, h: "Two points per semester hour of accredited college, plus credit exams and certifications.", ref: "para 3-18" }
+  ];
+  function screenPoints() {
+    setTitle("Promotion Points Worksheet", true);
+    var rank = Store.settings().boardFor === "SSG" ? "SSG" : "SGT", m = Store.chain();
+    var html = '<div class="card"><div class="muted">A quick estimate to see where you stand. Your real points are figured automatically from your records (AR 600-8-19, para 3-14), so check your Soldier Record Brief and fix errors early: corrections only count going forward.</div></div>' +
+      '<div class="chip-row" id="ptRank">' + ["SGT", "SSG"].map(function (r) { return '<button class="chip' + (r === rank ? ' on' : '') + '" data-r="' + r + '">For ' + r + '</button>'; }).join("") + '</div>';
+    PTS.forEach(function (p) {
+      html += '<label class="lbl" for="pt-' + p.k + '"><b>' + esc(p.t) + '</b> (max ' + p.max[rank] + ')</label>' +
+        '<input class="input" id="pt-' + p.k + '" inputmode="numeric" maxlength="3" placeholder="0" value="' + escAttr(m["pts-" + p.k] || "") + '">' +
+        '<div class="muted" style="font-size:.8rem;margin:4px 0 8px;">' + esc(p.h) + ' AR 600-8-19 (Mar 2026), ' + p.ref + '.</div>';
+    });
+    html += '<label class="lbl" for="pt-cut">This month\'s cutoff score for your MOS (from your S1 or the HRC cutoff list)</label>' +
+      '<input class="input" id="pt-cut" inputmode="numeric" maxlength="3" placeholder="e.g. 450" value="' + escAttr(m["pts-cut"] || "") + '">' +
+      '<div class="card" id="ptTotal" style="margin-top:12px;border-color:var(--gold);"></div>';
+    mount.innerHTML = html;
+    function val(k, cap) { var n = parseInt((mount.querySelector("#pt-" + k).value || "").replace(/\D/g, ""), 10); return isNaN(n) ? 0 : Math.min(n, cap); }
+    function update() {
+      var total = 0, over = [];
+      PTS.forEach(function (p) {
+        var raw = parseInt((mount.querySelector("#pt-" + p.k).value || "").replace(/\D/g, ""), 10) || 0;
+        if (raw > p.max[rank]) over.push(p.t.toLowerCase() + " counts only up to " + p.max[rank]);
+        total += val(p.k, p.max[rank]);
+        Store.setChainRole("pts-" + p.k, mount.querySelector("#pt-" + p.k).value.replace(/\D/g, "").slice(0, 3));
+      });
+      var cut = parseInt((mount.querySelector("#pt-cut").value || "").replace(/\D/g, ""), 10);
+      Store.setChainRole("pts-cut", isNaN(cut) ? "" : String(cut));
+      var gap = isNaN(cut) ? "" : total >= cut ? '<div style="margin-top:6px;" class="badge-good"><b>' + (total - cut) + ' points over the cutoff.</b></div>'
+        : '<div style="margin-top:6px;"><b>' + (cut - total) + ' points short of the cutoff.</b> <span class="muted">The categories with the most room left are the fastest gains.</span></div>';
+      var room = PTS.map(function (p) { return { t: p.t, left: p.max[rank] - val(p.k, p.max[rank]) }; }).sort(function (x, y) { return y.left - x.left; }).slice(0, 2);
+      mount.querySelector("#ptTotal").innerHTML = '<div class="flash-tag">Your estimate for ' + rank + '</div><div style="font-size:1.8rem;font-weight:800;">' + total + ' <span class="muted" style="font-size:1rem;">of 800</span></div>' + gap +
+        '<div class="muted" style="font-size:.85rem;margin-top:6px;">Most room left: ' + room.map(function (r) { return esc(r.t.toLowerCase()) + ' (' + r.left + ')'; }).join(", ") + '.</div>' +
+        (over.length ? '<div class="muted" style="font-size:.8rem;margin-top:6px;">Note: ' + esc(over.join("; ")) + '.</div>' : '');
+    }
+    mount.querySelectorAll("input").forEach(function (i) { i.addEventListener("input", update); });
+    mount.querySelectorAll("#ptRank .chip").forEach(function (b) { b.addEventListener("click", function () { Store.setSetting("boardFor", b.getAttribute("data-r")); screenPoints(); }); });
+    update();
+  }
+
   function screenRecords() {
     setTitle("Records & What to Bring", true);
     var checks = Store.checks();
@@ -1177,6 +1228,7 @@
     if (head === "knowledge") return screenKnowledge(), tab("home");
     if (head === "room") return screenRoom(), tab("home");
     if (head === "records") return screenRecords(), tab("home");
+    if (head === "points") return screenPoints(), tab("home");
     if (head === "memo") return screenMemo(), tab("home");
     if (head === "changes") return screenChanges(), tab("home");
     if (head === "badges") return screenBadges(), tab("more");
@@ -1226,6 +1278,7 @@
     allCards: allCards,
     reportingSteps: REPORTING_STEPS,
     toast: function (msg, ms) {
+      document.querySelectorAll(".toast").forEach(function (o) { o.remove(); });   // one at a time
       var t = document.createElement("div"); t.className = "toast"; t.textContent = msg;
       t.setAttribute("role", "status"); t.setAttribute("aria-live", "polite");
       document.body.appendChild(t); setTimeout(function () { t.remove(); }, ms || 2500);

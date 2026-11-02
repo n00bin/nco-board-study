@@ -54,7 +54,7 @@
       var hint = container.querySelector("#fHint");
       var front = container.querySelector("#fFront"), back = container.querySelector("#fBack");
 
-      function pubCode(c) { var p = STUDY.pubsById[c.pub]; return p ? p.code : ""; }
+      function pubCode(c) { if (c.label) return c.label; var p = STUDY.pubsById[c.pub]; return p ? p.code : ""; }
 
       function setFaces(flipped) {
         front.setAttribute("aria-hidden", flipped ? "true" : "false");
@@ -81,7 +81,7 @@
             (c.sample ? '<div class="flash-ref" style="color:var(--text);margin-top:12px;"><b>Example answer (fictional Soldier, make it yours):</b> ' + esc(c.sample) + '</div>' : "") +
             (c.points && c.points.length > 1 ? '<div class="flash-ref" style="color:var(--text);margin-top:12px;"><b>Did you cover these?</b>' + c.points.map(function (p) { return '<div style="margin-top:4px;">\u2022 ' + esc(p) + '</div>'; }).join("") + '</div>' : "") +
             (c.follow && c.follow.length ? '<div class="flash-ref" style="margin-top:12px;"><b>Board follow-ups:</b>' +
-              c.follow.map(function (f) { return '<div style="margin-top:6px;">&#8226; ' + esc(f.q) + '<br><span class="muted">' + esc(f.a) + '</span></div>'; }).join("") + '</div>' : "");
+              c.follow.map(function (f) { return '<div style="margin-top:8px;"><b style="color:var(--text);">Q: ' + esc(f.q) + '</b><span class="muted follow-a">A: ' + esc(f.a) + '</span></div>'; }).join("") + '</div>' : "");
           container.querySelector("#fRef").textContent = c.ref ? "Reference: " + c.ref : "";
           var inner = cardEl.querySelector(".flash-inner");
           inner.style.minHeight = ""; cardEl.style.minHeight = "";
@@ -143,7 +143,7 @@
       if (!queue.length) queue = cards.slice();
       var i = 0, reviewed = 0;
 
-      function pubCode(c) { var p = STUDY.pubsById[c.pub]; return p ? p.code : ""; }
+      function pubCode(c) { if (c.label) return c.label; var p = STUDY.pubsById[c.pub]; return p ? p.code : ""; }
 
       function ask() {
         var c = queue[i];

@@ -199,7 +199,7 @@
       var secs = (Store.settings().timer | 0);
       var autoRead = Store.settings().autoRead;
 
-      function pubCode(c) { var p = STUDY.pubsById[c.pub]; return p ? p.code : c.pub; }
+      function pubCode(c) { if (c.label) return c.label; var p = STUDY.pubsById[c.pub]; return p ? p.code : c.pub; }
       function pubLabel(c) { var p = STUDY.pubsById[c.pub]; return p ? p.code + (p.title ? " — " + p.title : "") : c.pub; }
       // Recite-length answers (creeds, Code of Conduct) get no timer; long answers and scenarios get double time.
       function timeFor(c) {
@@ -406,7 +406,7 @@
 
       // ---- voice check: hear what you said, pre-tick the key points it heard (you can still change any box) ----
       var voice = { rec: null, text: "" };
-      function voiceButton() { return SR ? '<button class="btn ghost" id="voiceBtn">&#128483;&#65039; Voice check (optional): the app listens</button><div class="spacer"></div>' : ""; }
+      function voiceButton() { return SR ? '<button class="btn ghost" id="voiceBtn">&#128483;&#65039; Voice check (optional, needs a connection): the app listens</button><div class="spacer"></div>' : ""; }
       function wireVoice() {
         voice.text = ""; voice.paused = false;
         var b = container.querySelector("#voiceBtn"); if (!b) return;
@@ -421,6 +421,9 @@
             // (tapping Record pauses the voice check; see wireRec)
           } catch (err) { App.toast("Voice check isn't supported in this browser.", 3500); }
         };
+        if (navigator.onLine === false) {   // speech recognition uses the phone's online service: say so up front instead of failing
+          b.textContent = "Voice check needs a connection. Use Record to hear yourself instead."; b.disabled = true; return;
+        }
         b.addEventListener("click", start);
         if (!Store.settings().voiceOff && !voiceFail) start();
       }
