@@ -120,7 +120,7 @@
   // One verdict everywhere. bearingMiss: labels that need work; sitMiss: required situational questions missed.
   function verdict(pct, bearingMiss, sitMiss) {
     bearingMiss = bearingMiss || []; sitMiss = sitMiss || 0;
-    var fix = [bearingMiss.length ? listJoin2(bearingMiss) : "", sitMiss ? sitMiss + " situational question" + (sitMiss > 1 ? "s" : "") : ""].filter(Boolean);
+    var fix = [bearingMiss.length ? listJoin2(bearingMiss.map(function (b) { return /^tell us/i.test(b) ? "\u201cTell us about yourself\u201d" : b; })) : "", sitMiss ? sitMiss + " situational question" + (sitMiss > 1 ? "s" : "") : ""].filter(Boolean);
     if (pct >= 75 && fix.length) return { level: "almost", title: "Almost board-ready", msg: "Your answers scored " + pct + "%. A real board also grades bearing and the situational questions, so tighten up " + listJoin2(fix) + " and run it again." };
     if (pct >= 90) return { level: "ready", title: "Board-ready", msg: "Board-ready. Keep it sharp with a board every few days." };
     if (pct >= 75) return { level: "ready", title: "Strong", msg: "Strong. Tighten the misses." };
@@ -276,8 +276,8 @@
       function header(label) {
         var localN = deck.filter(function (c) { return c.local; }).length, totalQ = deck.length - localN;
         var txt = label ? label : curLocal ? "About your unit" : qNum ? "Question " + qNum + " of " + totalQ : "";
-        return '<div class="progress-bar"><span style="width:' + Math.round(100 * s / Math.max(1, steps.length)) + '%"></span></div>' +
-          '<div class="q-count mb-head"><span>' + txt + '</span>' + (asked >= 3 ? '<span class="pill score-pill">Score ' + Math.round(100 * got / asked) + '%</span>' : '') + '</div>';
+        return '<div class="q-count mb-head"><span>' + txt + '</span>' + (asked >= 3 ? '<span class="pill score-pill">Score ' + Math.round(100 * got / asked) + '%</span>' : '') + '</div>' +
+          '<div class="progress-bar"><span style="width:' + Math.round(100 * s / Math.max(1, steps.length)) + '%"></span></div>';
       }
       function timerHtml(t, why) {
         // say why the clock isn't the Settings value (long answers and scenarios get double time; the intro gets 90 s)
@@ -620,7 +620,7 @@
         var rev = function () {
           clearTimer();
           container.innerHTML = header("Second try") +
-            '<div class="card"><div class="flash-tag">Second try</div><div class="q-text" style="margin:6px 0 12px;">' + esc(qt(c)) + '</div>' +
+            '<div class="card"><div class="flash-tag">' + esc(pubCode(c)) + '</div><div class="q-text" style="margin:6px 0 12px;">' + esc(qt(c)) + '</div>' +
             '<div class="flash-tag">Answer</div><div class="flash-a">' + esc(c.a).replace(/\n/g, "<br>") + '</div></div>' +
             '<p class="center muted">Did you get it this time?</p>' + gradeButtons();
           onGrade(gradeIt);
@@ -633,7 +633,7 @@
         var f = st.f, c = st.parent, t = secs;
         container.innerHTML = header() + timerHtml(t) +
           '<div class="card" style="border-color:var(--gold);"><div class="flash-tag">The board follows up</div>' +
-            '<div class="muted" style="font-size:.85rem;margin-top:6px;">About: ' + esc(String(qt(c)).length > 110 ? String(qt(c)).slice(0, 107) + "\u2026" : qt(c)) + '</div>' +
+            '<div class="muted" style="font-size:.85rem;margin-top:6px;">About: ' + esc(String(qt(c)).length > 110 ? String(qt(c)).slice(0, 107).replace(/\s+\S*$/, "") + "\u2026" : qt(c)) + '</div>' +
             qShow(f.q) + (listen ? '<button class="mini" id="fuSpeak" aria-label="Hear it again" style="margin-top:6px;"><svg class=ic aria-hidden=true><use href=#i-speaker></use></svg></button>' : '') + '</div>' +
           (sponsor ? sponsorBox(f.a, f.ref, "") + '<p class="center muted">Ask the follow-up, listen, then grade.</p>' + gradeButtons()
                    : '<p class="center muted">Answer out loud, then reveal.</p>' + recButton() + '<button class="btn gold lg" id="reveal">Reveal answer</button>');
@@ -678,29 +678,29 @@
         var sitMiss = missedIds.filter(function (id, k) { return pubOf[id] === "sit" && missedIds.indexOf(id) === k; }).length;
         var V = verdict(pct, bearingMiss, sitMiss), notReady = V.level === "almost", msg = V.msg;
         if (deck.length < 8 && V.level !== "work") { V = { level: "work", title: "Good practice", msg: pct + "% on a short board. Board-ready takes a full board of 10 or more questions." }; msg = V.msg; }
-        var nQ = deck.length, nF = Math.max(0, asked - nQ);
+        var nQ = deck.filter(function (c) { return !c.local; }).length, nF = Math.max(0, asked - nQ);
         var countLine = nQ + " question" + (nQ === 1 ? "" : "s") + (nF ? ", " + nF + " follow-up" + (nF === 1 ? "" : "s") + " or second tries" : "");
-        var html = (notReady ? '<div class="card" style="border-color:var(--gold);text-align:center;"><div style="font-size:1.35rem;font-weight:800;">' + esc(V.title) + '</div><div class="muted" style="margin-top:6px;">' + esc(msg) + '</div>' +
-              (bearingMiss.length && !sponsor ? '<div class="btn-row" style="margin-top:10px;"><a class="btn ghost" href="#/reporting">Practice reporting</a><a class="btn ghost" href="#/flash/tc3-21-5">Drill cards</a></div>' : '') + '</div>' : '') +
-          '<div class="ring-wrap"><div class="ring ' + (pct >= 75 ? 'good' : pct >= 50 ? 'mid' : 'bad') + '" style="--p:' + pct + ';"><div class="ring-in">' + pct + '%</div></div><small>score</small></div>' +
+        var html = '<div class="ring-wrap"><div class="ring ' + (pct >= 75 ? 'good' : pct >= 50 ? 'mid' : 'bad') + '" style="--p:' + pct + ';"><div class="ring-in">' + pct + '%</div></div><small>score</small></div>' +
           (function () {
-            var full = qScores.filter(function (x) { return x >= 0.99; }).length, part = qScores.filter(function (x) { return x > 0 && x < 0.99; }).length, miss = qScores.length - full - part;
+            var full = qScores.filter(function (x) { return x >= 0.99; }).length, part = qScores.filter(function (x) { return x >= 0.66 && x < 0.99; }).length, miss = qScores.length - full - part;
             var cb = extras.filter(function (x) { return x.k === "cb"; }), fu = extras.filter(function (x) { return x.k === "fu"; });
             var cbOk = cb.filter(function (x) { return x.ok; }).length, fuOk = fu.filter(function (x) { return x.ok; }).length;
             var legend = '<div class="dot-legend"><span><span class="dot g"></span>full</span><span><span class="dot a"></span>with gaps</span><span><span class="dot r"></span>missed</span>' + (extras.length ? '<span><span class="dot sq"></span>second try / follow-up</span>' : '') + '</div>';
-            return '<div class="dots" aria-hidden="true">' + qScores.map(function (x) { return '<span class="dot ' + (x >= 0.99 ? 'g' : x > 0 ? 'a' : 'r') + '"></span>'; }).join("") +
+            return '<div class="dots" aria-hidden="true">' + qScores.map(function (x) { return '<span class="dot ' + (x >= 0.99 ? 'g' : x >= 0.66 ? 'a' : 'r') + '"></span>'; }).join("") +
                 (extras.length ? '<span class="dot-gap"></span>' + extras.map(function (x) { return '<span class="dot sq ' + (x.ok ? 'g' : 'r') + '"></span>'; }).join("") : '') + '</div>' + legend +
               '<p class="center muted" style="font-size:.92rem;margin:4px 0 0;">' + countLine + '</p><details class="fb-fold score-how"><summary>How this was scored</summary><p class="muted" style="font-size:.92rem;margin:0 0 8px;">First answers: ' + full + ' full \u2022 ' + part + ' with gaps \u2022 ' + miss + ' missed' +
                 (cb.length ? '<br>Second tries: ' + cbOk + ' of ' + cb.length + ' recovered' : '') + (fu.length ? '<br>Follow-ups: ' + fuOk + ' of ' + fu.length + ' right' : '') +
                 '<br>The score counts every answer, with part credit for answers with gaps.</p></details>' +
               (pct >= 75 && !notReady && V.level !== "work" && deck.length >= 8 ? '<p class="center" style="font-weight:700;color:var(--gold);"><svg class=ic aria-hidden=true><use href=#i-trophy></use></svg> Strong board.</p>' : '');
-          })() + (notReady ? '' : '<p class="center muted">' + msg + '</p>') +
+          })() + (notReady ? '<div class="verdict-line"><b>' + esc(V.title) + '.</b> ' + esc(msg) + '</div>' : '<p class="center muted">' + msg + '</p>') +
           // the next step first: drill the misses (or run another), then the details
           (missed.length && !sponsor ? '<button class="btn gold lg" id="drillMiss"><svg class=ic aria-hidden=true><use href=#i-refresh></use></svg> Drill your ' + missed.length + ' miss' + (missed.length === 1 ? '' : 'es') + ' now</button><div class="spacer"></div>' : '');
         if (bearing.length) {
+          var BHREF = { "Reporting in": "#/reporting", "Reporting out": "#/reporting", "Facing movements": "#/flash/tc3-21-5", "Tell us about yourself": "#/statement" };
           html += '<h2 class="section">Bearing &amp; delivery</h2><div class="lg">';
           bearing.forEach(function (b) {
-            html += '<div class="li"><span class="grow"><span class="t" style="font-weight:600;">' + esc(b.label) + '</span></span><b class="' + (b.ok ? "badge-good" : "badge-bad") + '">' + (b.ok ? "✓ clean" : "✗ needs work") + '</b></div>';
+            var inner = '<span class="grow"><span class="t" style="font-weight:600;">' + esc(b.label) + '</span>' + (!b.ok && !sponsor && BHREF[b.label] ? '<span class="s">Tap to practice</span>' : '') + '</span><b class="' + (b.ok ? "badge-good" : "badge-bad") + '">' + (b.ok ? "✓ clean" : "✗ needs work") + '</b>';
+            html += !b.ok && !sponsor && BHREF[b.label] ? '<a class="li" href="' + BHREF[b.label] + '">' + inner + '<span class="chev" aria-hidden="true"><svg class=ic aria-hidden=true><use href=#i-chev></use></svg></span></a>' : '<div class="li">' + inner + '</div>';
           });
           html += '</div>';
         }

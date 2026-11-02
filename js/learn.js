@@ -197,7 +197,7 @@
       function teach() {
         var c = lesson.cards[i], p = STUDY.pubsById[c.pub];
         container.innerHTML =
-          '<div class="flash-progress">Learn • ' + esc(lesson.title) + ' • ' + (i + 1) + ' / ' + lesson.cards.length + '</div>' +
+          '<div class="flash-progress">Learn • ' + esc(lesson.title) + ' • ' + (i + 1) + ' / ' + lesson.cards.length + '</div><div class="progress-bar"><span style="width:' + Math.round(100 * (i + 1) / lesson.cards.length) + '%"></span></div>' +
           '<div class="card learn-card"><div class="flash-toprow"><span class="flash-tag">' + esc(p ? p.code : "") + (c.topic ? " • " + esc(c.topic) : "") + '</span>' +
             '<button class="mini" id="lSpeak" aria-label="Read aloud"><svg class=ic aria-hidden=true><use href=#i-speaker></use></svg></button></div>' +
             '<div class="learn-q">' + esc(c.q) + '</div>' +

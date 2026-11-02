@@ -732,3 +732,19 @@ details.score-how > summary { justify-content: center; }
 .flash-back .mini { background: var(--surface); }
 /* search → the card you tapped */
 .focus-card { border-color: var(--gold) !important; box-shadow: 0 0 0 2px rgba(255,204,51,.25); }
+
+/* ---------- v3.34 polish round 7 ---------- */
+/* one progress header: text, then a thin bar */
+.q-count + .progress-bar, .flash-progress + .progress-bar { margin: 6px 0 12px; }
+.verdict-line { text-align: center; color: var(--text-dim); margin: 4px 8px 12px; line-height: 1.45; }
+.verdict-line b { color: var(--gold); }
+/* numbers and checkboxes sit at the top of tall rows */
+.lg .li.steps-li, .row.check { align-items: flex-start; }
+.lg .li.steps-li .numbubble, .row.check .checkbox { margin-top: 2px; }
+/* Points: live estimate pinned above the tab bar */
+#ptSticky { position: fixed; left: 50%; transform: translateX(-50%); width: calc(100% - 24px); max-width: calc(var(--maxw) - 24px); bottom: calc(68px + env(safe-area-inset-bottom)); z-index: 9;
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 10px 14px; border-radius: var(--radius); background: var(--surface-2); border: 1px solid var(--gold); color: var(--text); text-decoration: none; box-shadow: 0 6px 18px rgba(0,0,0,.5); font-size: .92rem; }
+#ptSticky b { font-size: 1.15rem; color: var(--gold); }
+#ptSticky small { color: var(--text-dim); font-weight: 400; }
+#ptSticky > span:last-child { margin-left: auto; font-weight: 700; }
+#app:has(#ptSticky) { padding-bottom: 150px; }

@@ -17,6 +17,15 @@
     '<button class="btn grade-good" id="gGood">Got it</button>' +
     '<button class="btn grade-easy" id="gEasy">Easy</button>';
 
+  // what the session looked like, by each card's first grade
+  function finishHtml(first) {
+    var ids = Object.keys(first), n = ids.length, miss = 0, easy = 0;
+    ids.forEach(function (k) { if (first[k] === "again") miss++; else if (first[k] === "easy") easy++; });
+    var known = n - miss, p = n ? Math.round(100 * known / n) : 0;
+    return '<div class="ring-wrap"><div class="ring ' + (p >= 75 ? 'good' : p >= 50 ? 'mid' : 'bad') + '" style="--p:' + p + ';"><div class="ring-in">' + p + '%</div></div><small>knew it the first time</small></div>' +
+      '<div class="done-h">Session complete</div>' +
+      '<p class="center muted">' + n + ' card' + (n === 1 ? '' : 's') + ' \u2022 ' + (known - easy) + ' got it \u2022 ' + easy + ' easy \u2022 ' + miss + ' missed' + (miss ? '<br>The ones you missed come back sooner.' : '') + '</p>';
+  }
   var Flashcards = {
     // cards = the deck for this session (already filtered by caller)
     render: function (container, cards, title, opts) {
@@ -26,7 +35,7 @@
       // due first, then new; big decks only feed in 30 new cards per session so it stays doable
       var queue = Store.buildQueue(cards, (cards.length > 60 && !(opts && opts.noCap)) ? 30 : undefined).slice();
       if (!queue.length) queue = cards.slice();           // (deck with nothing due) study all
-      var i = 0, reviewed = 0, passed = 0, conf;
+      var i = 0, reviewed = 0, passed = 0, conf, first = {};
       var autoRead = Store.settings().autoRead;
       var confRow;
 
@@ -119,7 +128,7 @@
       function grade(g) {
         var c = queue[i];
         Store.grade(c.id, g, conf);
-        reviewed++;
+        reviewed++; if (!(c.id in first)) first[c.id] = g;
         if (g === "again") queue.push(c);   // loop back later this session
         else passed++;
         i++;
@@ -131,10 +140,9 @@
         Speech.stop();
         if (opts && opts.onDone) return opts.onDone(reviewed);
         container.innerHTML =
-          '<div class="ring-wrap"><div class="ring good" style="--p:100;"><div class="ring-in">&#10003;</div></div><small>' + reviewed + ' cards reviewed</small></div><div class="done-h">Session complete</div>' +
-          '<p class="center muted">Nicely done. Misses come back sooner; the rest wait longer.</p><div class="spacer"></div>' + (window.App && App.sessionNextHtml ? App.sessionNextHtml() : '') +
+          finishHtml(first) + '<div class="spacer"></div>' + (window.App && App.sessionNextHtml ? App.sessionNextHtml() : '') +
           '<button class="btn gold lg" id="again">Study more</button><div class="spacer"></div>' +
-          '<button class="btn ghost" id="home">Back to Home</button>';
+          '<button class="btn ghost lg" id="home">Back to Home</button>';
         container.querySelector("#again").addEventListener("click", function () { Flashcards.render(container, cards, title, opts); });
         container.querySelector("#home").addEventListener("click", function () { App.go("#/"); });
       }
@@ -164,7 +172,7 @@
       if (!cards.length) { container.innerHTML = '<div class="empty">' + EMPTY + '</div>'; return; }
       var queue = Store.buildQueue(cards, cards.length > 60 ? 30 : undefined).slice();
       if (!queue.length) queue = cards.slice();
-      var i = 0, reviewed = 0;
+      var i = 0, reviewed = 0, first = {};
 
       function pubCode(c) { if (c.label) return c.label; var p = STUDY.pubsById[c.pub]; return p ? p.code : ""; }
 
@@ -208,13 +216,12 @@
 
       function grade(g) {
         var c = queue[i];
-        Store.grade(c.id, g); reviewed++;
+        Store.grade(c.id, g); reviewed++; if (!(c.id in first)) first[c.id] = g;
         if (g === "again") queue.push(c);
         i++;
         if (i >= queue.length) {
-          container.innerHTML = '<div class="ring-wrap"><div class="ring good" style="--p:100;"><div class="ring-in">&#10003;</div></div><small>' + reviewed + ' cards reviewed</small></div><div class="done-h">Session complete</div>' +
-            '<p class="center muted">Nicely done. Misses come back sooner; the rest wait longer.</p><div class="spacer"></div>' +
-            '<button class="btn gold lg" id="again">Study more</button><div class="spacer"></div><button class="btn ghost" id="home">Back to Home</button>';
+          container.innerHTML = finishHtml(first) + '<div class="spacer"></div>' +
+            '<button class="btn gold lg" id="again">Study more</button><div class="spacer"></div><button class="btn ghost lg" id="home">Back to Home</button>';
           container.querySelector("#again").addEventListener("click", function () { Flashcards.renderTyped(container, cards, title); });
           container.querySelector("#home").addEventListener("click", function () { App.go("#/"); });
           return;

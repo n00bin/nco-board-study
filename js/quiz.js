@@ -79,9 +79,9 @@
         var item = questions[i];
         selected = null;
         container.innerHTML =
-          '<div class="progress-bar"><span style="width:' + Math.round(100 * i / questions.length) + '%"></span></div><div class="q-count">Question ' + (i + 1) + " of " + questions.length +
-            " • Score " + score + '</div>' +
-          '<div class="card"><div class="q-text" style="margin:0;">' + esc(item.q) + '</div></div>' +
+          '<div class="q-count">Question ' + (i + 1) + " of " + questions.length +
+            " • Score " + score + '</div><div class="progress-bar"><span style="width:' + Math.round(100 * i / questions.length) + '%"></span></div>' +
+          '<div class="card">' + (function () { var p = window.STUDY && STUDY.pubsById[item.card.pub]; var t = item.card.label || (p ? p.code : ""); return t ? '<div class="flash-tag">' + esc(t) + '</div>' : ''; })() + '<div class="q-text" style="margin:0;">' + esc(item.q) + '</div></div>' +
           '<div id="choices"></div>' +
           '<div id="verdict" class="verdict" role="status" aria-live="polite"></div>' +
           '<button class="btn gold lg" id="submitBtn" disabled>Submit answer</button>';
@@ -165,12 +165,15 @@
         container.innerHTML =
           '<div class="ring-wrap"><div class="ring ' + (pct >= 75 ? 'good' : pct >= 50 ? 'mid' : 'bad') + '" style="--p:' + pct + ';"><div class="ring-in">' + pct + '%</div></div><small>' + score + " of " + questions.length + ' correct</small></div>' +
           dots + '<p class="center muted">' + msg + '</p>' +
-          '<button class="btn gold lg" id="again">Try another quiz</button>' + weakHtml + missHtml +
+          (misses.length ? '<button class="btn gold lg" id="drillQ"><svg class=ic aria-hidden=true><use href=#i-refresh></use></svg> Drill your ' + misses.length + ' miss' + (misses.length === 1 ? '' : 'es') + ' now</button>' : '') +
+          weakHtml + missHtml + '<div class="spacer"></div><button class="btn ' + (misses.length ? 'ghost' : 'gold') + ' lg" id="again">Try another quiz</button>' +
           '<div class="spacer"></div>' +
           '<button class="btn ghost lg" id="home">Back to Home</button>';
         container.querySelector("#again").addEventListener("click", function () {
           Quiz.render(container, cards, title, length);
         });
+        var dq = container.querySelector("#drillQ");
+        if (dq) dq.addEventListener("click", function () { Store.setChainRole("last-misses", misses.map(function (c) { return c.id; }).join(",")); App.go("#/flash/misses"); });
         container.querySelector("#home").addEventListener("click", function () { App.go("#/"); });
       }
 

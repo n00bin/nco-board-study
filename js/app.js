@@ -266,7 +266,7 @@
       else {
         var lp = window.Learn && Learn.nextBoardLesson ? Learn.nextBoardLesson() : null;
         if (lp && lp.next) items.push('<a href="#/lesson/' + escAttr(lp.next.id) + '"><svg class=ic aria-hidden=true><use href=#i-book></use></svg> Lesson: ' + esc(lp.next.title.replace(/^.*:\s*/, "")) + '</a>');
-        if (dueN > 0) items.push('<a href="#/flash/due">&#8635; Review ' + Math.min(dueN, 20) + (dueN > 20 ? ' of ' + dueN : '') + ' card' + (dueN > 1 ? "s" : "") + ' due today</a>');
+        if (dueN > 0) items.push('<a href="#/flash/due"><svg class=ic aria-hidden=true><use href=#i-refresh></use></svg> Review ' + Math.min(dueN, 20) + (dueN > 20 ? ' of ' + dueN : '') + ' card' + (dueN > 1 ? "s" : "") + ' due today</a>');
         if (unseen) { var pp = pacePlan(unseen, days), tl = pp.triage ? topLeft() : 0;
           if (pp.triage && tl) items.push('<a href="#/flash/top"><svg class=ic aria-hidden=true><use href=#i-target></use></svg> Learn ' + pp.pace + ' new cards from the Top 100 first (' + tl + ' left)</a>');
           else items.push('<a href="#/flash/core"><svg class=ic aria-hidden=true><use href=#i-star></use></svg> ' + (pp.pace ? 'Learn ' + pp.pace + ' new Board Core cards' : 'New Board Core cards') + ' (' + unseen + ' left)</a>'); }
@@ -392,7 +392,7 @@
           (rs.seen ? '<div class="sub" style="font-size:.85rem;margin-top:6px;">Board Core studied: ' + rs.seen + ' of ' + coreIds.length + '.<br><b>How it\u2019s figured:</b> 60% Board Core cards you got right last time (' + rs.recalled + ' of ' + coreIds.length + ') + 40% your last 3 Mock Boards (' + (rs.mockAvg == null ? 'none yet' : rs.mockAvg + '%') + '), counted fully once you have 3 Mock Boards and have covered half of Board Core.</div>' : '') + '</details>') +
       '</div>' +
       ((/iPhone|iPad|iPod/.test(navigator.userAgent) && !navigator.standalone && !Store.settings().iosTipDone) ? '<div class="card" id="iosTip" style="border-color:var(--gold);"><div class="flash-tag">Put it on your home screen</div><div style="font-size:1rem;">In Safari, tap Share (the square with the arrow), then <b>Add to Home Screen</b>, then <b>Add</b>. It opens like an app and works offline.</div><button class="btn ghost" id="iosOk" style="margin-top:8px;">Got it</button></div>' : '') +
-      (dToB != null && dToB > 7 ? '' : boardCountdown(coreIds)) + boardResultAsk(rs) +
+      (dToB != null && dToB > 7 || !Store.settings().boardFor ? '' : boardCountdown(coreIds)) + boardResultAsk(rs) +
       // 2) what to do today (one list; board-week extras are folded in)
       todayPlan(coreIds, dueN, Store.leeches(ids).length) +
       // 3) the four tools
@@ -1093,8 +1093,8 @@
       (note ? '<div class="card" style="border-color:var(--gold);"><div class="flash-tag">Your sponsor\'s notes</div><div style="white-space:pre-wrap;">' + esc(note) + '</div></div>' : '') +
       '<p class="center muted">' + (fresh ? "Saved to your history. " : "Already saved. ") + (ids.length ? "The questions you missed will come back sooner in your reviews:" : "No misses. Nice work.") + '</p>' +
       ids.map(function (id) { var c = byId[id]; return c ? '<details class="set-fold"><summary>' + esc(c.q) + '</summary><div style="padding:0 2px 10px;">' + esc(c.a) + '</div></details>' : ""; }).join("") +
-      (ids.length ? (Store.setChainRole("last-misses", ids.join(",")), '<div class="spacer"></div><a class="btn gold lg" href="#/flash/misses">Drill the ' + ids.length + ' you missed now</a><div class="spacer"></div><a class="btn ghost" href="#/">Back to Home</a>')
-        : '<div class="spacer"></div><a class="btn gold lg" href="#/board/core">Run a Mock Board on your own</a><div class="spacer"></div><a class="btn ghost" href="#/">Back to Home</a>');
+      (ids.length ? (Store.setChainRole("last-misses", ids.join(",")), '<div class="spacer"></div><a class="btn gold lg" href="#/flash/misses">Drill the ' + ids.length + ' you missed now</a><div class="spacer"></div><a class="btn ghost lg" href="#/">Back to Home</a>')
+        : '<div class="spacer"></div><a class="btn gold lg" href="#/board/core">Run a Mock Board on your own</a><div class="spacer"></div><a class="btn ghost lg" href="#/">Back to Home</a>');
   }
 
 
@@ -1236,7 +1236,9 @@
     mount.innerHTML = '<div class="card"><div class="muted">Each subject&#39;s edition, and how many cards cite it. Last checked ' + esc(STUDY.meta.updated ? niceDate(new Date(STUDY.meta.updated + "T12:00:00").getTime()) : "") + '. Unofficial study aid; your board memo and SOP come first.</div></div>' +
       '<div class="lg">' + rows.map(function (k) {
         var eds = Object.keys(by[k].ed).sort(function (x, y) { return by[k].ed[y] - by[k].ed[x]; });
-        return '<div class="li"><span class="grow"><span class="t" style="color:var(--gold);">' + esc(k) + '</span><span class="s">' + esc(eds[0]) + ' \u2022 cited by ' + by[k].n + ' card' + (by[k].n === 1 ? '' : 's') + '</span></span></div>';
+        var pub = STUDY.pubs.filter(function (p) { return p.code === k; })[0];
+        var inner = '<span class="grow"><span class="t"' + (pub ? ' style="color:var(--gold);"' : '') + '>' + esc(k) + '</span><span class="s">' + esc(eds[0]) + ' \u2022 cited by ' + by[k].n + ' card' + (by[k].n === 1 ? '' : 's') + '</span></span>';
+        return pub ? '<a class="li" href="#/pub/' + escAttr(pub.id) + '">' + inner + '<span class="chev" aria-hidden="true"><svg class=ic aria-hidden=true><use href=#i-chev></use></svg></span></a>' : '<div class="li">' + inner + '</div>';
       }).join("") + '</div>' +
       '<div class="muted center" style="font-size:.85rem;margin-top:12px;">Spot a problem? Use the flag on any card.</div>';
   }
@@ -1402,6 +1404,9 @@
         : '<div style="margin-top:6px;"><b>' + (cut - total) + ' points short of the cutoff.</b> <span class="muted">The categories with the most room left are the fastest gains.</span></div>';
       var room = PTS.map(function (p) { return { t: p.t, left: p.max[rank] - Math.min(n("pt-" + p.k) || 0, p.max[rank]) }; }).sort(function (x, y) { return y.left - x.left; }).slice(0, 2);
       var calm = (rank === "SGT" && !mount.querySelector("#ptxschool").checked) ? '<div class="muted" style="font-size:.85rem;margin-top:6px;">Don\u2019t panic if you\u2019re well short: that\u2019s normal before BLC. You don’t need BLC to pin on SGT (AR 600-8-19, para 1-34a), but graduating adds 150 points, the biggest single jump.</div>' : '';
+      var stk = document.getElementById("ptSticky");
+      if (!stk) { stk = document.createElement("a"); stk.id = "ptSticky"; stk.href = "#"; stk.addEventListener("click", function (e) { e.preventDefault(); var t = mount.querySelector("#ptTotal"); if (t) t.scrollIntoView({ behavior: "smooth", block: "center" }); }); mount.appendChild(stk); }
+      stk.innerHTML = '<span>Your estimate</span><b>' + total + ' <small>of 800</small></b>' + (cut != null && !blank ? '<span class="' + (total >= cut ? 'badge-good' : 'badge-bad') + '">' + (total >= cut ? 'at or above' : (cut - total) + ' below') + ' the ' + cut + ' cutoff</span>' : '');
       mount.querySelector("#ptTotal").innerHTML = '<div class="flash-tag">Your estimate for ' + rank + '</div><div style="font-size:1.6rem;font-weight:800;">' + total + ' <span class="muted" style="font-size:1rem;">of 800</span></div>' + gap +
         '<div class="muted" style="font-size:.85rem;margin-top:6px;">Most room left: ' + room.map(function (r) { return esc(r.t.toLowerCase()) + ' (' + r.left + ')'; }).join(", ") + '.</div>' +
         (over.length ? '<div class="muted" style="font-size:.85rem;margin-top:6px;">Note: ' + esc(over.join("; ")) + '.</div>' : '') + calm;
@@ -1567,7 +1572,7 @@
     var head = parts[0] || "";
     window.scrollTo(0, 0);
     // practice screens get the whole phone (no tab bar; the main button pins to the bottom); sponsor pages get a guest shell
-    document.body.classList.toggle("session", /^(flash|type|quiz|drive|board|lesson|sheetin)$/.test(head));
+    document.body.classList.toggle("session", /^(flash|type|quiz|drive|board|lesson|sheetin|sponsor)$/.test(head));
     document.body.classList.toggle("guest", /^(sponsor|sheet|sbresult|progress|takecards)$/.test(head));
     setTimeout(sessionBanner, 0);
 
@@ -1608,8 +1613,8 @@
     if (head === "sheet") return screenSheet(parts[1] || ""), tab("home");
     if (head === "sheetin") return screenSheetIn(parts[1] || ""), tab("home");
     if (head === "sbresult") return screenSponsorResult(parts.slice(1)), tab("home");
-    if (head === "pub") return screenPub(parts[1]), tab("browse");
-    if (head === "read") return screenRead(parts[1], parts[2]), tab("browse");
+    if (head === "pub") return screenPub(parts[1]), tab(curTab === "search" ? "search" : "browse");
+    if (head === "read") return screenRead(parts[1], parts[2]), tab(curTab === "search" ? "search" : "browse");
     if (head === "pick") return screenPick(parts[1]), modeTab();
     if (head === "flash") return screenFlash(parts[1]), modeTab();
     if (head === "type") return screenType(parts[1]), modeTab();
@@ -1619,7 +1624,7 @@
     if (head) {
       setTitle("Not found", true);
       mount.innerHTML = '<div class="empty-state"><svg class=ic aria-hidden=true><use href=#i-alert></use></svg><div class="t">Page not found</div><div class="muted">That link doesn&#39;t go anywhere in the app.</div><a class="btn gold lg" href="#/">Go to Home</a></div>';
-      return tab("home");
+      return tab("none");
     }
     return screenHome(), tab("home");
   }
