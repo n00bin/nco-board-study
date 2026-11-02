@@ -697,3 +697,38 @@ details.set-fold > summary::before { content: none !important; }
 .flash-front .flip-cue { display: none; }
 .chip-row.seg2 { display: grid; grid-template-columns: 1fr 1fr; }
 .chip-row.seg2 .chip { padding: 0 8px; font-size: .92rem; }
+
+/* ---------- v3.33 polish round 6 ---------- */
+:root { color-scheme: dark; }
+/* steady app bar: fixed height, both side slots always reserved so the title never moves */
+.appbar { height: calc(56px + env(safe-area-inset-top)); min-height: 0; padding: env(safe-area-inset-top) 4px 0; box-sizing: border-box; }
+#backBtn[hidden], #installBtn { display: inline-flex !important; visibility: hidden; pointer-events: none; }
+#backBtn { display: inline-flex; align-items: center; justify-content: center; }
+#backBtn svg.ic { width: 24px; height: 24px; color: var(--text); }
+.chev svg.ic { width: 18px; height: 18px; color: var(--text-dim); vertical-align: middle; }
+/* selected chip: its icon follows the text colour */
+.chip.on svg.ic { color: currentColor !important; }
+/* one confirmation style, at the bottom */
+.toast { top: auto !important; bottom: calc(84px + env(safe-area-inset-bottom)); border-radius: 999px; font-weight: 700; }
+body.session .toast, body.guest .toast, body.session .saved-tick { bottom: calc(92px + env(safe-area-inset-bottom)); }
+/* every Mock Board step pins its main button */
+body.session #ready, body.session #skipLocal {
+  position: fixed !important; left: 50%; transform: translateX(-50%); width: calc(100% - 32px); max-width: calc(var(--maxw) - 32px); bottom: calc(12px + env(safe-area-inset-bottom)); z-index: 9; margin: 0 !important; }
+body.session:has(#ready, #skipLocal)::after {
+  content: ""; position: fixed; left: 0; right: 0; bottom: 0; height: calc(78px + env(safe-area-inset-bottom)); z-index: 8; pointer-events: none;
+  background: linear-gradient(to bottom, rgba(20,22,15,0), var(--bg) 16px); }
+/* Drive: big pinned controls */
+body.session .drive-ctl { position: fixed; left: 50%; transform: translateX(-50%); width: 100%; max-width: var(--maxw); bottom: 0; z-index: 8; margin: 0;
+  padding: 10px 16px calc(12px + env(safe-area-inset-bottom)); background: var(--bg); box-shadow: 0 -18px 16px -4px var(--bg); }
+body.session .drive-ctl .btn { min-height: 64px; font-size: 1.15rem; }
+/* results */
+.dot-legend .dot.sq { background: none; border: 1.5px solid var(--text-dim); }
+details.score-how { max-width: 420px; margin: 0 auto 6px; }
+details.score-how > summary { justify-content: center; }
+.done-h { text-align: center; font-size: 1.35rem; font-weight: 800; margin: 4px 0 2px; }
+/* one button shape: length pickers are buttons, not pills */
+.len-row .chip { border-radius: var(--radius); }
+/* flashcard back keeps its icon tiles */
+.flash-back .mini { background: var(--surface); }
+/* search → the card you tapped */
+.focus-card { border-color: var(--gold) !important; box-shadow: 0 0 0 2px rgba(255,204,51,.25); }

@@ -423,7 +423,7 @@
                       ["Your rank, name, job, and unit", "Your time in service", "One or two real accomplishments", "Your goals as an NCO"].map(function (t) {
                         return '<label class="switch" style="margin-top:10px;"><input type="checkbox" class="ip"> <span>' + esc(t) + '</span></label>'; }).join("") +
                       (sponsor ? '</div>' : '<div class="muted" style="font-size:.85rem;margin-top:10px;">Tip: draft it under Board Day Prep → Opening Statement (there\'s an example).</div></div>') +
-                    '<div id="playback"></div><button class="btn gold lg" id="introDone">Score it</button>');
+                    '<div id="playback"></div><button class="btn gold lg" id="introDone">Score this answer</button>');
           playback();
           if (stmt) onGrade(function (ok) { bearing.push({ label: "Tell us about yourself", ok: ok }); next(); });
           else container.querySelector("#introDone").addEventListener("click", function () {
@@ -489,13 +489,13 @@
       var voice = { rec: null, text: "" };
       function voiceButton() { return SR ? '<button class="btn ghost" id="voiceBtn" title="Uses your phone\u2019s speech service (Google or Apple); needs a connection"><span class="ic"><svg class=ic aria-hidden=true><use href=#i-voice></use></svg></span> Voice check</button><div class="spacer"></div>' : ""; }
       function wireVoice(c) {
-        voice.text = ""; voice.paused = false;
+        voice.text = ""; voice.paused = false; voice.started = false;
         var b = container.querySelector("#voiceBtn"); if (!b) return;
         if (c && (c.local || c.pub === "personal")) {   // your unit, your leaders, your life: keep it off the speech service
           b.textContent = "Voice check off"; b.disabled = true; b.title = "Off for personal and your-unit questions"; return;
         }
         var start = function () {
-          Store.setSetting("voiceAuto", true);
+          Store.setSetting("voiceAuto", true); voice.started = true;
           try {
             var r = new SR(); r.lang = "en-US"; r.continuous = true; r.interimResults = false;
             r.onresult = function (e) { for (var k = e.resultIndex; k < e.results.length; k++) if (e.results[k].isFinal) voice.text += " " + e.results[k][0].transcript; };
@@ -544,16 +544,16 @@
       function reveal(c) {
         clearTimer();
         if (autoRead) Speech.speak(c.a);
-        var listened = SR && !voice.paused && container.querySelector("#voiceBtn") && container.querySelector("#voiceBtn").disabled;
+        var listened = SR && voice.started && !voice.paused && !c.unfilled;
         container.innerHTML = header() +
-          '<div class="card"><div class="flash-tag">' + esc(pubCode(c)) + (c.topic ? " • " + esc(c.topic) : "") + '</div>' +
+          '<div class="card"><div class="flash-tag">' + esc(pubCode(c)) + (c.topic && String(c.topic).toLowerCase() !== String(pubCode(c)).toLowerCase() ? " • " + esc(c.topic) : "") + '</div>' +
             '<div class="q-text" style="margin:6px 0 12px;">' + esc(qt(c)) + '</div>' +
             '<div class="flash-tag">Answer</div><div class="flash-a">' + esc(c.a).replace(/\n/g, "<br>") + '</div>' +
             (c.changed ? '<div class="flash-ref" style="color:var(--gold);margin-top:8px;"><svg class=ic aria-hidden=true><use href=#i-alert></use></svg> ' + esc(c.changed) + '</div>' : '') +
             (c.points && !c.unfilled ? '' : moreHtml(c)) + '</div>' +
           (c.points && !c.unfilled ? (listened ? '<div id="heard"><div class="muted center" style="font-size:.85rem;">Checking what you said…</div></div>' : '') + rubricHtml(c) +
             (moreHtml(c) ? '<div class="card">' + moreHtml(c) + '</div>' : '') : '') +
-          (window.Speech && Speech.supported() ? '<button class="btn ghost" id="hearA" style="margin-bottom:8px;"><svg class=ic aria-hidden=true><use href=#i-speaker></use></svg> Hear a model answer</button>' : '') +
+          (window.Speech && Speech.supported() && !c.unfilled ? '<button class="btn ghost" id="hearA" style="margin-bottom:8px;"><svg class=ic aria-hidden=true><use href=#i-speaker></use></svg> Hear a model answer</button>' : '') +
           (listened && !c.points ? '<div id="heard"><div class="muted center" style="font-size:.85rem;">Checking what you said…</div></div>' : '') +
           '<div id="playback"></div>' +
           (c.unfilled ? '<div class="card"><div class="muted">You haven\'t filled this in yet, so it isn\'t scored. Boards do ask it: look it up and add it under Board Day Prep, then it counts.</div></div><button class="btn gold lg" id="skipLocal">Next question</button>'
@@ -570,7 +570,7 @@
         if (!c.local) qScores.push(score);          // score: 1 = got it, 0 = missed, fractions from the key-point rubric
         var ok = score >= 0.66;   // two of three key points is a pass; the key fact alone (kp1) is 0.75
         Store.grade(c.id, ok ? "good" : "again");
-        var pp = perPub[c.pub] || (perPub[c.pub] = { n: 0, miss: 0, code: pubLabel(c) });
+        var pp = perPub[c.pub] || (perPub[c.pub] = { n: 0, miss: 0, code: pubLabel(c), id: c.pub });
         pp.n++; asked++; got += score;
         if (!ok) { missedIds.push(c.id); pp.miss++; missed.push({ q: qt(c), a: c.a, code: pubCode(c) + (score > 0 && score < 1 ? " \u2022 " + Math.round(score * 100) + "% of key points" : "") }); }
         // Like a real board: a good answer earns a harder follow-up; a miss means the board comes back to it
@@ -611,7 +611,7 @@
         sayQ(qt(c));
         var cbs = container.querySelector("#cbSpeak"); if (cbs) cbs.addEventListener("click", function () { Speech.speak(qt(c), curVoice); });
         var gradeIt = function (ok) {
-          var pp = perPub[c.pub] || (perPub[c.pub] = { n: 0, miss: 0, code: pubLabel(c) });
+          var pp = perPub[c.pub] || (perPub[c.pub] = { n: 0, miss: 0, code: pubLabel(c), id: c.pub });
           pp.n++; asked++; if (ok) got++; else pp.miss++;
           extras.push({ k: "cb", ok: ok });
           next();
@@ -640,7 +640,7 @@
         sayQ(f.q);
         var fus = container.querySelector("#fuSpeak"); if (fus) fus.addEventListener("click", function () { Speech.speak(f.q, curVoice); });
         var gradeFollow = function (ok) {
-          var pp = perPub[c.pub] || (perPub[c.pub] = { n: 0, miss: 0, code: pubLabel(c) });
+          var pp = perPub[c.pub] || (perPub[c.pub] = { n: 0, miss: 0, code: pubLabel(c), id: c.pub });
           pp.n++; asked++; extras.push({ k: "fu", ok: ok });
           if (ok) got++; else { pp.miss++; missed.push({ q: f.q, a: f.a, code: "Follow-up" }); }
           next();
@@ -684,16 +684,16 @@
               (bearingMiss.length && !sponsor ? '<div class="btn-row" style="margin-top:10px;"><a class="btn ghost" href="#/reporting">Practice reporting</a><a class="btn ghost" href="#/flash/tc3-21-5">Drill cards</a></div>' : '') + '</div>' : '') +
           '<div class="ring-wrap"><div class="ring ' + (pct >= 75 ? 'good' : pct >= 50 ? 'mid' : 'bad') + '" style="--p:' + pct + ';"><div class="ring-in">' + pct + '%</div></div><small>score</small></div>' +
           (function () {
-            var full = qScores.filter(function (x) { return x >= 0.99; }).length, part = qScores.filter(function (x) { return x >= 0.66 && x < 0.99; }).length, miss = qScores.length - full - part;
+            var full = qScores.filter(function (x) { return x >= 0.99; }).length, part = qScores.filter(function (x) { return x > 0 && x < 0.99; }).length, miss = qScores.length - full - part;
             var cb = extras.filter(function (x) { return x.k === "cb"; }), fu = extras.filter(function (x) { return x.k === "fu"; });
             var cbOk = cb.filter(function (x) { return x.ok; }).length, fuOk = fu.filter(function (x) { return x.ok; }).length;
             var legend = '<div class="dot-legend"><span><span class="dot g"></span>full</span><span><span class="dot a"></span>with gaps</span><span><span class="dot r"></span>missed</span>' + (extras.length ? '<span><span class="dot sq"></span>second try / follow-up</span>' : '') + '</div>';
-            return '<div class="dots" aria-hidden="true">' + qScores.map(function (x) { return '<span class="dot ' + (x >= 0.99 ? 'g' : x >= 0.66 ? 'a' : 'r') + '"></span>'; }).join("") +
+            return '<div class="dots" aria-hidden="true">' + qScores.map(function (x) { return '<span class="dot ' + (x >= 0.99 ? 'g' : x > 0 ? 'a' : 'r') + '"></span>'; }).join("") +
                 (extras.length ? '<span class="dot-gap"></span>' + extras.map(function (x) { return '<span class="dot sq ' + (x.ok ? 'g' : 'r') + '"></span>'; }).join("") : '') + '</div>' + legend +
-              '<p class="center muted" style="font-size:.85rem;">First answers: ' + full + ' full \u2022 ' + part + ' with gaps \u2022 ' + miss + ' missed' +
+              '<p class="center muted" style="font-size:.92rem;margin:4px 0 0;">' + countLine + '</p><details class="fb-fold score-how"><summary>How this was scored</summary><p class="muted" style="font-size:.92rem;margin:0 0 8px;">First answers: ' + full + ' full \u2022 ' + part + ' with gaps \u2022 ' + miss + ' missed' +
                 (cb.length ? '<br>Second tries: ' + cbOk + ' of ' + cb.length + ' recovered' : '') + (fu.length ? '<br>Follow-ups: ' + fuOk + ' of ' + fu.length + ' right' : '') +
-                '<br>The score counts every answer, with part credit for answers with gaps.</p>' +
-              (pct >= 75 && !notReady ? '<p class="center" style="font-weight:700;color:var(--gold);"><svg class=ic aria-hidden=true><use href=#i-trophy></use></svg> Strong board. Keep it sharp.</p>' : '');
+                '<br>The score counts every answer, with part credit for answers with gaps.</p></details>' +
+              (pct >= 75 && !notReady && V.level !== "work" && deck.length >= 8 ? '<p class="center" style="font-weight:700;color:var(--gold);"><svg class=ic aria-hidden=true><use href=#i-trophy></use></svg> Strong board.</p>' : '');
           })() + (notReady ? '' : '<p class="center muted">' + msg + '</p>') +
           // the next step first: drill the misses (or run another), then the details
           (missed.length && !sponsor ? '<button class="btn gold lg" id="drillMiss"><svg class=ic aria-hidden=true><use href=#i-refresh></use></svg> Drill your ' + missed.length + ' miss' + (missed.length === 1 ? '' : 'es') + ' now</button><div class="spacer"></div>' : '');
@@ -706,7 +706,7 @@
         }
         if (weak.length) {
           html += '<h2 class="section">Weakest subjects</h2><div class="lg">';
-          weak.forEach(function (p) { html += '<div class="li"><span class="grow"><span class="t" style="font-weight:600;font-size:.92rem;">' + esc(p.code) + '</span></span><b class="badge-bad" style="white-space:nowrap;">missed ' + p.miss + ' of ' + p.n + '</b></div>'; });
+          weak.forEach(function (p) { html += '<a class="li" href="#/flash/' + encodeURIComponent(p.id || "") + '"><span class="grow"><span class="t" style="font-weight:600;font-size:.92rem;">' + esc(p.code) + '</span></span><b class="badge-bad" style="white-space:nowrap;">missed ' + p.miss + ' of ' + p.n + '</b><span class="chev" aria-hidden="true"><svg class=ic aria-hidden=true><use href=#i-chev></use></svg></span></a>'; });
           html += '</div>';
         }
         if (missed.length) {
@@ -717,9 +717,9 @@
           html += '</details>';
         }
         if (sponsor) html += '<h2 class="section">Your notes for the Soldier (optional)</h2><textarea class="input" id="sbNote" rows="3" maxlength="300" placeholder="e.g. Good bearing. Rambled on the intro; slow down on SHARP answers."></textarea>' +
-          '<div class="spacer"></div><button class="btn green lg" id="sendBack"><svg class=ic aria-hidden=true><use href=#i-send></use></svg> Send these results to the Soldier</button>' +
+          '<div class="spacer"></div><button class="btn gold lg" id="sendBack"><svg class=ic aria-hidden=true><use href=#i-send></use></svg> Send results to the Soldier</button>' +
           '<div class="muted center" style="font-size:.85rem;margin-top:6px;">They open the link on their phone: the score goes into their history and the questions they missed come back sooner.</div>';
-        html += (window.App && App.sessionNextHtml ? App.sessionNextHtml() : '') + '<div class="spacer"></div><button class="btn ' + (missed.length && !sponsor ? 'ghost' : 'gold') + ' lg" id="again">Run another board</button><div class="spacer"></div><button class="btn ghost lg" id="home">Back to Home</button>';
+        html += (window.App && App.sessionNextHtml ? App.sessionNextHtml() : '') + '<div class="spacer"></div><button class="btn ' + (missed.length || sponsor ? 'ghost' : 'gold') + ' lg" id="again">Run another board</button><div class="spacer"></div><button class="btn ghost lg" id="home">Back to Home</button>';
         container.innerHTML = html;
         container.querySelector("#again").addEventListener("click", function () { MockBoard.render(container, cards, length, opts); });
         container.querySelector("#home").addEventListener("click", function () { App.go("#/"); });

@@ -330,7 +330,7 @@
   function boardCountdown(coreIds) {
     var bd = Store.settings().boardDate;
     if (!bd) return '<a class="row" href="#/settings"><div class="grow"><div class="code"><svg class=ic aria-hidden=true><use href=#i-calendar></use></svg> Set your board date</div>' +
-      '<div class="ttl">Get a countdown and a daily study pace</div></div><div class="chev">&#8250;</div></a>';
+      '<div class="ttl">Get a countdown and a daily study pace</div></div><div class="chev" aria-hidden="true"><svg class=ic aria-hidden=true><use href=#i-chev></use></svg></div></a>';
     var days = daysToBoard();
     var unseen = coreIds.filter(function (id) { return !seenOf(id); }).length;
     var head, tip;
@@ -351,7 +351,7 @@
         "You've seen every Board Core card. Keep up your reviews and run Mock Boards.";
     }
     return '<a class="row board-row" href="' + (days >= 0 && days <= 7 ? "#/boardday" : "#/settings") + '"><div class="grow"><div class="code"><svg class=ic aria-hidden=true><use href=#i-calendar></use></svg> ' + esc(head) + '</div>' +
-      '<div class="ttl">' + esc(tip) + '</div></div><div class="chev">&#8250;</div></a>';
+      '<div class="ttl">' + esc(tip) + '</div></div><div class="chev" aria-hidden="true"><svg class=ic aria-hidden=true><use href=#i-chev></use></svg></div></a>';
   }
 
   // Home = five things: where you stand, what to do today, the four tools, board-day prep, your week.
@@ -456,14 +456,15 @@
   }
 
   // ---- read every card in a subject as a list (for reading, not drilling) ----
-  function screenRead(id) {
+  function screenRead(id, focus) {
     var p = STUDY.pubsById[id]; if (!p) return screenHome();
     setTitle(p.code, true);
     var pc = cardsForDeck(id).slice().sort(function (x, y) { return (y.core ? 1 : 0) - (x.core ? 1 : 0); }), shownCoreH = false, shownMoreH = false;
     mount.innerHTML = '<div class="card"><div class="muted">All ' + pc.length + ' cards in ' + esc(p.title) + ', Board Core first. Reading helps you learn it; saying the answer before you look (Flashcards) helps you remember it.</div></div>' +
-      pc.map(function (c) { return (c.core && !shownCoreH ? (shownCoreH = true, '<div class="lg-h">Board Core</div>') : !c.core && !shownMoreH ? (shownMoreH = true, '<div class="lg-h">More detail</div>') : '') + '<div class="card"><div style="font-weight:600;">' + esc(c.q) + '</div>' +
+      pc.map(function (c) { return (c.core && !shownCoreH ? (shownCoreH = true, '<div class="lg-h">Board Core</div>') : !c.core && !shownMoreH ? (shownMoreH = true, '<div class="lg-h">More detail</div>') : '') + '<div class="card" data-cid="' + escAttr(c.id) + '"><div style="font-weight:600;">' + esc(c.q) + '</div>' +
         '<div style="margin-top:6px;">' + esc(c.a).replace(/\n/g, "<br>") + '</div>' + (c.changed ? '<div class="flash-ref" style="color:var(--gold);"><svg class=ic aria-hidden=true><use href=#i-alert></use></svg> ' + esc(c.changed) + '</div>' : '') +
         (c.ref ? '<div class="flash-ref">' + esc(c.ref) + '</div>' : '') + '</div>'; }).join("");
+    if (focus) { var fc = mount.querySelector('[data-cid="' + String(focus).replace(/"/g, "") + '"]'); if (fc) { fc.classList.add("focus-card"); setTimeout(function () { fc.scrollIntoView({ block: "center" }); }, 30); } }
   }
 
   function screenPick(mode) {
@@ -600,7 +601,7 @@
       var hl = function (s) { return esc(s).replace(new RegExp("(" + safe + ")", "ig"), "<mark>$1</mark>"); };
       results.innerHTML = hits.length ? '<div class="muted" style="font-size:.85rem;margin:4px 4px 8px;">' + all.length + ' result' + (all.length === 1 ? '' : 's') + '</div>' + note + hits.map(function (c) {
         var p = STUDY.pubsById[c.pub];
-        return '<a class="card" style="display:block;text-decoration:none;color:inherit;" href="#/pub/' + escAttr(c.pub) + '"><div class="flash-tag tag-row">' + esc(p ? p.code : "") + (c.topic ? " • " + esc(c.topic) : "") + (c.core ? '<span class="pill core-pill inline">Core</span>' : '') + '</div>' +
+        return '<a class="card" style="display:block;text-decoration:none;color:inherit;" href="#/read/' + escAttr(c.pub) + '/' + escAttr(c.id) + '"><div class="flash-tag tag-row">' + esc(p ? p.code : "") + (c.topic ? " • " + esc(c.topic) : "") + (c.core ? '<span class="pill core-pill inline">Core</span>' : '') + '</div>' +
           '<div style="font-weight:600;margin-bottom:6px;">' + hl(c.q) + '</div><div class="muted">' + hl(c.a) + '</div></a>';
       }).join("") : '<div class="empty">No matches. Try a shorter word, or one of these:</div>' + tryChips();
     }
@@ -617,7 +618,7 @@
     var html =
       group("Study", [li("#/pick/board", "<svg class=ic aria-hidden=true><use href=#i-users></use></svg>", "Mock Board", "Practice the oral board"), li("#/boardday", "<svg class=ic aria-hidden=true><use href=#i-clipboard></use></svg>", "Board Day Prep", "Room, uniform, reporting, memo")]) +
       group("You and your sponsor", [li("#/sendprogress", "<svg class=ic aria-hidden=true><use href=#i-send></use></svg>", "Send my progress", "Your sponsor sees your weak spots"), li("#/mycards", "<svg class=ic aria-hidden=true><use href=#i-pen></use></svg>", "My Cards", "Your unit's smart book, your MOS"), li("#/badges", "<svg class=ic aria-hidden=true><use href=#i-medal></use></svg>", "Badges", "Milestones you've earned")]) +
-      group("App", (deferredPrompt ? ['<a class="li" href="#/more" id="installRow"><span class="li-ic" aria-hidden="true"><svg class=ic aria-hidden=true><use href=#i-install></use></svg></span><span class="grow"><span class="t">Install the app</span><span class="s">Opens like an app and works offline</span></span><span class="chev">&#8250;</span></a>'] : []).concat([li("#/settings", "<svg class=ic aria-hidden=true><use href=#i-sliders></use></svg>", "Settings", "Board date, goal, timer, reminders"), li("#/share", "<svg class=ic aria-hidden=true><use href=#i-share></use></svg>", "Share &amp; QR code", "Send the app to a friend or your squad"), li("#/backup", "<svg class=ic aria-hidden=true><use href=#i-download></use></svg>", "Backup &amp; restore", "Save your progress to a file"), li("#/sources", "<svg class=ic aria-hidden=true><use href=#i-bookmark></use></svg>", "Sources &amp; editions", "Which regulation each card comes from")]));
+      group("App", (deferredPrompt ? ['<a class="li" href="#/more" id="installRow"><span class="li-ic" aria-hidden="true"><svg class=ic aria-hidden=true><use href=#i-install></use></svg></span><span class="grow"><span class="t">Install the app</span><span class="s">Opens like an app and works offline</span></span><span class="chev" aria-hidden="true"><svg class=ic aria-hidden=true><use href=#i-chev></use></svg></span></a>'] : []).concat([li("#/settings", "<svg class=ic aria-hidden=true><use href=#i-sliders></use></svg>", "Settings", "Board date, goal, timer, reminders"), li("#/share", "<svg class=ic aria-hidden=true><use href=#i-share></use></svg>", "Share &amp; QR code", "Send the app to a friend or your squad"), li("#/backup", "<svg class=ic aria-hidden=true><use href=#i-download></use></svg>", "Backup &amp; restore", "Save your progress to a file"), li("#/sources", "<svg class=ic aria-hidden=true><use href=#i-bookmark></use></svg>", "Sources &amp; editions", "Which regulation each card comes from")]));
     html += '<details class="set-fold"><summary>Recent quizzes &amp; boards (' + Math.min(10, quizzes.length) + ')</summary>' + (quizzes.length ? quizzes.slice(0, 10).map(function (q) {
       var pct = Math.round((q.score / q.total) * 100), cls = pct >= 75 ? "badge-good" : pct >= 60 ? "" : "badge-bad";
       var nm = STUDY.pubsById[q.deck] ? STUDY.pubsById[q.deck].code : q.deck === "core" ? "Board Core" : q.deck;
@@ -810,7 +811,7 @@
       cards.forEach(function (c) {
         var p = STUDY.pubsById[c.pub];
         html += '<div class="row" data-edit="' + escAttr(c.id) + '"><div class="grow"><div class="code">' + esc(p ? p.code : "My Cards") + '</div>' +
-          '<div class="ttl">' + esc(c.q) + '</div></div><button class="mini" data-del="' + escAttr(c.id) + '" aria-label="Delete card: ' + escAttr(String(c.q).slice(0, 60)) + '"><svg class=ic aria-hidden=true><use href=#i-trash></use></svg></button><div class="chev">&#8250;</div></div>';
+          '<div class="ttl">' + esc(c.q) + '</div></div><button class="mini" data-del="' + escAttr(c.id) + '" aria-label="Delete card: ' + escAttr(String(c.q).slice(0, 60)) + '"><svg class=ic aria-hidden=true><use href=#i-trash></use></svg></button><div class="chev" aria-hidden="true"><svg class=ic aria-hidden=true><use href=#i-chev></use></svg></div></div>';
       });
     } else html += '<div class="empty">No cards of your own yet. Tap Add a card above.</div>';
     if (cards.length) html += '<div class="spacer"></div><button class="btn ghost" id="shareCards"><svg class=ic aria-hidden=true><use href=#i-send></use></svg> Share my cards (send a link)</button>' +
@@ -954,8 +955,8 @@
     "When dismissed, stand at attention, render the hand salute, hold until returned, face about, and march out."
   ];
   // grouped list: one card, divided rows (icon, title, one short line)
-  function li(href, ic, t, s) { return '<a class="li" href="' + href + '"><span class="li-ic" aria-hidden="true">' + ic + '</span><span class="grow"><span class="t">' + t + '</span>' + (s ? '<span class="s">' + s + '</span>' : '') + '</span><span class="chev" aria-hidden="true">&#8250;</span></a>'; }
-  function liDeck(href, code, title, n, deck, extra) { return '<a class="li deck" ' + (deck ? 'data-deck="' + deck + '" ' : '') + 'href="' + href + '"' + (extra || '') + '><span class="grow"><span class="t" style="color:var(--gold);">' + code + '</span>' + (title ? '<span class="s">' + title + '</span>' : '') + '</span><span class="pill">' + n + '</span><span class="chev" aria-hidden="true">&#8250;</span></a>'; }
+  function li(href, ic, t, s) { return '<a class="li" href="' + href + '"><span class="li-ic" aria-hidden="true">' + ic + '</span><span class="grow"><span class="t">' + t + '</span>' + (s ? '<span class="s">' + s + '</span>' : '') + '</span><span class="chev" aria-hidden="true"><svg class=ic aria-hidden=true><use href=#i-chev></use></svg></span></a>'; }
+  function liDeck(href, code, title, n, deck, extra) { return '<a class="li deck" ' + (deck ? 'data-deck="' + deck + '" ' : '') + 'href="' + href + '"' + (extra || '') + '><span class="grow"><span class="t" style="color:var(--gold);">' + code + '</span>' + (title ? '<span class="s">' + title + '</span>' : '') + '</span><span class="pill">' + n + '</span><span class="chev" aria-hidden="true"><svg class=ic aria-hidden=true><use href=#i-chev></use></svg></span></a>'; }
   // autosave feedback: a small "Saved" line that fades
   function flashSaved() { var s = document.getElementById("savedTick"); if (!s) { s = document.createElement("div"); s.id = "savedTick"; s.className = "saved-tick"; document.body.appendChild(s); } s.textContent = "Saved \u2713"; s.classList.add("on"); clearTimeout(flashSaved.t); flashSaved.t = setTimeout(function () { s.classList.remove("on"); }, 1200); }
   // "Haircut neat; clean-shaven..." -> bold first clause, the rest smaller
@@ -974,7 +975,7 @@
       '<div class="muted" style="font-size:.85rem;margin:2px 4px 6px;">Your board memo and local SOP always come first.</div>' +
       group("The board itself", [li("#/room", "<svg class=ic aria-hidden=true><use href=#i-building></use></svg>", "Board Room", "What it&#39;s like, who sits on it, how they decide"), li("#/reporting", "<svg class=ic aria-hidden=true><use href=#i-flag></use></svg>", "Report to the Board", "The sequence and your bearing"), li("#/statement", "<svg class=ic aria-hidden=true><use href=#i-quote></use></svg>", "Opening statement", "Draft your “tell us about yourself”"), li("#/pub/boardskills", "<svg class=ic aria-hidden=true><use href=#i-brain></use></svg>", "Board know-how", "If you freeze, how to answer")]) +
       group("Get ready", [li("#/memo", "<svg class=ic aria-hidden=true><use href=#i-doc></use></svg>", "My board memo", "Reporting wording, uniform, time"), li("#/uniform", "<svg class=ic aria-hidden=true><use href=#i-shirt></use></svg>", "Uniform inspection", "Check it before you walk in"), li("#/records", "<svg class=ic aria-hidden=true><use href=#i-folder></use></svg>", "Records", "What to bring: SRB, points, pockets"), li("#/points", "<svg class=ic aria-hidden=true><use href=#i-chart></use></svg>", "Points", "Where you stand on promotion points")]) +
-      group("Know your Army", [li("#/chain", "<svg class=ic aria-hidden=true><use href=#i-sitemap></use></svg>", "Chain of command", "Fill it in, then quiz yourself"), li("#/knowledge", "<svg class=ic aria-hidden=true><use href=#i-globe></use></svg>", "Your unit, your job, current events", ""), li("#/changes", "<svg class=ic aria-hidden=true><use href=#i-spark></use></svg>", "What's new", "AFT, waist-to-height, grooming")]);
+      group("Know your Army", [li("#/chain", "<svg class=ic aria-hidden=true><use href=#i-sitemap></use></svg>", "Chain of command", "Fill it in, then quiz yourself"), li("#/knowledge", "<svg class=ic aria-hidden=true><use href=#i-globe></use></svg>", "Your unit, your job, current events", "Notes for the questions about you"), li("#/changes", "<svg class=ic aria-hidden=true><use href=#i-spark></use></svg>", "What's new", "AFT, waist-to-height, grooming")]);
   }
 
   // ---- What changed recently: built from the cards, so the page and the cards always agree ----
@@ -1088,7 +1089,7 @@
       })() +
       (selfPct != null ? '<div class="card"><div class="flash-tag">You vs. your sponsor</div><div class="muted">Your own Mock Boards average <b>' + selfPct + '%</b>. Your sponsor scored you <b>' + pct + '%</b>. ' +
         (selfPct - pct >= 10 ? 'You grade yourself about ' + (selfPct - pct) + ' points higher than your sponsor does. Next time, only give yourself a key point if you said it out loud, clearly.' : selfPct - pct <= -10 ? 'Your sponsor scored you higher than you score yourself. You know more than you think.' : 'Your own grading is close to your sponsor&#39;s. You can trust your practice scores.') + '</div></div>' : '') +
-      (bear.length ? '<h2 class="section">Bearing (your sponsor\'s grades)</h2>' + bear.map(function (b) { return '<div class="row"><div class="grow"><div class="ttl">' + esc(b.label) + '</div></div><div class="' + (b.ok ? "badge-good" : "badge-bad") + '" style="font-weight:700;">' + (b.ok ? "\u2713 clean" : "\u2717 needs work") + '</div></div>'; }).join("") : '') +
+      (bear.length ? '<h2 class="section">Bearing (your sponsor\'s grades)</h2>' + '<div class="lg">' + bear.map(function (b) { return '<div class="li"><span class="grow"><span class="t" style="font-weight:600;">' + esc(b.label) + '</span></span><b class="' + (b.ok ? "badge-good" : "badge-bad") + '">' + (b.ok ? "\u2713 clean" : "\u2717 needs work") + '</b></div>'; }).join("") + '</div>' : '') +
       (note ? '<div class="card" style="border-color:var(--gold);"><div class="flash-tag">Your sponsor\'s notes</div><div style="white-space:pre-wrap;">' + esc(note) + '</div></div>' : '') +
       '<p class="center muted">' + (fresh ? "Saved to your history. " : "Already saved. ") + (ids.length ? "The questions you missed will come back sooner in your reviews:" : "No misses. Nice work.") + '</p>' +
       ids.map(function (id) { var c = byId[id]; return c ? '<details class="set-fold"><summary>' + esc(c.q) + '</summary><div style="padding:0 2px 10px;">' + esc(c.a) + '</div></details>' : ""; }).join("") +
@@ -1261,7 +1262,7 @@
     setTitle("Chain of Command", true);
     var chain = Store.chain();
     var filledN = CHAIN_ROLES.filter(function (r) { return chain[r.k]; }).length;
-    var html = '<div class="muted" style="font-size:.85rem;margin:2px 4px 8px;">Boards almost always ask these. <b>' + filledN + ' of ' + CHAIN_ROLES.length + '</b> filled in. Saved names become flashcards and Mock Board questions.</div>';
+    var html = '<div class="muted" style="font-size:.85rem;margin:2px 4px 8px;">Boards almost always ask these. <b id="chainN">' + filledN + ' of ' + CHAIN_ROLES.length + '</b> filled in. Saved names become flashcards and Mock Board questions.</div>';
     [["Your unit", true], ["Army &amp; national", false]].forEach(function (g) {
       html += '<div class="lg-h">' + g[0] + '</div><div class="lg">';
       CHAIN_ROLES.filter(function (r) { return r.your === g[1]; }).forEach(function (r) {
@@ -1272,7 +1273,8 @@
     html += '<div class="spacer"></div><button class="btn gold lg" id="saveChain">Done</button>';
     if (filledN) html += '<div class="spacer"></div><a class="btn green" href="#/flash/chain">Study these ' + filledN + ' as flashcards</a>';
     mount.innerHTML = html;
-    mount.querySelectorAll(".chainin").forEach(function (inp) { inp.addEventListener("input", function () { Store.setChainRole(inp.getAttribute("data-k"), inp.value.trim()); flashSaved(); }); });
+    mount.querySelectorAll(".chainin").forEach(function (inp) { inp.addEventListener("input", function () { Store.setChainRole(inp.getAttribute("data-k"), inp.value.trim()); flashSaved();
+      var cn = mount.querySelector("#chainN"); if (cn) cn.textContent = Array.prototype.filter.call(mount.querySelectorAll(".chainin"), function (x) { return x.value.trim(); }).length + " of " + CHAIN_ROLES.length; }); });
     mount.querySelector("#saveChain").addEventListener("click", function () {
       mount.querySelectorAll(".chainin").forEach(function (inp) { Store.setChainRole(inp.getAttribute("data-k"), inp.value.trim()); });
       App.toast("Roster saved"); screenChain();
@@ -1462,14 +1464,15 @@
     var skeleton = "Good (morning/afternoon), Sergeant Major and members of the board.\nI am (Rank Last Name), serving as (duty position) in (unit).\nI have (X) years in service and (Y) time in grade.\nSome of my accomplishments include ...\nI am prepared for promotion because ...\nMy goals as an NCO are ...\nThank you.";
     var cur = Store.statement();
     mount.innerHTML =
-      '<div class="card"><div class="muted">Most boards open with \u201cTell the board about yourself.\u201d Draft your answer here and tap Save. It stays on this phone.</div></div>' +
+      '<div class="card"><div class="muted">Most boards open with \u201cTell the board about yourself.\u201d Draft your answer here. It saves as you type and stays on this phone.</div></div>' +
       '<label class="lbl" for="stmt">Your opening statement</label>' +
       '<textarea class="input" id="stmt" rows="12" placeholder="Write your statement...">' + (cur ? esc(cur) : "") + '</textarea>' +
-      '<div class="btn-row" style="margin-top:10px;"><button class="btn gold" id="save">Save</button><button class="btn ghost" id="tmpl">Fill-in template</button></div>' +
-      '<div class="spacer"></div><button class="btn ghost" id="ex">Show an example</button>' +
+      '<div class="btn-row" style="margin-top:10px;"><button class="btn ghost" id="tmpl">Fill-in template</button><button class="btn ghost" id="ex">See an example</button></div>' +
       '<div id="exBox" hidden><div class="card" style="margin-top:10px;"><div class="flash-tag">Example (fictional Soldier: write your own)</div><div style="white-space:pre-wrap;margin-top:6px;">' +
-        esc(SAMPLE_STATEMENT) + '</div><div class="muted" style="font-size:.85rem;margin-top:8px;">Keep yours about a minute. Say it, don\'t read it. Be specific: real duties, real accomplishments, real goals.</div></div></div>';
+        esc(SAMPLE_STATEMENT) + '</div><div class="muted" style="font-size:.85rem;margin-top:8px;">Keep yours about a minute. Say it, don\'t read it. Be specific: real duties, real accomplishments, real goals.</div></div></div>' +
+      '<div class="spacer"></div><button class="btn gold lg" id="save">Done</button>';
     mount.querySelector("#save").addEventListener("click", function () { Store.setStatement(mount.querySelector("#stmt").value); App.toast("Saved"); });
+    mount.querySelector("#stmt").addEventListener("input", function () { Store.setStatement(this.value); flashSaved(); });
     mount.querySelector("#ex").addEventListener("click", function () { var b = mount.querySelector("#exBox"); b.hidden = !b.hidden; });
     mount.querySelector("#tmpl").addEventListener("click", function () { var t = mount.querySelector("#stmt"); if (!t.value.trim() || confirm("Replace current text with the template?")) t.value = skeleton; });
   }
@@ -1606,16 +1609,23 @@
     if (head === "sheetin") return screenSheetIn(parts[1] || ""), tab("home");
     if (head === "sbresult") return screenSponsorResult(parts.slice(1)), tab("home");
     if (head === "pub") return screenPub(parts[1]), tab("browse");
-    if (head === "read") return screenRead(parts[1]), tab("browse");
-    if (head === "pick") return screenPick(parts[1]), tab("home");
-    if (head === "flash") return screenFlash(parts[1]), tab("home");
-    if (head === "type") return screenType(parts[1]), tab("home");
-    if (head === "quiz") return screenQuiz(parts[1]), tab("home");
-    if (head === "board") return screenBoard(parts[1]), tab("home");
-    if (head === "drive") return screenDrive(parts[1]), tab("home");
+    if (head === "read") return screenRead(parts[1], parts[2]), tab("browse");
+    if (head === "pick") return screenPick(parts[1]), modeTab();
+    if (head === "flash") return screenFlash(parts[1]), modeTab();
+    if (head === "type") return screenType(parts[1]), modeTab();
+    if (head === "quiz") return screenQuiz(parts[1]), modeTab();
+    if (head === "board") return screenBoard(parts[1]), modeTab();
+    if (head === "drive") return screenDrive(parts[1]), modeTab();
+    if (head) {
+      setTitle("Not found", true);
+      mount.innerHTML = '<div class="empty-state"><svg class=ic aria-hidden=true><use href=#i-alert></use></svg><div class="t">Page not found</div><div class="muted">That link doesn&#39;t go anywhere in the app.</div><a class="btn gold lg" href="#/">Go to Home</a></div>';
+      return tab("home");
+    }
     return screenHome(), tab("home");
   }
-  function tab(name) { document.querySelectorAll(".tab").forEach(function (t) { var on = t.getAttribute("data-tab") === name; t.classList.toggle("active", on); if (on) t.setAttribute("aria-current", "page"); else t.removeAttribute("aria-current"); }); }
+  var curTab = (function () { try { return sessionStorage.getItem("ncob-tab") || "home"; } catch (e) { return "home"; } })();
+  function modeTab() { tab(curTab); }
+  function tab(name) { curTab = name; try { sessionStorage.setItem("ncob-tab", name); } catch (e) {} document.querySelectorAll(".tab").forEach(function (t) { var on = t.getAttribute("data-tab") === name; t.classList.toggle("active", on); if (on) t.setAttribute("aria-current", "page"); else t.removeAttribute("aria-current"); }); }
   var SHORT = { "What the Board Room Is Like": "Board Room", "Records & What to Bring": "Records", "Promotion Points Worksheet": "Points", "Know Your Army & Your Job": "Know Your Army",
     "What Changed Recently": "What's New", "Board Sheet for Your Sponsor": "Sponsor Sheet", "Sponsor Board Results": "Sponsor Results", "Enter Paper Board Results": "Paper Results",
     "Start My MOS Cards": "My MOS Cards", "Board Prep Progress": "Progress", "Sources & Editions": "Sources", "Promotion Points": "Points", "Add Shared Cards": "Shared Cards", "Send My Progress": "Send Progress" };

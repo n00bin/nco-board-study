@@ -131,8 +131,8 @@
         Speech.stop();
         if (opts && opts.onDone) return opts.onDone(reviewed);
         container.innerHTML =
-          '<div class="ring-wrap"><div class="ring">&#10003;<small>' + reviewed + ' cards reviewed</small></div></div>' +
-          '<p class="center muted">Session complete. Nicely done.</p><div class="spacer"></div>' + (window.App && App.sessionNextHtml ? App.sessionNextHtml() : '') +
+          '<div class="ring-wrap"><div class="ring good" style="--p:100;"><div class="ring-in">&#10003;</div></div><small>' + reviewed + ' cards reviewed</small></div><div class="done-h">Session complete</div>' +
+          '<p class="center muted">Nicely done. Misses come back sooner; the rest wait longer.</p><div class="spacer"></div>' + (window.App && App.sessionNextHtml ? App.sessionNextHtml() : '') +
           '<button class="btn gold lg" id="again">Study more</button><div class="spacer"></div>' +
           '<button class="btn ghost" id="home">Back to Home</button>';
         container.querySelector("#again").addEventListener("click", function () { Flashcards.render(container, cards, title, opts); });
@@ -212,8 +212,8 @@
         if (g === "again") queue.push(c);
         i++;
         if (i >= queue.length) {
-          container.innerHTML = '<div class="ring-wrap"><div class="ring">&#10003;<small>' + reviewed + ' cards reviewed</small></div></div>' +
-            '<p class="center muted">Session complete. Nicely done.</p><div class="spacer"></div>' +
+          container.innerHTML = '<div class="ring-wrap"><div class="ring good" style="--p:100;"><div class="ring-in">&#10003;</div></div><small>' + reviewed + ' cards reviewed</small></div><div class="done-h">Session complete</div>' +
+            '<p class="center muted">Nicely done. Misses come back sooner; the rest wait longer.</p><div class="spacer"></div>' +
             '<button class="btn gold lg" id="again">Study more</button><div class="spacer"></div><button class="btn ghost" id="home">Back to Home</button>';
           container.querySelector("#again").addEventListener("click", function () { Flashcards.renderTyped(container, cards, title); });
           container.querySelector("#home").addEventListener("click", function () { App.go("#/"); });

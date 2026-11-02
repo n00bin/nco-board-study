@@ -75,7 +75,7 @@
             '<div class="flash-q" style="margin:10px 0;font-size:1.3em;line-height:1.4;">' + esc(c.oral || c.q) + '</div>' +
             (phase === "a" ? '<hr class="div"><div class="flash-a" style="font-size:1.2em;line-height:1.4;">' + esc(c.a).replace(/\n/g, "<br>") + '</div>' : '') +
           '</div>' +
-          '<div class="btn-row">' +
+          '<div class="btn-row drive-ctl">' +
             '<button class="btn lg" id="dPause">' + (playing ? "<svg class=ic aria-hidden=true><use href=#i-pause></use></svg> Pause" : "<svg class=ic aria-hidden=true><use href=#i-play></use></svg> Resume") + '</button>' +
             '<button class="btn lg" id="dNext">Next <svg class=ic aria-hidden=true><use href=#i-next></use></svg></button>' +
           '</div><div class="spacer"></div>' +
