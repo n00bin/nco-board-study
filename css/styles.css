@@ -495,3 +495,34 @@ a.textlink { text-align: center; }
 
 .lg .pill { flex: none; }
 .lg.pick-top { border-color: var(--gold); }
+
+/* ---------- v3.28 polish round 1 ---------- */
+#installBtn { display: none !important; }
+#appTitle { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+body.session .tabbar, body.guest .tabbar { display: none; }
+body.session .screen, body.guest .screen { padding-bottom: 28px; }
+body.session #reveal, body.session #rubricDone, body.session #fGrades, body.session #knSave, body.session .grade-row:not(#fGrades) {
+  position: sticky; bottom: calc(10px + env(safe-area-inset-bottom)); z-index: 6; box-shadow: 0 -6px 18px rgba(0,0,0,.45); }
+body.session #fGrades { bottom: 0; padding: 10px 0 calc(10px + env(safe-area-inset-bottom)); box-shadow: 0 -10px 18px rgba(20,22,15,.95); }
+.sess-banner { text-align: center; font-size: .78rem; font-weight: 700; color: var(--gold); letter-spacing: .5px; margin: -4px 0 8px; }
+.q-count { margin-top: 6px; }
+.grade-again { background: none; border: 1.5px solid #b3322e; color: #ff9b96; }
+.grade-good  { background: var(--gold); color: #1a1a0e; }
+.grade-easy  { background: none; border: 1.5px solid var(--line); color: var(--text); }
+.flip-cue { margin-top: 18px; font-size: .78rem; color: var(--text-dim); text-align: center; }
+.tool-grid .btn { background: var(--surface); border: 1px solid var(--line); color: var(--text); }
+.tool-grid .btn:active { background: var(--surface-2); }
+.url-line { margin-top: 10px; font-size: .85rem; overflow-wrap: anywhere; }
+.pill.core-pill { display: inline-block; margin-bottom: 6px; color: var(--gold); border-color: var(--gold); }
+mark { background: rgba(255,204,51,.28); color: inherit; border-radius: 3px; padding: 0 1px; }
+.check-prog { margin: 0 4px 10px; font-size: .88rem; color: var(--text-dim); }
+.check-prog .bar { margin-top: 6px; }
+.progress-bar { height: 4px; background: var(--line); border-radius: 2px; margin: 2px 0 8px; overflow: hidden; }
+.progress-bar span { display: block; height: 100%; background: var(--gold); }
+details > summary { min-height: 44px; display: flex; align-items: center; }
+details.fb-fold > summary, details.hero-more > summary { display: list-item; min-height: 0; padding: 12px 0; }
+.textlink { min-height: 44px; }
+.bar { background: var(--line); }
+
+.chg { padding: 10px 2px; border-top: 1px solid var(--line); font-size: .93rem; }
+details.set-fold .row { margin-bottom: 6px; }

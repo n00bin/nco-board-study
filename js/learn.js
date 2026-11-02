@@ -132,7 +132,7 @@
       var html =
         '<div class="hero"><div class="big">' + pct + '%</div><div class="sub">of your board path • ' + doneN + ' / ' + pathFlat.length + ' lessons' + (extraDone > 0 ? ' (+' + extraDone + ' extra)' : '') + '</div>' +
           '<div class="bar"><span style="width:' + pct + '%"></span></div></div>' +
-        '<div class="card"><div class="muted">Learn Mode teaches you the material first, then practices it, a few facts at a time. <b>For your board, finish the first three tracks: Board 101, Fundamentals, and Board Core.</b> The publication tracks below them are extra depth if you have time.</div></div>';
+        '<div class="card"><div class="muted">Learn it, then practice it. <b>For your board: finish Board 101, Fundamentals and Board Core.</b></div></div>';
       if (next) html += '<a class="btn gold lg" href="#/lesson/' + next.id + '">' + (doneN ? "&#9654; Continue learning" : "&#9654; Start learning") + '</a><div class="spacer"></div>';
 
       var BOARD_PATH = { board101: 1, fundamentals: 1, core: 1, sit: 1, personal: 1 }, shownExtra = false;
@@ -140,13 +140,14 @@
       // keep the board path together at the top: the required scenario and personal tracks right after Board Core
       tracks = tracks.filter(function (t) { return BOARD_PATH[t.id]; }).concat(tracks.filter(function (t) { return !BOARD_PATH[t.id]; }));
       tracks.forEach(function (t) {
-        if (!BOARD_PATH[t.id] && !shownExtra) { shownExtra = true; html += '<h2 class="section">Extra depth (optional)</h2>'; }
+        if (!BOARD_PATH[t.id] && !shownExtra) { shownExtra = true; html += '<details class="set-fold"><summary>Extra depth: every publication (optional)</summary>'; }
         var td = doneCount(t.lessons);
         var tp = t.lessons.length ? Math.round((td / t.lessons.length) * 100) : 0;
         html += '<a class="row" href="#/track/' + t.id + '"><div class="grow"><div class="code">' + esc(t.title) + '</div>' +
           '<div class="meta">' + td + ' / ' + t.lessons.length + ' lessons' + (t.id === "sit" || t.id === "personal" ? ' \u2022 asked at every board (also part of Board Core)' : '') + '</div>' +
           '<div class="bar"><span style="width:' + tp + '%"></span></div></div><div class="chev">&#8250;</div></a>';
       });
+      if (shownExtra) html += '</details>';
       container.innerHTML = html;
     },
 

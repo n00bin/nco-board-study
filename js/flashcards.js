@@ -13,7 +13,7 @@
   var EMPTY = "Nothing to study here right now. Nothing is due, or the deck is empty. Try Board Core, or pick a subject.";
   var GRADE_HINT = "Missed it: see it soon. Got it: see it later. Easy: see it much later.";
   var GRADE_BTNS =
-    '<button class="btn grade-again" id="gAgain">Missed it</button>' +
+    '<button class="btn grade-again" id="gAgain">Missed</button>' +
     '<button class="btn grade-good" id="gGood">Got it</button>' +
     '<button class="btn grade-easy" id="gEasy">Easy</button>';
 
@@ -39,6 +39,7 @@
                 '<span><button class="mini" id="fSpeak" aria-label="Read aloud">&#128266;</button>' +
                 '<button class="mini" id="fReport" aria-label="Report card">&#9873;</button></span></div>' +
               '<div class="flash-q" id="fQ"></div>' +
+              '<div class="flip-cue" aria-hidden="true">&#8635; tap the card to flip</div>' +
             '</div>' +
             '<div class="flash-face flash-back" id="fBack" aria-hidden="true">' +
               '<div class="flash-tag" id="fTagB">Answer</div>' +
@@ -47,7 +48,7 @@
             '</div>' +
           '</div></div>' +
           '<div class="flash-hint" id="fHint">Tap card to flip</div>' +
-          '<div class="grade-row conf-row" id="fConf"><button class="btn ghost" id="cSure">I know it</button><button class="btn ghost" id="cUnsure">Not sure</button></div>' +
+          '<div class="grade-row conf-row" id="fConf"><button class="btn gold" id="cSure">I know it</button><button class="btn ghost" id="cUnsure">Not sure</button></div>' +
           '<div class="grade-row" id="fGrades" hidden>' + GRADE_BTNS + '</div>' +
         '</div>';
 
@@ -63,7 +64,7 @@
         front.setAttribute("aria-hidden", flipped ? "true" : "false");
         back.setAttribute("aria-hidden", flipped ? "false" : "true");
         grades.hidden = !flipped; confRow.hidden = flipped;
-        hint.textContent = flipped ? GRADE_HINT : (queue[i] && queue[i].why ? "Say the answer and why it matters, then tap to flip" : "Say the answer, then tap to flip");
+        hint.textContent = flipped ? "" : (queue[i] && queue[i].why ? "Say the answer and why it matters, then flip" : "Say the answer, then flip");
       }
 
       function paint() {

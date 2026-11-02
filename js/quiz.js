@@ -79,7 +79,7 @@
         var item = questions[i];
         selected = null;
         container.innerHTML =
-          '<div class="q-count">Question ' + (i + 1) + " of " + questions.length +
+          '<div class="progress-bar"><span style="width:' + Math.round(100 * i / questions.length) + '%"></span></div><div class="q-count">Question ' + (i + 1) + " of " + questions.length +
             " • Score " + score + '</div>' +
           '<div class="q-text">' + esc(item.q) + '</div>' +
           '<div id="choices"></div>' +
@@ -125,7 +125,7 @@
         } else {
           btn.classList.add("wrong"); mark(btn, false);
           all.forEach(function (b) { if (b._opt && b._opt.correct) { b.classList.add("correct"); mark(b, true); } });
-          if (verdict) { verdict.className = "verdict no"; verdict.textContent = "✗ Incorrect. The right answer is marked ✓."; }
+          if (verdict) { verdict.className = "verdict no"; verdict.textContent = "\u2717 Not quite: the right answer is marked"; }
         }
         var nav = document.createElement("button");
         nav.className = "btn gold";

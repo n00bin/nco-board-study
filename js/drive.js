@@ -79,11 +79,11 @@
             '<button class="btn lg" id="dPause">' + (playing ? "&#10073;&#10073; Pause" : "&#9658; Resume") + '</button>' +
             '<button class="btn lg" id="dNext">Next &#9197;</button>' +
           '</div><div class="spacer"></div>' +
-          '<button class="btn green" id="dLoop">' + (loop ? "&#128257; Repeat: on" : "&#128257; Repeat: off") + '</button>' +
+          '<button class="btn ' + (loop ? 'green' : 'ghost') + '" id="dLoop">' + (loop ? "&#128257; Repeat: on" : "&#128257; Repeat: off") + '</button>' +
           '<div class="spacer"></div><button class="btn ghost" id="dStop">&#9209; Stop Drive Mode</button>';
         container.querySelector("#dPause").addEventListener("click", function () { playing ? pause() : resume(); });
         container.querySelector("#dNext").addEventListener("click", function () { skip(); });
-        container.querySelector("#dLoop").addEventListener("click", function () { loop = !loop; container.querySelector("#dLoop").innerHTML = loop ? "&#128257; Repeat: on" : "&#128257; Repeat: off"; });
+        container.querySelector("#dLoop").addEventListener("click", function () { loop = !loop; container.querySelector("#dLoop").className = "btn " + (loop ? "green" : "ghost"); container.querySelector("#dLoop").innerHTML = loop ? "&#128257; Repeat: on" : "&#128257; Repeat: off"; });
         container.querySelector("#dStop").addEventListener("click", function () { Drive.stop(); App.go("#/"); });
       }
 
