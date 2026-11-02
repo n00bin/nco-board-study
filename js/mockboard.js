@@ -670,7 +670,7 @@
           (function () {
             var full = qScores.filter(function (x) { return x >= 0.99; }).length, part = qScores.filter(function (x) { return x >= 0.66 && x < 0.99; }).length, miss = qScores.length - full - part;
             return '<div class="dots" aria-hidden="true">' + qScores.map(function (x) { return '<span class="dot ' + (x >= 0.99 ? 'g' : x >= 0.66 ? 'a' : 'r') + '"></span>'; }).join("") + '</div>' +
-              '<p class="center muted" style="font-size:.85rem;">' + full + ' full \u2022 ' + part + ' partial \u2022 ' + miss + ' missed' + (nF ? ' \u2022 plus ' + nF + ' follow-up' + (nF === 1 ? '' : 's') : '') + '</p>' +
+              '<p class="center muted" style="font-size:.85rem;">' + full + ' full \u2022 ' + part + ' with gaps • ' + miss + ' missed' + (nF ? ' \u2022 plus ' + nF + ' follow-up' + (nF === 1 ? '' : 's') : '') + '</p>' +
               (pct >= 75 && !notReady ? '<p class="center" style="font-weight:700;color:var(--gold);">&#127881; Strong board. Keep it sharp.</p>' : '');
           })() + (notReady ? '' : '<p class="center muted">' + msg + '</p>') +
           // the next step first: drill the misses (or run another), then the details
