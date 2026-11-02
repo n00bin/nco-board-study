@@ -141,6 +141,13 @@
     }
     // Board Core: the tagged must-know cards, plus your own cards and chain-of-command roster
     if (deck === "core") return all.filter(function (c) { return c.core || c.custom; });
+    // 10-minute review: up to 30 Board Core cards, the ones due (confident misses first) before new ones
+    if (deck === "ten") {
+      var coreT = all.filter(function (c) { return c.core && rankOk(c); }), nowT = Date.now();
+      var dueT = coreT.filter(function (c) { return Store.isDue(c.id, nowT); }).sort(function (x, y) { var rx = Store.recOf(x.id), ry = Store.recOf(y.id); return ((ry.cw || 0) - (rx.cw || 0)) || (rx.due - ry.due); });
+      var newT = coreT.filter(function (c) { var r = Store.recOf(c.id); return !r || !(r.seen > 0); });
+      return dueT.concat(newT).slice(0, 30);
+    }
     if (deck === "sgtdeck") return all.filter(function (c) { return c.rank === "SGT"; });
     if (deck === "ssgdeck") return all.filter(function (c) { return c.rank === "SSG"; });
     // Final-week review: Board Core cards you've studied, weakest first (most misses, then soonest due), then the rest
@@ -173,6 +180,7 @@
     if (deck === "final") return "Final-Week Review";
     if (deck === "top") return "Top 100 cards";
     if (deck === "misses") return "Your Mock Board misses";
+    if (deck === "ten") return "10-minute review";
     if (deck === "due") return "Due for review";
     if (deck === "leeches") return "Cards you keep missing";
     if (deck === "cram") return "Night-before Cram";
@@ -272,7 +280,8 @@
     var triageNote = (pp2.triage && days > 7) ? '<div class="muted" style="font-size:.8rem;margin-top:8px;">Short on time: at ' + NEW_CAP + ' a day you\u2019ll reach about ' + pp2.reach + ' of ' + unseen + ' new cards before board week. That\u2019s OK. Top 100 and the scenarios first; skip cards marked Advanced.</div>' : '';
     var remind = (!Store.settings().remindersAdded && (days == null || days > 1)) ? '<div style="margin-top:8px;font-size:.85rem;"><a href="#/settings">&#128276; Add study reminders to my calendar</a></div>' : '';
     planExtras = (sponsorNote || remind) ? '<div class="card">' + sponsorNote.replace("margin-top:8px;", "") + remind + '</div>' : '';
-    var startBtn = lastPlan.length >= 2 ? '<button class="btn gold lg" id="startSess" style="margin-top:8px;">&#9654; Start today&#39;s session</button>' : '';
+    var startBtn = lastPlan.length >= 2 ? '<button class="btn gold lg" id="startSess" style="margin-top:8px;">&#9654; Start today&#39;s session</button>' +
+      '<button class="btn ghost" id="tenMin" style="margin-top:8px;">&#9201;&#65039; Only 10 minutes? Do the most important 10</button>' : '';
     return '<div class="card"><div class="flash-tag">' + esc(title) + '</div>' + startBtn + '<div style="display:flex;flex-direction:column;gap:8px;margin-top:8px;">' + items.join("") + '</div>' + blank + triageNote + '</div>';
   }
   // "Ready?" check: based on what you actually REMEMBERED (last grade was a hit), plus recent Mock Boards.
@@ -389,6 +398,10 @@
     mount.innerHTML = html;
     wireBoardResult(rs);
     var ss0 = mount.querySelector("#startSess"); if (ss0) ss0.addEventListener("click", startSession);
+    var tm0 = mount.querySelector("#tenMin"); if (tm0) tm0.addEventListener("click", function () {
+      lastPlan = [{ href: "#/flash/ten", label: "10-minute review" }, { href: "#/board/core", label: "if you have 5 more minutes: a 5-minute Mock Board" }];
+      startSession();
+    });
     var iok = mount.querySelector("#iosOk"); if (iok) iok.addEventListener("click", function () { Store.setSetting("iosTipDone", true); mount.querySelector("#iosTip").remove(); });
     mount.querySelectorAll("#rankAsk .chip").forEach(function (b) {
       b.addEventListener("click", function () { Store.setSetting("boardFor", b.getAttribute("data-r")); screenHome(); });
@@ -491,7 +504,7 @@
   function screenFlash(deck) {
     setTitle(deckTitle(deck), true);
     // Top 100 and Final-Week Review are meant to be done whole: no 30-new-card session cap
-    Flashcards.render(mount, cardsForDeck(deck), deckTitle(deck), (deck === "top" || deck === "final") ? { noCap: true } : undefined);
+    Flashcards.render(mount, cardsForDeck(deck), deckTitle(deck), (deck === "top" || deck === "final" || deck === "ten") ? { noCap: true } : undefined);
   }
 
   function screenQuiz(deck) {
@@ -640,7 +653,7 @@
       html += '<h2 class="section">Read-aloud</h2><div class="card"><label class="switch"><input type="checkbox" id="autoRead"' + (s.autoRead ? ' checked' : '') + '> <span>Automatically read questions &amp; answers aloud</span></label></div>';
     if (Speech.supported()) html += '<div class="spacer"></div><button class="btn ghost" id="speakTest">&#128266; Test the voice</button>';
     if (window.SpeechRecognition || window.webkitSpeechRecognition)
-      html += '<h2 class="section">Mock Board voice check</h2><div class="card"><label class="switch"><input type="checkbox" id="voiceAuto"' + (!s.voiceOff ? ' checked' : '') + '> <span>Listen to my answers and pre-tick the key points I said (needs the microphone; may need a connection)</span></label></div>';
+      html += '<h2 class="section">Mock Board voice check</h2><div class="card"><label class="switch"><input type="checkbox" id="voiceAuto"' + (!s.voiceOff ? ' checked' : '') + '> <span>Listen to my answers and pre-tick the key points I said (needs the microphone; may need a connection)</span></label><div class="muted" style="font-size:.8rem;margin-top:6px;">Voice check uses your phone\u2019s speech service (Google or Apple), so your spoken answer leaves the phone while it listens. It stays off for personal and your-unit questions. Record my answer stays on the phone.</div></div>';
     mount.innerHTML = html;
 
     mount.querySelector("#bDate").addEventListener("change", function (e) {

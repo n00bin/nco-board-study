@@ -84,7 +84,7 @@
             esc(c.a).replace(/\n/g, "<br>") +
             (c.changed ? '<div class="flash-ref" style="color:var(--gold);margin-top:10px;">&#9888;&#65039; ' + esc(c.changed) + '</div>' : "") +
             (c.why ? '<div class="flash-ref" style="color:var(--text);margin-top:12px;"><b>Why it matters:</b> ' + esc(c.why) + '</div>' : "") +
-            (c.sample ? '<div class="flash-ref" style="color:var(--text);margin-top:12px;"><b>Example answer (fictional Soldier, make it yours):</b> ' + esc(c.sample) + '</div>' : "") +
+            (c.sample && c.pub === "personal" ? '<div class="flash-ref" style="color:var(--text);margin-top:12px;"><b>Example answer (fictional Soldier, make it yours):</b> ' + esc(c.sample) + '</div>' : "") +
             (c.points && c.points.length > 1 ? '<div class="flash-ref" style="color:var(--text);margin-top:12px;"><b>Did you cover these?</b>' + c.points.map(function (p) { return '<div style="margin-top:4px;">\u2022 ' + esc(p) + '</div>'; }).join("") + '</div>' : "") +
             (c.follow && c.follow.length ? '<div class="flash-ref" style="margin-top:12px;"><b>Board follow-ups:</b>' +
               c.follow.map(function (f) { return '<details class="follow-d" style="margin-top:8px;"><summary><b style="color:var(--text);">Q: ' + esc(f.q) + '</b> <span class="muted" style="font-size:.8rem;">(say it, then tap)</span></summary><span class="muted follow-a">A: ' + esc(f.a) + '</span></details>'; }).join("") + '</div>' : "");

@@ -33,15 +33,17 @@
       if (a.length > 90) return; // skip long prose as a distractor
       if (c.pub === card.pub) sameP.push(a); else other.push(a);
     });
-    var distract = [];
-    var seen = {};
-    shuffle(sameP).concat(shuffle(other)).forEach(function (a) {
-      if (distract.length >= 3) return;
-      if (seen[a]) return;
-      // keep distractors a sensible length vs the answer
-      seen[a] = true;
-      distract.push(a);
-    });
+    // keep distractors close to the right answer's length so the longest choice isn't a giveaway
+    var distract = [], seen = {}, L = correct.length;
+    var fit = function (a) { return a.length >= L * 0.6 && a.length <= L * 1.4; };
+    var cands = shuffle(sameP).concat(shuffle(other));
+    cands.filter(fit).concat(cands.filter(function (a) { return !fit(a); }).sort(function (x, y) { return Math.abs(x.length - L) - Math.abs(y.length - L); }))
+      .forEach(function (a) { if (distract.length >= 3 || seen[a]) return; seen[a] = true; distract.push(a); });
+    // sometimes swap in a wrong choice as long as the right one, so length is no clue either way
+    if (distract.length === 3 && Math.random() < 0.3 && distract.every(function (d) { return d.length < L; })) {
+      var longer = cands.filter(function (a) { return !seen[a] && a.length >= L && a.length <= L * 1.8; })[0];
+      if (longer) { distract.sort(function (x, y) { return x.length - y.length; }); distract[0] = longer; }
+    }
     var options = [{ text: correct, correct: true }];
     distract.forEach(function (d) { options.push({ text: d, correct: false }); });
     return { q: card.q, options: shuffle(options), card: card };

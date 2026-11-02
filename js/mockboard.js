@@ -471,16 +471,19 @@
         }
         var rev = function () { stopVoice(); reveal(c); };
         container.querySelector("#reveal").addEventListener("click", rev);
-        wireRec(); wireVoice();
+        wireRec(); wireVoice(c);
         runTimer(cs, rev);
       }
 
       // ---- voice check: hear what you said, pre-tick the key points it heard (you can still change any box) ----
       var voice = { rec: null, text: "" };
-      function voiceButton() { return SR ? '<button class="btn ghost" id="voiceBtn">&#128483;&#65039; Voice check (optional, needs a connection): the app listens</button><div class="spacer"></div>' : ""; }
-      function wireVoice() {
+      function voiceButton() { return SR ? '<button class="btn ghost" id="voiceBtn">&#128483;&#65039; Voice check (optional): your phone\u2019s speech service (Google or Apple) hears your answer and needs a connection</button><div class="spacer"></div>' : ""; }
+      function wireVoice(c) {
         voice.text = ""; voice.paused = false;
         var b = container.querySelector("#voiceBtn"); if (!b) return;
+        if (c && (c.local || c.pub === "personal")) {   // your unit, your leaders, your life: keep it off the speech service
+          b.textContent = "Voice check stays off for personal and your-unit questions"; b.disabled = true; return;
+        }
         var start = function () {
           Store.setSetting("voiceAuto", true);
           try {
@@ -533,7 +536,7 @@
             '<div class="flash-tag">Answer</div><div class="flash-a">' + esc(c.a).replace(/\n/g, "<br>") + '</div>' +
             (c.changed ? '<div class="flash-ref" style="color:var(--gold);margin-top:8px;">&#9888;&#65039; ' + esc(c.changed) + '</div>' : '') +
             (c.ref ? '<div class="flash-ref">Reference: ' + esc(c.ref) + '</div>' : '') + (curStyle === "why" && c.pub !== "sit" && c.pub !== "personal" ? '' : whyHtml(c)) +
-            (c.sample ? '<div class="flash-ref" style="color:var(--text);margin-top:10px;"><b>Example answer (fictional Soldier):</b> ' + esc(c.sample) + '</div>' : '') + '</div>' +
+            (c.sample && c.pub === "personal" ? '<div class="flash-ref" style="color:var(--text);margin-top:10px;"><b>Example answer (fictional Soldier):</b> ' + esc(c.sample) + '</div>' : '') + '</div>' +
           (window.Speech && Speech.supported() ? '<button class="btn ghost" id="hearA" style="margin-bottom:8px;">&#128266; Hear a model answer</button>' : '') +
           (listened ? '<div id="heard"><div class="muted center" style="font-size:.85rem;">Checking what you said…</div></div>' : '') +
           '<div id="playback"></div>' +

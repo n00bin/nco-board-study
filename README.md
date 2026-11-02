@@ -10,6 +10,16 @@ no account, no app store, nothing to sign up for.
 
 ---
 
+## What's new in 3.24
+
+- **Hear a model answer on 127 more scenarios** (every Board Core scenario and Sergeant / Staff Sergeant card): a
+  30-45 second spoken answer in the shape a board wants, built only from the card's own facts.
+- **Only 10 minutes?** One tap on Home: the 30 most important Board Core cards (due ones first), then an optional
+  5-minute board.
+- **Voice check privacy**: it now says your spoken answer goes to your phone's speech service, and it stays off for
+  personal and your-unit questions. Record my answer never leaves the phone.
+- Quiz questions built on the fly no longer make the longest choice the right one.
+
 ## What's new in 3.23
 
 - **Listen-only Mock Board**: turn it on and you hear each question (and follow-up) instead of reading it, like the real
