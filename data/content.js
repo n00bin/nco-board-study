@@ -1,7 +1,7 @@
 /* NCO Board Study Guide content: 2104 cards across 43 subjects, built from 30+ Army publications,
    the 2019-2026 Army Directives, and DoD/TSP guidance (sources in the project folder). Checked against the sources 2026-11-02. */
 window.STUDY = {
-  meta: {"title":"NCO Board Study Guide","subtitle":"E-5 / E-6 Promotion Board","version":"3.19.0","updated":"2026-11-02","verified":"2026-11-01","cards":2104},
+  meta: {"title":"NCO Board Study Guide","subtitle":"E-5 / E-6 Promotion Board","version":"3.19.1","updated":"2026-11-02","verified":"2026-11-01","cards":2104},
   pubs: [
     {"id":"sit","code":"What Would You Do?","title":"Situational Leadership Scenarios","cat":"Board Skills"},
     {"id":"personal","code":"Personal Questions","title":"Tell Us About You","cat":"Board Skills"},

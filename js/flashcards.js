@@ -91,17 +91,23 @@
           container.querySelector("#fRef").textContent = c.ref ? "Reference: " + c.ref : "";
           var inner = cardEl.querySelector(".flash-inner");
           inner.style.minHeight = ""; cardEl.style.minHeight = "";
-          var h = Math.max(320, back.scrollHeight + 6, front.scrollHeight + 6);
-          inner.style.minHeight = h + "px"; cardEl.style.minHeight = h + "px";
+          sizeTo(false);
         };
         if (wasFlipped) { container.querySelector("#fA").textContent = ""; setTimeout(function () { if (queue[i] === c) fill(); }, 300); }
         else fill();
         if (autoRead) Speech.speak(c.q);
       }
 
+      // the card is as tall as the side you're looking at, so the buttons under it stay on screen
+      function sizeTo(flipped) {
+        var inner = cardEl.querySelector(".flash-inner");
+        inner.style.minHeight = ""; cardEl.style.minHeight = "";
+        var h = Math.max(260, (flipped ? back.scrollHeight : front.scrollHeight) + 6);
+        inner.style.minHeight = h + "px"; cardEl.style.minHeight = h + "px";
+      }
       function flip() {
         var flipped = cardEl.classList.toggle("flipped");
-        setFaces(flipped);
+        setFaces(flipped); sizeTo(flipped);
         if (flipped && autoRead) Speech.speak(queue[i].a);
       }
 

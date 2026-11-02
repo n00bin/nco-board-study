@@ -263,7 +263,7 @@
       }
       function header(label) {
         var localN = deck.filter(function (c) { return c.local; }).length, totalQ = deck.length - localN;
-        return '<div class="q-count">' + (label ? label : qNum ? "Question " + qNum + " of " + totalQ + (localN ? " (+" + localN + " about your unit)" : "") : "") + (asked >= 3 ? (qNum ? "  •  " : "") + "Score so far " + Math.round(100 * got / asked) + "%" : "") + '</div>';
+        return '<div class="q-count">' + (label ? label : curLocal ? "About your unit and your Army" : qNum ? "Question " + qNum + " of " + totalQ + (localN ? " (+" + localN + " about your unit)" : "") : "") + (asked >= 3 ? (qNum ? "  •  " : "") + "Score so far " + Math.round(100 * got / asked) + "%" : "") + '</div>';
       }
       function timerHtml(t, why) {
         // say why the clock isn't the Settings value (long answers and scenarios get double time; the intro gets 90 s)
@@ -319,7 +319,7 @@
       function show() {
         clearTimer();
         var st = steps[s];
-        if (st.kind === "q") { curStyle = st.style || "standard"; curVoice = VOICES[st.mi || 0] || VOICES[0]; return question(st.c); }
+        if (st.kind === "q") { curLocal = !!st.c.local; curStyle = st.style || "standard"; curVoice = VOICES[st.mi || 0] || VOICES[0]; return question(st.c); }
         if (st.kind === "follow") return followUp(st);
         if (st.kind === "comeback") return comeback(st.c);
         if (st.kind === "reportIn") return reportIn();
@@ -436,10 +436,10 @@
       }
 
       // ---- questions ----
-      var curStyle = "standard";
+      var curStyle = "standard", curLocal = false;
       var VOICES = [{ pitch: 1, rate: 0.98 }, { pitch: 0.8, rate: 0.92 }, { pitch: 1.2, rate: 1.05 }, { pitch: 0.9, rate: 0.9 }], curVoice = VOICES[0];
       function question(c) {
-        qNum++;
+        if (!c.local) qNum++;
         var cs = timeFor(c); curLimit = cs || 0;
         if (curStyle === "rapid" && secs && c.pub !== "sit" && c.pub !== "personal") cs = Math.min(cs || 20, 20);
         container.innerHTML = header() + timerHtml(cs) +
@@ -545,8 +545,8 @@
         if (curStyle === "rapid") fups = [];
         // A real board member presses on what you left out: ask about the first missed key point (bonus "why" boxes skipped)
         var gap = (left || []).map(function (k) { return c.points && c.points[k]; }).filter(function (p) { return p && !/^Said why it matters/i.test(p); })[0];
-        if (score >= 0.5 && score < 1 && gap && curStyle !== "rapid" && !c.local) {
-          fups = [{ q: "You didn't mention this: \u201c" + gap.replace(/\.$/, "") + ".\u201d Tell the board about that, and why it matters.", a: gap.replace(/.$/, "") + "." + (c.why ? " " + c.why : ""), ref: c.ref, adaptive: true }];
+        if (score >= 0.5 && score < 1 && gap && curStyle !== "rapid" && !c.local && c.pub !== "personal") {
+          fups = [{ q: "You didn't mention this: \u201c" + gap.replace(/\.$/, "") + ".\u201d Tell the board about that, and why it matters.", a: gap.replace(/\.$/, "") + "." + (c.why ? " " + c.why : ""), ref: c.ref, adaptive: true }];
         }
         if (score >= 0.5 && fups.length) {
           var fu = fups.map(function (f) { return { kind: "follow", f: f, parent: c }; });
@@ -631,7 +631,8 @@
 
         // A real board weighs bearing and the required situational questions, not just the percentage.
         var bearingMiss = bearing.filter(function (b) { return !b.ok; }).map(function (b) { return b.label.toLowerCase(); });
-        var sitMiss = missedIds.filter(function (id) { return /^sit-/.test(id); }).length;
+        var pubOf = {}; cards.forEach(function (c) { pubOf[c.id] = c.pub; });
+        var sitMiss = missedIds.filter(function (id, k) { return pubOf[id] === "sit" && missedIds.indexOf(id) === k; }).length;
         var V = verdict(pct, bearingMiss, sitMiss), notReady = V.level === "almost", msg = V.msg;
         var nQ = deck.length, nF = Math.max(0, asked - nQ);
         var countLine = nQ + " question" + (nQ === 1 ? "" : "s") + (nF ? ", " + nF + " follow-up" + (nF === 1 ? "" : "s") + " or second tries" : "");

@@ -1005,8 +1005,8 @@
     var pct = Math.round(100 * got / total);
     mount.innerHTML = '<div class="ring-wrap"><div class="ring">' + pct + '%<small>from your sponsor\'s board</small></div></div>' +
       (function () {
-        var V = MockBoard.verdict(pct, bear.filter(function (b) { return !b.ok; }).map(function (b) { return b.label.toLowerCase(); }), ids.filter(function (id) { return /^sit-/.test(id); }).length);
-        return '<div class="card" style="border-color:' + (V.level === "ready" ? 'var(--good)' : 'var(--gold)') + ';text-align:center;"><b>' + esc(V.title) + '.</b> <span class="muted">' + esc(V.msg) + '</span></div>';
+        var V = MockBoard.verdict(pct, bear.filter(function (b) { return !b.ok; }).map(function (b) { return b.label.toLowerCase(); }), ids.filter(function (id) { return byId[id] && byId[id].pub === "sit"; }).length);
+        return '<div class="card" style="border-color:' + (V.level === "ready" ? 'var(--good)' : 'var(--gold)') + ';text-align:center;"><b>' + esc(V.title) + '.</b> <span class="muted">' + esc(V.msg.indexOf(V.title + ".") === 0 ? V.msg.slice(V.title.length + 1).trim() : V.msg) + '</span></div>';
       })() +
       (selfPct != null ? '<div class="card"><div class="flash-tag">You vs. your sponsor</div><div class="muted">Your own Mock Boards average <b>' + selfPct + '%</b>. Your sponsor scored you <b>' + pct + '%</b>. ' +
         (selfPct - pct >= 10 ? 'You grade yourself about ' + (selfPct - pct) + ' points higher than your sponsor does. Next time, only give yourself a key point if you said it out loud, clearly.' : selfPct - pct <= -10 ? 'Your sponsor scored you higher than you score yourself. You know more than you think.' : 'Your own grading is close to your sponsor&#39;s. You can trust your practice scores.') + '</div></div>' : '') +
@@ -1111,7 +1111,7 @@
     STUDY.cards.forEach(function (c) { byIdP[c.id] = c; });
     var twinSeen = {}, rankFit = function (c) { return !c.rank || !x.bf || x.bf === "BOTH" || c.rank === x.bf; };
     // first the cards the Soldier actually missed, then fill from their weakest subjects
-    (Array.isArray(x.mi) ? x.mi : []).forEach(function (id) { var c = byIdP[id]; if (!c || !rankFit(c) || weakIds.indexOf(id) >= 0) return; if (c.twin) { if (twinSeen[c.twin]) return; twinSeen[c.twin] = 1; } weakIds.push(id); });
+    (Array.isArray(x.mi) ? x.mi : []).forEach(function (id) { var c = byIdP[id]; if (!c || c.pub === "personal" || !rankFit(c) || weakIds.indexOf(id) >= 0) return; if (c.twin) { if (twinSeen[c.twin]) return; twinSeen[c.twin] = 1; } weakIds.push(id); });
     (x.w || []).forEach(function (pub) { STUDY.cards.filter(function (c) { if (!c.core || c.pub !== pub || !rankFit(c)) return false; if (c.twin) { if (twinSeen[c.twin]) return false; twinSeen[c.twin] = 1; } return true; }).slice(0, 4).forEach(function (c) { weakIds.push(c.id); }); });
     var sit = STUDY.cards.filter(function (c) { return c.core && c.pub === "sit" && rankFit(c); }).map(function (c) { return c.id; }).sort(function () { return Math.random() - 0.5; }).slice(0, 2);
     var board = weakIds.slice(0, 8).concat(sit.filter(function (id) { return weakIds.indexOf(id) < 0; }));
