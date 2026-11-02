@@ -759,9 +759,8 @@
       '<div class="card center"><p>Share this app with other Soldiers — it works on any phone, free.</p>' +
         '<img src="./icons/qr.png" alt="QR code to open the app" style="width:200px;height:200px;border-radius:12px;background:#fff;padding:8px;" />' +
         '<div class="muted" style="margin-top:10px;word-break:break-all;">' + APP_URL + '</div></div>' +
-      '<button class="btn gold lg" id="share">&#128279; Share link</button>' +
-      '<div class="spacer"></div><button class="btn ghost" id="copy">Copy link</button>' +
-      '<div class="spacer"></div><a class="btn ghost" href="#/kit">&#128424;&#65039; Print a one-page share kit (QR + install steps)</a>' +
+      '<div class="btn-row"><button class="btn gold lg" id="share">&#128279; Share link</button><button class="btn ghost lg" id="copy">Copy</button></div>' +
+      '<a class="textlink" href="#/kit">&#128424;&#65039; Print a one-page share kit (QR + install steps)</a>' +
       '<h2 class="section">Install it on your phone</h2>' +
       '<div class="card"><div class="ttl"><b>Android (Chrome):</b> tap the Install button at the top, or Chrome menu &#8942; &#8594; Install app / Add to Home screen.</div>' +
         '<div class="ttl" style="margin-top:8px;"><b>iPhone (Safari):</b> open the link in Safari, tap Share &#11014;&#65039;, then Add to Home Screen, then Add. Open it from the new icon; it works offline after the first visit.</div></div>' +
@@ -1242,8 +1241,8 @@
     setTitle("Uniform Inspection", true);
     var checks = Store.checks();
     var html = '<div class="card"><div class="muted">Tap each item once you\'ve verified it. Standards summarized from AR 670-1 / DA PAM 670-1 — verify exact measurements there and follow local guidance.</div></div>' +
-      '<div class="card"><div class="flash-tag">AGSU coat: where the main items go (enlisted)</div>' + UNIFORM_SVG +
-        '<div class="muted" style="font-size:.8rem;margin-top:6px;">Simple sketch, not to scale, shown as you face the Soldier (their right is on your left). From DA PAM 670-1 and AD 2025-18; your board memo and local SOP have the final say.</div></div>';
+      '<details class="set-fold" style="margin-top:0;"><summary>Picture: where the main items go on the AGSU coat</summary>' + UNIFORM_SVG +
+        '<div class="muted" style="font-size:.8rem;margin-top:6px;">Simple sketch, not to scale, shown as you face the Soldier (their right is on your left). From DA PAM 670-1 and AD 2025-18; your board memo and local SOP have the final say.</div><div style="height:8px;"></div></details>';
     UNIFORM_CHECKS.forEach(function (u) {
       var on = !!checks[u.id];
       html += '<button class="row check' + (on ? " checked" : "") + '" data-id="' + u.id + '" role="checkbox" aria-checked="' + (on ? "true" : "false") + '"><div class="checkbox">' + (on ? "&#10003;" : "") + '</div><div class="grow"><div class="ttl">' + esc(u.t) + '</div></div></button>';

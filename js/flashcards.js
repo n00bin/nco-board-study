@@ -80,14 +80,15 @@
         // Wait for the flip-back animation before swapping in the next answer, so it never flashes.
         var fill = function () {
           // the question stays visible on the back, and the card grows to fit long answers instead of clipping them
+          container.querySelector("#fA").style.fontSize = String(c.a).length > 220 ? "1rem" : "";   // long answers: calmer size
           container.querySelector("#fA").innerHTML = '<div class="muted" style="font-size:.85rem;margin-bottom:8px;">' + esc(c.q) + '</div>' +
             esc(c.a).replace(/\n/g, "<br>") +
             (c.changed ? '<div class="flash-ref" style="color:var(--gold);margin-top:10px;">&#9888;&#65039; ' + esc(c.changed) + '</div>' : "") +
             (c.why ? '<div class="flash-ref" style="color:var(--text);margin-top:12px;"><b>Why it matters:</b> ' + esc(c.why) + '</div>' : "") +
             (c.sample && c.pub === "personal" ? '<div class="flash-ref" style="color:var(--text);margin-top:12px;"><b>Example answer (fictional Soldier, make it yours):</b> ' + esc(c.sample) + '</div>' : "") +
-            (c.points && c.points.length > 1 ? '<div class="flash-ref" style="color:var(--text);margin-top:12px;"><b>Did you cover these?</b>' + c.points.map(function (p) { return '<div style="margin-top:4px;">\u2022 ' + esc(p) + '</div>'; }).join("") + '</div>' : "") +
-            (c.follow && c.follow.length ? '<div class="flash-ref" style="margin-top:12px;"><b>Board follow-ups:</b>' +
-              c.follow.map(function (f) { return '<details class="follow-d" style="margin-top:8px;"><summary><b style="color:var(--text);">Q: ' + esc(f.q) + '</b> <span class="muted" style="font-size:.8rem;">(say it, then tap)</span></summary><span class="muted follow-a">A: ' + esc(f.a) + '</span></details>'; }).join("") + '</div>' : "");
+            (c.points && c.points.length > 1 ? '<details class="fb-fold"><summary>Did you cover these? (' + c.points.length + ' key points)</summary>' + c.points.map(function (p) { return '<div style="margin-top:4px;">\u2022 ' + esc(p) + '</div>'; }).join("") + '</details>' : "") +
+            (c.follow && c.follow.length ? '<details class="fb-fold"><summary>Board follow-ups (' + c.follow.length + ')</summary>' +
+              c.follow.map(function (f) { return '<details class="follow-d" style="margin-top:8px;"><summary><b style="color:var(--text);">Q: ' + esc(f.q) + '</b> <span class="muted" style="font-size:.8rem;">(say it, then tap)</span></summary><span class="muted follow-a">A: ' + esc(f.a) + '</span></details>'; }).join("") + '</details>' : "");
           container.querySelector("#fRef").textContent = c.ref ? "Reference: " + c.ref : "";
           var inner = cardEl.querySelector(".flash-inner");
           inner.style.minHeight = ""; cardEl.style.minHeight = "";
@@ -134,6 +135,7 @@
       }
 
       cardEl.addEventListener("click", function (e) { if (e.target.closest && e.target.closest("details")) return; flip(); });
+      cardEl.addEventListener("toggle", function () { if (cardEl.classList.contains("flipped")) sizeTo(true); }, true);   // a fold opened: grow the card
       cardEl.addEventListener("keydown", function (e) {
         if (e.target === cardEl && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); flip(); }
       });

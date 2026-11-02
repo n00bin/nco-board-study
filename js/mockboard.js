@@ -663,29 +663,34 @@
         var nQ = deck.length, nF = Math.max(0, asked - nQ);
         var countLine = nQ + " question" + (nQ === 1 ? "" : "s") + (nF ? ", " + nF + " follow-up" + (nF === 1 ? "" : "s") + " or second tries" : "");
         var html = (notReady ? '<div class="card" style="border-color:var(--gold);text-align:center;"><div style="font-size:1.3rem;font-weight:800;">' + esc(V.title) + '</div><div class="muted" style="margin-top:6px;">' + esc(msg) + '</div>' +
-              (bearingMiss.length ? '<div class="btn-row" style="margin-top:10px;"><a class="btn ghost" href="#/reporting">Practice reporting</a><a class="btn ghost" href="#/flash/tc3-21-5">Drill cards</a></div>' : '') + '</div>' : '') +
+              (bearingMiss.length && !sponsor ? '<div class="btn-row" style="margin-top:10px;"><a class="btn ghost" href="#/reporting">Practice reporting</a><a class="btn ghost" href="#/flash/tc3-21-5">Drill cards</a></div>' : '') + '</div>' : '') +
           '<div class="ring-wrap"><div class="ring">' + pct + '%<small>answers</small></div></div>' +
-          '<p class="center muted" style="font-size:.85rem;">' + countLine + ' (partial credit counted)</p>' + (notReady ? '' : '<p class="center muted">' + msg + '</p>');
+          '<p class="center muted" style="font-size:.85rem;">' + countLine + ' (partial credit counted)</p>' + (notReady ? '' : '<p class="center muted">' + msg + '</p>') +
+          // the next step first: drill the misses (or run another), then the details
+          (missed.length && !sponsor ? '<button class="btn gold lg" id="drillMiss">&#128260; Drill your ' + missed.length + ' miss' + (missed.length === 1 ? '' : 'es') + ' now</button><div class="spacer"></div>' : '');
         if (bearing.length) {
-          html += '<h2 class="section">Bearing &amp; delivery</h2>';
+          html += '<h2 class="section">Bearing &amp; delivery</h2><div class="lg">';
           bearing.forEach(function (b) {
-            html += '<div class="row"><div class="grow"><div class="ttl">' + esc(b.label) + '</div></div><div class="' + (b.ok ? "badge-good" : "badge-bad") + '" style="font-weight:700;">' + (b.ok ? "✓ clean" : "✗ needs work") + '</div></div>';
+            html += '<div class="li"><span class="grow"><span class="t" style="font-weight:600;">' + esc(b.label) + '</span></span><b class="' + (b.ok ? "badge-good" : "badge-bad") + '">' + (b.ok ? "✓ clean" : "✗ needs work") + '</b></div>';
           });
+          html += '</div>';
         }
         if (weak.length) {
-          html += '<h2 class="section">Weakest subjects</h2>';
-          weak.forEach(function (p) { html += '<div class="row"><div class="grow"><div class="code">' + esc(p.code) + '</div></div><div class="badge-bad" style="font-weight:700;">missed ' + p.miss + '/' + p.n + '</div></div>'; });
+          html += '<h2 class="section">Weakest subjects</h2><div class="lg">';
+          weak.forEach(function (p) { html += '<div class="li"><span class="grow"><span class="t" style="font-weight:600;font-size:.9rem;">' + esc(p.code) + '</span></span><b class="badge-bad" style="white-space:nowrap;">' + p.miss + ' of ' + p.n + '</b></div>'; });
+          html += '</div>';
         }
         if (missed.length) {
-          html += '<h2 class="section">Review your misses</h2>' + (sponsor ? '' : '<button class="btn gold" id="drillMiss" style="margin-bottom:10px;">&#128260; Drill just these misses now</button>');
+          html += '<details class="plan-more"' + (sponsor ? ' open' : '') + '><summary>Review the ' + missed.length + ' question' + (missed.length === 1 ? '' : 's') + ' ' + (sponsor ? 'they' : 'you') + ' missed</summary>';
           missed.forEach(function (m) {
             html += '<div class="card"><div class="flash-tag">' + esc(m.code) + '</div><div style="font-weight:600;margin-bottom:6px;">' + esc(m.q) + '</div><div class="muted">' + esc(m.a) + '</div></div>';
           });
+          html += '</details>';
         }
         if (sponsor) html += '<h2 class="section">Your notes for the Soldier (optional)</h2><textarea class="input" id="sbNote" rows="3" maxlength="300" placeholder="e.g. Good bearing. Rambled on the intro; slow down on SHARP answers."></textarea>' +
           '<div class="spacer"></div><button class="btn green lg" id="sendBack">&#128228; Send these results to the Soldier</button>' +
           '<div class="muted center" style="font-size:.8rem;margin-top:6px;">They open the link on their phone: the score goes into their history and the questions they missed come back sooner.</div>';
-        html += (window.App && App.sessionNextHtml ? App.sessionNextHtml() : '') + '<div class="spacer"></div><button class="btn gold lg" id="again">Run another Mock Board</button><div class="spacer"></div><button class="btn ghost" id="home">Back to Home</button>';
+        html += (window.App && App.sessionNextHtml ? App.sessionNextHtml() : '') + '<div class="spacer"></div><div class="btn-row"><button class="btn ' + (missed.length && !sponsor ? 'ghost' : 'gold') + '" id="again">Run another</button><button class="btn ghost" id="home">Home</button></div>';
         container.innerHTML = html;
         container.querySelector("#again").addEventListener("click", function () { MockBoard.render(container, cards, length, opts); });
         container.querySelector("#home").addEventListener("click", function () { App.go("#/"); });

@@ -472,3 +472,23 @@ details.ref-fold > summary::-webkit-details-marker { display: none; }
 .ch-row .ch-l { flex: 0 0 42%; font-size: .88rem; font-weight: 600; color: var(--text); }
 .ch-row .input { flex: 1; min-width: 0; margin: 0; padding: 9px 10px; font-size: .95rem; }
 details.know-fold { margin: 0 0 8px; }
+
+/* ---------- v3.26 lighter everywhere ---------- */
+.card { padding: 14px; }
+.card:has(> .muted:only-child) { background: none; border: none; padding: 0 4px; margin: 2px 0 10px; }
+.card:has(> .muted:only-child) > .muted { font-size: .88rem; line-height: 1.45; }
+h2.section { font-size: .8rem; letter-spacing: 1px; margin: 18px 6px 8px; font-weight: 700; }
+.row { padding: 12px 14px; margin-bottom: 8px; }
+.row .ttl { font-size: .93rem; }
+.row .code { font-size: .93rem; }
+.check .ttl { font-size: .9rem; line-height: 1.4; }
+.lg .li > b { font-size: .88rem; flex: none; }
+details.fb-fold { margin-top: 12px; font-size: .85rem; color: var(--text); }
+details.fb-fold > summary { cursor: pointer; font-weight: 700; color: var(--text-dim); list-style: none; }
+details.fb-fold > summary::before { content: "\25B8  "; }
+details.fb-fold[open] > summary::before { content: "\25BE  "; }
+details.fb-fold > summary::-webkit-details-marker { display: none; }
+a.textlink { text-align: center; }
+
+.row.check .grow .ttl { font-size: .88rem; line-height: 1.4; }
+.row.check { padding: 10px 12px; }
