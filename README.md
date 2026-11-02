@@ -10,6 +10,16 @@ no account, no app store, nothing to sign up for.
 
 ---
 
+## What's new in 3.25
+
+- **Cleaner screens.** Home is your score, one Start button, the four tools, and a short list. Today's steps fold
+  away until you want them.
+- **Mock Board setup** fits on one screen: three short switches, one Start button, and 5-minute / 15 / 25 as chips.
+  Sponsor options fold under "Practice with your sponsor".
+- **More, Board Day Prep, Settings, Chain of Command and Know Your Army** are grouped, compact lists; rarely used
+  settings fold away; Chain of Command shows how many leaders you've filled in.
+- Answers and questions use a calmer text size so long answers don't fill the phone.
+
 ## What's new in 3.24
 
 - **Hear a model answer on 127 more scenarios** (every Board Core scenario and Sergeant / Staff Sergeant card): a

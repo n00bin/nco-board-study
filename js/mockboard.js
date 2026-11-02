@@ -535,7 +535,8 @@
             '<div class="q-text" style="margin:6px 0 12px;">' + esc(qt(c)) + '</div>' +
             '<div class="flash-tag">Answer</div><div class="flash-a">' + esc(c.a).replace(/\n/g, "<br>") + '</div>' +
             (c.changed ? '<div class="flash-ref" style="color:var(--gold);margin-top:8px;">&#9888;&#65039; ' + esc(c.changed) + '</div>' : '') +
-            (c.ref ? '<div class="flash-ref">Reference: ' + esc(c.ref) + '</div>' : '') + (curStyle === "why" && c.pub !== "sit" && c.pub !== "personal" ? '' : whyHtml(c)) +
+            (curStyle === "why" && c.pub !== "sit" && c.pub !== "personal" ? '' : whyHtml(c)) +
+            (c.ref ? '<div class="flash-ref">Reference: ' + esc(c.ref) + '</div>' : '') +
             (c.sample && c.pub === "personal" ? '<div class="flash-ref" style="color:var(--text);margin-top:10px;"><b>Example answer (fictional Soldier):</b> ' + esc(c.sample) + '</div>' : '') + '</div>' +
           (window.Speech && Speech.supported() ? '<button class="btn ghost" id="hearA" style="margin-bottom:8px;">&#128266; Hear a model answer</button>' : '') +
           (listened ? '<div id="heard"><div class="muted center" style="font-size:.85rem;">Checking what you said…</div></div>' : '') +
