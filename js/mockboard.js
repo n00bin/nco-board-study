@@ -740,7 +740,7 @@
           });
           html += '</div>';
         }
-        if (weak.length) {
+        if (weak.length && weak.some(function (p) { return p.miss >= 2; })) {
           html += '<h2 class="section">Weakest subjects</h2><div class="lg">';
           var gst = document.body.classList.contains("guest");
           weak.forEach(function (p) { var inner = '<span class="grow">' + subjHtml(p.code) + '<span class="s badge-bad">Missed ' + p.miss + ' of ' + p.n + ' question' + (p.n === 1 ? '' : 's') + '</span></span>'; html += gst ? '<div class="li">' + inner + '</div>' : '<a class="li" href="#/flash/' + encodeURIComponent(p.id || "") + '">' + inner + '<span class="chev" aria-hidden="true"><svg class=ic aria-hidden=true><use href=#i-chev></use></svg></span></a>'; });
@@ -770,8 +770,8 @@
           var bcode = "b-" + bearing.map(function (b) { return (CODE[b.label] || "X") + (b.ok ? 1 : 0); }).join("");
           var url = App.appUrl + "#/sbresult/" + (Math.round(got * 10) / 10) + "/" + asked + "/" + Date.now().toString(36) + "/" + ids.join(",") + "/" + bcode + (note ? "/" + encodeURIComponent(note) : "");
           var text = "Your practice board: " + pct + "%. Open this to save it in your app: " + url;
-          if (navigator.share) navigator.share({ title: "Practice board results", text: text }).catch(function () {});
-          else if (navigator.clipboard) navigator.clipboard.writeText(text).then(function () { App.toast("Link copied: text it to the Soldier", 3500); }, function () { App.toast(url, 6000); });
+          var sentB = this; if (navigator.share) navigator.share({ title: "Practice board results", text: text }).then(function () { sentB.innerHTML = '&#10003; Sent. Send again'; }).catch(function () {});
+          else if (navigator.clipboard) navigator.clipboard.writeText(text).then(function () { sentB.innerHTML = '&#10003; Link copied. Copy again'; App.toast("Link copied: text it to the Soldier", 3500); }, function () { App.toast(url, 6000); });
           else App.toast(url, 6000);
         });
       }

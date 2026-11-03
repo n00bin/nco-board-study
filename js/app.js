@@ -1477,7 +1477,8 @@
       if (k === "med") { var sc = mount.querySelector("#ptxschool").checked, wk = n("ptxweeks"), cb = n("ptxcbt");
         if (sc || wk != null || cb != null) v = (sc ? 150 + (+hon) : 0) + Math.min((wk || 0) * 4, rank === "SSG" ? 115 : 110) + Math.min(Math.floor((cb || 0) / 5), 90); }
       if (k === "civ") { var hr = n("ptxhours"); if (hr != null) v = hr * 2; }
-      if (v != null) { var P0 = PTS.filter(function (p) { return p.k === k; })[0], capV = P0 ? P0.max[rank] : v; if (v > capV) { App.toast("That works out to " + v + ", but this category counts only up to " + capV + ".", 3500); v = capV; } mount.querySelector("#pt-" + k).value = String(v); Store.setChainRole("pts-x" + k, "1"); }
+      if (v != null) { var P0 = PTS.filter(function (p) { return p.k === k; })[0], capV = P0 ? P0.max[rank] : v; var box = mount.querySelector("#pt-" + k), cn = mount.querySelector("#capn-" + k);
+        if (v > capV) { if (!cn) { box.insertAdjacentHTML("afterend", '<div class="muted cap-note" id="capn-' + k + '"></div>'); cn = mount.querySelector("#capn-" + k); } cn.textContent = "Works out to " + v + "; this category counts only up to " + capV + "."; v = capV; } else if (cn) cn.remove(); mount.querySelector("#pt-" + k).value = String(v); Store.setChainRole("pts-x" + k, "1"); }
       update();
     }
     function update() {

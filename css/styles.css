@@ -1147,3 +1147,11 @@ html { scroll-padding-top: 0 !important; }
 
 /* ---------- v3.68 polish round 40 ---------- */
 .pill.pill-link { min-height: 44px !important; }
+
+/* ---------- v3.69 polish round 41 ---------- */
+/* selected chips: outline and tint; solid gold is only for main actions */
+.chip.on { background: rgba(255,204,51,.14) !important; color: var(--gold) !important; border-color: var(--gold) !important; }
+.seg3 .chip.on small { color: var(--gold) !important; opacity: .85; }
+/* a search highlight you can see */
+mark { background: rgba(255,204,51,.42); color: #fff; font-weight: 600; }
+.cap-note { font-size: .85rem; margin-top: 6px; color: var(--gold); }

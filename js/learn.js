@@ -234,7 +234,7 @@
         window.scrollTo(0, 0);
 
         if (quizzable.length >= 4) Quiz.render(container, lesson.cards, lesson.title, quizzable.length, { onDone: complete });
-        else Flashcards.render(container, lesson.cards, lesson.title, { onDone: function (n, first) { var k = Object.keys(first || {}); if (!k.length) return complete(null, null); complete(k.filter(function (id) { return first[id] !== "again"; }).length, k.length, true); } });
+        else Flashcards.render(container, lesson.cards, lesson.title, { all: true, onDone: function (n, first) { var k = Object.keys(first || {}); if (!k.length) return complete(null, null); complete(k.filter(function (id) { return first[id] !== "again"; }).length, k.length, true); } });
       }
 
       function complete(score, total, selfGraded) {
@@ -249,7 +249,7 @@
           (function () { var tr = tracks.filter(function (t) { return t.lessons.indexOf(lesson) >= 0; })[0]; if (!tr) return ''; var d = doneCount(tr.lessons);
             return '<div class="track-prog"><span>' + esc(tr.title.replace(/:.*$/, "")) + ': ' + d + ' of ' + tr.lessons.length + (tr.lessons.length === 1 ? ' lesson' : ' lessons') + '</span><div class="bar"><span style="width:' + Math.round(100 * d / tr.lessons.length) + '%"></span></div></div>'; })() +
           '<p class="center muted">' + line + '</p><div class="spacer"></div>' + (sessN = (window.App && App.sessionNextHtml ? App.sessionNextHtml() : '')) +
-          (nextLesson && sessN ? '<button class="home-link" id="next" style="display:block;margin:0 auto 10px;">Or start the next lesson: ' + esc(String(nextLesson.title).replace(/^.*?:\s*/, "")) + '</button>' : '') +
+          (nextLesson && sessN ? '<button class="home-link" id="next" style="display:block;margin:0 auto 10px;">Or start the next lesson</button>' : '') +
           (nextLesson && !sessN ? '<button class="btn gold lg" id="next">Next lesson <svg class=ic aria-hidden=true><use href=#i-chev></use></svg></button><div class="muted center" style="font-size:.85rem;margin:6px 0 4px;">Up next: ' + esc(String(nextLesson.title).replace(/^.*?:\s*/, "")) + '</div><div class="spacer"></div>' : '') +
           '<button class="home-link" id="path">' + (sessN ? 'Back to Home' : 'Back to Learn') + '</button>';
         if (nextLesson) container.querySelector("#next").addEventListener("click", function () { App.go("#/lesson/" + nextLesson.id); });
