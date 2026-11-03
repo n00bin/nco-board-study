@@ -459,9 +459,10 @@
     setTitle(p.code, true);
     var pc = cardsForDeck(id).slice().sort(function (x, y) { return (y.core ? 1 : 0) - (x.core ? 1 : 0); }), shownCoreH = false, shownMoreH = false;
     mount.innerHTML = '<div class="card"><div class="muted">All ' + pc.length + ' cards in ' + esc(p.title) + ', Board Core first. Reading helps you learn it; saying the answer before you look (Flashcards) helps you remember it.</div></div>' +
-      pc.map(function (c) { return (c.core && !shownCoreH ? (shownCoreH = true, '<div class="lg-h">Board Core</div>') : !c.core && !shownMoreH ? (shownMoreH = true, '<div class="lg-h">More detail</div>') : '') + '<div class="card" data-cid="' + escAttr(c.id) + '"><div style="font-weight:600;">' + esc(c.q) + '</div>' +
+      pc.map(function (c) { return (c.core && !shownCoreH ? (shownCoreH = true, '<div class="lg-h" id="cat0">Board Core</div>') : !c.core && !shownMoreH ? (shownMoreH = true, '<div class="lg-h" id="cat1">More detail</div>') : '') + '<div class="card" data-cid="' + escAttr(c.id) + '"><div style="font-weight:600;">' + esc(c.q) + '</div>' +
         '<div style="margin-top:6px;">' + esc(c.a).replace(/\n/g, "<br>") + '</div>' + (c.changed ? '<div class="flash-ref" style="color:var(--gold);"><svg class=ic aria-hidden=true><use href=#i-alert></use></svg> ' + esc(c.changed) + '</div>' : '') +
         (c.ref ? '<div class="flash-ref">' + esc(c.ref) + '</div>' : '') + '</div>'; }).join("");
+    if (mount.querySelector("#cat0") && mount.querySelector("#cat1")) { mount.firstElementChild.insertAdjacentHTML("afterend", jumpChips(["Board Core", "More detail"])); wireJumps(); }
     if (focus) { var fc = mount.querySelector('[data-cid="' + String(focus).replace(/"/g, "") + '"]'); if (fc) { fc.classList.add("focus-card"); setTimeout(function () { fc.scrollIntoView({ block: "center" }); }, 30); } }
   }
 
@@ -542,7 +543,7 @@
     var cards = cardsForDeck(deck), title = deckTitle(deck);
     var timer = Store.settings().timer;
     mount.innerHTML =
-      '<div class="setup-head"><div class="t"><svg class=ic aria-hidden=true><use href=#i-users></use></svg> ' + esc(title) + '</div><div class="muted">Answer out loud, like the real board</div></div>' +
+      '<div class="setup-head"><div class="t"><svg class=ic aria-hidden=true><use href=#i-users></use></svg> ' + esc(title) + '</div><div class="muted">Answer out loud, like the real board \u2022 <a href="#/pick/board" class="sub-link">Change subject</a></div></div>' +
       '<div class="lg opts">' +
         '<button type="button" class="li li-btn" id="tChange"><span class="grow"><span class="t">Timer: ' + (timer > 0 ? timer + ' seconds a question' : 'off') + '</span><span class="s">' + (timer > 0 ? 'Double for long answers and scenarios' : 'Answer at your own pace') + '</span></span><span class="pill">Change</span></button>' +
         '<div class="tchips" id="tChips" hidden><div class="chip-row seg5">' + [0, 20, 30, 45, 60].map(function (t) { return '<button type="button" class="chip' + (t === timer ? ' on' : '') + '" data-tt="' + t + '">' + (t ? t + 's' : 'Off') + '</button>'; }).join("") + '</div></div>' +
@@ -622,7 +623,7 @@
     setTitle("More", true);
     var quizzes = Store.quizzes();
     var html =
-      group("Study", [li("#/pick/board", "<svg class=ic aria-hidden=true><use href=#i-users></use></svg>", "Mock Board", "Practice the oral board"), li("#/boardday", "<svg class=ic aria-hidden=true><use href=#i-clipboard></use></svg>", "Board Day Prep", "Room, uniform, reporting, memo")]) +
+      group("Study", [li("#/board/core", "<svg class=ic aria-hidden=true><use href=#i-users></use></svg>", "Mock Board", "Practice the oral board"), li("#/boardday", "<svg class=ic aria-hidden=true><use href=#i-clipboard></use></svg>", "Board Day Prep", "Room, uniform, reporting, memo")]) +
       group("You and your sponsor", [li("#/sendprogress", "<svg class=ic aria-hidden=true><use href=#i-send></use></svg>", "Send My Progress", "Your sponsor sees your weak spots"), li("#/mycards", "<svg class=ic aria-hidden=true><use href=#i-pen></use></svg>", "My Cards", "Your unit's smart book, your MOS"), li("#/badges", "<svg class=ic aria-hidden=true><use href=#i-medal></use></svg>", "Badges", "Milestones you've earned")]) +
       group("App", (deferredPrompt ? ['<a class="li" href="#/more" id="installRow"><span class="li-ic" aria-hidden="true"><svg class=ic aria-hidden=true><use href=#i-install></use></svg></span><span class="grow"><span class="t">Install the app</span><span class="s">Opens like an app and works offline</span></span><span class="chev" aria-hidden="true"><svg class=ic aria-hidden=true><use href=#i-chev></use></svg></span></a>'] : []).concat([li("#/settings", "<svg class=ic aria-hidden=true><use href=#i-sliders></use></svg>", "Settings", "Board date, goal, timer, reminders"), li("#/share", "<svg class=ic aria-hidden=true><use href=#i-share></use></svg>", "Share &amp; QR code", "Send the app to a friend or your squad"), li("#/backup", "<svg class=ic aria-hidden=true><use href=#i-download></use></svg>", "Backup &amp; restore", "Save your progress to a file"), li("#/sources", "<svg class=ic aria-hidden=true><use href=#i-bookmark></use></svg>", "Sources &amp; editions", "Which regulation each card comes from")]));
     html += '<details class="set-fold"><summary>Recent quizzes &amp; boards (' + Math.min(10, quizzes.length) + ')</summary>' + (quizzes.length ? quizzes.slice(0, 10).map(function (q) {
@@ -645,7 +646,7 @@
       '<div class="card"><label class="lbl" for="bDate" style="margin-top:0;">When is your board? (from your board memo)</label>' +
         '<input class="input" type="date" id="bDate" value="' + escAttr(s.boardDate || "") + '" />' +
         '<div class="muted" style="font-size:.85rem;margin-top:8px;">Home shows a countdown and how many new Board Core cards to learn each day.</div>' +
-        (s.boardDate ? '<button class="btn ghost sm" id="bClear" style="margin-top:10px;">Clear board date</button>' : '') + '</div>' +
+        (s.boardDate ? '<button class="home-link" id="bClear" style="text-align:left;width:auto;margin-top:6px;">Clear board date</button>' : '') + '</div>' +
       '<h2 class="section">Which board are you going to?</h2><div class="card"><div class="muted" style="font-size:.85rem;margin:0 0 8px;">Hides the few facts that only apply to the other rank (like SSG time-in-service numbers).</div><div class="chip-row seg3" id="rankChips">' +
         [["SGT", "SGT (E-5)"], ["SSG", "SSG (E-6)"], ["BOTH", "Not sure"]].map(function (r) { return '<button class="chip' + ((s.boardFor || "BOTH") === r[0] ? ' on' : '') + '" data-r="' + r[0] + '">' + r[1] + '</button>'; }).join("") +
       '</div></div>' +
@@ -1274,13 +1275,17 @@
     });
     var rows = Object.keys(by).filter(function (k) { return by[k].n >= 2; }).sort(function (x, y) { return x.localeCompare(y, undefined, { numeric: true }); });
     mount.innerHTML = '<div class="card"><div class="muted">Each subject&#39;s edition, and how many cards cite it. Last checked ' + esc(STUDY.meta.updated ? niceDate(new Date(STUDY.meta.updated + "T12:00:00").getTime()) : "") + '.</div></div>' +
-      '<div class="lg">' + rows.map(function (k) {
+      (function () { var rowFn = function (k) {
         var eds = Object.keys(by[k].ed).sort(function (x, y) { return by[k].ed[y] - by[k].ed[x]; });
         var pub = STUDY.pubs.filter(function (p) { return p.code === k; })[0];
         var inner = '<span class="grow"><span class="t" style="font-weight:600;">' + esc(k) + '</span><span class="s">' + esc(eds[0]) + ' \u2022 cited by ' + by[k].n + ' card' + (by[k].n === 1 ? '' : 's') + '</span></span>';
         return pub ? '<a class="li" href="#/pub/' + escAttr(pub.id) + '">' + inner + '<span class="chev" aria-hidden="true"><svg class=ic aria-hidden=true><use href=#i-chev></use></svg></span></a>' : '<div class="li static">' + inner.replace('</span></span>', ' \u2022 cited only</span></span>') + '</div>';
-      }).join("") + '</div>' +
+      }; var G = {}, order = [];
+        rows.forEach(function (k) { var g = (k.match(/^(DA PAM|ADP|ATP|AD|AR|FM|TC|STP|GTA|ALARACT)\b/) || [0, "Other"])[1]; if (!G[g]) { G[g] = []; order.push(g); } G[g].push(rowFn(k)); });
+        order.sort(function (x, y) { return x === "Other" ? 1 : y === "Other" ? -1 : x.localeCompare(y); });
+        return jumpChips(order) + order.map(function (g, n) { return group(esc(g), G[g], "cat" + n); }).join(""); })() +
       '<div class="muted center" style="font-size:.85rem;margin-top:12px;">Spot a problem? Use the flag on any card.</div>';
+    wireJumps();
   }
 
   function screenChanges() {
@@ -1335,7 +1340,7 @@
       html += '<button class="row check' + (on ? " checked" : "") + '" data-id="' + u.id + '" role="checkbox" aria-checked="' + (on ? "true" : "false") + '"><div class="checkbox">' + (on ? "&#10003;" : "") + '</div><div class="grow"><div class="ttl">' + checkText(u.t) + '</div></div></button>';
     });
     html += '<div class="spacer"></div><a class="btn ghost" href="#/flash/pam670-1">Study uniform placement</a>' +
-      '<div class="spacer"></div><button class="btn ghost" id="clear">Clear all checkmarks</button>';
+      '<div class="spacer"></div><button class="home-link danger-link" id="clear">Clear all checkmarks</button>';
     var doneN = UNIFORM_CHECKS.filter(function (u) { return checks[u.id]; }).length;
     html = '<div class="check-prog"><b>' + doneN + ' of ' + UNIFORM_CHECKS.length + '</b> checked<div class="bar"><span style="width:' + Math.round(100 * doneN / UNIFORM_CHECKS.length) + '%"></span></div></div>' + html;
     mount.innerHTML = groupChecks(html);
@@ -1420,7 +1425,7 @@
       '<div class="chip-row" id="ptRank">' + ["SGT", "SSG"].map(function (r) { return '<button class="chip' + (r === rank ? ' on' : '') + '" data-r="' + r + '">For ' + r + '</button>'; }).join("") + '</div>';
     PTS.forEach(function (p) {
       html += '<label class="lbl" for="pt-' + p.k + '"><b>' + esc(p.t) + '</b> (max ' + p.max[rank] + ')</label>' +
-        '<input class="input" id="pt-' + p.k + '" inputmode="numeric" maxlength="3" placeholder="0" value="' + escAttr(m["pts-" + p.k] || "") + '">' +
+        '<input class="input" id="pt-' + p.k + '" inputmode="numeric" maxlength="3" placeholder="not set" value="' + escAttr(m["pts-" + p.k] || "") + '">' +
         '<details class="pt-help"' + (m["pts-x" + p.k] ? " open" : "") + '><summary class="muted" style="font-size:.85rem;margin-top:4px;"><svg class=ic aria-hidden=true><use href=#i-calc></use></svg> Figure it for me</summary><div class="muted" style="font-size:.85rem;margin:4px 0;">' + esc(p.h) + ' AR 600-8-19 (Mar 2026), ' + p.ref + '.</div>' + help[p.k] + '</details><div style="height:10px;"></div>';
     });
     html += '<div id="cutAuto"></div><label class="lbl" for="pt-cut">This month\'s cutoff score for your MOS</label>' +

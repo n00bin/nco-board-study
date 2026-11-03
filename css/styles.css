@@ -917,3 +917,17 @@ body.session .grade-row .btn, body.session #reveal, body.session #rubricDone, bo
 body.session .drive-card { justify-content: center; }
 .ring-in svg.ic { width: 48px; height: 48px; color: var(--good); }
 details.set-fold > summary > .grow { flex: 1; min-width: 0; }
+
+/* ---------- v3.48 polish round 20 ---------- */
+.mb-head { flex-wrap: nowrap; white-space: nowrap; }
+.mb-head > span:first-child { overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.dot-legend .dot.sq.g { background: var(--good) !important; }
+.dot-legend .dot.sq.r { background: #e5726e !important; }
+label b, .lbl b, .ch-l b { font-weight: 700 !important; }
+.ring-in svg.ic { width: 72px !important; height: 72px !important; }
+#mosIn::placeholder { text-transform: none; }
+.sub-link { color: var(--gold); font-weight: 600; text-decoration: none; }
+.danger-link { color: #ff9b96 !important; }
+body.session .q-count.mb-head { box-shadow: 0 8px 10px -6px var(--bg); }
+#app:has(#timerChips) details.set-fold .card { border: none; background: transparent; padding: 4px 0; }
+.pills { align-items: center; }

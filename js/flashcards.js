@@ -95,7 +95,7 @@
         conf = undefined;
         var left = queue.length - i, mins = Math.max(1, Math.round(left * 15 / 60));
         container.querySelector("#fBar").style.width = Math.round(100 * passed / Math.max(1, passed + left)) + "%";
-        container.querySelector("#fProg").innerHTML = '<span>' + (opts && opts.onDone ? 'Practice \u2022 ' : '') + passed + ' done' + (reviewed > passed ? ' \u2022 misses come back' : '') + '</span><span class="pills"><span class="pill">' + left + ' to go \u2022 ~' + mins + ' min</span>' + (reviewed >= 3 && left > 3 ? '<button class="pill pill-btn" id="fDone">Done for now</button>' : '') + '</span>';
+        container.querySelector("#fProg").innerHTML = '<span>' + (opts && opts.onDone ? 'Practice \u2022 ' : '') + passed + ' done</span><span class="pills"><span class="pill" title="about ' + mins + ' min">' + left + ' left</span>' + (reviewed >= 3 && left > 3 ? '<button class="pill pill-btn" id="fDone">Finish</button>' : '') + '</span>';
         container.querySelector("#fTagF").textContent = pubCode(c) + (c.adv ? " \u2022 Advanced" : "");   // topic only on the back: it can give the answer away
         container.querySelector("#fTagB").textContent = pubCode(c) || "Answer";
         container.querySelector("#fQ").textContent = c.q;

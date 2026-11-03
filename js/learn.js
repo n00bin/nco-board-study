@@ -186,6 +186,12 @@
           '<span class="grow"><span class="t" style="font-weight:600;">' + esc(short) + '</span><span class="s">' + l.cards.length + (l.cards[0] && l.cards[0].pub === "sit" ? " scenarios" : " facts") + (parts.length > 1 ? ' \u2022 ' + esc(parts.slice(1).join(" \u2022 ")) : '') + '</span></span><span class="chev">&#8250;</span></a>';
       });
       if (t.lessons.length) html += '</div>';
+      if (t.lessons.length > 15) {   // long track: the next few up front, the whole list in a fold
+        var MK = '<a class="li" href="#/lesson/', bits = html.split(MK), head = bits.shift().replace(/<div class="lg">$/, ''), rows = bits.map(function (b) { return MK + b.replace(/<\/div>$/, ''); });
+        var at = Math.max(0, nx ? t.lessons.indexOf(nx) : 0);
+        html = head + '<div class="lg-h">Up next</div><div class="lg">' + rows.slice(at, at + 5).join("") + '</div>' +
+          '<details class="set-fold"><summary><span class="grow">All ' + rows.length + ' lessons</span></summary><div class="lg">' + rows.join("") + '</div></details>';
+      }
       container.innerHTML = html;
       return t.title;
     },
@@ -234,7 +240,7 @@
         Store.markLessonDone(lesson.id, score == null ? null : Math.round((score / total) * 100));
         var p = score == null ? 100 : Math.round(100 * score / Math.max(1, total));
         
-        var line = (score == null) ? "Practice done. Missed cards come back sooner in your reviews." : "You got " + score + " of " + total + " in practice.";
+        var line = (score == null) ? "Practice done. Nice work." : "You got " + score + " of " + total + " in practice.";
         container.innerHTML =
           '<div class="ring-wrap"><div class="ring ' + (p >= 75 ? 'good' : p >= 50 ? 'mid' : 'bad') + '" style="--p:' + p + ';"><div class="ring-in">' + (score == null ? '<svg class=ic aria-hidden=true><use href=#i-check></use></svg>' : p + '%') + '</div></div></div>' +
           '<div class="done-h">Lesson complete</div><p class="center muted" style="margin:0 0 6px;">' + esc(lesson.title) + '</p>' +

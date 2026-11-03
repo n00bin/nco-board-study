@@ -697,7 +697,7 @@
         if (sponsor) msg = msg.replace(/^Your answers/, "Their answers").replace(/so tighten up/, "so have them tighten up")
           .replace(/Drill the misses/, "Have them drill the misses").replace(/Study the misses, then run it again/, "Have them study the misses, then run it again").replace(/Tighten the misses/, "Have them tighten the misses");
         if (deck.length < 8 && V.level !== "work") { V = { level: "work", title: "Good practice", msg: pct + "% on a short board. Board-ready takes a full board of 10 or more questions." }; msg = V.msg; }
-        var nQ = deck.filter(function (c) { return !c.local; }).length, nF = Math.max(0, asked - nQ);
+        var nQ = qScores.length, nF = Math.max(0, asked - nQ);
         var nFu = extras.filter(function (x) { return x.k === "fu"; }).length, nCb = extras.filter(function (x) { return x.k === "cb"; }).length;
         var countLine = nQ + " question" + (nQ === 1 ? "" : "s") + (nFu ? ", " + nFu + " follow-up" + (nFu === 1 ? "" : "s") : "") + (nCb ? ", " + nCb + " second " + (nCb === 1 ? "try" : "tries") : "");
         var strongB = pct >= 75 && !notReady && V.level !== "work" && deck.length >= 8;
@@ -709,7 +709,7 @@
             var full = qScores.filter(function (x) { return x >= 0.99; }).length, part = qScores.filter(function (x) { return x >= 0.66 && x < 0.99; }).length, thin = qScores.filter(function (x) { return x > 0 && x < 0.66; }).length, miss = qScores.length - full - part - thin;
             var cb = extras.filter(function (x) { return x.k === "cb"; }), fu = extras.filter(function (x) { return x.k === "fu"; });
             var cbOk = cb.filter(function (x) { return x.ok; }).length, fuOk = fu.filter(function (x) { return x.ok; }).length;
-            var legend = '<div class="dot-legend">' + (full ? '<span><span class="dot g"></span>full</span>' : '') + (part ? '<span><span class="dot a"></span>passed with gaps</span>' : '') + (thin ? '<span><span class="dot p"></span>partly</span>' : '') + (miss ? '<span><span class="dot r"></span>missed</span>' : '') + '' + '</div>';
+            var legend = '<div class="dot-legend">' + (full ? '<span><span class="dot g"></span>full</span>' : '') + (part ? '<span><span class="dot a"></span>passed with gaps</span>' : '') + (thin ? '<span><span class="dot p"></span>partly</span>' : '') + (miss ? '<span><span class="dot r"></span>missed</span>' : '') + (extras.some(function (x) { return x.ok; }) ? '<span><span class="dot sq g"></span>right on retry</span>' : '') + (extras.some(function (x) { return !x.ok; }) ? '<span><span class="dot sq r"></span>missed on retry</span>' : '') + '' + '</div>';
             return (extras.length ? '<div class="dots-sub">First answers</div>' : '') + '<div class="dots" aria-hidden="true">' + qScores.map(function (x) { return '<span class="dot ' + (x >= 0.99 ? 'g' : x >= 0.66 ? 'a' : x > 0 ? 'p' : 'r') + '"></span>'; }).join("") +
                 '</div>' + (extras.length ? '<div class="dots-sub">Second tries &amp; follow-ups</div><div class="dots">' + extras.map(function (x) { return '<span class="dot sq ' + (x.ok ? 'g' : 'r') + '"></span>'; }).join("") + '</div>' : '') + legend +
               '<p class="center muted" style="font-size:.92rem;margin:4px 0 0;">' + countLine + '</p><details class="set-fold score-how"><summary>How this was scored</summary><p class="muted" style="font-size:.92rem;margin:0 0 8px;">First answers: ' + full + ' full \u2022 ' + part + ' passed with gaps \u2022 ' + (thin ? thin + ' partly \u2022 ' : '') + miss + ' missed' +
