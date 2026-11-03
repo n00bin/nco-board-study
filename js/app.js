@@ -380,6 +380,7 @@
     // today's target = the plan (reviews due + paced new cards), never less than the daily goal
     var unseenN = coreIds.length - rs.seen, paceN = pacePlan(unseenN, dToB).pace;
     var dayTarget = Math.max(daily.goal, Math.min(dueN, 20) + paceN);
+    try { var dk = new Date().toDateString(), dt0 = (localStorage.getItem("ncoboard.daytarget") || "").split("|"); if (dt0[0] === dk && +dt0[1] > 0) dayTarget = +dt0[1]; else localStorage.setItem("ncoboard.daytarget", dk + "|" + dayTarget); } catch (e) {}
     var recommended = dToB != null && dToB < 0 && /\|Recommended$/.test(Store.settings().boardResult || "");
 
     // 1) where you stand
@@ -534,7 +535,7 @@
       if (fresh.length) return Flashcards.render(mount, fresh, deckTitle(deck) + " \u2022 new", { noCap: true, max: nN });
     }
     // Top 100 and Final-Week Review are meant to be done whole: no 30-new-card session cap
-    Flashcards.render(mount, cardsForDeck(deck), deckTitle(deck), (deck === "top" || deck === "final" || deck === "ten") ? { noCap: true } : deck === "due" ? { max: 20 } : undefined);
+    Flashcards.render(mount, cardsForDeck(deck), deckTitle(deck), (deck === "top" || deck === "final" || deck === "ten") ? { noCap: true } : deck === "due" ? { max: 20 } : deck === "misses" ? { all: true } : undefined);
   }
 
   function screenQuiz(deck) {
@@ -561,7 +562,7 @@
     var cards = cardsForDeck(deck), title = deckTitle(deck);
     var timer = Store.settings().timer;
     mount.innerHTML =
-      '<div class="setup-head"><div class="t"><svg class=ic aria-hidden=true><use href=#i-users></use></svg> ' + esc(title) + '</div><div class="muted">Answer out loud, like the real board</div><a href="#/pick/board" class="sub-link" style="display:inline-block;margin-top:4px;">Change subject</a></div>' +
+      '<div class="setup-head"><div class="t"><svg class=ic aria-hidden=true><use href=#i-users></use></svg> ' + esc(title) + '</div><div class="muted">Answer out loud, like the real board</div><a href="#/pick/board" class="pill pill-link" style="display:inline-flex;margin-top:8px;">Change subject</a></div>' +
       '<div class="lg opts">' +
         '<button type="button" class="li li-btn" id="tChange"><span class="grow"><span class="t">Timer: ' + (timer > 0 ? timer + 's per question' : 'off') + '</span><span class="s">' + (timer > 0 ? 'Double for long answers and scenarios' : 'Answer at your own pace') + '</span></span><span class="pill">Change</span></button>' +
         '<div class="tchips" id="tChips" hidden><div class="chip-row seg5">' + [0, 20, 30, 45, 60].map(function (t) { return '<button type="button" class="chip' + (t === timer ? ' on' : '') + '" data-tt="' + t + '">' + (t ? t + 's' : 'Off') + '</button>'; }).join("") + '</div></div>' +
@@ -836,7 +837,7 @@
         '<div class="ttl" style="margin-top:8px;"><b>iPhone (Safari):</b> open the link in Safari, tap Share <svg class=ic aria-hidden=true><use href=#i-upload></use></svg>, then Add to Home Screen, then Add. Open it from the new icon; it works offline after the first visit.</div></div>' +
       '<h2 class="section">Spot an error?</h2>' +
       '<div class="card"><div class="muted">Tap the <svg class=ic aria-hidden=true><use href=#i-flag></use></svg> flag on any card. You can send the report from your phone (text, email, chat) or copy it. No account needed.</div></div>' +
-      '<a class="btn ghost" href="https://github.com/' + REPO + '/issues/new" target="_blank" rel="noopener">Report it on GitHub</a><div class="muted center" style="font-size:.85rem;margin-top:4px;">Needs a free GitHub account.</div>';
+      '<a class="btn ghost lg" href="https://github.com/' + REPO + '/issues/new" target="_blank" rel="noopener">Report it on GitHub</a><div class="muted center" style="font-size:.85rem;margin-top:4px;">Needs a free GitHub account.</div>';
     mount.querySelector("#share").addEventListener("click", function () {
       if (navigator.share) navigator.share({ title: "NCO Board Study Guide", text: "Study for the E-5/E-6 board:", url: APP_URL }).catch(function () {});
       else copyLink();
@@ -1072,7 +1073,7 @@
     var box = '<span class="sheet-box"></span>';
     var html = '<div class="card no-print"><div class="muted">Print this (or save it as a PDF) and hand it to your sponsor. They read each question aloud, tick what you said, and grade your bearing. No app needed on their side.</div>' +
       '<div class="spacer"></div><button class="btn gold lg" id="doPrint"><svg class=ic aria-hidden=true><use href=#i-print></use></svg> Print or save as PDF</button>' +
-      '<div class="spacer"></div><a class="btn ghost" href="#/sheetin/' + escAttr(want.join(",")) + '"><svg class=ic aria-hidden=true><use href=#i-pen></use></svg> Enter paper results</a></div>' +
+      '<div class="spacer"></div><a class="btn ghost lg" href="#/sheetin/' + escAttr(want.join(",")) + '"><svg class=ic aria-hidden=true><use href=#i-pen></use></svg> Enter paper results</a></div>' +
       '<div class="sheet"><h2 style="margin:6px 0;">Practice Promotion Board</h2><div class="muted"><div>Soldier: ______________________</div><div>Sponsor: ______________________</div><div>Date: ____________</div></div>' +
       '<h3>Bearing (tick if clean)</h3>' + ["Reporting in", "Facing movements", "Tell us about yourself (about 90 seconds)", "Reporting out"].map(function (b) { return '<div class="sheet-ck">' + box + '<span>' + esc(b) + '</span></div>'; }).join("");
     cards.forEach(function (c, k) {
@@ -1228,7 +1229,7 @@
         (cal.unsureN >= 5 ? ' When unsure: ' + Math.round(100 * cal.unsureRight / cal.unsureN) + '%.' : '') + '</div>';
     }
     return '<div class="card"><div class="flash-tag">Your last 7 days</div><div style="display:flex;align-items:flex-end;height:52px;margin:6px 0;" aria-hidden="true">' + bars + '</div>' +
-      '<div class="muted" style="font-size:.85rem;">' + total + ' cards on ' + days + ' day' + (days === 1 ? '' : 's') + ' • ' + boards + ' Mock Board' + (boards === 1 ? '' : 's') + '</div><div class="btn-row" style="margin-top:8px;"><a class="btn ghost sm" href="#/sendprogress">Send to sponsor</a><a class="btn ghost sm" href="#/badges">Badges</a></div>' + calLine + '</div>';
+      '<div class="muted" style="font-size:.85rem;">' + total + ' cards on ' + days + ' day' + (days === 1 ? '' : 's') + ' • ' + boards + ' Mock Board' + (boards === 1 ? '' : 's') + '</div><div class="btn-row" style="margin-top:8px;"><a class="btn ghost sm" href="#/sendprogress">Send my progress to my sponsor</a></div>' + calLine + '</div>';
   }
   // ---- progress snapshot: encoded into a link, shown on the sponsor's phone ----
   function b64e(o) { return btoa(unescape(encodeURIComponent(JSON.stringify(o)))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, ""); }
@@ -1497,7 +1498,7 @@
       if (!stk) { stk = document.createElement("a"); stk.id = "ptSticky"; stk.href = "#"; stk.addEventListener("click", function (e) { e.preventDefault(); var t = mount.querySelector("#ptTotal"); if (t) t.scrollIntoView({ behavior: "smooth", block: "center" }); }); mount.appendChild(stk); }
       stk.classList.toggle("empty", !total && cut == null);
       stk.innerHTML = '<span>Your estimate</span><b>' + total + ' <small>of 800</small></b>' + (cut != null && !blank ? '<span class="' + (total >= cut ? 'badge-good' : 'badge-bad') + '">' + (total >= cut ? (total - cut) + ' over' : (cut - total) + ' short of') + ' ' + cut + '</span>' : cut != null ? '<span class="muted">Cutoff ' + cut + '</span>' : '');
-      mount.querySelector("#ptTotal").innerHTML = '<div class="flash-tag">Your estimate for ' + rank + '</div><div style="font-size:1.6rem;font-weight:800;">' + total + ' <span class="muted" style="font-size:1rem;">of 800</span></div>' + gap +
+      mount.querySelector("#ptTotal").innerHTML = '<div class="flash-tag">Your estimate for ' + rank + '</div><div style="font-size:1.6rem;font-weight:800;color:var(--gold);">' + total + ' <span class="muted" style="font-size:1rem;">of 800</span></div>' + gap +
         '<div class="muted" style="font-size:.85rem;margin-top:6px;">Most room left: ' + room.map(function (r) { return esc(r.t.toLowerCase()) + ' (' + r.left + ')'; }).join(", ") + '.</div>' +
         (over.length ? '<div class="muted" style="font-size:.85rem;margin-top:6px;">Note: ' + esc(over.join("; ")) + '.</div>' : '') + calm;
     }

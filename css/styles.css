@@ -1139,3 +1139,8 @@ html { scroll-padding-top: 0 !important; }
 .sr-a { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
 /* finished steps of today's session */
 .plan-steps .plan-item.done { color: var(--text-dim); }
+
+/* ---------- v3.66 polish round 38 ---------- */
+.pill.pill-link { text-decoration: none; color: var(--gold); min-height: 36px; align-items: center; padding: 0 14px; }
+/* Drive's side buttons are easy to hit in a car */
+.drive-sub .btn { min-height: 52px !important; }

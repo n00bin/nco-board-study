@@ -42,7 +42,7 @@
       if (!cards.length) { container.innerHTML = '<div class="empty">' + EMPTY + '</div>'; return; }
 
       // due first, then new; big decks only feed in 30 new cards per session so it stays doable
-      var queue = Store.buildQueue(cards, (cards.length > 60 && !(opts && opts.noCap)) ? 30 : undefined).slice();
+      var queue = (opts && opts.all) ? cards.slice() : Store.buildQueue(cards, (cards.length > 60 && !(opts && opts.noCap)) ? 30 : undefined).slice();
       if (!queue.length) queue = cards.slice();           // (deck with nothing due) study all
       if (opts && opts.max) queue = queue.slice(0, opts.max);
       var i = 0, reviewed = 0, passed = 0, conf, first = {};
@@ -85,7 +85,7 @@
         front.setAttribute("aria-hidden", flipped ? "true" : "false");
         back.setAttribute("aria-hidden", flipped ? "false" : "true");
         grades.hidden = !flipped; confRow.hidden = flipped;
-        hint.textContent = flipped ? "" : (queue[i] && queue[i].why ? "Say the answer and why it matters, then flip." : "Say the answer, then flip.");
+        hint.textContent = flipped ? "" : (queue[i] && queue[i].why ? "Say the answer and why it matters, then tap how sure you are." : "Say the answer out loud, then tap how sure you are.");
       }
 
       function paint() {
@@ -151,9 +151,9 @@
         if (opts && opts.onDone) return opts.onDone(reviewed, first);
         container.innerHTML =
           finishHtml(first) + '<div class="spacer"></div>' + (window.App && App.sessionNextHtml ? App.sessionNextHtml() : '') +
-          (hasMiss(first) && nextStep() ? '<button id="again" hidden></button>' : '<button class="btn ' + (hasMiss(first) ? 'ghost' : 'gold') + ' lg" id="again"><svg class=ic aria-hidden=true><use href=#i-cards></use></svg> Study more</button>') + nextStep() + '<div class="spacer"></div>' +
+          (hasMiss(first) && nextStep() ? '<button id="again" hidden></button>' : '<button class="btn ' + (hasMiss(first) ? 'ghost' : 'gold') + ' lg" id="again"><svg class=ic aria-hidden=true><use href=#i-cards></use></svg> ' + (opts && opts.all ? 'Study Board Core' : 'Study more') + '</button>') + nextStep() + '<div class="spacer"></div>' +
           '<button class="home-link" id="home">Back to Home</button>';
-        container.querySelector("#again").addEventListener("click", function () { Flashcards.render(container, cards, title, opts); });
+        container.querySelector("#again").addEventListener("click", function () { if (opts && opts.all) return App.go("#/flash/core"); Flashcards.render(container, cards, title, opts); });
         container.querySelector("#home").addEventListener("click", function () { App.go("#/"); });
       }
 

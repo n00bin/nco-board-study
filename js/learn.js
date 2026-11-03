@@ -251,9 +251,9 @@
           '<p class="center muted">' + line + '</p><div class="spacer"></div>' + (sessN = (window.App && App.sessionNextHtml ? App.sessionNextHtml() : '')) +
           (nextLesson && sessN ? '<button class="home-link" id="next" style="display:block;margin:0 auto 10px;">Or start the next lesson: ' + esc(String(nextLesson.title).replace(/^.*?:\s*/, "")) + '</button>' : '') +
           (nextLesson && !sessN ? '<button class="btn gold lg" id="next">Next lesson <svg class=ic aria-hidden=true><use href=#i-chev></use></svg></button><div class="muted center" style="font-size:.85rem;margin:6px 0 4px;">Up next: ' + esc(String(nextLesson.title).replace(/^.*?:\s*/, "")) + '</div><div class="spacer"></div>' : '') +
-          '<button class="home-link" id="path">Back to Learn</button>';
+          '<button class="home-link" id="path">' + (sessN ? 'Back to Home' : 'Back to Learn') + '</button>';
         if (nextLesson) container.querySelector("#next").addEventListener("click", function () { App.go("#/lesson/" + nextLesson.id); });
-        container.querySelector("#path").addEventListener("click", function () { App.go("#/learn"); });
+        container.querySelector("#path").addEventListener("click", function () { App.go(sessN ? "#/" : "#/learn"); });
       }
 
       teach();
