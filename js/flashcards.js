@@ -95,7 +95,7 @@
         conf = undefined;
         var left = queue.length - i, mins = Math.max(1, Math.round(left * 15 / 60));
         container.querySelector("#fBar").style.width = Math.round(100 * passed / Math.max(1, passed + left)) + "%";
-        container.querySelector("#fProg").innerHTML = '<span>' + (opts && opts.onDone ? 'Practice \u2022 ' : '') + passed + ' done' + (reviewed > passed ? ' \u2022 misses come back' : '') + '</span><span class="pill">' + left + ' to go \u2022 ~' + mins + ' min</span>';
+        container.querySelector("#fProg").innerHTML = '<span>' + (opts && opts.onDone ? 'Practice \u2022 ' : '') + passed + ' done' + (reviewed > passed ? ' \u2022 misses come back' : '') + '</span><span class="pills"><span class="pill">' + left + ' to go \u2022 ~' + mins + ' min</span>' + (reviewed >= 3 && left > 3 ? '<button class="pill pill-btn" id="fDone">Done for now</button>' : '') + '</span>';
         container.querySelector("#fTagF").textContent = pubCode(c) + (c.adv ? " \u2022 Advanced" : "");   // topic only on the back: it can give the answer away
         container.querySelector("#fTagB").textContent = pubCode(c) || "Answer";
         container.querySelector("#fQ").textContent = c.q;
@@ -165,6 +165,7 @@
         e.stopPropagation(); var c = queue[i]; Speech.speak(cardEl.classList.contains("flipped") ? c.a : c.q);
       });
       container.querySelector("#fReport").addEventListener("click", function (e) { e.stopPropagation(); App.reportCard(queue[i]); });
+      container.querySelector("#fProg").addEventListener("click", function (e) { if (e.target.closest && e.target.closest("#fDone")) { e.stopPropagation(); done(); } });
       container.querySelector("#fSpeakB").addEventListener("click", function (e) { e.stopPropagation(); Speech.speak(queue[i].a); });
       container.querySelector("#fReportB").addEventListener("click", function (e) { e.stopPropagation(); App.reportCard(queue[i]); });
       container.querySelector("#cSure").addEventListener("click", function (e) { e.stopPropagation(); conf = "sure"; flip(); });

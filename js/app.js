@@ -120,7 +120,7 @@
   // First run: ask which board before showing anything rank-specific
   function rankAsk() {
     if (Store.settings().boardFor) return "";
-    return '<div class="card" style="border-color:var(--gold);"><div class="flash-tag">First, which board are you going to?</div>' +
+    return '<div class="card" style="border-color:var(--gold);"><div class="flash-tag">Which board are you going to?</div>' +
       '<div class="muted" style="font-size:.85rem;margin-bottom:8px;">So the app only shows the numbers for your rank. You can change it in Settings.</div>' +
       '<div class="chip-row seg3" id="rankAsk"><button class="chip" data-r="SGT">SGT (E-5)</button><button class="chip" data-r="SSG">SSG (E-6)</button><button class="chip" data-r="BOTH">Not sure</button></div></div>';
   }
@@ -376,8 +376,7 @@
       : (rs.seen === 0 && !streak) ? '<div class="big" style="font-size:1.6rem;">Welcome</div><div class="sub">Your board-ready score starts with your first cards.</div>'
       : '<div class="big">' + rs.ready + '%</div><div class="sub">board-ready</div>';
     var freshBadges = checkBadges(coreIds, rs);
-    var html = rankAsk() +
-      '<div class="hero">' +
+    var html = '<div class="hero">' +
         '<div style="display:flex;justify-content:space-between;align-items:flex-end;"><div>' + head + '</div>' +
           (streak ? '' : '<!--') + '<div style="text-align:right;white-space:nowrap;"><div style="font-size:1.6rem;font-weight:800;"><svg class=ic aria-hidden=true><use href=#i-flame></use></svg> ' + streak + '</div><div class="sub">day streak' + (Store.saverUsed() && Date.now() - Store.saverUsed() < 2 * 86400000 ? ' (1 missed day forgiven)' : '') + '</div></div>' + (streak ? '' : '-->') + '</div>' +
         (calm || recommended || notRec ? '' : (rs.seen === 0 && !streak ? '' : '<div class="bar"><span style="width:' + rs.ready + '%"></span></div>') +
@@ -392,8 +391,8 @@
           (rs.mockAvg == null && rs.seen >= 30 ? '<div class="sub" style="margin-top:4px;font-size:.85rem;">No Mock Boards yet: they are 40% of this score. <a href="#/board/core" style="color:inherit;text-decoration:underline;">Run one</a> to raise it.</div>' : '') +
           (rs.weak.length > 1 ? '<div class="sub" style="margin-top:4px;font-size:.85rem;">Also: <b>' + esc(rs.weak.slice(1).join(", ")) + '</b></div>' : '') +
           (dayTarget > daily.goal ? '<div class="sub" style="margin-top:4px;font-size:.85rem;">Today&#39;s ' + dayTarget + ' cards = reviews due + new cards to stay on pace' + (dToB != null && dToB > 0 ? ' for your board' : '') + '. Your minimum goal is ' + daily.goal + '.</div>' : '') +
-          (rs.seen ? '<div class="sub" style="font-size:.85rem;margin-top:6px;">Board Core studied: ' + rs.seen + ' of ' + coreIds.length + '.<br><b>How it\u2019s figured:</b> 60% Board Core cards you got right last time (' + rs.recalled + ' of ' + coreIds.length + ') + 40% your last 3 Mock Boards (' + (rs.mockAvg == null ? 'none yet' : rs.mockAvg + '%') + '), counted fully once you have 3 Mock Boards and have covered half of Board Core.</div>' : '') + '</details>') +
-      '</div>' +
+          (rs.seen ? '<div class="sub" style="font-size:.85rem;margin-top:6px;">Board Core studied: ' + rs.seen + ' of ' + coreIds.length + '.<br><b>How it\u2019s figured:</b> 60% Board Core cards you got right last time (' + rs.recalled + ' of ' + coreIds.length + ') + 40% your last 3 Mock Boards (' + (rs.mockAvg == null ? 'none yet' : rs.mockAvg + '%') + '), counted fully once you have 3 Mock Boards and have covered half of Board Core.</div>' : '<div class="sub" style="margin-top:4px;font-size:.85rem;">60% from Board Core cards you get right, 40% from your last 3 Mock Boards. It starts moving with your first cards.</div>') + '</details>') +
+      '</div>' + rankAsk() +
       ((/iPhone|iPad|iPod/.test(navigator.userAgent) && !navigator.standalone && !Store.settings().iosTipDone) ? '<div class="card" id="iosTip" style="border-color:var(--gold);"><div class="flash-tag">Put it on your home screen</div><div style="font-size:1rem;">In Safari, tap Share (the square with the arrow), then <b>Add to Home Screen</b>, then <b>Add</b>. It opens like an app and works offline.</div><button class="btn ghost" id="iosOk" style="margin-top:8px;">Got it</button></div>' : '') +
       (dToB != null && dToB > 7 || !Store.settings().boardFor ? '' : boardCountdown(coreIds)) + boardResultAsk(rs) +
       // 2) what to do today (one list; board-week extras are folded in)
@@ -527,7 +526,7 @@
     mount.innerHTML =
       '<div class="setup-head"><div class="t"><svg class=ic aria-hidden=true><use href=#i-check></use></svg> ' + esc(title) + '</div><div class="muted">' + quizN + ' quiz questions</div></div>' +
       '<button class="btn gold lg" data-n="10"><svg class=ic aria-hidden=true><use href=#i-play></use></svg> Start 10 questions</button>' +
-      '<div class="len-row" style="grid-template-columns:1fr 1fr;margin-top:10px;"><button class="chip" data-n="20">20 questions</button><button class="chip" data-n="999">All ' + quizN + '</button></div>' +
+      '<div class="lg-h" style="margin-top:2px;">Other lengths</div><div class="len-row" style="grid-template-columns:1fr 1fr;"><button class="chip" data-n="20"><b>20</b><small>questions</small></button><button class="chip" data-n="999"><b>' + quizN + '</b><small>the whole set</small></button></div>' +
       (function () {
         var past = Store.quizzes().filter(function (x) { return x.deck === title && x.total; }).slice(0, 3);
         return '<h2 class="section">What&#39;s in this quiz</h2><div class="card"><div class="muted" style="font-size:.92rem;">' + quizN + ' of the ' + cards.length + ' cards in ' + esc(title) + ' have a short answer you can pick from four choices. Long answers (creeds, scenarios) stay in Flashcards and the Mock Board.</div></div>' +
@@ -558,7 +557,7 @@
         '<button class="btn ghost" id="sendSponsor" style="margin-top:8px;"><svg class=ic aria-hidden=true><use href=#i-send></use></svg> Send a board to my sponsor</button>' +
         '<div class="muted center" style="font-size:.85rem;margin:6px 0;">They open the link and run the same board on their phone, with the answers and checklists.</div>' +
         '<button class="btn ghost" id="printSheet"><svg class=ic aria-hidden=true><use href=#i-print></use></svg> Print a paper board instead</button></details>' : '');
-    var tch = mount.querySelector("#tChange"); if (tch) tch.addEventListener("click", function () { var b = mount.querySelector("#tChips"); b.hidden = !b.hidden; });
+    var tch = mount.querySelector("#tChange"); if (tch) tch.addEventListener("click", function () { var b = mount.querySelector("#tChips"); b.hidden = !b.hidden; tch.querySelector(".pill").textContent = b.hidden ? "Change" : "Done"; });
     mount.querySelectorAll("[data-tt]").forEach(function (b) { b.addEventListener("click", function () { Store.setSetting("timer", parseInt(b.getAttribute("data-tt"), 10)); screenBoard(deck); App.toast("Timer saved", 1200); }); });
     var lenNote = function () { mount.querySelector("#lenNote").textContent = mount.querySelector("#fullBoard").checked ? "Full board, 10 questions: about 15 to 20 minutes. On a bus? Turn Full board off." : "Questions only: about 5 to 8 minutes for 10."; };
     mount.querySelector("#fullBoard").addEventListener("change", lenNote); lenNote();
@@ -585,7 +584,7 @@
 
   function screenSearch() {
     setTitle("Search", true);
-    mount.innerHTML = '<div class="search-wrap"><span class="search-ic" aria-hidden="true"><svg class=ic aria-hidden=true><use href=#i-search></use></svg></span><input class="input" id="q" type="search" aria-label="Search questions and answers" placeholder="Search questions & answers..." autocomplete="off" /><button class="search-x" id="qx" aria-label="Clear search" hidden>&#10005;</button></div><div id="results" class="spacer" aria-live="polite"></div>';
+    mount.innerHTML = '<div class="search-wrap"><span class="search-ic" aria-hidden="true"><svg class=ic aria-hidden=true><use href=#i-search></use></svg></span><input class="input" id="q" type="search" aria-label="Search questions and answers" placeholder="Search questions & answers..." autocomplete="off" /><button class="search-x" id="qx" aria-label="Clear search" hidden>&#10005;</button></div><div id="results" style="margin-top:12px;" aria-live="polite"></div>';
     var input = mount.querySelector("#q"), results = mount.querySelector("#results");
     function run() {
       var term = input.value.trim().toLowerCase();
@@ -811,7 +810,7 @@
         '<div class="ttl" style="margin-top:8px;"><b>iPhone (Safari):</b> open the link in Safari, tap Share <svg class=ic aria-hidden=true><use href=#i-upload></use></svg>, then Add to Home Screen, then Add. Open it from the new icon; it works offline after the first visit.</div></div>' +
       '<h2 class="section">Spot an error?</h2>' +
       '<div class="card"><div class="muted">Tap the <svg class=ic aria-hidden=true><use href=#i-flag></use></svg> flag on any card. You can send the report from your phone (text, email, chat) or copy it. No account needed.</div></div>' +
-      '<a class="btn ghost" href="https://github.com/' + REPO + '/issues/new" target="_blank" rel="noopener">Or report it online (needs a free GitHub account)</a>';
+      '<a class="btn ghost" href="https://github.com/' + REPO + '/issues/new" target="_blank" rel="noopener">Report it on GitHub</a><div class="muted center" style="font-size:.85rem;margin-top:4px;">Needs a free GitHub account.</div>';
     mount.querySelector("#share").addEventListener("click", function () {
       if (navigator.share) navigator.share({ title: "NCO Board Study Guide", text: "Study for the E-5/E-6 board:", url: APP_URL }).catch(function () {});
       else copyLink();
@@ -1000,8 +999,10 @@
     row0.addEventListener("scroll", edge, { passive: true }); edge();
     if (!window.IntersectionObserver) return;
     var mark = function (id) { chips.forEach(function (b) { var on = b.getAttribute("data-jump") === id; b.classList.toggle("on", on); if (on && b.scrollIntoView) { var row = b.parentElement; row.scrollTo({ left: b.offsetLeft - 24, behavior: "smooth" }); } }); };
-    var io = new IntersectionObserver(function (es) { es.forEach(function (e) { if (e.isIntersecting) mark(e.target.id); }); }, { rootMargin: "-130px 0px -60% 0px" });
-    chips.forEach(function (b) { var t = document.getElementById(b.getAttribute("data-jump")); if (t) io.observe(t); });
+    var heads = Array.prototype.map.call(chips, function (b) { return document.getElementById(b.getAttribute("data-jump")); }).filter(Boolean), cur = null, tick = false;
+    var spy = function () { tick = false; if (!row0.isConnected) { window.removeEventListener("scroll", onS); return; } var id = heads[0] && heads[0].id; heads.forEach(function (h) { if (h.getBoundingClientRect().top < 150) id = h.id; }); if (id !== cur) { cur = id; mark(id); } };
+    var onS = function () { if (!tick) { tick = true; requestAnimationFrame(spy); } };
+    window.addEventListener("scroll", onS, { passive: true }); spy();
   }
   function wireJumps() { setTimeout(wireJumpSpy, 0); mount.querySelectorAll("[data-jump]").forEach(function (b) { b.addEventListener("click", function () { var t = document.getElementById(b.getAttribute("data-jump")); if (t) t.scrollIntoView({ behavior: "smooth", block: "start" }); }); }); }
 
@@ -1117,7 +1118,8 @@
       Store.setChainRole(seenKey, "1");
     }
     var pct = Math.round(100 * got / total);
-    mount.innerHTML = '<div class="ring-wrap"><div class="ring ' + (pct >= 75 ? 'good' : pct >= 50 ? 'mid' : 'bad') + '" style="--p:' + pct + ';"><div class="ring-in">' + pct + '%</div></div><small>from your sponsor\'s board</small></div>' +
+    var sbClean = !bear.some(function (b) { return !b.ok; }) && !ids.some(function (id) { return byId[id] && byId[id].pub === "sit"; }) && total >= 8;
+    mount.innerHTML = '<div class="ring-wrap"><div class="ring ' + (pct >= 75 && sbClean ? 'good' : pct >= 50 ? 'mid' : 'bad') + '" style="--p:' + pct + ';"><div class="ring-in">' + pct + '%</div></div><small>from your sponsor\'s board</small></div>' +
       (function () {
         var V = MockBoard.verdict(pct, bear.filter(function (b) { return !b.ok; }).map(function (b) { return b.label.toLowerCase(); }), ids.filter(function (id) { return byId[id] && byId[id].pub === "sit"; }).length);
         if (total < 8 && V.level !== "work") V = { level: "work", title: "Good practice", msg: pct + "% on a short board. Board-ready takes a full board of 10 or more questions." };
@@ -1288,7 +1290,7 @@
     var first = true;
     CHANGES.forEach(function (sec) {
       var cs = all.filter(sec.test); if (!cs.length) return;
-      html += '<details class="set-fold"' + (first ? ' open' : '') + '><summary>' + esc(sec.h) + ' <span class="pill" style="margin-left:6px;">' + cs.length + '</span></summary>';
+      html += '<details class="set-fold"><summary><span class="grow">' + esc(sec.h) + '</span><span class="pill">' + cs.length + '</span></summary>';
       first = false;
       cs.forEach(function (c) {
         html += '<div class="chg"><div style="font-weight:600;margin-bottom:4px;">' + esc(c.q) + '</div><div>' + esc(c.a) + '</div>' + (c.ref ? '<div class="flash-ref">' + esc(c.ref) + '</div>' : '') + '</div>';
@@ -1332,7 +1334,7 @@
       var on = !!checks[u.id];
       html += '<button class="row check' + (on ? " checked" : "") + '" data-id="' + u.id + '" role="checkbox" aria-checked="' + (on ? "true" : "false") + '"><div class="checkbox">' + (on ? "&#10003;" : "") + '</div><div class="grow"><div class="ttl">' + checkText(u.t) + '</div></div></button>';
     });
-    html += '<div class="spacer"></div><a class="btn ghost" href="#/flash/pam670-1">Study the uniform placement cards (DA PAM 670-1)</a>' +
+    html += '<div class="spacer"></div><a class="btn ghost" href="#/flash/pam670-1">Study uniform placement</a>' +
       '<div class="spacer"></div><button class="btn ghost" id="clear">Clear all checkmarks</button>';
     var doneN = UNIFORM_CHECKS.filter(function (u) { return checks[u.id]; }).length;
     html = '<div class="check-prog"><b>' + doneN + ' of ' + UNIFORM_CHECKS.length + '</b> checked<div class="bar"><span style="width:' + Math.round(100 * doneN / UNIFORM_CHECKS.length) + '%"></span></div></div>' + html;
@@ -1457,6 +1459,7 @@
       if (!stk) { mount.addEventListener("focusin", function (e) { if (/INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) { var b = document.getElementById("ptSticky"); if (b) b.classList.add("typing"); } });
         mount.addEventListener("focusout", function () { var b = document.getElementById("ptSticky"); if (b) b.classList.remove("typing"); }); }
       if (!stk) { stk = document.createElement("a"); stk.id = "ptSticky"; stk.href = "#"; stk.addEventListener("click", function (e) { e.preventDefault(); var t = mount.querySelector("#ptTotal"); if (t) t.scrollIntoView({ behavior: "smooth", block: "center" }); }); mount.appendChild(stk); }
+      stk.classList.toggle("empty", !total);
       stk.innerHTML = '<span>Your estimate</span><b>' + total + ' <small>of 800</small></b>' + (cut != null && !blank ? '<span class="' + (total >= cut ? 'badge-good' : 'badge-bad') + '">' + (total >= cut ? 'at or above' : (cut - total) + ' below') + ' the ' + cut + ' cutoff</span>' : '');
       mount.querySelector("#ptTotal").innerHTML = '<div class="flash-tag">Your estimate for ' + rank + '</div><div style="font-size:1.6rem;font-weight:800;">' + total + ' <span class="muted" style="font-size:1rem;">of 800</span></div>' + gap +
         '<div class="muted" style="font-size:.85rem;margin-top:6px;">Most room left: ' + room.map(function (r) { return esc(r.t.toLowerCase()) + ' (' + r.left + ')'; }).join(", ") + '.</div>' +
@@ -1581,7 +1584,7 @@
       html += '</details>';
     });
     html += '<div class="spacer"></div><a class="btn gold lg" href="#/reporting">How to report to the board</a><div class="spacer"></div>' +
-      '<a class="btn ghost lg" href="#/pick/board">Rehearse it: Full board Mock Board</a>';
+      '<a class="btn ghost lg" href="#/pick/board">Rehearse in a Mock Board</a>';
     mount.innerHTML = html;
   }
 

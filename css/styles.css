@@ -910,3 +910,10 @@ body.session .grade-row .btn, body.session #reveal, body.session #rubricDone, bo
 .cut-pair b { font-size: 1.35rem; color: var(--gold); }
 .cut-ippsa { display: flex; align-items: center; gap: 6px; margin-top: 10px; min-height: 44px; color: var(--gold); font-weight: 600; text-decoration: none; }
 .cut-ippsa { text-decoration: none !important; }
+
+/* ---------- v3.47 polish round 19 ---------- */
+#ptSticky.empty { display: none; }
+.pill-btn { border: 1px solid var(--gold); color: var(--gold); background: none; font: inherit; font-size: .85rem; cursor: pointer; min-height: 40px; padding: 0 12px; }
+body.session .drive-card { justify-content: center; }
+.ring-in svg.ic { width: 48px; height: 48px; color: var(--good); }
+details.set-fold > summary > .grow { flex: 1; min-width: 0; }
