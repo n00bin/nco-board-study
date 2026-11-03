@@ -1,6 +1,6 @@
 /* Service worker — caches the app for full offline use.
    Bump CACHE when you change app files or content so phones update. */
-var CACHE = "ncoboard-v72";
+var CACHE = "ncoboard-v73";
 var ASSETS = [
   "./",
   "./index.html",

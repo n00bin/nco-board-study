@@ -1094,7 +1094,7 @@
     var cards = want.map(function (id) { return byId[id]; }).filter(Boolean);
     if (cards.length < 3) { mount.innerHTML = badLink('The board link is incomplete. Ask the Soldier to send it again.'); return; }
     mount.innerHTML = '<div class="card"><div class="flash-tag">You are the board</div><div class="muted">A Soldier asked you to run a practice board. Read each question aloud, listen, then tick what they actually said.</div></div>' +
-      '<label class="switch card"><input type="checkbox" id="sbFull" checked> <span><b>Full board</b>: reporting in, drill, "tell us about yourself," then the questions</span></label>' +
+      '<label class="switch card"><input type="checkbox" id="sbFull" checked> <span><b>Full board</b>: reporting in, drill, \u201ctell us about yourself,\u201d then the questions</span></label>' +
       '<button class="btn gold lg" id="sbGo"><svg class=ic aria-hidden=true><use href=#i-play></use></svg> Start the board</button><div class="muted center" style="font-size:.85rem;margin:-4px 0 8px;">' + cards.length + ' questions</div>' +
       '<div class="spacer"></div><a class="btn ghost" href="#/sheet/' + escAttr(want.join(",")) + '"><svg class=ic aria-hidden=true><use href=#i-print></use></svg> Print a paper board</a>';
     mount.querySelector("#sbGo").addEventListener("click", function () {
@@ -1137,7 +1137,7 @@
       (bear.length ? '<h2 class="section">Bearing (your sponsor\'s grades)</h2>' + '<div class="lg">' + bear.map(function (b) { return '<div class="li"><span class="grow"><span class="t" style="font-weight:600;">' + esc(b.label) + '</span></span><b class="' + (b.ok ? "badge-good" : "badge-bad") + '">' + (b.ok ? "\u2713 clean" : "\u2717 needs work") + '</b></div>'; }).join("") + '</div>' : '') +
       (note ? '<div class="card" style="border-color:var(--gold);"><div class="flash-tag">Your sponsor\'s notes</div><div style="white-space:pre-wrap;">' + esc(note) + '</div></div>' : '') +
       '<p class="center muted">' + (fresh ? "Saved to your history. " : "Already saved. ") + (ids.length ? "The questions you missed will come back sooner in your reviews:" : "No misses. Nice work.") + '</p>' +
-      ids.map(function (id) { var c = byId[id]; return c ? '<details class="set-fold"><summary>' + esc(c.q) + '</summary><div style="padding:0 2px 10px;">' + esc(c.a) + '</div></details>' : ""; }).join("") +
+      (ids.length ? '<details class="set-fold"><summary><span class="grow">Review your ' + ids.length + ' miss' + (ids.length === 1 ? '' : 'es') + '</span></summary>' + ids.map(function (id) { var c = byId[id]; return c ? '<div class="chg"><div style="font-weight:600;margin-bottom:4px;">' + esc(c.q) + '</div><div>' + esc(c.a) + '</div></div>' : ""; }).join("") + '</details>' : '') +
       '<div class="spacer"></div><a class="home-link" href="#/">Back to Home</a>';
   }
 
@@ -1559,8 +1559,8 @@
       '<div class="btn-row" style="margin-top:10px;"><button class="btn ghost" id="tmpl">Fill-in template</button><button class="btn ghost" id="ex">See an example</button></div>' +
       '<div id="exBox" hidden><div class="card" style="margin-top:10px;"><div class="flash-tag">Example (fictional Soldier: write your own)</div><div style="white-space:pre-wrap;margin-top:6px;">' +
         esc(SAMPLE_STATEMENT) + '</div><div class="muted" style="font-size:.85rem;margin-top:8px;">Keep yours about a minute. Say it, don\'t read it. Be specific: real duties, real accomplishments, real goals.</div></div></div>' +
-      '<div class="spacer"></div><button class="btn gold lg" id="save">Done</button>';
-    mount.querySelector("#save").addEventListener("click", function () { Store.setStatement(mount.querySelector("#stmt").value); App.toast("Saved"); });
+      '<div class="muted center" style="font-size:.85rem;margin-top:10px;">Saves as you type.</div><div class="spacer"></div><button class="btn gold lg" id="save">Done</button>';
+    mount.querySelector("#save").addEventListener("click", function () { Store.setStatement(mount.querySelector("#stmt").value); App.toast("Saved"); App.go("#/boardday"); });
     mount.querySelector("#stmt").addEventListener("input", function () { Store.setStatement(this.value); flashSaved(); });
     mount.querySelector("#ex").addEventListener("click", function () { var b = mount.querySelector("#exBox"); b.hidden = !b.hidden; });
     mount.querySelector("#tmpl").addEventListener("click", function () { var t = mount.querySelector("#stmt"); if (!t.value.trim() || confirm("Replace current text with the template?")) t.value = skeleton; });

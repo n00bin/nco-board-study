@@ -84,7 +84,7 @@
         front.setAttribute("aria-hidden", flipped ? "true" : "false");
         back.setAttribute("aria-hidden", flipped ? "false" : "true");
         grades.hidden = !flipped; confRow.hidden = flipped;
-        hint.textContent = flipped ? "" : (queue[i] && queue[i].why ? "Say the answer and why it matters, then flip" : "Say the answer, then flip");
+        hint.textContent = flipped ? "" : (queue[i] && queue[i].why ? "Say the answer and why it matters, then flip." : "Say the answer, then flip.");
       }
 
       function paint() {

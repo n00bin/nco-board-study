@@ -943,3 +943,29 @@ body.session .q-count.mb-head { box-shadow: 0 8px 10px -6px var(--bg); }
 .progress-bar { background: rgba(255,255,255,.14); }
 .li.static .t { color: var(--text) !important; font-weight: 600 !important; }
 details.more-changes > summary { color: var(--gold); }
+
+/* ---------- v3.50 polish round 22 ---------- */
+/* one clear button in Search (hide the browser's own) */
+.search-wrap input[type=search]::-webkit-search-cancel-button { -webkit-appearance: none; appearance: none; display: none; }
+.search-wrap input[type=search]::-webkit-search-decoration { -webkit-appearance: none; }
+/* folds that hold lists: no card inside a card */
+details.set-fold > .lg, details.set-fold > .lg-h + .lg { border: none; background: transparent; border-radius: 0; margin-left: -12px; margin-right: -12px; }
+details.set-fold > .lg > .li, details.set-fold > .lg > .li-btn { padding-left: 12px; padding-right: 12px; }
+details.set-fold > .lg-h { margin-left: 0; }
+/* lesson complete: progress centred under the headline */
+.done-h ~ .track-prog { max-width: 280px; margin: 0 auto 10px; text-align: center; }
+/* results legends sit under their own row */
+.dot-legend { margin: 2px 0 8px; flex-wrap: wrap; }
+/* points calculator reads as a tool */
+details.pt-help > summary { display: inline-flex !important; min-height: 44px; padding: 6px 12px !important; margin-top: 8px; border: 1px solid var(--line); border-radius: 999px; color: var(--gold) !important; font-weight: 600; font-size: .92rem !important; width: auto; }
+details.pt-help > summary::after { display: none; }
+details.pt-help[open] { background: var(--surface-2); border-left: 3px solid var(--gold); border-radius: 0 var(--radius) var(--radius) 0; padding: 4px 12px 12px; margin-top: 8px; }
+details.pt-help[open] > summary { border: none; padding-left: 0 !important; }
+/* first run: the rank card doesn't compete with the gold Start */
+#app .card:has(> #rankAsk) { border-color: var(--line) !important; }
+/* the quiz stem stays below the sticky header */
+.card { scroll-margin-top: 110px; }
+/* toasts: one line for short messages */
+.toast { min-width: 240px; max-width: calc(100% - 32px) !important; white-space: normal; }
+/* Home score fold: a full tap target */
+details.hero-more > summary { min-height: 44px !important; }
