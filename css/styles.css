@@ -1131,3 +1131,11 @@ html { scroll-padding-top: 0 !important; }
 /* today's steps are links: give them a chevron like every other row */
 .plan-steps .btn.plan-item::after { content: "\203A"; margin-left: auto; padding-left: 10px; font-size: 1.35rem; line-height: 1; color: var(--text-dim); }
 .plan-steps .btn.plan-item { display: flex; align-items: center; }
+
+/* ---------- v3.65 polish round 37 ---------- */
+/* the Saved note sits under the app bar, clear of the content you're editing */
+.saved-tick, body.session .saved-tick { bottom: auto !important; top: calc(64px + env(safe-area-inset-top)); z-index: 30; box-shadow: 0 4px 14px rgba(0,0,0,.45); }
+/* search answers: three lines, the card opens the rest */
+.sr-a { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+/* finished steps of today's session */
+.plan-steps .plan-item.done { color: var(--text-dim); }

@@ -125,7 +125,7 @@
         container.innerHTML =
           (upTo == null ? '<div class="ring-wrap"><div class="ring good" style="--p:100;"><div class="ring-in">' + n + '</div></div><small>cards played</small></div>'
             : '<div class="stop-ic"><svg class=ic aria-hidden=true><use href=#i-headphones></use></svg></div>') +
-          '<div class="done-h">' + (upTo == null ? 'Drive Mode done' : 'Stopped') + '</div><p class="center muted" style="margin-top:0;">' + (upTo == null ? 'You heard every card in this set.' : 'Stopped on card ' + (n + 1) + ' of ' + deck.length + ' after ' + (Date.now() - t0 < 60000 ? 'under a minute' : 'about ' + Math.round((Date.now() - t0) / 60000) + ' min') + '. Pick up again any time; due cards come first.') + '</p>' +
+          '<div class="done-h">' + (upTo == null ? 'Drive Mode done' : 'Good run') + '</div><p class="center muted" style="margin-top:0;">' + (upTo == null ? 'You heard every card in this set.' : 'Stopped on card ' + (n + 1) + ' of ' + deck.length + ' after ' + (Date.now() - t0 < 60000 ? 'under a minute' : 'about ' + Math.round((Date.now() - t0) / 60000) + ' min') + '. Pick up again any time; due cards come first.') + '</p>' +
           '<div class="spacer"></div>' +
           '<button class="btn gold lg" id="again">' + (upTo == null ? 'Play again' : 'Pick up again') + '</button><div class="spacer"></div>' +
           '<button class="home-link" id="home">Back to Home</button>';
