@@ -1018,3 +1018,13 @@ details.pt-help[open] { border-left: 1px solid var(--line); border: 1px solid va
 /* quiz choices keep their place when the mark appears */
 .choice { position: relative; padding-left: 40px !important; }
 .choice .mark { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); }
+
+/* ---------- v3.55 polish round 27 ---------- */
+/* a steady flashcard header: the Finish pill is short; its tap area extends invisibly */
+#fProg, .q-count.mb-head { min-height: 40px; }
+.pill-btn { min-height: 30px !important; position: relative; }
+.pill-btn::after { content: ""; position: absolute; inset: -8px -6px; }
+/* the intro's result note sits in the button slot, like every other result note */
+body.session .intro-note.result-flash { position: fixed; left: 50%; transform: translateX(-50%); width: calc(100% - 32px); max-width: calc(var(--maxw) - 32px); bottom: calc(12px + env(safe-area-inset-bottom)); min-height: 58px; display: flex; align-items: center; justify-content: center; margin: 0; z-index: 20; }
+/* nothing rests under the bottom fade */
+body.session .screen { padding-bottom: 150px !important; }

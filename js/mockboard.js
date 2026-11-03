@@ -700,7 +700,7 @@
         var handheld = sponsor && !document.body.classList.contains("guest");
         if (sponsor) msg = msg.replace(/^Your answers/, "Their answers").replace(/so tighten up/, "so have them tighten up")
           .replace(/Drill the misses/, "Have them drill the misses").replace(/Study the misses, then run it again/, "Have them study the misses, then run it again").replace(/Tighten the misses/, "Have them tighten the misses");
-        if (deck.length < 8 && V.level !== "work") { V = { level: "work", title: "Good practice", msg: pct + "% on a short board. Board-ready takes a full board of 10 or more questions." }; msg = V.msg; }
+        if (asked < 8 && V.level !== "work") { V = { level: "work", title: "Good practice", msg: pct + "% on a short board. Board-ready takes a full board of 10 or more questions." }; msg = V.msg; }
         var nQ = qScores.length, nF = Math.max(0, asked - nQ);
         var nFu = extras.filter(function (x) { return x.k === "fu"; }).length, nCb = extras.filter(function (x) { return x.k === "cb"; }).length;
         var countLine = nQ + " question" + (nQ === 1 ? "" : "s") + (nFu ? ", " + nFu + " follow-up" + (nFu === 1 ? "" : "s") : "") + (nCb ? ", " + nCb + " second " + (nCb === 1 ? "try" : "tries") : "");
@@ -708,7 +708,7 @@
         var vTitle = strongB ? "Strong board" : V.title, vLine = strongB ? (missed.length ? (sponsor ? "Have them tighten the " : "Tighten the ") + missed.length + " miss" + (missed.length === 1 ? "" : "es") + ", then run another." : "Keep it sharp with a board every few days.")
           : (msg.indexOf(V.title + ".") === 0 ? msg.slice(V.title.length + 1).trim() : msg).replace(/^(Your|Their) answers scored \d+%\. /, "").replace(/^A real board also grades bearing and the situational questions, so /, "").replace(/^A board doesn\'t pass you on a percentage: it wants confident, complete answers\. /, "").replace(/^./, function (ch) { return ch.toUpperCase(); });
         var howFold = '';
-        var html = (handheld ? '<div class="handback"><svg class=ic aria-hidden=true><use href=#i-handshake></use></svg><div><b>Hand the phone back to the Soldier.</b><br>Their score is saved on this phone.</div></div>' : '') + '<div class="ring-wrap"><div class="ring ' + (V.level === "ready" && !(deck.length < 8) ? 'good' : pct >= 50 ? 'mid' : 'bad') + '" style="--p:' + pct + ';"><div class="ring-in">' + pct + '%</div></div><small>' + (extras.length ? 'score, incl. second tries &amp; follow-ups' : 'score') + '</small></div>' +
+        var html = (handheld ? '<div class="handback"><svg class=ic aria-hidden=true><use href=#i-handshake></use></svg><div><b>Hand the phone back to the Soldier.</b><br>Their score is saved on this phone.</div></div>' : '') + '<div class="ring-wrap"><div class="ring ' + (pct >= 75 && V.level !== "almost" ? 'good' : pct >= 50 ? 'mid' : 'bad') + '" style="--p:' + pct + ';"><div class="ring-in">' + pct + '%</div></div><small>' + (extras.length ? 'score, incl. second tries &amp; follow-ups' : 'score') + '</small></div>' +
           '<div class="done-h">' + (strongB ? '<svg class=ic aria-hidden=true><use href=#i-trophy></use></svg> ' : '') + esc(vTitle) + '</div><p class="center muted" style="margin-top:0;">' + esc(vLine) + '</p>' +
           (function () {
             var full = qScores.filter(function (x) { return x >= 0.99; }).length, part = qScores.filter(function (x) { return x >= 0.66 && x < 0.99; }).length, thin = qScores.filter(function (x) { return x > 0 && x < 0.66; }).length, miss = qScores.length - full - part - thin;
@@ -743,7 +743,7 @@
           html += '</div>';
         }
         if (missed.length) {
-          html += '<details class="set-fold"><summary>Review ' + (sponsor ? 'their' : 'your') + ' ' + missed.length + ' miss' + (missed.length === 1 ? '' : 'es') + '</summary>';
+          html += '<details class="set-fold"><summary>Review ' + (sponsor && !handheld ? 'their' : 'your') + ' ' + missed.length + ' miss' + (missed.length === 1 ? '' : 'es') + '</summary>';
           missed.forEach(function (m) {
             html += '<div class="card"><div class="flash-tag">' + esc(m.code) + '</div><div style="font-weight:600;margin-bottom:6px;">' + esc(m.q) + '</div><div class="muted">' + esc(m.a) + '</div></div>';
           });

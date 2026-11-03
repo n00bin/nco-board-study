@@ -380,7 +380,7 @@
         '<div style="display:flex;justify-content:space-between;align-items:flex-end;gap:10px;"><div style="min-width:0;">' + head + '</div>' +
           (streak ? '' : '<!--') + '<div style="text-align:right;flex:none;"><div style="font-size:1.6rem;font-weight:800;white-space:nowrap;"><svg class=ic aria-hidden=true><use href=#i-flame></use></svg> ' + streak + '</div><div class="sub" style="white-space:nowrap;">day streak</div>' + (Store.saverUsed() && Date.now() - Store.saverUsed() < 2 * 86400000 ? '<div class="sub" style="font-size:.85rem;">1 day forgiven</div>' : '') + '</div>' + (streak ? '' : '-->') + '</div>' +
         (calm || recommended || notRec ? '' : (rs.seen === 0 && !streak ? '' : '<div class="bar"><span style="width:' + rs.ready + '%"></span></div>') +
-          '<div class="sub" style="margin-top:6px;font-size:.85rem;">' + (dToB != null && dToB > 7 ? 'Board in ' + dToB + ' days \u2022 ' : '') + (daily.count >= dayTarget ? 'Today\u2019s cards done &#10003;' : 'Today: ' + daily.count + ' of ' + dayTarget + ' cards') + '</div>' +
+          '<div class="sub" style="margin-top:6px;font-size:.85rem;">' + (dToB != null && dToB > 7 ? 'Board in ' + dToB + ' days \u2022 ' : '') + (daily.count >= dayTarget ? 'Today\u2019s cards done &#10003; The rest of the plan is extra.' : 'Today: ' + daily.count + ' of ' + dayTarget + ' cards') + '</div>' +
           '<details class="hero-more"><summary class="sub">' + (rs.weak.length ? 'Work on: ' + esc(rs.weak[0]) + (rs.weak.length > 1 ? ' +' + (rs.weak.length - 1) : '') : 'How your score works') + '</summary>' +
           (function () {
             var q = Store.quizzes(), sp = q.filter(function (x) { return /with sponsor/.test(x.deck) && x.total; })[0], me = q.filter(function (x) { return /^Mock Board/.test(x.deck) && !/with sponsor/.test(x.deck) && x.total; }).slice(0, 5);
@@ -478,7 +478,7 @@
         '<button class="chip" data-r="#/type/" aria-pressed="false"><svg class=ic aria-hidden=true><use href=#i-keyboard></use></svg> Type answers</button></div>' +
         '<div class="muted" style="font-size:.85rem;margin:0 4px 8px;">Flip cards: tap to see the answer. Type answers: write it first, then check.</div>';
     if (mode === "drive")
-      html += '<div class="card"><div class="muted">Hands-free: the app reads each question, pauses for you to answer aloud, then reads the answer. Great for PT or the drive in — keep the screen on.</div></div>';
+      html += '<div class="muted" style="font-size:.85rem;margin:0 4px 10px;">Hands-free: the app reads each question, pauses for you to answer aloud, then reads the answer. Great for PT or the drive in — keep the screen on.</div>';
     var quizOk = function (c) { return !c.flashOnly && ((c.choices && c.choices.length >= 2) || (c.a && String(c.a).length <= 90)); };
     var cnt = function (cs) { var n = mode === "quiz" ? cs.filter(quizOk).length : mode === "drive" ? (Store.buildQueue(cs).length || cs.length) : cs.length; return n ? n + (mode === "quiz" ? " questions" : mode === "drive" ? " due" : " cards") : 0; };
     html += '<div class="muted" style="font-size:.85rem;margin:0 4px 8px;">' + (mode === "quiz" ? "Numbers are quiz questions (cards with a short answer)." : mode === "drive" ? "Numbers are cards due or new for you today." : "Numbers are cards in each set.") + '</div>';
@@ -1005,9 +1005,9 @@
     var row0 = chips[0].parentElement, edge = function () { row0.classList.toggle("fade-l", row0.scrollLeft > 4); row0.classList.toggle("fade-r", row0.scrollLeft + row0.clientWidth < row0.scrollWidth - 4); };
     row0.addEventListener("scroll", edge, { passive: true }); edge();
     if (!window.IntersectionObserver) return;
-    var mark = function (id) { chips.forEach(function (b) { var on = b.getAttribute("data-jump") === id; b.classList.toggle("on", on); if (on && b.scrollIntoView) { var row = b.parentElement; row.scrollTo({ left: b.offsetLeft - 24, behavior: "smooth" }); } }); };
+    var mark = function (id) { chips.forEach(function (b) { var on = b.getAttribute("data-jump") === id; b.classList.toggle("on", on); if (on && b.scrollIntoView) { var row = b.parentElement; row.scrollTo({ left: b === chips[0] ? 0 : b.offsetLeft - 24, behavior: "smooth" }); } }); };
     var heads = Array.prototype.map.call(chips, function (b) { return document.getElementById(b.getAttribute("data-jump")); }).filter(Boolean), cur = null, tick = false;
-    var spy = function () { tick = false; if (!row0.isConnected) { window.removeEventListener("scroll", onS); return; } var id = heads[0] && heads[0].id; var line = row0.getBoundingClientRect().bottom + window.innerHeight * 0.35; heads.forEach(function (h) { if (h.getBoundingClientRect().top < line) id = h.id; }); if (id !== cur) { cur = id; mark(id); } };
+    var spy = function () { tick = false; if (!row0.isConnected) { window.removeEventListener("scroll", onS); return; } var id = heads[0] && heads[0].id; var line = row0.getBoundingClientRect().bottom + window.innerHeight * 0.35; heads.forEach(function (h) { if (h.getBoundingClientRect().top < line) id = h.id; }); if (window.scrollY < 20 && heads[0]) id = heads[0].id; if (id !== cur) { cur = id; mark(id); } };
     var onS = function () { if (!tick) { tick = true; requestAnimationFrame(spy); } };
     window.addEventListener("scroll", onS, { passive: true }); spy();
   }
@@ -1125,7 +1125,7 @@
       Store.setChainRole(seenKey, "1");
     }
     var pct = Math.round(100 * got / total);
-    var sbClean = !bear.some(function (b) { return !b.ok; }) && !ids.some(function (id) { return byId[id] && byId[id].pub === "sit"; }) && total >= 8;
+    var sbClean = !bear.some(function (b) { return !b.ok; }) && !ids.some(function (id) { return byId[id] && byId[id].pub === "sit"; });
     mount.innerHTML = '<div class="ring-wrap"><div class="ring ' + (pct >= 75 && sbClean ? 'good' : pct >= 50 ? 'mid' : 'bad') + '" style="--p:' + pct + ';"><div class="ring-in">' + pct + '%</div></div><small>from your sponsor\'s board</small></div>' +
       (function () {
         var V = MockBoard.verdict(pct, bear.filter(function (b) { return !b.ok; }).map(function (b) { return b.label.toLowerCase(); }), ids.filter(function (id) { return byId[id] && byId[id].pub === "sit"; }).length);
@@ -1138,7 +1138,7 @@
         (selfPct - pct >= 10 ? 'You grade yourself about ' + (selfPct - pct) + ' points higher than your sponsor does. Next time, only give yourself a key point if you said it out loud, clearly.' : selfPct - pct <= -10 ? 'Your sponsor scored you higher than you score yourself. You know more than you think.' : 'Your own grading is close to your sponsor&#39;s. You can trust your practice scores.') + '</div></div>' : '') +
       (bear.length ? '<h2 class="section">Bearing (your sponsor\'s grades)</h2>' + '<div class="lg">' + bear.map(function (b) { return '<div class="li"><span class="grow"><span class="t" style="font-weight:600;">' + esc(b.label) + '</span></span><b class="' + (b.ok ? "badge-good" : "badge-bad") + '">' + (b.ok ? "\u2713 clean" : "\u2717 needs work") + '</b></div>'; }).join("") + '</div>' : '') +
       (note ? '<div class="card" style="border-color:var(--gold);"><div class="flash-tag">Your sponsor\'s notes</div><div style="white-space:pre-wrap;">' + esc(note) + '</div></div>' : '') +
-      '<p class="center muted">' + (fresh ? "Saved to your history. " : "Already saved. ") + (ids.length ? "The questions you missed will come back sooner in your reviews:" : "No misses. Nice work.") + '</p>' +
+      '<p class="center muted">' + (fresh ? "Saved to your history. " : "Already saved. ") + (ids.length ? "The questions you missed will come back sooner in your reviews:" : got < total ? "No missed questions. A follow-up or two needed tightening." : "No misses. Nice work.") + '</p>' +
       (ids.length ? '<details class="set-fold"><summary><span class="grow">Review your ' + ids.length + ' miss' + (ids.length === 1 ? '' : 'es') + '</span></summary>' + ids.map(function (id) { var c = byId[id]; return c ? '<div class="chg"><div style="font-weight:600;margin-bottom:4px;">' + esc(c.q) + '</div><div>' + esc(c.a) + '</div></div>' : ""; }).join("") + '</details>' : '') +
       '<div class="spacer"></div><a class="home-link" href="#/">Back to Home</a>';
   }
@@ -1597,7 +1597,7 @@
       });
       html += '</details>';
     });
-    html += '<div class="spacer"></div><a class="btn gold lg" href="#/reporting">How to report to the board</a><div class="spacer"></div>' +
+    html += '<div class="spacer"></div><a class="btn gold lg" href="#/reporting"><svg class=ic aria-hidden=true><use href=#i-flag></use></svg> How to report to the board</a><div class="spacer"></div>' +
       group("", [li("#/board/core", "<svg class=ic aria-hidden=true><use href=#i-users></use></svg>", "Rehearse in a Mock Board", "Full board: report in, drill, then the questions")]);
     mount.innerHTML = html;
   }
