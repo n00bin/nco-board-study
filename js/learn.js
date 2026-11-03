@@ -145,7 +145,7 @@
         if (!BOARD_PATH[t.id] && !shownExtra) { shownExtra = true; html += '<details class="set-fold"><summary>Extra depth: every publication (optional)</summary>'; }
         var td = doneCount(t.lessons);
         var tp = t.lessons.length ? Math.round((td / t.lessons.length) * 100) : 0;
-        html += '<a class="row" href="#/track/' + t.id + '"><div class="grow"><div class="code">' + esc(t.title) + '</div>' +
+        html += '<a class="row" href="#/track/' + t.id + '"><div class="grow"><div class="ttl" style="font-weight:700;">' + esc(t.title) + '</div>' +
           '<div class="meta">' + td + ' / ' + t.lessons.length + (t.lessons.length === 1 ? ' lesson' : ' lessons') + (t.id === "sit" || t.id === "personal" ? ' \u2022 asked at every board' : '') + '</div>' +
           '<div class="bar"><span style="width:' + tp + '%"></span></div></div><div class="chev" aria-hidden="true"><svg class=ic aria-hidden=true><use href=#i-chev></use></svg></div></a>';
       });

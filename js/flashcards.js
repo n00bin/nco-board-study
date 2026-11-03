@@ -96,7 +96,7 @@
         var left = queue.length - i, mins = Math.max(1, Math.round(left * 15 / 60));
         container.querySelector("#fBar").style.width = Math.round(100 * passed / Math.max(1, passed + left)) + "%";
         container.querySelector("#fProg").innerHTML = '<span>' + (opts && opts.onDone ? 'Practice \u2022 ' : '') + passed + ' done</span><span class="pills"><span class="pill" title="about ' + mins + ' min">' + left + ' left</span>' + (reviewed >= 3 && left > 3 ? '<button class="pill pill-btn" id="fDone">Finish</button>' : '') + '</span>';
-        container.querySelector("#fTagF").textContent = pubCode(c) + (c.adv ? " \u2022 Advanced" : "");   // topic only on the back: it can give the answer away
+        container.querySelector("#fTagF").textContent = (/\b(regulation|publication|pamphlet|field manual|doctrine)\b|\b(which|what) (AR|FM|ADP|ATP|TC|DA PAM)\b/i.test(c.q) ? "Name the publication" : pubCode(c)) + (c.adv ? " \u2022 Advanced" : "");   // topic only on the back: it can give the answer away
         container.querySelector("#fTagB").textContent = pubCode(c) || "Answer";
         container.querySelector("#fQ").textContent = c.q;
         // Wait for the flip-back animation before swapping in the next answer, so it never flashes.
@@ -189,8 +189,8 @@
       function ask() {
         var c = queue[i];
         container.innerHTML =
-          '<div class="q-count mb-head"><span>' + reviewed + ' reviewed</span><span class="pill">' + (queue.length - i) + ' to go</span></div>' +
-          '<div class="card"><div class="flash-toprow"><span class="flash-tag">' + esc(pubCode(c)) + '</span></div>' +
+          '<div class="q-count mb-head"><span>' + reviewed + ' reviewed</span><span class="pill">' + (queue.length - i) + ' to go</span></div><div class="progress-bar"><span style="width:' + Math.round(100 * i / Math.max(1, queue.length)) + '%"></span></div>' +
+          '<div class="card"><div class="flash-toprow"><span class="flash-tag">' + esc(/\b(regulation|publication|pamphlet|field manual|doctrine)\b|\b(which|what) (AR|FM|ADP|ATP|TC|DA PAM)\b/i.test(c.q) ? "Name the publication" : pubCode(c)) + '</span></div>' +
             '<div class="flash-q" style="margin-bottom:14px;">' + esc(c.q) + '</div>' +
             '<textarea class="input" id="tIn" rows="2" placeholder="Type your answer…"></textarea></div>' +
           '<button class="btn gold lg" id="tShow">Check answer</button>';
@@ -211,7 +211,7 @@
           (na.length >= 3 && nt.indexOf(na) >= 0));
         var verdict = !typed ? "" : close ? '<div class="badge-good" style="font-weight:700;">&#10003; Looks right</div>' : '<div class="badge-bad" style="font-weight:700;">&#10007; Compare carefully</div>';
         container.innerHTML =
-          '<div class="flash-progress">Reviewed ' + reviewed + '  •  Left ' + (queue.length - i) + '</div>' +
+          '<div class="q-count mb-head"><span>' + reviewed + ' reviewed</span><span class="pill">' + (queue.length - i) + ' to go</span></div><div class="progress-bar"><span style="width:' + Math.round(100 * i / Math.max(1, queue.length)) + '%"></span></div>' +
           '<div class="card"><div class="flash-tag">' + esc(pubCode(c)) + '</div>' +
             '<div class="flash-q" style="margin:6px 0 10px;">' + esc(c.q) + '</div>' +
             (typed ? '<div class="muted">You wrote: ' + esc(typed) + '</div>' + verdict + '<hr class="div">' : '') +

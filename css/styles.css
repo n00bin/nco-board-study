@@ -969,3 +969,18 @@ details.pt-help[open] > summary { border: none; padding-left: 0 !important; }
 .toast { min-width: 240px; max-width: calc(100% - 32px) !important; white-space: normal; }
 /* Home score fold: a full tap target */
 details.hero-more > summary { min-height: 44px !important; }
+
+/* ---------- v3.51 polish round 23 ---------- */
+/* flashcard header keeps its height when Finish appears */
+#fProg { min-height: 40px; }
+/* typed answers: the Check button is pinned like every other session action */
+body.session #tShow { position: fixed !important; left: 50%; transform: translateX(-50%); width: calc(100% - 32px); max-width: calc(var(--maxw) - 32px); bottom: calc(12px + env(safe-area-inset-bottom)); z-index: 9; margin: 0 !important; min-height: 58px; }
+body.session:has(#tShow)::after { content: ""; position: fixed; left: 0; right: 0; bottom: 0; height: calc(100px + env(safe-area-inset-bottom)); z-index: 8; pointer-events: none; background: linear-gradient(to bottom, rgba(20,22,15,0), var(--bg) 38px); }
+/* text links get a full tap target */
+.home-link, a.sub-link, #tenMin, #bClear { min-height: 44px; display: inline-flex !important; align-items: center; justify-content: center; }
+.home-link { display: flex !important; }
+/* bigger legend dots */
+.dot-legend .dot { width: 12px !important; height: 12px !important; }
+/* points helpers: full-width inputs, standard panel */
+details.pt-help .input { max-width: none !important; }
+details.pt-help[open] { border-left: 1px solid var(--line); border: 1px solid var(--line); border-radius: var(--radius); }

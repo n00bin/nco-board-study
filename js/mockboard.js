@@ -277,7 +277,7 @@
         var localN = deck.filter(function (c) { return c.local; }).length, totalQ = deck.length - localN;
         var kind = steps[s] && steps[s].kind, KL = { reportIn: "Reporting in", drill: "Facing movements", intro: "Tell us about yourself", member: "Next board member", reportOut: "Reporting out", follow: "Follow-up to question " + qNum };
         var txt = label ? label : (kind && kind !== "q" && KL[kind]) ? KL[kind] : curLocal ? "About your unit" : qNum ? "Question " + qNum : "";
-        return '<div class="q-count mb-head"><span>' + txt + '</span>' + '<span class="pills">' + (qNum ? '<span class="pill">' + Math.min(qNum, totalQ) + ' / ' + totalQ + '</span>' : '') + (asked >= 3 ? '<span class="pill score-pill">Score ' + Math.round(100 * got / asked) + '%</span>' : '') + '</span>' + '</div>' +
+        return '<div class="q-count mb-head"><span>' + txt + '</span>' + '<span class="pills">' + (qNum ? '<span class="pill">' + Math.min(qNum, totalQ) + ' / ' + totalQ + '</span>' : (function () { var op = steps.filter(function (x) { return x.kind === "reportIn" || x.kind === "drill" || x.kind === "intro"; }); var at = op.indexOf(steps[s]); return at >= 0 ? '<span class="pill">Opening ' + (at + 1) + ' of ' + op.length + '</span>' : ''; })()) + (asked >= 3 ? '<span class="pill score-pill">Score ' + Math.round(100 * got / asked) + '%</span>' : '') + '</span>' + '</div>' +
           '<div class="progress-bar"><span style="width:' + Math.round(100 * Math.min(1, qNum / Math.max(1, totalQ))) + '%"></span></div>';
       }
       function timerHtml(t, why) {
@@ -310,6 +310,7 @@
       function next() { stopMirror(); s++; window.scrollTo(0, 0); if (s >= steps.length) return results(); show(); }
 
       // Key-point rubric (scenario cards with `points`): tick what the answer actually covered; partial credit.
+      function rb(c) { return !!(c.points && c.points.length > 1); }
       function rubricHtml(c, who) {
         var rule = c.kp1 && c.points.length > 1 ? 'The key fact alone is a pass (75%). Each other box adds a little more.' : 'Tick only what was actually said out loud.';
         return '<div class="card" style="border-color:var(--gold);"><div class="flash-tag">' + (who || "Did you cover these?") + '</div>' +
@@ -395,7 +396,7 @@
         container.innerHTML = header() +
           '<div class="card"><div class="flash-tag">Report to the board</div>' +
             (sponsor ? '<div class="q-text" style="margin-top:8px;">Call the Soldier in. Have them knock (if your SOP does), enter, and report to you out loud.</div>' +
-              '<div class="muted">Listen for: "Sergeant Major, (rank) (last name) reports to the President of the Board," a sharp salute held until you return it, and their correct rank.</div></div>'
+              '<div class="muted">Listen for: \u201cSergeant Major, (rank) (last name) reports to the President of the Board,\u201d a sharp salute held until you return it, and their correct rank.</div></div>'
             : '<div class="q-text" style="margin-top:8px;">You are called in. Stand up, walk in, and report — out loud, for real.</div>' +
               (Store.chain()["memo-report"] ? '<div class="muted">Your memo\'s wording: <b>\u201c' + esc(Store.chain()["memo-report"]) + '\u201d</b></div></div>'
                 : '<div class="muted">\u201cSergeant Major, ' + esc(Store.settings().displayName || "(your rank) (your last name)") + ' reports to the President of the Board.\u201d Use your board memo\'s exact wording (you can save it under Board Day Prep \u2192 My Board Memo).</div></div>')) +
@@ -473,17 +474,17 @@
         if (curStyle === "rapid" && secs && c.pub !== "sit" && c.pub !== "personal") cs = Math.min(cs || 20, 20);
         container.innerHTML = header() + timerHtml(cs) +
           // Only the publication is shown on the question side: topic labels can give the answer away.
-          '<div class="card"><div class="flash-toprow"><span class="flash-tag">' + esc(pubCode(c)) + (c.adv ? ' \u2022 Advanced' : '') + '</span>' +
+          '<div class="card"><div class="flash-toprow"><span class="flash-tag">' + esc(/\b(regulation|publication|pamphlet|field manual|doctrine)\b|\b(which|what) (AR|FM|ADP|ATP|TC|DA PAM)\b/i.test(qt(c)) ? "Name the publication" : pubCode(c)) + (c.adv ? ' \u2022 Advanced' : '') + '</span>' +
             '<span><button class="mini" id="mSpeak" aria-label="Read aloud"><svg class=ic aria-hidden=true><use href=#i-speaker></use></svg></button>' +
             '<button class="mini" id="mReport" aria-label="Report a problem with this card"><svg class=ic aria-hidden=true><use href=#i-flag></use></svg></button></span></div>' +
             qShow(qt(c)) + '</div>' +
-          (sponsor ? sponsorBox(c.a, c.ref, whyHtml(c)) + '<p class="center muted">Read the question aloud, listen, then grade.</p>' + (c.points ? rubricHtml(c, "Sponsor: tick what the Soldier covered") : gradeButtons())
+          (sponsor ? sponsorBox(c.a, c.ref, whyHtml(c)) + '<p class="center muted">Read the question aloud, listen, then grade.</p>' + (rb(c) ? rubricHtml(c, "Sponsor: tick what the Soldier covered") : gradeButtons())
                    : '<p class="center muted">' + (c.why && c.pub !== "sit" && c.pub !== "personal" && curStyle !== "rapid" ? 'Answer out loud, then say why it matters. Then reveal.' : 'Answer out loud, then reveal.') + '</p>' + '<div class="rv-row">' + recButton() + voiceButton() + '</div>' + '<button class="btn gold lg" id="reveal">Reveal answer</button>');
         container.querySelector("#mSpeak").addEventListener("click", function () { Speech.speak(qt(c), curVoice); });
         container.querySelector("#mReport").addEventListener("click", function () { App.reportCard(c); });
         sayQ(qt(c));
         if (sponsor) {
-          if (c.points) onRubric(function (fr, left) { clearTimer(); markQ(c, fr, left); }, c); else onGrade(function (ok) { clearTimer(); markQ(c, ok ? 1 : 0); });
+          if (rb(c)) onRubric(function (fr, left) { clearTimer(); markQ(c, fr, left); }, c); else onGrade(function (ok) { clearTimer(); markQ(c, ok ? 1 : 0); });
           runTimer(cs, function () { var n = container.querySelector("#tNum"); if (n) n.textContent = "Time!"; }); return;
         }
         var rev = function () { stopVoice(); reveal(c); };
@@ -532,7 +533,7 @@
           html += '<div style="font-size:.92rem;margin-top:6px;"><b>Delivery:</b> about ' + words + ' words in ' + secsV + ' seconds (' + wpm + ' a minute)' +
             (wpm > 190 ? ', a little fast: slow down and breathe' : wpm < 90 ? ', a little slow or halting: lead with the answer' : ', a good pace') +
             (fill ? '; ' + fill + ' filler word' + (fill > 1 ? 's' : '') + ' ("um", "like")' : '; no filler words heard') + '.</div>'; }
-        if (c.points) {
+        if (rb(c)) {
           var n = 0;
           container.querySelectorAll(".kp").forEach(function (cb, k) { if (hitRate(c.points[k], said) >= 0.5) { cb.checked = true; n++; } });
           html += '<div class="muted" style="font-size:.85rem;margin-top:6px;">Pre-ticked ' + n + ' of ' + c.points.length + ' key points it heard. Check the boxes yourself: you are the final judge.</div>';
@@ -559,19 +560,19 @@
             '<div class="q-text" style="margin:6px 0 12px;">' + esc(qt(c)) + '</div>' +
             (c.unfilled ? '' : '<div class="flash-tag">Answer</div><div class="flash-a">' + esc(c.a).replace(/\n/g, "<br>") + '</div>') +
             (c.changed ? '<div class="flash-ref" style="color:var(--gold);margin-top:8px;"><svg class=ic aria-hidden=true><use href=#i-alert></use></svg> ' + esc(c.changed) + '</div>' : '') +
-            (c.points && !c.unfilled ? '' : moreHtml(c)) + '</div>' +
-          (c.points && !c.unfilled ? (listened ? '<div id="heard"><div class="muted center" style="font-size:.85rem;">Checking what you said…</div></div>' : '') + rubricHtml(c) +
+            (rb(c) && !c.unfilled ? '' : moreHtml(c)) + '</div>' +
+          (rb(c) && !c.unfilled ? (listened ? '<div id="heard"><div class="muted center" style="font-size:.85rem;">Checking what you said…</div></div>' : '') + rubricHtml(c) +
             (moreHtml(c) ? '<div class="card">' + moreHtml(c) + '</div>' : '') : '') +
           (window.Speech && Speech.supported() && !c.unfilled ? '<button class="btn ghost" id="hearA" style="margin-bottom:8px;"><svg class=ic aria-hidden=true><use href=#i-speaker></use></svg> Hear a model answer</button>' : '') +
-          (listened && !c.points ? '<div id="heard"><div class="muted center" style="font-size:.85rem;">Checking what you said…</div></div>' : '') +
+          (listened && !rb(c) ? '<div id="heard"><div class="muted center" style="font-size:.85rem;">Checking what you said…</div></div>' : '') +
           '<div id="playback"></div>' +
           (c.unfilled ? '<div class="card"><div class="muted">You haven\'t filled this in yet, so it isn\'t scored. Boards do ask it: look it up and add it under Board Day Prep, then it counts.</div></div><button class="btn gold lg" id="skipLocal">Next question</button>'
-            : c.points ? '' : '<p class="center muted">How did you do?</p>' + gradeButtons());
+            : rb(c) ? '' : '<p class="center muted">How did you do?</p>' + gradeButtons());
         playback();
         var ha = container.querySelector("#hearA"); if (ha) ha.addEventListener("click", function () { Speech.speak(c.sample || c.a, { rate: 0.95 }); });
         if (listened) setTimeout(function () { applyVoice(c); }, 900);
         if (c.unfilled) { container.querySelector("#skipLocal").addEventListener("click", function () { next(); }); return; }
-        if (c.points) onRubric(function (fr, left) { markQ(c, fr, left); }, c); else onGrade(function (ok) { markQ(c, ok ? 1 : 0); });
+        if (rb(c)) onRubric(function (fr, left) { markQ(c, fr, left); }, c); else onGrade(function (ok) { markQ(c, ok ? 1 : 0); });
       }
 
       var qScores = [], extras = [];   // extras: second tries and follow-ups, {k: 'cb'|'fu', ok}
@@ -620,7 +621,7 @@
         var t = secs;
         container.innerHTML = header("Second try") + timerHtml(t) +
           '<div class="card" style="border-color:var(--gold);"><div class="flash-tag">The board comes back to it</div>' +
-            '<div class="muted" style="font-size:.85rem;margin-top:6px;">"Let\'s go back to an earlier question."</div>' +
+            '<div class="muted" style="font-size:.85rem;margin-top:6px;">\u201cLet\u2019s go back to an earlier question.\u201d</div>' +
             qShow(qt(c)) + (listen ? '<button class="mini" id="cbSpeak" aria-label="Hear it again" style="margin-top:6px;"><svg class=ic aria-hidden=true><use href=#i-speaker></use></svg></button>' : '') + '</div>' +
           (sponsor ? sponsorBox(c.a, c.ref, "") + '<p class="center muted">Ask it again, listen, then grade.</p>' + gradeButtons()
                    : '<p class="center muted">You saw the answer a few minutes ago. Say it out loud now, in your own words, then reveal.</p>' + recButton() + '<button class="btn gold lg" id="reveal">Reveal answer</button>');
@@ -712,10 +713,10 @@
             var full = qScores.filter(function (x) { return x >= 0.99; }).length, part = qScores.filter(function (x) { return x >= 0.66 && x < 0.99; }).length, thin = qScores.filter(function (x) { return x > 0 && x < 0.66; }).length, miss = qScores.length - full - part - thin;
             var cb = extras.filter(function (x) { return x.k === "cb"; }), fu = extras.filter(function (x) { return x.k === "fu"; });
             var cbOk = cb.filter(function (x) { return x.ok; }).length, fuOk = fu.filter(function (x) { return x.ok; }).length;
-            var legend = '<div class="dot-legend">' + (full ? '<span><span class="dot g"></span>full</span>' : '') + (part ? '<span><span class="dot a"></span>passed with gaps</span>' : '') + (thin ? '<span><span class="dot p"></span>partly</span>' : '') + (miss ? '<span><span class="dot r"></span>missed</span>' : '') + '</div>'; var legendB = '<div class="dot-legend">' + (extras.some(function (x) { return x.ok; }) ? '<span><span class="dot sq g"></span>right on retry</span>' : '') + (extras.some(function (x) { return !x.ok; }) ? '<span><span class="dot sq r"></span>missed on retry</span>' : '') + '' + '</div>';
+            var legend = '<div class="dot-legend">' + (full ? '<span><span class="dot g"></span>full</span>' : '') + (part ? '<span><span class="dot a"></span>passed with gaps</span>' : '') + (thin || miss ? '<span><span class="dot r"></span>not passed</span>' : '') + '</div>'; var legendB = '<div class="dot-legend">' + (extras.some(function (x) { return x.ok; }) ? '<span><span class="dot sq g"></span>right on retry</span>' : '') + (extras.some(function (x) { return !x.ok; }) ? '<span><span class="dot sq r"></span>missed on retry</span>' : '') + '' + '</div>';
             return (extras.length ? '<div class="dots-sub">First answers</div>' : '') + '<div class="dots" aria-hidden="true">' + qScores.map(function (x) { return '<span class="dot ' + (x >= 0.99 ? 'g' : x >= 0.66 ? 'a' : x > 0 ? 'p' : 'r') + '"></span>'; }).join("") +
                 '</div>' + legend + (extras.length ? '<div class="dots-sub">Second tries &amp; follow-ups</div><div class="dots">' + extras.map(function (x) { return '<span class="dot sq ' + (x.ok ? 'g' : 'r') + '"></span>'; }).join("") + '</div>' + legendB : '') +
-              '<p class="center muted" style="font-size:.92rem;margin:4px 0 0;">' + countLine + '</p>' + (howFold = '<details class="set-fold score-how"><summary>How this was scored</summary><p class="muted" style="font-size:.92rem;margin:0 0 8px;">First answers: ' + full + ' full \u2022 ' + part + ' passed with gaps \u2022 ' + (thin ? thin + ' partly \u2022 ' : '') + miss + ' missed' +
+              '<p class="center muted" style="font-size:.92rem;margin:4px 0 0;">' + countLine + '</p>' + (howFold = '<details class="set-fold score-how"><summary>How this was scored</summary><p class="muted" style="font-size:.92rem;margin:0 0 8px;">First answers: ' + full + ' full \u2022 ' + part + ' passed with gaps \u2022 ' + (thin + miss) + ' not passed' + (thin ? ' (' + thin + ' with part credit)' : '') +
                 (cb.length ? '<br>Second tries: ' + cbOk + ' of ' + cb.length + ' recovered' : '') + (fu.length ? '<br>Follow-ups: ' + fuOk + ' of ' + fu.length + ' right' : '') +
                 '<br>The score counts every answer, with part credit for answers with gaps. A real board also weighs bearing and the situational questions, and wants confident, complete answers, not just a percentage.</p></details>', '') +
               '';
@@ -737,7 +738,7 @@
         if (weak.length) {
           html += '<h2 class="section">Weakest subjects</h2><div class="lg">';
           var gst = document.body.classList.contains("guest");
-          weak.forEach(function (p) { var inner = '<span class="grow">' + subjHtml(p.code) + '</span><b class="badge-bad" style="white-space:nowrap;">missed ' + p.miss + ' of ' + p.n + '</b>'; html += gst ? '<div class="li">' + inner + '</div>' : '<a class="li" href="#/flash/' + encodeURIComponent(p.id || "") + '">' + inner + '<span class="chev" aria-hidden="true"><svg class=ic aria-hidden=true><use href=#i-chev></use></svg></span></a>'; });
+          weak.forEach(function (p) { var inner = '<span class="grow">' + subjHtml(p.code) + '</span><b class="badge-bad" style="white-space:nowrap;">not passed ' + p.miss + ' of ' + p.n + '</b>'; html += gst ? '<div class="li">' + inner + '</div>' : '<a class="li" href="#/flash/' + encodeURIComponent(p.id || "") + '">' + inner + '<span class="chev" aria-hidden="true"><svg class=ic aria-hidden=true><use href=#i-chev></use></svg></span></a>'; });
           html += '</div>';
         }
         if (missed.length) {

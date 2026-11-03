@@ -1559,7 +1559,7 @@
       '<div class="btn-row" style="margin-top:10px;"><button class="btn ghost" id="tmpl">Fill-in template</button><button class="btn ghost" id="ex">See an example</button></div>' +
       '<div id="exBox" hidden><div class="card" style="margin-top:10px;"><div class="flash-tag">Example (fictional Soldier: write your own)</div><div style="white-space:pre-wrap;margin-top:6px;">' +
         esc(SAMPLE_STATEMENT) + '</div><div class="muted" style="font-size:.85rem;margin-top:8px;">Keep yours about a minute. Say it, don\'t read it. Be specific: real duties, real accomplishments, real goals.</div></div></div>' +
-      '<div class="muted center" style="font-size:.85rem;margin-top:10px;">Saves as you type.</div><div class="spacer"></div><button class="btn gold lg" id="save">Done</button>';
+      '<div class="spacer"></div><button class="btn ghost lg" id="save">Done</button>';
     mount.querySelector("#save").addEventListener("click", function () { Store.setStatement(mount.querySelector("#stmt").value); App.toast("Saved"); App.go("#/boardday"); });
     mount.querySelector("#stmt").addEventListener("input", function () { Store.setStatement(this.value); flashSaved(); });
     mount.querySelector("#ex").addEventListener("click", function () { var b = mount.querySelector("#exBox"); b.hidden = !b.hidden; });
@@ -1811,7 +1811,7 @@
   function askLeave(go) {
     if (document.querySelector(".leave-sheet")) return;
     var o = document.createElement("div"); o.className = "leave-sheet"; o.setAttribute("role", "dialog"); o.setAttribute("aria-modal", "true");
-    o.innerHTML = '<div class="leave-box"><div class="t">Leave this session?</div><div class="muted">You&#39;ll lose your place. Cards you already graded stay graded.</div>' +
+    o.innerHTML = '<div class="leave-box"><div class="t">Leave this session?</div><div class="muted">You&#39;ll lose your place. Answers you&#39;ve already scored are saved.</div>' +
       '<button class="btn gold lg" id="lvStay">Keep going</button><div class="spacer"></div><button class="btn ghost lg" id="lvGo">Leave</button></div>';
     document.body.appendChild(o);
     o.querySelector("#lvStay").addEventListener("click", function () { o.remove(); });
