@@ -900,3 +900,13 @@ body.session .q-count.mb-head { position: sticky; top: calc(56px + env(safe-area
 .mb-head + .progress-bar:has(+ .timer-big) { display: block !important; height: 2px; margin-bottom: 4px; }
 /* one pinned height for single buttons and grade rows */
 body.session .grade-row .btn, body.session #reveal, body.session #rubricDone, body.session #introDone, body.session #qNext, body.session #submitBtn, body.session #ready, body.session #skipLocal { min-height: 58px; padding-top: 10px; padding-bottom: 10px; }
+
+/* ---------- v3.46 monthly cutoff scores ---------- */
+.cut-card { margin-bottom: 10px; border-color: var(--gold) !important; }
+.cut-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 6px; }
+.cut-pair > div { background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--radius); padding: 10px; text-align: center; }
+.cut-pair > div.mine { border-color: var(--gold); }
+.cut-pair small { display: block; font-size: .85rem; color: var(--text-dim); }
+.cut-pair b { font-size: 1.35rem; color: var(--gold); }
+.cut-ippsa { display: flex; align-items: center; gap: 6px; margin-top: 10px; min-height: 44px; color: var(--gold); font-weight: 600; text-decoration: none; }
+.cut-ippsa { text-decoration: none !important; }

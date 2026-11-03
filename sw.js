@@ -1,6 +1,6 @@
 /* Service worker — caches the app for full offline use.
    Bump CACHE when you change app files or content so phones update. */
-var CACHE = "ncoboard-v68";
+var CACHE = "ncoboard-v69";
 var ASSETS = [
   "./",
   "./index.html",
@@ -48,6 +48,14 @@ self.addEventListener("activate", function (e) {
 // Cache-first: instant load, works with no signal.
 self.addEventListener("fetch", function (e) {
   if (e.request.method !== "GET") return;
+  // monthly cutoff scores change: try the network first, fall back to the last copy offline
+  if (/\/data\/cutoffs\.json$/.test(new URL(e.request.url).pathname)) {
+    e.respondWith(fetch(e.request).then(function (res) {
+      if (res && res.ok) { var cp = res.clone(); caches.open(CACHE).then(function (c) { c.put(e.request, cp); }).catch(function () {}); }
+      return res;
+    }).catch(function () { return caches.match(e.request).then(function (hit) { return hit || Response.error(); }); }));
+    return;
+  }
   e.respondWith(
     caches.match(e.request).then(function (hit) {
       if (hit) return hit;

@@ -650,6 +650,10 @@
       '<h2 class="section">Which board are you going to?</h2><div class="card"><div class="muted" style="font-size:.85rem;margin:0 0 8px;">Hides the few facts that only apply to the other rank (like SSG time-in-service numbers).</div><div class="chip-row seg3" id="rankChips">' +
         [["SGT", "SGT (E-5)"], ["SSG", "SSG (E-6)"], ["BOTH", "Not sure"]].map(function (r) { return '<button class="chip' + ((s.boardFor || "BOTH") === r[0] ? ' on' : '') + '" data-r="' + r[0] + '">' + r[1] + '</button>'; }).join("") +
       '</div></div>' +
+      '<h2 class="section">Your MOS</h2><div class="card" id="mosCard"><label class="lbl" for="mosIn" style="margin-top:0;">MOS code</label>' +
+        '<input class="input" id="mosIn" maxlength="3" autocapitalize="characters" placeholder="e.g. 25B" value="' + escAttr(s.mos || "") + '" style="max-width:140px;text-transform:uppercase;">' +
+        '<div class="chip-row seg2" id="compChips" style="margin-top:10px;"><button class="chip' + (s.comp !== "agr" ? ' on' : '') + '" data-c="ac">Active Duty</button><button class="chip' + (s.comp === "agr" ? ' on' : '') + '" data-c="agr">AGR</button></div>' +
+        '<div class="muted" id="mosCut" style="font-size:.85rem;margin-top:8px;">Fills in this month&#39;s cutoff on the Points worksheet.</div></div>' +
       '<h2 class="section">Study reminders</h2><div class="card"><div class="muted" style="font-size:.85rem;">Add a daily study reminder' + (s.boardDate ? ' (until your board)' : '') + ' and a weekly "sponsor board" reminder to your phone\'s calendar.</div>' +
         '<label class="lbl" for="remT">Remind me at</label><input class="input" type="time" id="remT" value="19:00" />' +
       (('Notification' in window) ? '<div class="spacer"></div><button class="btn ghost" id="notifyOn">' + (s.notify ? '<svg class=ic aria-hidden=true><use href=#i-bell></use></svg> Daily reminder is on' : '<svg class=ic aria-hidden=true><use href=#i-bell></use></svg> Turn on a daily reminder') + '</button><div class="muted" style="font-size:.85rem;margin-top:4px;">Notifications work in the installed Android app.</div>' : '') +
@@ -685,6 +689,18 @@
     });
     var bc = mount.querySelector("#bClear");
     if (bc) bc.addEventListener("click", function () { Store.setSetting("boardDate", ""); App.toast("Board date cleared"); screenSettings(); });
+    var mosPrev = function () {
+      var st = Store.settings(), box = mount.querySelector("#mosCut"); if (!box) return;
+      loadCutoffs().then(function (d) {
+        if (!d || !st.mos) return;
+        var pr = cutFor(d, st.mos, st.comp);
+        box.innerHTML = pr ? esc(d.cycle) + ' cutoff for ' + esc(st.mos) + ': SGT <b>' + cutTxt(pr[0]) + '</b> \u2022 SSG <b>' + cutTxt(pr[1]) + '</b>' : esc(st.mos) + ' isn&#39;t on the ' + esc(d.cycle) + ' list. Check the code.';
+      });
+    };
+    mount.querySelector("#mosIn").addEventListener("input", function () { var v = this.value.toUpperCase().replace(/[^0-9A-Z]/g, "").slice(0, 3); Store.setSetting("mos", v); Store.setChainRole("pts-cutauto", Store.chain()["pts-cut"] ? Store.chain()["pts-cutauto"] : ""); flashSaved(); if (v.length === 3) mosPrev(); });
+    mount.querySelectorAll("#compChips .chip").forEach(function (b) { b.addEventListener("click", function () { Store.setSetting("comp", b.getAttribute("data-c")); mount.querySelectorAll("#compChips .chip").forEach(function (x) { x.classList.toggle("on", x === b); }); mosPrev(); }); });
+    mosPrev();
+    if (focus === "mos") setTimeout(function () { var mi = mount.querySelector("#mosIn"); if (mi) { mi.scrollIntoView({ block: "center" }); mi.focus(); } }, 30);
     mount.querySelectorAll("#rankChips .chip").forEach(function (b) {
       b.addEventListener("click", function () {
         Store.setSetting("boardFor", b.getAttribute("data-r"));
@@ -1373,6 +1389,15 @@
   // table 3-4: 500 = 120, then 3 points less per 5-point band, 300-304 = 1
   function aftPts(s) { s = s | 0; if (s >= 500) return 120; if (s >= 305) return 117 - 3 * Math.floor((499 - s) / 5); return s >= 300 ? 1 : 0; }
   var AWARDS = [["aam", "Army Achievement Medal", 10], ["gcm", "Good Conduct Medal", 10], ["arcom", "Army Commendation Medal", 20], ["msm", "Meritorious Service Medal", 25], ["bsm", "Bronze Star Medal", 30]];
+  // ---- monthly cutoff scores (data/cutoffs.json, refreshed daily by a GitHub job) ----
+  var cutoffsP = null;
+  function loadCutoffs() {
+    if (!cutoffsP) cutoffsP = fetch("./data/cutoffs.json", { cache: "no-cache" }).then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); }).catch(function () { cutoffsP = null; return null; });
+    return cutoffsP;
+  }
+  function cutFor(d, mos, comp) { var t = d && d[comp === "agr" ? "agr" : "ac"]; return t && mos ? t[String(mos).toUpperCase()] || null : null; }
+  function cutAge(d) { return d && d.updated ? Math.floor((Date.now() - new Date(d.updated + "T12:00:00").getTime()) / 86400000) : null; }
+  function cutTxt(v) { return v == null ? "not listed" : v >= 798 ? "798 (closed)" : v <= 24 ? "24 (everyone eligible)" : String(v); }
   function screenPoints() {
     setTitle("Promotion Points Worksheet", true);
     var rank = Store.settings().boardFor === "SSG" ? "SSG" : "SGT", m = Store.chain();
@@ -1396,7 +1421,7 @@
         '<input class="input" id="pt-' + p.k + '" inputmode="numeric" maxlength="3" placeholder="0" value="' + escAttr(m["pts-" + p.k] || "") + '">' +
         '<details class="pt-help"' + (m["pts-x" + p.k] ? " open" : "") + '><summary class="muted" style="font-size:.85rem;margin-top:4px;"><svg class=ic aria-hidden=true><use href=#i-calc></use></svg> Figure it for me</summary><div class="muted" style="font-size:.85rem;margin:4px 0;">' + esc(p.h) + ' AR 600-8-19 (Mar 2026), ' + p.ref + '.</div>' + help[p.k] + '</details><div style="height:10px;"></div>';
     });
-    html += '<label class="lbl" for="pt-cut">This month\'s cutoff score for your MOS (from your S1 or the HRC cutoff list)</label>' +
+    html += '<div id="cutAuto"></div><label class="lbl" for="pt-cut">This month\'s cutoff score for your MOS</label>' +
       '<input class="input" id="pt-cut" inputmode="numeric" maxlength="3" placeholder="e.g. 450" value="' + escAttr(m["pts-cut"] || "") + '">' +
       '<div class="card" id="ptTotal" style="margin-top:12px;border-color:var(--gold);"></div>';
     mount.innerHTML = html;
@@ -1450,6 +1475,24 @@
     // reopening (or switching SGT/SSG): recompute any category that was figured from the helper inputs
     PTS.forEach(function (p) { if (m["pts-x" + p.k] || (p.k === "med" && m["pts-xschool"])) convert(p.k); });
     update();
+    // fill this month's cutoff for your MOS (you can still type your own)
+    mount.querySelector("#pt-cut").addEventListener("input", function () { Store.setChainRole("pts-cutauto", ""); });
+    var st0 = Store.settings();
+    loadCutoffs().then(function (d) {
+      var box = mount.querySelector("#cutAuto"); if (!box) return;
+      if (!d) { box.innerHTML = '<div class="muted" style="font-size:.85rem;margin:0 2px 6px;">Couldn&#39;t load this month&#39;s cutoffs (offline?). Type yours below.</div>'; return; }
+      var pair = cutFor(d, st0.mos, st0.comp), age = cutAge(d);
+      if (!st0.mos) { box.innerHTML = '<div class="lg cut-card"><a class="li" href="#/settings/mos"><span class="li-ic"><svg class=ic aria-hidden=true><use href=#i-chart></use></svg></span><span class="grow"><span class="t">Fill in your MOS cutoff automatically</span><span class="s">Pick your MOS in Settings. ' + esc(d.cycle) + ' scores are ready.</span></span><span class="chev" aria-hidden="true"><svg class=ic aria-hidden=true><use href=#i-chev></use></svg></span></a></div>'; return; }
+      if (!pair) { box.innerHTML = '<div class="card cut-card"><b>' + esc(st0.mos) + '</b> isn&#39;t on the ' + esc(d.cycle) + ' ' + (st0.comp === "agr" ? "AGR" : "Active Duty") + ' list. Check the MOS in Settings, or ask your S1.</div>'; return; }
+      var mine = pair[rank === "SSG" ? 1 : 0];
+      box.innerHTML = '<div class="card cut-card"><div class="flash-tag">' + esc(d.cycle) + ' cutoff \u2022 ' + esc(st0.mos) + (st0.comp === "agr" ? ' (AGR)' : '') + '</div>' +
+        '<div class="cut-pair"><div' + (rank === "SGT" ? ' class="mine"' : '') + '><small>SGT</small><b>' + cutTxt(pair[0]) + '</b></div><div' + (rank === "SSG" ? ' class="mine"' : '') + '><small>SSG</small><b>' + cutTxt(pair[1]) + '</b></div></div>' +
+        '<div class="muted" style="font-size:.85rem;margin-top:8px;">' + (d.updated ? 'Updated ' + niceDate(new Date(d.updated + "T12:00:00").getTime()) + '. ' : '') + 'From the HQDA cutoff memo via <a href="' + escAttr(d.sourceUrl) + '" target="_blank" rel="noopener">mosroadmap.com</a>. Unofficial: confirm with your S1.' +
+        (age != null && age > 45 ? ' <b style="color:var(--gold);">These may be out of date.</b>' : '') + '</div>' +
+        '<a class="cut-ippsa" href="https://hr.army.mil" target="_blank" rel="noopener"><svg class=ic aria-hidden=true><use href=#i-share></use></svg> See your own standing in IPPS-A (CAC)</a></div>';
+      var ci = mount.querySelector("#pt-cut"), mm = Store.chain();
+      if (mine != null && mine > 24 && mine < 798 && (!ci.value || mm["pts-cutauto"] === "1")) { ci.value = mine; save("pt-cut"); Store.setChainRole("pts-cutauto", "1"); update(); }
+    });
   }
 
   function screenRecords() {
