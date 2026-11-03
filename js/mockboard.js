@@ -220,7 +220,7 @@
         stopMirror();
       };
       var mirror = { stream: null };
-      function mirrorButton() { return (!sponsor && navigator.mediaDevices && navigator.mediaDevices.getUserMedia) ? '<button class="btn ghost" id="mirrorBtn"><svg class=ic aria-hidden=true><use href=#i-mirror></use></svg> Mirror (front camera)</button><div id="mirrorBox"></div><div class="spacer"></div>' : ''; }
+      function mirrorButton(short) { return (!sponsor && navigator.mediaDevices && navigator.mediaDevices.getUserMedia) ? (short ? '<button class="btn ghost" id="mirrorBtn"><svg class=ic aria-hidden=true><use href=#i-mirror></use></svg> Mirror</button>' : '<button class="btn ghost" id="mirrorBtn"><svg class=ic aria-hidden=true><use href=#i-mirror></use></svg> Mirror (front camera)</button><div id="mirrorBox"></div><div class="spacer"></div>') : ''; }
       function stopMirror() { if (mirror.stream) { mirror.stream.getTracks().forEach(function (t) { t.stop(); }); mirror.stream = null; } }
       function wireMirror() {
         var b = container.querySelector("#mirrorBtn"); if (!b) return;
@@ -400,13 +400,12 @@
           '<div class="card"><div class="flash-tag">Report to the board</div>' +
             (sponsor ? '<div class="q-text" style="margin-top:8px;">Call the Soldier in. Have them knock (if your SOP does), enter, and report to you out loud.</div>' +
               '<div class="muted" style="margin-top:6px;">Listen for:</div><div class="say">\u201cSergeant Major, (rank) (last name) reports to the President of the Board.\u201d</div><div class="muted">A sharp salute held until you return it, and their correct rank.</div></div>'
-            : '<div class="q-text" style="margin-top:8px;">You are called in. Stand up, walk in, and report — out loud, for real.</div>' +
+            : '<div class="q-text" style="margin-top:8px;">You are called in. Stand up, walk in, and report out loud.</div>' +
               (Store.chain()["memo-report"] ? '<div class="say">\u201c' + esc(Store.chain()["memo-report"]) + '\u201d</div><div class="muted">Your memo\'s exact wording.</div></div>'
-                : '<div class="say">\u201cSergeant Major, ' + esc(Store.settings().displayName || "(your rank) (your last name)") + ' reports to the President of the Board.\u201d</div><div class="muted">Use your board memo\'s exact wording (save it under Board Day Prep \u2192 My Board Memo).</div></div>')) +
-          '<button class="btn ghost" id="showSteps"><svg class=ic aria-hidden=true><use href=#i-clipboard></use></svg> <span>Show the reporting steps</span></button><div id="stepsBox" hidden>' + stepsList(all.slice(1, 5)) + '</div><div class="spacer"></div>' +
-          mirrorButton() + 
+                : '<div class="say">\u201cSergeant Major, ' + esc(Store.settings().displayName || "(your rank) (your last name)") + ' reports to the President of the Board.\u201d</div><div class="muted">If your memo words it differently, use that (Board Day Prep \u2192 My Board Memo).</div></div>')) +
+          '<div class="btn-pair"><button class="btn ghost" id="showSteps"><svg class=ic aria-hidden=true><use href=#i-clipboard></use></svg> <span>Show steps</span></button>' + mirrorButton(true) + '</div><div id="stepsBox" hidden>' + stepsList(all.slice(1, 5)) + '</div><div id="mirrorBox"></div><div class="spacer"></div>' + 
           gradeButtons("Needs work", "Clean", (sponsor ? 'Did they halt about two steps in front of you, salute and hold it, say their correct rank, and sit only when told?' : 'Did you halt two steps in front of the president, hold your salute until it was returned, say your correct rank, and sit only when told?'));
-        container.querySelector("#showSteps").addEventListener("click", function () { var b = container.querySelector("#stepsBox"); b.hidden = !b.hidden; this.querySelector("span").textContent = b.hidden ? "Show the reporting steps" : "Hide the reporting steps"; });
+        container.querySelector("#showSteps").addEventListener("click", function () { var b = container.querySelector("#stepsBox"); b.hidden = !b.hidden; this.querySelector("span").textContent = b.hidden ? "Show steps" : "Hide steps"; });
         wireMirror();
         onGrade(function (ok) { bearing.push({ label: "Reporting in", ok: ok }); next(); });
       }
@@ -481,7 +480,7 @@
             '<span><button class="mini" id="mSpeak" aria-label="Read aloud"><svg class=ic aria-hidden=true><use href=#i-speaker></use></svg></button>' +
             '<button class="mini" id="mReport" aria-label="Report a problem with this card"><svg class=ic aria-hidden=true><use href=#i-flag></use></svg></button></span></div>' +
             qShow(qt(c)) + '</div>' +
-          (sponsor ? sponsorBox(c.a, c.ref, whyHtml(c)) + '<p class="center muted">Read the question aloud, listen, then grade.</p>' + (rb(c) ? rubricHtml(c, "Sponsor: tick what the Soldier covered") : gradeButtons())
+          (sponsor ? '<p class="center muted">Read the question aloud, listen, then grade.</p>' + sponsorBox(c.a, c.ref, whyHtml(c)) + (rb(c) ? rubricHtml(c, "Sponsor: tick what the Soldier covered") : gradeButtons())
                    : '<p class="center muted">' + (c.why && c.pub !== "sit" && c.pub !== "personal" && curStyle !== "rapid" ? 'Answer out loud, then say why it matters. Then reveal.' : 'Answer out loud, then reveal.') + '</p>' + '<div class="rv-row">' + recButton() + voiceButton() + '</div>' + '<button class="btn gold lg" id="reveal">Reveal answer</button>');
         container.querySelector("#mSpeak").addEventListener("click", function () { Speech.speak(qt(c), curVoice); });
         container.querySelector("#mReport").addEventListener("click", function () { App.reportCard(c); });
@@ -770,7 +769,7 @@
           var url = App.appUrl + "#/sbresult/" + (Math.round(got * 10) / 10) + "/" + asked + "/" + Date.now().toString(36) + "/" + ids.join(",") + "/" + bcode + (note ? "/" + encodeURIComponent(note) : "");
           var text = "Your practice board: " + pct + "%. Open this to save it in your app: " + url;
           if (navigator.share) navigator.share({ title: "Practice board results", text: text }).catch(function () {});
-          else if (navigator.clipboard) navigator.clipboard.writeText(text).then(function () { App.toast("Link copied: text it to the Soldier", 3500); });
+          else if (navigator.clipboard) navigator.clipboard.writeText(text).then(function () { App.toast("Link copied: text it to the Soldier", 3500); }, function () { App.toast(url, 6000); });
           else App.toast(url, 6000);
         });
       }

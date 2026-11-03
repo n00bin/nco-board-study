@@ -224,6 +224,12 @@
     b.textContent = "Today\u2019s session \u2022 step " + (s.i + 1) + " of " + s.items.length;
     mount.insertBefore(b, mount.firstChild);
   }
+  if (window.MutationObserver) new MutationObserver(function () {
+    if (!sessionStorage.getItem("ncob-sess") && !mount.querySelector("[data-sessnext]")) return;
+    sessionBanner();
+    var nx = mount.querySelector("[data-sessnext]");
+    if (nx) mount.querySelectorAll(".btn.gold").forEach(function (b) { if (b !== nx) { b.classList.remove("gold"); b.classList.add("ghost"); } });
+  }).observe(mount, { childList: true, subtree: true });
   document.addEventListener("click", function (e) { var b = e.target.closest && e.target.closest("[data-sessnext]"); if (b) App.go(b.getAttribute("data-sessnext")); });
   // New cards a day to see all of Board Core a week before the board, capped at 20 so a late start stays doable.
   var NEW_CAP = 20;
@@ -603,10 +609,11 @@
       all.sort(function (a, b) { return (b._w - a._w) || (rank(b) - rank(a)); });
       var hits = all.slice(0, 80);
       var note = all.length > hits.length ? '<div class="muted center" style="margin-bottom:8px;">Showing the first 80 of ' + all.length + ' matches. Type more to narrow it down.</div>' : '';
-      var hl = function (s) { return esc(s).replace(new RegExp("(" + safe + ")", "ig"), "<mark>$1</mark>"); };
+      var hlW = new RegExp("\\b(" + safe + ")\\b", "ig"), hlP = new RegExp("(" + safe + ")", "ig"), hlRx = hlP;
+      var hl = function (s) { return esc(s).replace(hlRx, "<mark>$1</mark>"); };
       var nWhole = all.filter(function (c) { return c._w; }).length, divDone = false;
       results.innerHTML = hits.length ? '<div class="muted" style="font-size:.85rem;margin:4px 4px 8px;">' + all.length + ' result' + (all.length === 1 ? '' : 's') + '</div>' + note + hits.map(function (c) {
-        var p = STUDY.pubsById[c.pub];
+        var p = STUDY.pubsById[c.pub]; hlRx = c._w ? hlW : hlP;
         var div = (!c._w && nWhole && !divDone) ? (divDone = true, '<div class="lg-h" style="margin-top:14px;">Inside longer words</div>') : '';
         return div + '<a class="card" style="display:block;text-decoration:none;color:inherit;" href="#/read/' + escAttr(c.pub) + '/' + escAttr(c.id) + '"><div class="flash-tag tag-row">' + esc(p ? p.code : "") + (c.topic ? " • " + esc(c.topic) : "") + (c.core ? '<span class="pill core-pill inline">Core</span>' : '') + '</div>' +
           '<div style="font-weight:600;margin-bottom:6px;">' + hl(c.q) + '</div><div class="muted">' + hl(c.a) + '</div><div class="open-hint">Open in ' + esc(p ? p.code : "its subject") + ' <svg class=ic aria-hidden=true><use href=#i-chev></use></svg></div></a>';
@@ -989,7 +996,7 @@
   // "AD 2026-07", "TC 3-22.249": keep publication codes on one line
   function nbCode(h) { return String(h).replace(/\b(AD|AR|TC|FM|ADP|ATP|STP|GTA|DA PAM|PAM)\s(\d[\d.-]*\d)/g, function (m0, a1, a2) { return a1 + "\u00a0" + a2.replace(/-/g, "\u2011"); }); }
   function li(href, ic, t, s) { return '<a class="li" href="' + href + '"><span class="li-ic" aria-hidden="true">' + ic + '</span><span class="grow"><span class="t">' + t + '</span>' + (s ? '<span class="s">' + s + '</span>' : '') + '</span><span class="chev" aria-hidden="true"><svg class=ic aria-hidden=true><use href=#i-chev></use></svg></span></a>'; }
-  function liDeck(href, code, title, n, deck, extra) { return '<a class="li deck" ' + (deck ? 'data-deck="' + deck + '" ' : '') + 'href="' + href + '"' + (extra || '') + '><span class="grow"><span class="t" style="color:var(--gold);">' + code + '</span>' + (title ? '<span class="s">' + nbCode(title) + '</span>' : '') + '</span><span class="pill">' + n + '</span><span class="chev" aria-hidden="true"><svg class=ic aria-hidden=true><use href=#i-chev></use></svg></span></a>'; }
+  function liDeck(href, code, title, n, deck, extra) { return '<a class="li deck" ' + (deck ? 'data-deck="' + deck + '" ' : '') + 'href="' + href + '"' + (extra || '') + '><span class="grow"><span class="t">' + code + '</span>' + (title ? '<span class="s">' + nbCode(title) + '</span>' : '') + '</span><span class="pill">' + n + '</span><span class="chev" aria-hidden="true"><svg class=ic aria-hidden=true><use href=#i-chev></use></svg></span></a>'; }
   // autosave feedback: a small "Saved" line that fades
   function flashSaved() { var s = document.getElementById("savedTick"); if (!s) { s = document.createElement("div"); s.id = "savedTick"; s.className = "saved-tick"; document.body.appendChild(s); } s.textContent = "Saved \u2713"; s.classList.add("on"); clearTimeout(flashSaved.t); flashSaved.t = setTimeout(function () { s.classList.remove("on"); }, 1200); }
   // "Haircut neat; clean-shaven..." -> bold first clause, the rest smaller
@@ -1177,6 +1184,7 @@
     var got = Store.badges();
     var coreB = STUDY.cards.filter(function (c) { return c.core && rankOk(c); }).map(function (c) { return c.id; }), fB = badgeFacts(coreB, readyScore(coreB));
     var PROG = { "core-50": [fB.seen, 50], "core-150": [fB.seen, 150], "core-all": [fB.seen, fB.total], "boards-5": [fB.boards, 5], "streak-7": [fB.streak, 7], "ready-50": [fB.ready, 50], "ready-80": [fB.ready, 80] };
+    var b1 = window.Learn && Learn.trackDone && Learn.trackDone("board101"); if (b1) PROG.board101 = b1;
     var row = function (b) {
       var on = !!got[b.id], when = on && got[b.id] > 946684800000 ? ' • ' + niceDate(got[b.id]) : '';
       return '<div class="li"' + (on ? '' : ' style="opacity:.6;"') + '><span class="li-ic" aria-hidden="true">' + (b.ic || "<svg class=ic aria-hidden=true><use href=#i-medal></use></svg>") + '</span><span class="grow"><span class="t">' + esc(b.t) + '</span><span class="s">' + esc(!on && PROG[b.id] && PROG[b.id][1] > PROG[b.id][0] ? (PROG[b.id][1] - PROG[b.id][0]) + ' to go' : b.d) + when + '</span></span>' + (!on && PROG[b.id] ? '<span class="pill">' + (/ready/.test(b.id) ? Math.min(PROG[b.id][0], PROG[b.id][1]) + '% of ' + PROG[b.id][1] + '%' : Math.min(PROG[b.id][0], PROG[b.id][1]) + ' / ' + PROG[b.id][1]) + '</span>' : '') + '</div>';
@@ -1437,7 +1445,7 @@
         '<input class="input" id="pt-' + p.k + '" inputmode="numeric" maxlength="3" placeholder="not set" value="' + escAttr(m["pts-" + p.k] || "") + '">' +
         '<details class="pt-help"' + (m["pts-x" + p.k] ? " open" : "") + '><summary class="muted" style="font-size:.85rem;margin-top:4px;"><svg class=ic aria-hidden=true><use href=#i-calc></use></svg> Figure it for me</summary><div class="muted" style="font-size:.85rem;margin:4px 0;">' + esc(p.h) + ' AR 600-8-19 (Mar 2026), ' + p.ref + '.</div>' + help[p.k] + '</details><div style="height:10px;"></div>';
     });
-    html += '<details class="cut-other" id="cutOther" open><summary>Use a different cutoff</summary><label class="lbl" for="pt-cut" style="margin-top:4px;">Cutoff score to compare against</label>' +
+    html += '<details class="set-fold cut-other" id="cutOther" open><summary>Use a different cutoff</summary><label class="lbl" for="pt-cut" style="margin-top:4px;">Cutoff score to compare against</label>' +
       '<input class="input" id="pt-cut" inputmode="numeric" maxlength="3" placeholder="e.g. 450" value="' + escAttr(m["pts-cut"] || "") + '"></details>' +
       '<div class="card" id="ptTotal" style="margin-top:12px;border-color:var(--gold);"></div>';
     mount.innerHTML = html;
@@ -1599,8 +1607,8 @@
       });
       html += '</details>';
     });
-    html += '<div class="spacer"></div><a class="btn ghost lg" href="#/reporting"><svg class=ic aria-hidden=true><use href=#i-flag></use></svg> How to report to the board</a><div class="spacer"></div>' +
-      group("", [li("#/board/core", "<svg class=ic aria-hidden=true><use href=#i-users></use></svg>", "Rehearse in a Mock Board", "Full board: report in, drill, then the questions")]);
+    html += '<div class="spacer"></div>' +
+      group("", [li("#/reporting", "<svg class=ic aria-hidden=true><use href=#i-flag></use></svg>", "How to report to the board", "The steps and the words, in order"), li("#/board/core", "<svg class=ic aria-hidden=true><use href=#i-users></use></svg>", "Rehearse in a Mock Board", "Full board: report in, drill, then the questions")]);
     mount.innerHTML = html;
   }
 

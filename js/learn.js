@@ -155,6 +155,7 @@
     },
 
     // next unfinished lesson on the board path (Board 101 -> Fundamentals -> Board Core), for Home's daily plan
+    trackDone: function (id) { var t = buildTracks().filter(function (x) { return x.id === id; })[0]; return t ? [t.lessons.filter(isDone).length, t.lessons.length] : null; },
     nextBoardLesson: function () {
       var tracks = buildTracks().filter(function (t) { return t.id === "board101" || t.id === "fundamentals" || t.id === "core"; });
       var total = 0, done = 0, next = null;

@@ -1059,3 +1059,17 @@ html { scroll-padding-top: calc(72px + env(safe-area-inset-top)); }
 /* jump chips: a short, fixed fade so no half-chip sliver shows at the edge */
 .jump-row.fade-l { -webkit-mask-image: linear-gradient(90deg, transparent, #000 22px) !important; mask-image: linear-gradient(90deg, transparent, #000 22px) !important; }
 .jump-row.fade-l.fade-r { -webkit-mask-image: linear-gradient(90deg, transparent, #000 22px, #000 86%, transparent) !important; mask-image: linear-gradient(90deg, transparent, #000 22px, #000 86%, transparent) !important; }
+
+/* ---------- v3.58 polish round 30 ---------- */
+/* the Finish pill never changes the header height (its tap area extends invisibly) */
+#fDone, .tdone { min-height: 30px !important; height: 30px; padding: 0 14px !important; }
+body.session .q-count.mb-head { min-height: 52px; }
+/* two half-width secondary buttons */
+.btn-pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; }
+.btn-pair .btn { margin: 0; }
+/* Easy: the same filled secondary style as the rest */
+.grade-easy { background: var(--surface-2) !important; border: none !important; color: var(--text) !important; }
+/* the cutoff fold is a card like the others */
+details.set-fold.cut-other > summary { color: var(--text); font-size: 1rem; font-weight: 700; }
+/* Drive: the card hugs its text */
+body.session .drive-card { min-height: 0 !important; justify-content: flex-start !important; }
