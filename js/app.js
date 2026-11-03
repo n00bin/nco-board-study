@@ -533,7 +533,7 @@
     mount.innerHTML =
       '<div class="setup-head"><div class="t"><svg class=ic aria-hidden=true><use href=#i-check></use></svg> ' + esc(title) + '</div><div class="muted">' + quizN + ' quiz questions</div></div>' +
       '<button class="btn gold lg" data-n="10"><svg class=ic aria-hidden=true><use href=#i-play></use></svg> Start 10 questions</button>' +
-      '<div class="lg-h" style="margin-top:2px;">Other lengths</div><div class="len-row" style="grid-template-columns:1fr 1fr;"><button class="chip" data-n="20"><b>20</b><small>questions</small></button><button class="chip" data-n="999"><b>' + quizN + '</b><small>the whole set</small></button></div>' +
+      '<div class="lg-h" style="margin-top:2px;">Other lengths</div><div class="len-row"><button class="chip" data-n="5"><b>5</b><small>quick</small></button><button class="chip" data-n="20"><b>20</b><small>questions</small></button><button class="chip" data-n="999"><b>' + quizN + '</b><small>the whole set</small></button></div>' +
       (function () {
         var past = Store.quizzes().filter(function (x) { return x.deck === title && x.total; }).slice(0, 3);
         return '<h2 class="section">What&#39;s in this quiz</h2><div class="card"><div class="muted" style="font-size:.92rem;">' + quizN + ' of the ' + cards.length + ' cards in ' + esc(title) + ' have a short answer you can pick from four choices. Long answers (creeds, scenarios) stay in Flashcards and the Mock Board.</div></div>' +
@@ -1190,7 +1190,7 @@
       return '<div class="li"' + (on ? '' : ' style="opacity:.6;"') + '><span class="li-ic" aria-hidden="true">' + (b.ic || "<svg class=ic aria-hidden=true><use href=#i-medal></use></svg>") + '</span><span class="grow"><span class="t">' + esc(b.t) + '</span><span class="s">' + esc(!on && PROG[b.id] && PROG[b.id][1] > PROG[b.id][0] ? (PROG[b.id][1] - PROG[b.id][0]) + ' to go' : b.d) + when + '</span></span>' + (!on && PROG[b.id] ? '<span class="pill">' + (/ready/.test(b.id) ? Math.min(PROG[b.id][0], PROG[b.id][1]) + '% of ' + PROG[b.id][1] + '%' : Math.min(PROG[b.id][0], PROG[b.id][1]) + ' / ' + PROG[b.id][1]) + '</span>' : '') + '</div>';
     };
     var earned = BADGES.filter(function (b) { return got[b.id]; }), left = BADGES.filter(function (b) { return !got[b.id]; });
-    var medal = function (b) { var when = got[b.id] > 946684800000 ? niceDate(got[b.id]) : ''; return '<div class="medal"><span class="medal-ic">' + (b.ic || '<svg class=ic aria-hidden=true><use href=#i-medal></use></svg>') + '</span><b>' + esc(b.t) + '</b><small>' + when + '</small></div>'; };
+    var medal = function (b) { var when = got[b.id] > 946684800000 ? niceDate(got[b.id]) : 'Earned'; return '<div class="medal"><span class="medal-ic">' + (b.ic || '<svg class=ic aria-hidden=true><use href=#i-medal></use></svg>') + '</span><b>' + esc(b.t) + '</b><small>' + when + '</small></div>'; };
     mount.innerHTML = '<div class="muted" style="font-size:.85rem;margin:2px 4px 8px;">Small wins on the way to your board. They stay on this phone.</div>' +
       (earned.length ? '<div class="lg-h">Earned (' + earned.length + ')</div><div class="medal-grid">' + earned.map(medal).join("") + '</div>' : '') +
       (left.length ? group("Still to earn (" + left.length + ")", left.map(row)) : '');

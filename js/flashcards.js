@@ -147,7 +147,7 @@
 
       function done() {
         Speech.stop();
-        if (opts && opts.onDone) return opts.onDone(reviewed);
+        if (opts && opts.onDone) return opts.onDone(reviewed, first);
         container.innerHTML =
           finishHtml(first) + '<div class="spacer"></div>' + (window.App && App.sessionNextHtml ? App.sessionNextHtml() : '') +
           (hasMiss(first) && nextStep() ? '<button id="again" hidden></button>' : '<button class="btn ' + (hasMiss(first) ? 'ghost' : 'gold') + ' lg" id="again"><svg class=ic aria-hidden=true><use href=#i-cards></use></svg> Study more</button>') + nextStep() + '<div class="spacer"></div>' +
@@ -221,7 +221,7 @@
         var verdict = !typed ? "" : good ? '<div class="badge-good" style="font-weight:700;">&#10003; Looks right</div>' : near ? '<div class="verdict-near">Close: compare with the answer</div>' : share < 0.15 ? '<div class="badge-bad" style="font-weight:700;">&#10007; Doesn&#39;t match the answer</div>' : '<div class="verdict-near">Compare with the answer</div>';
         container.innerHTML =
           '<div class="q-count mb-head"><span>' + esc(title) + ' \u2022 ' + passed + ' done</span><span class="pills"><span class="pill">' + (queue.length - i) + ' left</span>' + (reviewed >= 3 && queue.length - i > 3 ? '<button class="pill pill-btn tdone">Finish</button>' : '') + '</span></div><div class="progress-bar"><span style="width:' + Math.round(100 * passed / Math.max(1, passed + queue.length - i)) + '%"></span></div>' +
-          '<div class="card"><div class="flash-tag">' + esc(pubCode(c)) + '</div>' +
+          '<div class="card"><div class="flash-toprow"><span class="flash-tag">' + esc(pubCode(c)) + '</span><span><button class="mini" id="tSpeak" aria-label="Read the answer aloud"><svg class=ic aria-hidden=true><use href=#i-speaker></use></svg></button><button class="mini" id="tReport" aria-label="Report a problem with this card"><svg class=ic aria-hidden=true><use href=#i-flag></use></svg></button></span></div>' +
             '<div class="flash-q" style="margin:6px 0 10px;">' + esc(c.q) + '</div>' +
             (typed ? '<div class="muted">You wrote: ' + esc(typed) + '</div>' + verdict + '<hr class="div">' : '') +
             '<div class="flash-tag">Answer</div><div class="flash-a">' + esc(c.a).replace(/\n/g, "<br>") + '</div>' +
@@ -230,6 +230,8 @@
           '<div class="grade-row' + (good ? '' : (!typed || share < 0.15) ? ' neutral miss-em' : ' neutral') + '">' + GRADE_BTNS + '</div>';
         container.querySelector("#gAgain").addEventListener("click", function () { grade("again"); });
         container.querySelectorAll(".tdone").forEach(function (b) { b.addEventListener("click", typedDone); });
+        container.querySelector("#tSpeak").addEventListener("click", function () { Speech.speak(c.a); });
+        container.querySelector("#tReport").addEventListener("click", function () { App.reportCard(c); });
         container.querySelector("#gGood").addEventListener("click", function () { grade("good"); });
         container.querySelector("#gEasy").addEventListener("click", function () { grade("easy"); });
       }

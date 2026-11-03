@@ -234,16 +234,16 @@
         window.scrollTo(0, 0);
 
         if (quizzable.length >= 4) Quiz.render(container, lesson.cards, lesson.title, quizzable.length, { onDone: complete });
-        else Flashcards.render(container, lesson.cards, lesson.title, { onDone: function () { complete(null, null); } });
+        else Flashcards.render(container, lesson.cards, lesson.title, { onDone: function (n, first) { var k = Object.keys(first || {}); if (!k.length) return complete(null, null); complete(k.filter(function (id) { return first[id] !== "again"; }).length, k.length, true); } });
       }
 
-      function complete(score, total) {
+      function complete(score, total, selfGraded) {
         Store.markLessonDone(lesson.id, score == null ? null : Math.round((score / total) * 100));
         var p = score == null ? 100 : Math.round(100 * score / Math.max(1, total));
         
-        var line = (score == null) ? "Practice done. Nice work." : "You got " + score + " of " + total + " in practice.";
+        var line = (score == null) ? "Practice done. Nice work." : selfGraded ? "You knew " + score + " of " + total + " on the first try." : "You got " + score + " of " + total + " in practice.";
         container.innerHTML =
-          '<div class="ring-wrap"><div class="ring ' + (p >= 75 ? 'good' : p >= 50 ? 'mid' : 'bad') + '" style="--p:' + p + ';"><div class="ring-in">' + (score == null ? '<svg class=ic aria-hidden=true><use href=#i-check></use></svg>' : p + '%') + '</div></div></div>' +
+          '<div class="ring-wrap"><div class="ring ' + (p >= 75 ? 'good' : p >= 50 ? 'mid' : 'bad') + '" style="--p:' + p + ';"><div class="ring-in">' + (score == null ? '&#10003;' : p + '%') + '</div></div></div>' +
           '<div class="done-h">Lesson complete</div><p class="center muted" style="margin:0 0 6px;">' + esc(lesson.title) + '</p>' +
           (function () { var tr = tracks.filter(function (t) { return t.lessons.indexOf(lesson) >= 0; })[0]; if (!tr) return ''; var d = doneCount(tr.lessons);
             return '<div class="track-prog"><span>' + esc(tr.title.replace(/:.*$/, "")) + ': ' + d + ' of ' + tr.lessons.length + (tr.lessons.length === 1 ? ' lesson' : ' lessons') + '</span><div class="bar"><span style="width:' + Math.round(100 * d / tr.lessons.length) + '%"></span></div></div>'; })() +

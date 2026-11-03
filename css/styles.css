@@ -1073,3 +1073,8 @@ body.session .q-count.mb-head { min-height: 52px; }
 details.set-fold.cut-other > summary { color: var(--text); font-size: 1rem; font-weight: 700; }
 /* Drive: the card hugs its text */
 body.session .drive-card { min-height: 0 !important; justify-content: flex-start !important; }
+
+/* ---------- v3.59 polish round 31 ---------- */
+/* the countdown bar is short and sits under its number, so it can't read as a second session bar */
+.timer-bar { max-width: 140px; height: 4px !important; margin: 2px auto 12px !important; border-radius: 99px; background: rgba(255,255,255,.08) !important; }
+.timer-bar span { background: var(--text) !important; border-radius: 99px; }

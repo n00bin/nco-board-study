@@ -429,7 +429,7 @@
                   : '<div class="card" style="border-color:var(--gold);"><div class="flash-tag">Did you cover these?</div>' +
                       ["Your rank, name, job, and unit", "Your time in service", "One or two real accomplishments", "Your goals as an NCO"].map(function (t) {
                         return '<label class="switch" style="margin-top:10px;"><input type="checkbox" class="ip"> <span>' + esc(t) + '</span></label>'; }).join("") +
-                      (sponsor ? '</div>' : '<div class="muted" style="font-size:.85rem;margin-top:10px;">Tip: draft it under Board Day Prep → Opening Statement (there\'s an example).</div></div>') +
+                      '</div>' +
                     '<div id="playback"></div><button class="btn gold lg" id="introDone">Score this answer</button>');
           playback();
           if (stmt) onGrade(function (ok) { bearing.push({ label: "Tell us about yourself", ok: ok }); next(); });
@@ -490,6 +490,7 @@
           runTimer(cs, function () { var n = container.querySelector("#tNum"); if (n) n.textContent = "Time!"; }); return;
         }
         var rev = function () { stopVoice(); reveal(c); };
+        if (c.unfilled) { clearTimer(); return reveal(c); }
         container.querySelector("#reveal").addEventListener("click", rev);
         wireRec(); wireVoice(c);
         runTimer(cs, rev);
@@ -568,7 +569,7 @@
           (window.Speech && Speech.supported() && !c.unfilled ? '<button class="btn ghost" id="hearA" style="margin-bottom:8px;"><svg class=ic aria-hidden=true><use href=#i-speaker></use></svg> Hear a model answer</button>' : '') +
           (listened && !rb(c) ? '<div id="heard"><div class="muted center" style="font-size:.85rem;">Checking what you said…</div></div>' : '') +
           '<div id="playback"></div>' +
-          (c.unfilled ? '<div class="card"><div class="muted">You haven\'t filled this in yet, so it isn\'t scored. Boards do ask it: look it up and add it under Board Day Prep, then it counts.</div></div><button class="btn gold lg" id="skipLocal">Next question</button>'
+          (c.unfilled ? '<div class="card" style="border-color:var(--gold);"><div class="flash-tag">Not filled in yet</div><div style="margin-top:4px;">Boards do ask this. Look it up, add it under Board Day Prep, and it counts next time. This one isn\'t scored.</div><a class="btn ghost" href="#/knowledge" style="margin-top:10px;"><svg class=ic aria-hidden=true><use href=#i-pen></use></svg> Fill it in now</a></div><button class="btn gold lg" id="skipLocal">Next question</button>'
             : rb(c) ? '' : '<p class="center muted">How did you do?</p>' + gradeButtons());
         playback();
         var ha = container.querySelector("#hearA"); if (ha) ha.addEventListener("click", function () { Speech.speak(c.sample || c.a, { rate: 0.95 }); });
@@ -598,7 +599,7 @@
           var shortList = c.points.every(function (p) { return p.length <= 22 || /^Said why/i.test(p); });
           var nLeft = (left || []).filter(function (k) { return c.points[k] && !/^Said why/i.test(c.points[k]); }).length;
           var tp = c.topic ? String(c.topic).replace(/\s*\(.*\)\s*$/, "") : "";
-          if (tp && !/^[A-Z0-9]{2,}/.test(tp) && !/\s[A-Z]/.test(tp)) tp = tp.charAt(0).toLowerCase() + tp.slice(1);   // keep acronyms like AFTB, SHARP
+          if (tp) tp = tp.split(" ").map(function (w) { return /^[A-Z0-9]{2,}/.test(w) ? w : w.toLowerCase(); }).join(" ");   // keep acronyms like AFTB, SHARP
           var cue = c.pub === "sit" ? "What else would you do, Sergeant?" : shortList ? (nLeft > 1 ? "You left some out. What's the rest of it?" : "You left one out. What's the rest of it?") : "There's more to it. What else should the board hear" + (tp ? " about " + tp : "") + "?";
           fups = [{ q: cue, a: "The part left out: " + gap.replace(/\.$/, "") + "." + (c.why ? " " + c.why : ""), ref: c.ref, adaptive: true }];
         }
@@ -718,7 +719,7 @@
             var cbOk = cb.filter(function (x) { return x.ok; }).length, fuOk = fu.filter(function (x) { return x.ok; }).length;
             var legend = '<div class="dot-legend">' + (full ? '<span><span class="dot g"></span>full</span>' : '') + (part ? '<span><span class="dot a"></span>passed with gaps</span>' : '') + (thin || miss ? '<span><span class="dot r"></span>not passed</span>' : '') + '</div>'; var legendB = '<div class="dot-legend">' + (extras.some(function (x) { return x.ok; }) ? '<span><span class="dot sq g"></span>right on retry</span>' : '') + (extras.some(function (x) { return !x.ok; }) ? '<span><span class="dot sq r"></span>missed on retry</span>' : '') + '' + '</div>';
             return (extras.length ? '<div class="dots-sub">First answers</div>' : '') + '<div class="dots" aria-hidden="true">' + qScores.map(function (x) { return '<span class="dot ' + (x >= 0.99 ? 'g' : x >= 0.66 ? 'a' : x > 0 ? 'p' : 'r') + '"></span>'; }).join("") +
-                '</div>' + legend + (extras.length ? '<div class="dots-sub">Second tries &amp; follow-ups</div><div class="dots">' + extras.map(function (x) { return '<span class="dot sq ' + (x.ok ? 'g' : 'r') + '"></span>'; }).join("") + '</div>' + legendB : '') +
+                '</div>' + (extras.length ? '<div class="dots-sub">Second tries &amp; follow-ups</div><div class="dots">' + extras.map(function (x) { return '<span class="dot sq ' + (x.ok ? 'g' : 'r') + '"></span>'; }).join("") + '</div>' + legend.replace(/<\/div>$/, "") + legendB.replace(/^<div class="dot-legend">/, "") : legend) +
               '<p class="center muted" style="font-size:.92rem;margin:4px 0 12px;">' + countLine + '</p>' + (howFold = '<details class="set-fold score-how"><summary>How this was scored</summary><p class="muted" style="font-size:.92rem;margin:0 0 8px;">First answers: ' + full + ' full \u2022 ' + part + ' passed with gaps \u2022 ' + (thin + miss) + ' not passed' + (thin ? ' (' + thin + ' with part credit)' : '') +
                 (cb.length ? '<br>Second tries: ' + cbOk + ' of ' + cb.length + ' recovered' : '') + (fu.length ? '<br>Follow-ups: ' + fuOk + ' of ' + fu.length + ' right' : '') +
                 '<br>The score counts every answer, with part credit for answers with gaps. A real board also weighs bearing and the situational questions, and wants confident, complete answers, not just a percentage.</p></details>', '') +
