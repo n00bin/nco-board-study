@@ -144,12 +144,12 @@
     }
     // Board Core: the tagged must-know cards, plus your own cards and chain-of-command roster
     if (deck === "core") return all.filter(function (c) { return c.core || c.custom; });
-    // 10-minute review: up to 30 Board Core cards, the ones due (confident misses first) before new ones
+    // 10-minute review: up to 15 Board Core cards, the ones due (confident misses first) before new ones
     if (deck === "ten") {
       var coreT = all.filter(function (c) { return c.core && rankOk(c); }), nowT = Date.now();
       var dueT = coreT.filter(function (c) { return Store.isDue(c.id, nowT); }).sort(function (x, y) { var rx = Store.recOf(x.id), ry = Store.recOf(y.id); return ((ry.cw || 0) - (rx.cw || 0)) || (rx.due - ry.due); });
       var newT = coreT.filter(function (c) { var r = Store.recOf(c.id); return !r || !(r.seen > 0); });
-      return dueT.concat(newT).slice(0, 30);
+      return dueT.concat(newT).slice(0, 15);
     }
     if (deck === "sgtdeck") return all.filter(function (c) { return c.rank === "SGT"; });
     if (deck === "ssgdeck") return all.filter(function (c) { return c.rank === "SSG"; });
@@ -213,7 +213,7 @@
     s.i++; try { sessionStorage.setItem("ncob-sess", JSON.stringify(s)); } catch (e) {}
     if (s.i >= s.items.length) { try { sessionStorage.removeItem("ncob-sess"); } catch (e) {} return '<div class="card center" style="border-color:var(--gold);"><b>&#10003; Today&#39;s session is done.</b> <span class="muted">Nice work. Come back tomorrow.</span></div><div class="spacer"></div>'; }
     var nx = s.items[s.i];
-    return '<button class="btn gold lg" data-sessnext="' + escAttr(nx.href) + '">Next in today&#39;s session: ' + esc(nx.label) + ' &#8594;</button><div class="spacer"></div>';
+    return '<div class="center muted" style="font-size:.85rem;margin-bottom:6px;">Next in today&#39;s session (' + (s.i + 1) + ' of ' + s.items.length + ')</div><button class="btn gold lg" data-sessnext="' + escAttr(nx.href) + '">' + esc(nx.label.charAt(0).toUpperCase() + nx.label.slice(1)) + ' &#8594;</button><div class="spacer"></div>';
   }
   // while today's session runs, each step shows where you are in it
   function sessionBanner() {
@@ -397,7 +397,7 @@
           (rs.mockAvg == null && rs.seen >= 30 ? '<div class="sub" style="margin-top:4px;font-size:.85rem;">No Mock Boards yet: they are 40% of this score. <a href="#/board/core" style="color:inherit;text-decoration:underline;">Run one</a> to raise it.</div>' : '') +
           (rs.weak.length > 1 ? '<div class="sub" style="margin-top:4px;font-size:.85rem;">Also: <b>' + esc(rs.weak.slice(1).join(", ")) + '</b></div>' : '') +
           (dayTarget > daily.goal ? '<div class="sub" style="margin-top:4px;font-size:.85rem;">Today&#39;s ' + dayTarget + ' cards = reviews due + new cards to stay on pace' + (dToB != null && dToB > 0 ? ' for your board' : '') + '. Your minimum goal is ' + daily.goal + '.</div>' : '') +
-          (rs.seen ? '<div class="sub" style="font-size:.85rem;margin-top:6px;">Board Core studied: ' + rs.seen + ' of ' + coreIds.length + '.<br><b>How it\u2019s figured:</b> 60% Board Core cards you got right last time (' + rs.recalled + ' of ' + coreIds.length + ') + 40% your last 3 Mock Boards (' + (rs.mockAvg == null ? 'none yet' : rs.mockAvg + '%') + '), counted fully once you have 3 Mock Boards and have covered half of Board Core.</div>' : '<div class="sub" style="margin-top:4px;font-size:.85rem;">60% from Board Core cards you get right, 40% from your last 3 Mock Boards. It starts moving with your first cards.</div>') + '</details>') +
+          (rs.seen ? '<div class="sub" style="font-size:.85rem;margin-top:6px;">Board Core studied: ' + rs.seen + ' of ' + coreIds.length + '.</div><details class="hero-how"><summary>How it\u2019s figured</summary><div class="sub" style="font-size:.85rem;">60% Board Core cards you got right last time (' + rs.recalled + ' of ' + coreIds.length + ') + 40% your last 3 Mock Boards (' + (rs.mockAvg == null ? 'none yet' : rs.mockAvg + '%') + '), counted fully once you have 3 Mock Boards and have covered half of Board Core.</div></details>' : '<div class="sub" style="margin-top:4px;font-size:.85rem;">60% from Board Core cards you get right, 40% from your last 3 Mock Boards. It starts moving with your first cards.</div>') + '</details>') +
       '</div>' + rankAsk() +
       ((/iPhone|iPad|iPod/.test(navigator.userAgent) && !navigator.standalone && !Store.settings().iosTipDone) ? '<div class="card" id="iosTip" style="border-color:var(--gold);"><div class="flash-tag">Put it on your home screen</div><div style="font-size:1rem;">In Safari, tap Share (the square with the arrow), then <b>Add to Home Screen</b>, then <b>Add</b>. It opens like an app and works offline.</div><button class="btn ghost" id="iosOk" style="margin-top:8px;">Got it</button></div>' : '') +
       (dToB != null && dToB > 7 || !Store.settings().boardFor ? '' : boardCountdown(coreIds)) + boardResultAsk(rs) +
@@ -522,7 +522,7 @@
   function screenFlash(deck) {
     setTitle("Flashcards", true);
     // Top 100 and Final-Week Review are meant to be done whole: no 30-new-card session cap
-    Flashcards.render(mount, cardsForDeck(deck), deckTitle(deck), (deck === "top" || deck === "final" || deck === "ten") ? { noCap: true } : undefined);
+    Flashcards.render(mount, cardsForDeck(deck), deckTitle(deck), (deck === "top" || deck === "final" || deck === "ten") ? { noCap: true } : deck === "due" ? { max: 20 } : undefined);
   }
 
   function screenQuiz(deck) {
@@ -1187,7 +1187,7 @@
     var b1 = window.Learn && Learn.trackDone && Learn.trackDone("board101"); if (b1) PROG.board101 = b1;
     var row = function (b) {
       var on = !!got[b.id], when = on && got[b.id] > 946684800000 ? ' • ' + niceDate(got[b.id]) : '';
-      return '<div class="li"' + (on ? '' : ' style="opacity:.6;"') + '><span class="li-ic" aria-hidden="true">' + (b.ic || "<svg class=ic aria-hidden=true><use href=#i-medal></use></svg>") + '</span><span class="grow"><span class="t">' + esc(b.t) + '</span><span class="s">' + esc(!on && PROG[b.id] && PROG[b.id][1] > PROG[b.id][0] ? (PROG[b.id][1] - PROG[b.id][0]) + ' to go' : b.d) + when + '</span></span>' + (!on && PROG[b.id] ? '<span class="pill">' + (/ready/.test(b.id) ? Math.min(PROG[b.id][0], PROG[b.id][1]) + '% of ' + PROG[b.id][1] + '%' : Math.min(PROG[b.id][0], PROG[b.id][1]) + ' / ' + PROG[b.id][1]) + '</span>' : '') + '</div>';
+      return '<div class="li"' + (on ? '' : ' style="opacity:.6;"') + '><span class="li-ic" aria-hidden="true">' + (b.ic || "<svg class=ic aria-hidden=true><use href=#i-medal></use></svg>") + '</span><span class="grow"><span class="t">' + esc(b.t) + '</span><span class="s">' + esc(!on && PROG[b.id] && PROG[b.id][1] > PROG[b.id][0] ? (PROG[b.id][1] - PROG[b.id][0]) + ' to go' : b.d) + when + '</span></span>' + (!on && PROG[b.id] ? '<span class="pill">' + (/ready/.test(b.id) ? 'at ' + Math.min(PROG[b.id][0], PROG[b.id][1]) + '%' : Math.min(PROG[b.id][0], PROG[b.id][1]) + ' / ' + PROG[b.id][1]) + '</span>' : '') + '</div>';
     };
     var earned = BADGES.filter(function (b) { return got[b.id]; }), left = BADGES.filter(function (b) { return !got[b.id]; });
     var medal = function (b) { var when = got[b.id] > 946684800000 ? niceDate(got[b.id]) : 'Earned'; return '<div class="medal"><span class="medal-ic">' + (b.ic || '<svg class=ic aria-hidden=true><use href=#i-medal></use></svg>') + '</span><b>' + esc(b.t) + '</b><small>' + when + '</small></div>'; };

@@ -44,6 +44,7 @@
       // due first, then new; big decks only feed in 30 new cards per session so it stays doable
       var queue = Store.buildQueue(cards, (cards.length > 60 && !(opts && opts.noCap)) ? 30 : undefined).slice();
       if (!queue.length) queue = cards.slice();           // (deck with nothing due) study all
+      if (opts && opts.max) queue = queue.slice(0, opts.max);
       var i = 0, reviewed = 0, passed = 0, conf, first = {};
       var autoRead = Store.settings().autoRead;
       var confRow;
@@ -95,7 +96,7 @@
         conf = undefined;
         var left = queue.length - i, mins = Math.max(1, Math.round(left * 15 / 60));
         container.querySelector("#fBar").style.width = Math.round(100 * passed / Math.max(1, passed + left)) + "%";
-        container.querySelector("#fProg").innerHTML = '<span>' + (opts && opts.onDone ? 'Practice' : esc(title)) + ' \u2022 ' + passed + ' done</span><span class="pills"><span class="pill" title="about ' + mins + ' min">' + left + ' left</span>' + (reviewed >= 3 && left > 3 ? '<button class="pill pill-btn" id="fDone">Finish</button>' : '') + '</span>';
+        container.querySelector("#fProg").innerHTML = '<span>' + (opts && opts.onDone ? 'Practice' : esc(title)) + ' \u2022 ' + passed + ' done</span><span class="pills"><span class="pill" title="about ' + mins + ' min">' + left + ' left</span>' + (reviewed >= 3 && left > 3 ? '<button class="fin-btn" id="fDone"><span class="pill pill-btn">Finish</span></button>' : '') + '</span>';
         container.querySelector("#fTagF").textContent = (/\b(regulation|publication|pamphlet|field manual|doctrine)\b|\b(which|what) (AR|FM|ADP|ATP|TC|DA PAM)\b/i.test(c.q) ? "Name the publication" : pubCode(c)) + (c.adv ? " \u2022 Advanced" : "");   // topic only on the back: it can give the answer away
         container.querySelector("#fTagB").textContent = pubCode(c) || "Answer";
         container.querySelector("#fQ").textContent = c.q;
@@ -189,7 +190,7 @@
       function ask() {
         var c = queue[i];
         container.innerHTML =
-          '<div class="q-count mb-head"><span>' + esc(title) + ' \u2022 ' + passed + ' done</span><span class="pills"><span class="pill">' + (queue.length - i) + ' left</span>' + (reviewed >= 3 && queue.length - i > 3 ? '<button class="pill pill-btn tdone">Finish</button>' : '') + '</span></div><div class="progress-bar"><span style="width:' + Math.round(100 * passed / Math.max(1, passed + queue.length - i)) + '%"></span></div>' +
+          '<div class="q-count mb-head"><span>' + esc(title) + ' \u2022 ' + passed + ' done</span><span class="pills"><span class="pill">' + (queue.length - i) + ' left</span>' + (reviewed >= 3 && queue.length - i > 3 ? '<button class="fin-btn tdone"><span class="pill pill-btn">Finish</span></button>' : '') + '</span></div><div class="progress-bar"><span style="width:' + Math.round(100 * passed / Math.max(1, passed + queue.length - i)) + '%"></span></div>' +
           '<div class="card"><div class="flash-toprow"><span class="flash-tag">' + esc(/\b(regulation|publication|pamphlet|field manual|doctrine)\b|\b(which|what) (AR|FM|ADP|ATP|TC|DA PAM)\b/i.test(c.q) ? "Name the publication" : pubCode(c)) + '</span><span><button class="mini" id="tSpeak" aria-label="Read aloud"><svg class=ic aria-hidden=true><use href=#i-speaker></use></svg></button><button class="mini" id="tReport" aria-label="Report a problem with this card"><svg class=ic aria-hidden=true><use href=#i-flag></use></svg></button></span></div>' +
             '<div class="flash-q" style="margin-bottom:14px;">' + esc(c.q) + '</div>' +
             '<textarea class="input" id="tIn" rows="2" placeholder="Type your answer…"></textarea></div>' +
@@ -220,7 +221,7 @@
         var good = close || (aw.length >= 2 && share >= 0.6), near = !good && share >= 0.3;
         var verdict = !typed ? "" : good ? '<div class="badge-good" style="font-weight:700;">&#10003; Looks right</div>' : near ? '<div class="verdict-near">Close: compare with the answer</div>' : share < 0.15 ? '<div class="badge-bad" style="font-weight:700;">&#10007; Doesn&#39;t match the answer</div>' : '<div class="verdict-near">Compare with the answer</div>';
         container.innerHTML =
-          '<div class="q-count mb-head"><span>' + esc(title) + ' \u2022 ' + passed + ' done</span><span class="pills"><span class="pill">' + (queue.length - i) + ' left</span>' + (reviewed >= 3 && queue.length - i > 3 ? '<button class="pill pill-btn tdone">Finish</button>' : '') + '</span></div><div class="progress-bar"><span style="width:' + Math.round(100 * passed / Math.max(1, passed + queue.length - i)) + '%"></span></div>' +
+          '<div class="q-count mb-head"><span>' + esc(title) + ' \u2022 ' + passed + ' done</span><span class="pills"><span class="pill">' + (queue.length - i) + ' left</span>' + (reviewed >= 3 && queue.length - i > 3 ? '<button class="fin-btn tdone"><span class="pill pill-btn">Finish</span></button>' : '') + '</span></div><div class="progress-bar"><span style="width:' + Math.round(100 * passed / Math.max(1, passed + queue.length - i)) + '%"></span></div>' +
           '<div class="card"><div class="flash-toprow"><span class="flash-tag">' + esc(pubCode(c)) + '</span><span><button class="mini" id="tSpeak" aria-label="Read the answer aloud"><svg class=ic aria-hidden=true><use href=#i-speaker></use></svg></button><button class="mini" id="tReport" aria-label="Report a problem with this card"><svg class=ic aria-hidden=true><use href=#i-flag></use></svg></button></span></div>' +
             '<div class="flash-q" style="margin:6px 0 10px;">' + esc(c.q) + '</div>' +
             (typed ? '<div class="muted">You wrote: ' + esc(typed) + '</div>' + verdict + '<hr class="div">' : '') +

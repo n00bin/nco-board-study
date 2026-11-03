@@ -96,6 +96,9 @@
         Speech.speak(c.oral || c.q, { onEnd: function () {
           if (!playing || myGen !== gen) return;
           paint("listen");
+          var wait = gap * ((c.pub === "sit" || c.pub === "personal" || String(c.a).length > 200) ? 3 : 1), t0 = Date.now();
+          var tick = function () { var ph = container.querySelector("#phase"); if (!playing || myGen !== gen || !ph || shown !== "listen") return; var left = Math.max(0, Math.ceil(wait - (Date.now() - t0) / 1000)); ph.innerHTML = '<svg class=ic aria-hidden=true><use href=#i-mic></use></svg> Your turn: answer aloud <b class="cd">' + left + 's</b>'; if (left > 0) setTimeout(tick, 250); };
+          tick();
           timer = setTimeout(function () {
             if (!playing || myGen !== gen) return;
             paint("a");

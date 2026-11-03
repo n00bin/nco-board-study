@@ -1062,7 +1062,7 @@ html { scroll-padding-top: calc(72px + env(safe-area-inset-top)); }
 
 /* ---------- v3.58 polish round 30 ---------- */
 /* the Finish pill never changes the header height (its tap area extends invisibly) */
-#fDone, .tdone { min-height: 30px !important; height: 30px; padding: 0 14px !important; }
+#fDone, .tdone { min-height: 44px !important; height: 44px; padding: 0 0 0 4px !important; }
 body.session .q-count.mb-head { min-height: 52px; }
 /* two half-width secondary buttons */
 .btn-pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; }
@@ -1078,3 +1078,26 @@ body.session .drive-card { min-height: 0 !important; justify-content: flex-start
 /* the countdown bar is short and sits under its number, so it can't read as a second session bar */
 .timer-bar { max-width: 140px; height: 4px !important; margin: 2px auto 12px !important; border-radius: 99px; background: rgba(255,255,255,.08) !important; }
 .timer-bar span { background: var(--text) !important; border-radius: 99px; }
+
+/* ---------- v3.60 polish round 32 ---------- */
+/* Finish: a full 44px target; the pill drawn inside it */
+.fin-btn { background: none; border: 0; padding: 0 0 0 4px; margin: 0; min-height: 44px; height: 44px; display: inline-flex; align-items: center; cursor: pointer; font: inherit; }
+.fin-btn .pill-btn::after { display: none; }
+.fin-btn .pill-btn { pointer-events: none; }
+body.session .q-count.mb-head { min-height: 56px !important; }
+/* one checkbox style: gold fill when ticked */
+.check.checked { border-color: var(--gold) !important; background: rgba(255,204,51,.07) !important; }
+.check.checked .checkbox { background: var(--gold); border-color: var(--gold) !important; color: #1a1a0e; }
+/* Drive: a clear phase line with its countdown */
+.drive-card .phase { font-size: 1rem; font-weight: 700; }
+.drive-card .phase .cd { margin-left: 6px; font-variant-numeric: tabular-nums; }
+body.session .drive-card { margin-top: 4vh; }
+/* Home: the formula fold */
+details.hero-how { margin-top: 6px; }
+details.hero-how > summary { font-size: .85rem; font-weight: 700; cursor: pointer; color: inherit; opacity: .85; }
+/* pickers: only the recommended row is marked */
+.lg.pick-top { border-color: var(--line) !important; }
+.lg.pick-top > .li:first-child { box-shadow: inset 3px 0 0 var(--gold); }
+/* quiz choices: no indent; the mark sits on the right */
+.choice { padding-left: 16px !important; padding-right: 40px !important; }
+.choice .mark { left: auto !important; right: 14px; margin: 0 !important; }
