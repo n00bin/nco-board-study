@@ -213,7 +213,7 @@
             (c.sample ? '<div class="flash-ref" style="color:var(--text);margin-top:12px;"><b>Example answer (fictional Soldier, make it yours):</b> ' + esc(c.sample) + '</div>' : '') +
             (c.ref ? '<div class="flash-ref">' + esc(c.ref) + '</div>' : '') + '</div>' +
           '<div class="btn-row lesson-nav">' +
-            (i > 0 ? '<button class="btn ghost" id="lPrev"><svg class=ic aria-hidden=true><use href=#i-back></use></svg> Back</button>' : '') +
+            (i > 0 ? '<button class="btn ghost" id="lPrev"><svg class=ic aria-hidden=true><use href=#i-back></use></svg> Previous</button>' : '') +
             '<button class="btn gold" id="lNext">' + (i + 1 >= lesson.cards.length ? "Practice <svg class=ic aria-hidden=true><use href=#i-chev></use></svg>" : "Next <svg class=ic aria-hidden=true><use href=#i-chev></use></svg>") + '</button></div>';
         container.querySelector("#lSpeak").addEventListener("click", function () { Speech.speak(c.q + ". " + c.a); });
         if (container.querySelector("#lPrev")) container.querySelector("#lPrev").addEventListener("click", function () { i--; teach(); });

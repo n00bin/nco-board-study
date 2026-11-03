@@ -55,7 +55,7 @@
             '<div class="flash-face flash-front" id="fFront">' +
               '<div class="flash-toprow"><span class="flash-tag" id="fTagF"></span>' +
                 '<span><button class="mini" id="fSpeak" aria-label="Read aloud"><svg class=ic aria-hidden=true><use href=#i-speaker></use></svg></button>' +
-                '<button class="mini" id="fReport" aria-label="Report card"><svg class=ic aria-hidden=true><use href=#i-flag></use></svg></button></span></div>' +
+                '<button class="mini" id="fReport" aria-label="Report a problem with this card"><svg class=ic aria-hidden=true><use href=#i-flag></use></svg></button></span></div>' +
               '<div class="flash-q" id="fQ"></div>' +
               '<div class="flash-hint" id="fHint">Tap card to flip</div>' +
               '<div class="flip-cue" aria-hidden="true">&#8635; tap the card to flip</div>' +
@@ -63,7 +63,7 @@
             '<div class="flash-face flash-back" id="fBack" aria-hidden="true">' +
               '<div class="flash-toprow"><span class="flash-tag" id="fTagB">Answer</span>' +
                 '<span><button class="mini" id="fSpeakB" aria-label="Read the answer aloud"><svg class=ic aria-hidden=true><use href=#i-speaker></use></svg></button>' +
-                '<button class="mini" id="fReportB" aria-label="Report card"><svg class=ic aria-hidden=true><use href=#i-flag></use></svg></button></span></div>' +
+                '<button class="mini" id="fReportB" aria-label="Report a problem with this card"><svg class=ic aria-hidden=true><use href=#i-flag></use></svg></button></span></div>' +
               '<div class="flash-a" id="fA"></div>' +
               '<div class="flash-ref" id="fRef"></div>' +
             '</div>' +

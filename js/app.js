@@ -551,12 +551,13 @@
         '<a class="li" href="#/settings/timer"><span class="grow"><span class="t">Timer: ' + (timer > 0 ? timer + ' seconds a question' : 'off') + '</span><span class="s">' + (timer > 0 ? 'Double for long answers and scenarios' : 'Answer at your own pace') + '</span></span><span class="pill">Change</span></a>' +
         '<label class="switch li"><input type="checkbox" id="fullBoard"' + (Store.settings().fullBoard !== false ? " checked" : "") + '> <span class="grow"><span class="t">Full board</span><span class="s">Report in, drill, introduce yourself</span></span></label>' +
         (window.speechSynthesis ? '<label class="switch li"><input type="checkbox" id="listenOnly"' + (Store.settings().listenOnly ? " checked" : "") + '> <span class="grow"><span class="t">Listen-only</span><span class="s">Hear each question, don\u2019t read it</span></span></label>' : '') +
-        '<label class="switch li"><input type="checkbox" id="sponsorMode"> <span class="grow"><span class="t">Sponsor holds the phone</span><span class="s">They read, see the answer, and grade you</span></span></label>' +
+        (/^(core|top|final)$/.test(deck) ? '' : '<label class="switch li"><input type="checkbox" id="sponsorMode"> <span class="grow"><span class="t">Sponsor holds the phone</span><span class="s">They read, see the answer, and grade you</span></span></label>') +
       '</div>' +
       '<button class="btn gold lg" data-n="10"><svg class=ic aria-hidden=true><use href=#i-play></use></svg> Start a 10-question board</button>' +
       '<div class="muted center" style="font-size:.85rem;margin:6px 0 10px;" id="lenNote"></div>' +
       '<div class="lg-h" style="margin-top:2px;">Other lengths</div><div class="len-row"><button class="chip" data-n="5" data-quick="1"><b>5</b><small>quick</small></button><button class="chip" data-n="15"><b>15</b><small>longer</small></button><button class="chip" data-n="25"><b>25</b><small>full-length</small></button></div>' +
       (/^(core|top|final)$/.test(deck) ? '<details class="set-fold" style="margin-top:14px;"><summary>Practice with your sponsor</summary>' +
+        '<div class="lg opts" style="margin-top:4px;"><label class="switch li"><input type="checkbox" id="sponsorMode"> <span class="grow"><span class="t">Sponsor holds this phone</span><span class="s">They read, see the answer, and grade you. Then tap Start.</span></span></label></div>' +
         '<button class="btn ghost" id="sendSponsor" style="margin-top:8px;"><svg class=ic aria-hidden=true><use href=#i-send></use></svg> Send a board to my sponsor</button>' +
         '<div class="muted center" style="font-size:.85rem;margin:6px 0;">They open the link and run the same board on their phone, with the answers and checklists.</div>' +
         '<button class="btn ghost" id="printSheet"><svg class=ic aria-hidden=true><use href=#i-print></use></svg> Print a paper board instead</button></details>' : '');
@@ -746,7 +747,7 @@
       '<input type="file" id="impFile" accept="application/json,.json" hidden>' +
       '<h2 class="section">Reset</h2>' +
       '<button class="btn danger" id="resetCards">Reset card progress only</button><div class="muted" style="font-size:.85rem;margin:6px 2px 0;">Clears what you&#39;ve studied and when cards are due. Keeps your notes, chain of command, memo and settings.</div><div class="spacer"></div>' +
-      '<button class="btn danger" id="resetAll">Erase everything</button><div class="muted center" style="font-size:.85rem;margin-top:6px;">Deletes your progress and your own cards on this phone.</div>';
+      '<button class="btn danger" id="resetAll">Erase everything</button><div class="muted" style="font-size:.85rem;margin:6px 2px 0;">Deletes your progress and your own cards on this phone.</div>';
     mount.querySelector("#exp").addEventListener("click", function () {
       var d = new Date(), name = "nco-board-progress-" + d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0") + ".json";
       download(name, Store.exportData()); App.toast("Backup downloaded");
@@ -977,7 +978,10 @@
   function group(title, rows, id) { return (title ? '<div class="lg-h"' + (id ? ' id="' + id + '"' : '') + '>' + title + '</div>' : '') + '<div class="lg">' + rows.join("") + '</div>'; }
   function jumpChips(cats) { return '<div class="jump-wrap"><div class="chip-row jump-row">' + cats.map(function (c, k) { return '<button class="chip" data-jump="cat' + k + '">' + esc(c.replace(/ &amp; .*| & .*/, "")) + '</button>'; }).join("") + '</div></div>'; }
   function wireJumpSpy() {
-    var chips = mount.querySelectorAll("[data-jump]"); if (!chips.length || !window.IntersectionObserver) return;
+    var chips = mount.querySelectorAll("[data-jump]"); if (!chips.length) return;
+    var row0 = chips[0].parentElement, edge = function () { row0.classList.toggle("fade-l", row0.scrollLeft > 4); row0.classList.toggle("fade-r", row0.scrollLeft + row0.clientWidth < row0.scrollWidth - 4); };
+    row0.addEventListener("scroll", edge, { passive: true }); edge();
+    if (!window.IntersectionObserver) return;
     var mark = function (id) { chips.forEach(function (b) { var on = b.getAttribute("data-jump") === id; b.classList.toggle("on", on); if (on && b.scrollIntoView) { var row = b.parentElement; row.scrollTo({ left: b.offsetLeft - 24, behavior: "smooth" }); } }); };
     var io = new IntersectionObserver(function (es) { es.forEach(function (e) { if (e.isIntersecting) mark(e.target.id); }); }, { rootMargin: "-130px 0px -60% 0px" });
     chips.forEach(function (b) { var t = document.getElementById(b.getAttribute("data-jump")); if (t) io.observe(t); });
@@ -1152,7 +1156,7 @@
       return '<div class="li"' + (on ? '' : ' style="opacity:.6;"') + '><span class="li-ic" aria-hidden="true">' + (b.ic || "<svg class=ic aria-hidden=true><use href=#i-medal></use></svg>") + '</span><span class="grow"><span class="t">' + esc(b.t) + '</span><span class="s">' + esc(!on && PROG[b.id] && PROG[b.id][1] > PROG[b.id][0] ? (PROG[b.id][1] - PROG[b.id][0]) + ' to go' : b.d) + when + '</span></span>' + (!on && PROG[b.id] ? '<span class="pill">' + (/ready/.test(b.id) ? Math.min(PROG[b.id][0], PROG[b.id][1]) + '% of ' + PROG[b.id][1] + '%' : Math.min(PROG[b.id][0], PROG[b.id][1]) + ' / ' + PROG[b.id][1]) + '</span>' : '') + '</div>';
     };
     var earned = BADGES.filter(function (b) { return got[b.id]; }), left = BADGES.filter(function (b) { return !got[b.id]; });
-    var medal = function (b) { var when = got[b.id] > 946684800000 ? niceDate(got[b.id]) : 'Earned'; return '<div class="medal"><span class="medal-ic">' + (b.ic || '<svg class=ic aria-hidden=true><use href=#i-medal></use></svg>') + '</span><b>' + esc(b.t) + '</b><small>' + when + '</small></div>'; };
+    var medal = function (b) { var when = got[b.id] > 946684800000 ? niceDate(got[b.id]) : ''; return '<div class="medal"><span class="medal-ic">' + (b.ic || '<svg class=ic aria-hidden=true><use href=#i-medal></use></svg>') + '</span><b>' + esc(b.t) + '</b><small>' + when + '</small></div>'; };
     mount.innerHTML = '<div class="muted" style="font-size:.85rem;margin:2px 4px 8px;">Small wins on the way to your board. They stay on this phone.</div>' +
       (earned.length ? '<div class="lg-h">Earned (' + earned.length + ')</div><div class="medal-grid">' + earned.map(medal).join("") + '</div>' : '') +
       (left.length ? group("Still to earn (" + left.length + ")", left.map(row)) : '');
@@ -1745,6 +1749,7 @@
     var r = d.getBoundingClientRect(); if (r.bottom > window.innerHeight - 70) d.scrollIntoView({ block: "nearest", behavior: "smooth" });
   }, true);
   function askLeave(go) {
+    if (document.querySelector(".leave-sheet")) return;
     var o = document.createElement("div"); o.className = "leave-sheet"; o.setAttribute("role", "dialog"); o.setAttribute("aria-modal", "true");
     o.innerHTML = '<div class="leave-box"><div class="t">Leave this session?</div><div class="muted">You&#39;ll lose your place. Cards you already graded stay graded.</div>' +
       '<button class="btn gold lg" id="lvStay">Keep going</button><div class="spacer"></div><button class="btn ghost lg" id="lvGo">Leave</button></div>';

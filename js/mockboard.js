@@ -366,7 +366,7 @@
         var cmds = shuffle(["Left, FACE.", "Right, FACE.", "About, FACE.", "Parade, REST.", "Half left, FACE."]).slice(0, 3);
         container.innerHTML = header() +
           '<div class="card"><div class="flash-tag">The board president</div>' +
-            '<div class="q-text" style="margin-top:8px;">"Before you sit, let\'s see some drill."</div>' +
+            '<div class="q-text" style="margin-top:8px;">\u201cBefore you sit, let\u2019s see some drill.\u201d</div>' +
             '<div class="muted">' + (sponsor ? 'Call each command out loud. Watch for a sharp movement on the command of execution, then they hold the position until your next command.' : 'Stand up and do each command, sharply, on the command of execution. Hold each position until the next command.') + '</div></div>' +
           '<div class="card">' + cmds.map(function (t, k) { return '<div class="row" style="margin-bottom:6px;"><div class="numbubble">' + (k + 1) + '</div><div class="grow"><div class="ttl" style="font-size:1.15rem;font-weight:700;">' + esc(t) + '</div></div></div>'; }).join("") +
             (sponsor ? '' : '<button class="btn ghost" id="sayIt" style="margin-top:6px;"><svg class=ic aria-hidden=true><use href=#i-speaker></use></svg> Call the commands for me</button>') +
@@ -409,7 +409,7 @@
         var t = secs ? 90 : 0, stmt = Store.statement();
         container.innerHTML = header() + timerHtml(t, "Aim for about a minute (90 seconds max)") +
           '<div class="card"><div class="flash-tag">The board president</div>' +
-            '<div class="q-text" style="margin-top:8px;">"Tell the board a little about yourself."</div></div>' +
+            '<div class="q-text" style="margin-top:8px;">\u201cTell the board a little about yourself.\u201d</div></div>' +
           '<div class="card"><div class="muted" style="font-size:.92rem;">' + (sponsor ? 'Ask the Soldier to tell you about themselves. Listen for about a minute: who they are, job and unit, time in service, a real accomplishment or two, and their goals as an NCO. Are they saying it, not reciting it?' :
             'Answer out loud in about a minute, eyes on the president: who you are, your job and unit, time in service, a real accomplishment or two, and your goals as an NCO. Say it, don\'t read it.' +
             (stmt ? '' : ' After this board, draft it under Board Day Prep \u2192 Opening Statement (there\'s an example).')) + '</div></div>' +
@@ -445,7 +445,7 @@
         var all = (window.App && App.reportingSteps) || [];
         container.innerHTML = header() +
           '<div class="card"><div class="flash-tag">The board president</div>' +
-            '<div class="q-text" style="margin-top:8px;">"That concludes the board. You are dismissed."</div></div>' +
+            '<div class="q-text" style="margin-top:8px;">\u201cThat concludes the board. You are dismissed.\u201d</div></div>' +
           '<p class="center muted">' + (sponsor ? 'Watch them stand at attention, salute and hold until you return it, face about, and march out.' : 'Do it now: stand at attention, salute and hold until it\'s returned, face about, and march out.') + '</p>' +
           gradeButtons("Needs work", "Clean");
         onGrade(function (ok) { bearing.push({ label: "Reporting out", ok: ok }); next(); });
@@ -474,7 +474,7 @@
           // Only the publication is shown on the question side: topic labels can give the answer away.
           '<div class="card"><div class="flash-toprow"><span class="flash-tag">' + esc(pubCode(c)) + (c.adv ? ' \u2022 Advanced' : '') + '</span>' +
             '<span><button class="mini" id="mSpeak" aria-label="Read aloud"><svg class=ic aria-hidden=true><use href=#i-speaker></use></svg></button>' +
-            '<button class="mini" id="mReport" aria-label="Report card"><svg class=ic aria-hidden=true><use href=#i-flag></use></svg></button></span></div>' +
+            '<button class="mini" id="mReport" aria-label="Report a problem with this card"><svg class=ic aria-hidden=true><use href=#i-flag></use></svg></button></span></div>' +
             qShow(qt(c)) + '</div>' +
           (sponsor ? sponsorBox(c.a, c.ref, whyHtml(c)) + '<p class="center muted">Read the question aloud, listen, then grade.</p>' + (c.points ? rubricHtml(c, "Sponsor: tick what the Soldier covered") : gradeButtons())
                    : '<p class="center muted">' + (c.why && c.pub !== "sit" && c.pub !== "personal" && curStyle !== "rapid" ? 'Answer out loud, then say why it matters. Then reveal.' : 'Answer out loud, then reveal.') + '</p>' + '<div class="rv-row">' + recButton() + voiceButton() + '</div>' + '<button class="btn gold lg" id="reveal">Reveal answer</button>');
@@ -699,11 +699,11 @@
         var html = '<div class="ring-wrap"><div class="ring ' + (pct >= 75 ? 'good' : pct >= 50 ? 'mid' : 'bad') + '" style="--p:' + pct + ';"><div class="ring-in">' + pct + '%</div></div><small>' + (extras.length ? 'score, incl. second tries &amp; follow-ups' : 'score') + '</small></div>' +
           '<div class="done-h">' + (strongB ? '<svg class=ic aria-hidden=true><use href=#i-trophy></use></svg> ' : '') + esc(vTitle) + '</div><p class="center muted" style="margin-top:0;">' + esc(vLine) + '</p>' +
           (function () {
-            var full = qScores.filter(function (x) { return x >= 0.99; }).length, part = qScores.filter(function (x) { return x >= 0.66 && x < 0.99; }).length, miss = qScores.length - full - part;
+            var full = qScores.filter(function (x) { return x >= 0.99; }).length, part = qScores.filter(function (x) { return x > 0 && x < 0.99; }).length, miss = qScores.length - full - part;
             var cb = extras.filter(function (x) { return x.k === "cb"; }), fu = extras.filter(function (x) { return x.k === "fu"; });
             var cbOk = cb.filter(function (x) { return x.ok; }).length, fuOk = fu.filter(function (x) { return x.ok; }).length;
             var legend = '<div class="dot-legend">' + (full ? '<span><span class="dot g"></span>full</span>' : '') + (part ? '<span><span class="dot a"></span>with gaps</span>' : '') + (miss ? '<span><span class="dot r"></span>missed</span>' : '') + '' + '</div>';
-            return '<div class="dots" aria-hidden="true">' + qScores.map(function (x) { return '<span class="dot ' + (x >= 0.99 ? 'g' : x >= 0.66 ? 'a' : 'r') + '"></span>'; }).join("") +
+            return (extras.length ? '<div class="dots-sub">First answers</div>' : '') + '<div class="dots" aria-hidden="true">' + qScores.map(function (x) { return '<span class="dot ' + (x >= 0.99 ? 'g' : x > 0 ? 'a' : 'r') + '"></span>'; }).join("") +
                 '</div>' + (extras.length ? '<div class="dots-sub">Second tries &amp; follow-ups</div><div class="dots">' + extras.map(function (x) { return '<span class="dot sq ' + (x.ok ? 'g' : 'r') + '"></span>'; }).join("") + '</div>' : '') + legend +
               '<p class="center muted" style="font-size:.92rem;margin:4px 0 0;">' + countLine + '</p><details class="set-fold score-how"><summary>How this was scored</summary><p class="muted" style="font-size:.92rem;margin:0 0 8px;">First answers: ' + full + ' full \u2022 ' + part + ' with gaps \u2022 ' + miss + ' missed' +
                 (cb.length ? '<br>Second tries: ' + cbOk + ' of ' + cb.length + ' recovered' : '') + (fu.length ? '<br>Follow-ups: ' + fuOk + ' of ' + fu.length + ' right' : '') +
@@ -711,7 +711,10 @@
               '';
           })() +
           // the next step first: drill the misses (or run another), then the details
-          (missed.length && !sponsor ? '<button class="btn gold lg" id="drillMiss"><svg class=ic aria-hidden=true><use href=#i-refresh></use></svg> Drill your ' + missed.length + ' miss' + (missed.length === 1 ? '' : 'es') + ' now</button><div class="spacer"></div>' : '');
+          (missed.length && !sponsor ? '<button class="btn gold lg" id="drillMiss"><svg class=ic aria-hidden=true><use href=#i-refresh></use></svg> Drill the ' + missed.length + ' you didn\'t pass</button><div class="spacer"></div>' : '');
+        if (sponsor) html += '<h2 class="section">Your notes for the Soldier (optional)</h2><textarea class="input" id="sbNote" rows="3" maxlength="300" placeholder="e.g. Good bearing. Rambled on the intro; slow down on SHARP answers."></textarea>' +
+          '<div class="spacer"></div><button class="btn gold lg" id="sendBack"><svg class=ic aria-hidden=true><use href=#i-send></use></svg> Send results to the Soldier</button>' +
+          '<div class="muted center" style="font-size:.85rem;margin-top:6px;">They open the link on their phone: the score goes into their history and the questions they missed come back sooner.</div>';
         if (bearing.length) {
           var BHREF = { "Reporting in": "#/reporting", "Reporting out": "#/reporting", "Facing movements": "#/flash/tc3-21-5", "Tell us about yourself": "#/statement" };
           html += '<h2 class="section">Bearing &amp; delivery</h2><div class="lg">';
@@ -726,9 +729,6 @@
           weak.forEach(function (p) { html += '<a class="li" href="#/flash/' + encodeURIComponent(p.id || "") + '"><span class="grow">' + subjHtml(p.code) + '</span><b class="badge-bad" style="white-space:nowrap;">missed ' + p.miss + ' of ' + p.n + '</b><span class="chev" aria-hidden="true"><svg class=ic aria-hidden=true><use href=#i-chev></use></svg></span></a>'; });
           html += '</div>';
         }
-        if (sponsor) html += '<h2 class="section">Your notes for the Soldier (optional)</h2><textarea class="input" id="sbNote" rows="3" maxlength="300" placeholder="e.g. Good bearing. Rambled on the intro; slow down on SHARP answers."></textarea>' +
-          '<div class="spacer"></div><button class="btn gold lg" id="sendBack"><svg class=ic aria-hidden=true><use href=#i-send></use></svg> Send results to the Soldier</button>' +
-          '<div class="muted center" style="font-size:.85rem;margin-top:6px;">They open the link on their phone: the score goes into their history and the questions they missed come back sooner.</div>';
         if (missed.length) {
           html += '<details class="set-fold"><summary>Review ' + (sponsor ? 'their' : 'your') + ' ' + missed.length + ' miss' + (missed.length === 1 ? '' : 'es') + '</summary>';
           missed.forEach(function (m) {
