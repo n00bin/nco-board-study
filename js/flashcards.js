@@ -23,12 +23,12 @@
     var ids = Object.keys(first), n = ids.length, miss = 0, easy = 0;
     ids.forEach(function (k) { if (first[k] === "again") miss++; else if (first[k] === "easy") easy++; });
     var known = n - miss, p = n ? Math.round(100 * known / n) : 0;
-    return '<div class="ring-wrap"><div class="ring ' + (p >= 75 ? 'good' : p >= 50 ? 'mid' : 'bad') + '" style="--p:' + p + ';"><div class="ring-in">' + p + '%</div></div><small>knew it the first time</small></div>' +
+    return '<div class="ring-wrap"><div class="ring ' + (p >= 75 ? 'good' : p >= 60 ? 'mid' : 'bad') + '" style="--p:' + p + ';"><div class="ring-in">' + p + '%</div></div><small>knew it the first time</small></div>' +
       '<div class="done-h">Session complete</div>' +
       '<p class="center muted" style="margin-top:0;">' + n + ' card' + (n === 1 ? '' : 's') + ' \u2022 ' + (known - easy) + ' got it' + (easy ? ' \u2022 ' + easy + ' easy' : '') + ' \u2022 ' + miss + ' missed</p>' +
       '<div class="dots" aria-hidden="true">' + ids.slice(0, 80).map(function (k) { return '<span class="dot ' + (first[k] === "again" ? 'r' : 'g') + '"></span>'; }).join("") + '</div>' +
       '<div class="dot-legend">' + (known ? '<span><span class="dot g"></span>knew it</span>' : '') + (miss ? '<span><span class="dot r"></span>missed</span>' : '') + '</div>' +
-      (miss ? (Store.setChainRole("last-misses", ids.filter(function (k) { return first[k] === "again"; }).slice(0, 40).join(",")), '<a class="btn gold lg" href="#/flash/misses"><svg class=ic aria-hidden=true><use href=#i-refresh></use></svg> Drill your ' + miss + ' miss' + (miss === 1 ? '' : 'es') + ' now</a>') : '');
+      (miss ? (Store.setChainRole("last-misses", ids.filter(function (k) { return first[k] === "again"; }).slice(0, 40).join(",")), '<a class="btn gold lg" href="#/flash/misses"><svg class=ic aria-hidden=true><use href=#i-refresh></use></svg> Drill ' + (miss === 1 ? 'this card' : 'these ' + miss + ' cards') + ' now</a>') : '');
   }
   function nextStep() {
     var dk = (location.hash.match(/^#\/(?:flash|type)\/([^\/]+)$/) || [])[1];
@@ -96,7 +96,7 @@
         conf = undefined;
         var left = queue.length - i, mins = Math.max(1, Math.round(left * 15 / 60));
         container.querySelector("#fBar").style.width = Math.round(100 * passed / Math.max(1, passed + left)) + "%";
-        container.querySelector("#fProg").innerHTML = '<span>' + (opts && opts.onDone ? 'Practice' : esc(title)) + ' \u2022 ' + passed + ' done</span><span class="pills"><span class="pill" title="about ' + mins + ' min">' + left + ' left</span>' + (reviewed >= 3 && left > 3 ? '<button class="fin-btn" id="fDone"><span class="pill pill-btn">Finish</span></button>' : '') + '</span>';
+        container.querySelector("#fProg").innerHTML = '<span>' + (opts && opts.onDone ? 'Practice' : esc(title)) + ' \u2022 ' + passed + ' done</span><span class="pills"><span class="pill" title="about ' + mins + ' min">' + (left > 30 ? '30+' : left) + ' left</span>' + (reviewed >= 3 && left > 3 ? '<button class="fin-btn" id="fDone"><span class="pill pill-btn">Finish</span></button>' : '') + '</span>';
         container.querySelector("#fTagF").textContent = (/\b(which|what) (regulation|publication|pamphlet|field manual|manual|AR|FM|ADP|ADRP|ATP|TC|DA PAM)\b|\b(regulation|publication|pamphlet|manual) (covers|prescribes|governs|sets)\b/i.test(c.q) ? "Name the publication" : pubCode(c)) + (c.adv ? " \u2022 Advanced" : "");   // topic only on the back: it can give the answer away
         container.querySelector("#fTagB").textContent = pubCode(c) || "Answer";
         container.querySelector("#fQ").textContent = c.q;

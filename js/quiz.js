@@ -162,7 +162,7 @@
         if (sb) sb.replaceWith(nav); else container.appendChild(nav);
         setTimeout(function () { if (verdict && verdict.getBoundingClientRect().bottom > window.innerHeight - 100 && !nav.querySelector(".nv")) (verdict.style.visibility = "hidden", nav.insertAdjacentHTML("afterbegin", '<span class="nv">' + (/\u2713/.test(verdict.textContent) ? '\u2713 Correct' : '\u2717 Not quite') + ' \u00b7 </span>')); }, 450);
         var last = container.querySelector(".flash-ref") || verdict;
-        if (last) setTimeout(function () { var why = container.querySelector(".verdict-why"), tgt = why || last, over = tgt.getBoundingClientRect().bottom - (window.innerHeight - 112), cd = container.querySelector(".card"), hd = container.querySelector(".mb-head"), room = cd ? cd.getBoundingClientRect().top - ((hd ? hd.getBoundingClientRect().bottom : 66) + 10) : over; if (!why) over = Math.min(over, Math.max(0, room)); if (over > 0) window.scrollBy({ top: over, behavior: "smooth" }); }, 30);
+        if (last) setTimeout(function () { var why = container.querySelector(".verdict-why"), tgt = why || last, over = tgt.getBoundingClientRect().bottom - (window.innerHeight - 112), cd = container.querySelector(".card"), hd = container.querySelector(".mb-head"), room = cd ? cd.getBoundingClientRect().top - ((hd ? hd.getBoundingClientRect().bottom : 66) + 10) : over; over = Math.min(over, Math.max(0, room)); if (over > 0) window.scrollBy({ top: over, behavior: "smooth" }); }, 30);
       }
 
       function showResults() {
@@ -181,9 +181,9 @@
         var msg = pct >= 90 ? "Outstanding. You know this set cold." : pct >= 75 ? "Solid. Drill the few misses and it sticks." :
                   pct >= 60 ? "Passing. Review the misses below, then go again." : "Needs work. Drill the misses, then take another quiz.";
         container.innerHTML =
-          '<div class="ring-wrap"><div class="ring ' + (pct >= 75 ? 'good' : pct >= 50 ? 'mid' : 'bad') + '" style="--p:' + pct + ';"><div class="ring-in">' + pct + '%</div></div><small>' + score + " of " + questions.length + ' correct</small></div>' +
+          '<div class="ring-wrap"><div class="ring ' + (pct >= 75 ? 'good' : pct >= 60 ? 'mid' : 'bad') + '" style="--p:' + pct + ';"><div class="ring-in">' + pct + '%</div></div><small>' + score + " of " + questions.length + ' correct</small></div>' +
           '<div class="done-h">' + msg.split(". ")[0].replace(/\.$/, "") + '</div><p class="center muted" style="margin-top:0;">' + (msg.split(". ").slice(1).join(". ") || "Run it again to lock it in.") + '</p>' + dots +
-          (misses.length ? '<button class="btn gold lg" id="drillQ"><svg class=ic aria-hidden=true><use href=#i-refresh></use></svg> Drill your ' + misses.length + ' miss' + (misses.length === 1 ? '' : 'es') + ' now</button>' : '') +
+          (misses.length ? '<button class="btn gold lg" id="drillQ"><svg class=ic aria-hidden=true><use href=#i-refresh></use></svg> Drill ' + (misses.length === 1 ? 'this card' : 'these ' + misses.length + ' cards') + ' now</button>' : '') +
           weakHtml + missHtml + '<div class="spacer"></div><button class="btn ' + (misses.length ? 'ghost' : 'gold') + ' lg" id="again">Try another quiz</button>' +
           '<div class="spacer"></div>' +
           '<button class="home-link" id="home">Back to Home</button>';

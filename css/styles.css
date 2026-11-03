@@ -1182,3 +1182,6 @@ body.session #reveal, body.session .grade-row .btn, body.session #rubricDone, bo
 .row.cmd-row { border: none !important; background: none !important; padding: 6px 0 !important; }
 /* a perfect score glows */
 .ring[style*="--p:100;"] { box-shadow: 0 0 0 4px rgba(92,184,92,.18), 0 0 28px rgba(92,184,92,.35); }
+
+/* ---------- v3.75 polish round 47 ---------- */
+#tChips .seg5 { padding: 0 12px 12px; }

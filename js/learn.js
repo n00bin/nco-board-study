@@ -244,15 +244,15 @@
         
         var line = (score == null) ? "Practice done. Nice work." : (score === total ? "Every card. Nice work." : "The ones you missed come back sooner in your reviews.");
         container.innerHTML =
-          '<div class="ring-wrap"><div class="ring ' + (p >= 75 ? 'good' : p >= 50 ? 'mid' : 'bad') + '" style="--p:' + p + ';"><div class="ring-in">' + (score == null ? '&#10003;' : p + '%') + '</div></div>' + (score == null ? '' : '<small>' + score + ' of ' + total + (selfGraded ? ' on the first try' : ' right in practice') + '</small>') + '</div>' +
+          '<div class="ring-wrap"><div class="ring ' + (p >= 75 ? 'good' : p >= 60 ? 'mid' : 'bad') + '" style="--p:' + p + ';"><div class="ring-in">' + (score == null ? '&#10003;' : p + '%') + '</div></div>' + (score == null ? '' : '<small>' + score + ' of ' + total + (selfGraded ? ' on the first try' : ' right in practice') + '</small>') + '</div>' +
           '<div class="done-h">Lesson complete</div><p class="center muted" style="margin:0 0 6px;">' + esc(lesson.title) + '</p>' +
           (function () { var tr = tracks.filter(function (t) { return t.lessons.indexOf(lesson) >= 0; })[0]; if (!tr) return ''; var d = doneCount(tr.lessons);
             return '<div class="track-prog"><span>' + esc(tr.title.replace(/:.*$/, "")) + ': ' + d + ' of ' + tr.lessons.length + (tr.lessons.length === 1 ? ' lesson' : ' lessons') + '</span><div class="bar"><span style="width:' + Math.round(100 * d / tr.lessons.length) + '%"></span></div></div>'; })() +
           '<p class="center muted">' + line + '</p><div class="spacer"></div>' + (sessN = (window.App && App.sessionNextHtml ? App.sessionNextHtml() : '')) +
-          (nextLesson && sessN ? '<button class="home-link" id="next" style="display:block;margin:0 auto 10px;">Or start the next lesson</button>' : '') +
+
           (nextLesson && !sessN ? '<button class="btn gold lg" id="next">Next lesson <svg class=ic aria-hidden=true><use href=#i-chev></use></svg></button><div class="muted center" style="font-size:.85rem;margin:6px 0 4px;">Up next: ' + esc(String(nextLesson.title).replace(/^.*?:\s*/, "")) + '</div><div class="spacer"></div>' : '') +
           '<button class="home-link" id="path">' + (sessN ? 'Back to Home' : 'Back to Learn') + '</button>';
-        if (nextLesson) container.querySelector("#next").addEventListener("click", function () { App.go("#/lesson/" + nextLesson.id); });
+        if (nextLesson && container.querySelector("#next")) container.querySelector("#next").addEventListener("click", function () { App.go("#/lesson/" + nextLesson.id); });
         container.querySelector("#path").addEventListener("click", function () { App.go(sessN ? "#/" : "#/learn"); });
       }
 

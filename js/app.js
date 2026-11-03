@@ -685,7 +685,7 @@
         [["SGT", "SGT (E-5)"], ["SSG", "SSG (E-6)"], ["BOTH", "Not sure"]].map(function (r) { return '<button class="chip' + ((s.boardFor || "BOTH") === r[0] ? ' on' : '') + '" data-r="' + r[0] + '">' + r[1] + '</button>'; }).join("") +
       '</div></div>' +
       '<h2 class="section">Your MOS</h2><div class="card" id="mosCard"><label class="lbl" for="mosIn" style="margin-top:0;">MOS code</label>' +
-        '<input class="input" id="mosIn" maxlength="3" autocapitalize="characters" placeholder="e.g. 25B" value="' + escAttr(s.mos || "") + '" style="max-width:140px;text-transform:uppercase;">' + (s.mos ? '' : '<div class="muted" style="font-size:.85rem;margin-top:6px;">Shows this month\u2019s SGT and SSG cutoff on Points.</div>') +
+        '<input class="input" id="mosIn" maxlength="3" autocapitalize="characters" placeholder="e.g. 25B" value="' + escAttr(s.mos || "") + '" style="max-width:140px;text-transform:uppercase;">' + 
         '<div class="chip-row seg2" id="compChips" style="margin-top:10px;"><button class="chip' + (s.comp !== "agr" ? ' on' : '') + '" data-c="ac">Active Duty</button><button class="chip' + (s.comp === "agr" ? ' on' : '') + '" data-c="agr">AGR</button></div>' +
         '<div class="muted" id="mosCut" style="font-size:.85rem;margin-top:8px;">Fills in this month&#39;s cutoff on the Points worksheet.</div></div>' +
       '<h2 class="section">Study reminders</h2><div class="card"><div class="muted" style="font-size:.85rem;">Add a daily study reminder' + (s.boardDate ? ' (until your board)' : '') + ' and a weekly "sponsor board" reminder to your phone\'s calendar.</div>' +
@@ -844,8 +844,8 @@
       '<div class="card"><div class="ttl"><b>Android (Chrome):</b> Chrome menu &#8942; &#8594; Install app (or Add to Home screen). Or use More &#8594; Install the app.</div>' +
         '<div class="ttl" style="margin-top:8px;"><b>iPhone (Safari):</b> open the link in Safari, tap Share <svg class=ic aria-hidden=true><use href=#i-upload></use></svg>, then Add to Home Screen, then Add. Open it from the new icon; it works offline after the first visit.</div></div>' +
       '<h2 class="section">Spot an error?</h2>' +
-      '<div class="card"><div class="muted">Tap the <svg class=ic aria-hidden=true><use href=#i-flag></use></svg> flag on any card. You can send the report from your phone (text, email, chat) or copy it. No account needed.</div></div>' +
-      '<a class="btn ghost lg" href="https://github.com/' + REPO + '/issues/new" target="_blank" rel="noopener">Report it on GitHub</a><div class="muted center" style="font-size:.85rem;margin-top:4px;">Needs a free GitHub account.</div>';
+      '<div class="card"><div class="muted">Tap the <svg class=ic aria-hidden=true><use href=#i-flag></use></svg> flag on any card. Send the report by text, email or chat, or copy it. No account needed. On GitHub instead? That needs a free account.</div></div>' +
+      '<a class="home-link" style="display:block;text-align:center;" href="https://github.com/' + REPO + '/issues/new" target="_blank" rel="noopener">Report it on GitHub</a>';
     mount.querySelector("#share").addEventListener("click", function () {
       if (navigator.share) navigator.share({ title: "NCO Board Study Guide", text: "Study for the E-5/E-6 board:", url: APP_URL }).catch(function () {});
       else copyLink();
@@ -971,9 +971,9 @@
 
   // ---- Board Day content ----
   var UNIFORM_CHECKS = [
+    { id: "u0", t: "Confirm WHICH uniform your board memo calls for (often the AGSU) and inspect that one" },
     { id: "u1", t: "Haircut neat & tapered within AR 670-1; clean-shaven (mustache OK); sideburns trimmed above the ear-canal opening (AD 2026-09). Beard only with a signed medical ETP or approved religious accommodation, and carry the signed copy (AD 2025-13)" },
     { id: "u1b", t: "Grooming per AD 2025-18: men's hair at most 2 in on top and 1 in on the sides; buns at most 3 in; nails square or rounded (women at most 1/4 in, men not past the fingertip); no lipstick; men wear no earrings, women plain matched studs only" },
-    { id: "u0", t: "Confirm WHICH uniform your board memo calls for (often the AGSU) and inspect that one" },
     { id: "u2", t: "Headgear per the memo, shaped and worn correctly: with the AGSU, the garrison cap (never the black beret, AD 2025-18); with the OCP, the patrol cap" },
     { id: "u3", t: "Nametapes (US ARMY / last name) correct, even, and properly placed" },
     { id: "u4", t: "Rank / grade insignia centered and correct" },
@@ -1163,7 +1163,7 @@
         if (total < 8 && V.level !== "work") V = { level: "work", title: "Good practice", msg: pct + "% on a short board. Board-ready takes a full board of 10 or more questions." };
         var line = (V.msg.indexOf(V.title + ".") === 0 ? V.msg.slice(V.title.length + 1).trim() : V.msg).replace(/^(Your|Their) answers scored \d+%\. /, "").replace(/^A real board also grades bearing and the situational questions, so /, "").replace(/^A board doesn\'t pass you on a percentage: it wants confident, complete answers\. /, "").replace(/^./, function (ch) { return ch.toUpperCase(); });
         return '<div class="done-h">' + esc(V.title) + '</div><p class="center muted" style="margin-top:0;">' + esc(line) + '</p>' +
-          (ids.length ? (Store.setChainRole("last-misses", ids.join(",")), '<a class="btn gold lg" href="#/flash/misses"><svg class=ic aria-hidden=true><use href=#i-refresh></use></svg> Drill your ' + ids.length + ' miss' + (ids.length === 1 ? '' : 'es') + ' now</a>') : '<a class="btn gold lg" href="#/board/core">Run a Mock Board on your own</a>');
+          (ids.length ? (Store.setChainRole("last-misses", ids.join(",")), '<a class="btn gold lg" href="#/flash/misses"><svg class=ic aria-hidden=true><use href=#i-refresh></use></svg> Drill ' + (ids.length === 1 ? 'this card' : 'these ' + ids.length + ' cards') + ' now</a>') : '<a class="btn gold lg" href="#/board/core">Run a Mock Board on your own</a>');
       })() +
       (selfPct != null ? '<div class="card"><div class="flash-tag">You vs. your sponsor</div><div class="muted">Your own Mock Boards average <b>' + selfPct + '%</b>. Your sponsor scored you <b>' + pct + '%</b>. ' +
         (selfPct - pct >= 10 ? 'You grade yourself about ' + (selfPct - pct) + ' points higher than your sponsor does. Next time, only give yourself a key point if you said it out loud, clearly.' : selfPct - pct <= -10 ? 'Your sponsor scored you higher than you score yourself. You know more than you think.' : 'Your own grading is close to your sponsor&#39;s. You can trust your practice scores.') + '</div></div>' : '') +
