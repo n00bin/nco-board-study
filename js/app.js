@@ -274,8 +274,8 @@
         if (lp && lp.next) items.push('<a href="#/lesson/' + escAttr(lp.next.id) + '"><svg class=ic aria-hidden=true><use href=#i-book></use></svg> Lesson: ' + esc(lp.next.title.replace(/^.*:\s*/, "")) + '</a>');
         if (dueN > 0) items.push('<a href="#/flash/due"><svg class=ic aria-hidden=true><use href=#i-refresh></use></svg> Review ' + Math.min(dueN, 20) + (dueN > 20 ? ' of ' + dueN : '') + ' card' + (dueN > 1 ? "s" : "") + ' due today</a>');
         if (unseen) { var pp = pacePlan(unseen, days), tl = pp.triage ? topLeft() : 0;
-          if (pp.triage && tl) items.push('<a href="#/flash/top"><svg class=ic aria-hidden=true><use href=#i-target></use></svg> Learn ' + pp.pace + ' new cards from the Top 100 first (' + tl + ' left)</a>');
-          else items.push('<a href="#/flash/core"><svg class=ic aria-hidden=true><use href=#i-star></use></svg> ' + (pp.pace ? 'Learn ' + pp.pace + ' new Board Core cards' : 'New Board Core cards') + ' (' + unseen + ' left)</a>'); }
+          if (pp.triage && tl) items.push('<a href="#/flash/top/' + pp.pace + '"><svg class=ic aria-hidden=true><use href=#i-target></use></svg> Learn ' + pp.pace + ' new cards from the Top 100 first (' + tl + ' left)</a>');
+          else items.push('<a href="#/flash/core' + (pp.pace ? '/' + pp.pace : '') + '"><svg class=ic aria-hidden=true><use href=#i-star></use></svg> ' + (pp.pace ? 'Learn ' + pp.pace + ' new Board Core cards' : 'New Board Core cards') + ' (' + unseen + ' left)</a>'); }
       }
       if (leechN > 0) items.push('<a href="#/flash/leeches"><svg class=ic aria-hidden=true><use href=#i-alert></use></svg> Practice ' + leechN + ' card' + (leechN > 1 ? "s" : "") + ' you keep missing</a>');
       items.push('<a href="#/board/core"><svg class=ic aria-hidden=true><use href=#i-users></use></svg> One Mock Board (the 5-minute one is fine on a busy day)</a>');
@@ -519,8 +519,13 @@
   function screenTrack(id) { var TT = { board101: "Board 101", fundamentals: "Fundamentals", core: "Board Core", sit: "Scenarios", personal: "Personal Questions" }; var p = STUDY.pubsById[id]; setTitle(TT[id] || (p ? p.code : "Learn"), true); Learn.track(mount, id); }
   function screenLesson(id) { var tr = String(id).split("-")[0]; var TT = { board101: "Board 101", fundamentals: "Fundamentals", core: "Board Core", sit: "Scenarios", personal: "Personal Questions" }; var p = STUDY.pubsById[tr]; setTitle(TT[tr] || (p ? p.code : "Lesson"), true); Learn.lesson(mount, id); }
 
-  function screenFlash(deck) {
+  function screenFlash(deck, newN) {
     setTitle("Flashcards", true);
+    var nN = parseInt(newN, 10);
+    if (nN > 0) {   // from today's plan: exactly the new cards it promised
+      var fresh = cardsForDeck(deck).filter(function (c) { var r = Store.recOf(c.id); return !r || !(r.seen > 0); });
+      if (fresh.length) return Flashcards.render(mount, fresh, deckTitle(deck) + " \u2022 new", { noCap: true, max: nN });
+    }
     // Top 100 and Final-Week Review are meant to be done whole: no 30-new-card session cap
     Flashcards.render(mount, cardsForDeck(deck), deckTitle(deck), (deck === "top" || deck === "final" || deck === "ten") ? { noCap: true } : deck === "due" ? { max: 20 } : undefined);
   }
@@ -619,7 +624,7 @@
         var div = (!c._w && nWhole && !divDone) ? (divDone = true, '<div class="lg-h" style="margin-top:14px;">Inside longer words</div>') : '';
         return div + '<a class="card" style="display:block;text-decoration:none;color:inherit;" href="#/read/' + escAttr(c.pub) + '/' + escAttr(c.id) + '"><div class="flash-tag tag-row">' + esc(p ? p.code : "") + (c.topic ? " • " + esc(c.topic) : "") + (c.core ? '<span class="pill core-pill inline">Core</span>' : '') + '</div>' +
           '<div style="font-weight:600;margin-bottom:6px;">' + hl(c.q) + '</div><div class="muted">' + hl(c.a) + '</div><div class="open-hint">Open in ' + esc(p ? p.code : "its subject") + ' <svg class=ic aria-hidden=true><use href=#i-chev></use></svg></div></a>';
-      }).join("") + '<div class="muted center end-line">' + (all.length > hits.length ? 'Showing the top ' + hits.length + '. Type more to narrow it down.' : 'End of results') + '</div>' + (hidePart ? '<button class="btn ghost" id="showPart">Show ' + nPart + ' more inside longer words</button>' : '') : '<div class="empty-state" style="padding:28px 0 12px;"><svg class=ic aria-hidden=true><use href=#i-search></use></svg><div class="t">No matches for \u201c' + esc(input.value.trim()) + '\u201d</div><div class="muted" style="margin-bottom:6px;">Try a shorter word, or one of these:</div></div>' + tryChips();
+      }).join("") + '<div class="muted center end-line">' + (hidePart ? '<button class="btn ghost" id="showPart">Show ' + nPart + ' more inside longer words</button></div>' : (all.length > hits.length ? 'Showing the top ' + hits.length + '. Type more to narrow it down.' : 'End of results') + '</div>') : '<div class="empty-state" style="padding:28px 0 12px;"><svg class=ic aria-hidden=true><use href=#i-search></use></svg><div class="t">No matches for \u201c' + esc(input.value.trim()) + '\u201d</div><div class="muted" style="margin-bottom:6px;">Try a shorter word, or one of these:</div></div>' + tryChips();
     }
     try { var q0 = sessionStorage.getItem("ncob-q"); if (q0) input.value = q0; } catch (e) {}
     function tryChips() { return '<div class="chip-row">' + ["SHARP", "AFT", "hazing", "counseling", "NCOER", "Article 15", "waist-to-height", "kratom", "land navigation", "Army Values"].map(function (w) { return '<button class="chip" data-try="' + w + '">' + w + '</button>'; }).join("") + '</div>'; }
@@ -680,7 +685,7 @@
       '<h2 class="section">Mock Board timer</h2><div class="muted" style="font-size:.85rem;margin:0 4px 8px;">Seconds you get to answer out loud before the answer is shown.</div><div class="chip-row seg5" id="timerChips">' +
         timers.map(function (t) { return '<button class="chip' + (t === s.timer ? ' on' : '') + '" data-t="' + t + '">' + (t === 0 ? 'Off' : t + 's') + '</button>'; }).join("") +
       '</div>' +
-      '<h2 class="section">Drive Mode answer pause</h2><div class="muted" style="font-size:.85rem;margin:0 4px 8px;">How long Drive Mode waits for you to answer before it reads the answer.</div><div class="chip-row" id="gapChips">' +
+      '<h2 class="section">Drive Mode answer pause</h2><div class="muted" style="font-size:.85rem;margin:0 4px 8px;">How long Drive Mode waits for you to answer before it reads the answer.</div><div class="chip-row seg4" id="gapChips">' +
         [3, 5, 8, 12].map(function (t) { return '<button class="chip' + (t === s.driveGap ? ' on' : '') + '" data-g="' + t + '">' + t + 's</button>'; }).join("") +
       '</div>';
     if (Speech.supported())
@@ -1189,7 +1194,7 @@
     var b1 = window.Learn && Learn.trackDone && Learn.trackDone("board101"); if (b1) PROG.board101 = b1;
     var row = function (b) {
       var on = !!got[b.id], when = on && got[b.id] > 946684800000 ? ' • ' + niceDate(got[b.id]) : '';
-      return '<div class="li"' + (on ? '' : ' style="opacity:.6;"') + '><span class="li-ic" aria-hidden="true">' + (b.ic || "<svg class=ic aria-hidden=true><use href=#i-medal></use></svg>") + '</span><span class="grow"><span class="t">' + esc(b.t) + '</span><span class="s">' + esc(!on && PROG[b.id] && PROG[b.id][1] > PROG[b.id][0] ? (PROG[b.id][1] - PROG[b.id][0]) + ' to go' : b.d) + when + '</span></span>' + (!on && PROG[b.id] ? '<span class="pill">' + (/ready/.test(b.id) ? 'at ' + Math.min(PROG[b.id][0], PROG[b.id][1]) + '%' : Math.min(PROG[b.id][0], PROG[b.id][1]) + ' / ' + PROG[b.id][1]) + '</span>' : '') + '</div>';
+      return '<div class="li"' + (on ? '' : ' style="opacity:.6;"') + '><span class="li-ic" aria-hidden="true">' + (b.ic || "<svg class=ic aria-hidden=true><use href=#i-medal></use></svg>") + '</span><span class="grow"><span class="t">' + esc(b.t) + '</span><span class="s">' + esc(!on && PROG[b.id] && PROG[b.id][1] > PROG[b.id][0] ? (PROG[b.id][1] - PROG[b.id][0]) + (/ready/.test(b.id) ? ' points to go' : ' to go') : b.d) + when + '</span></span>' + (!on && PROG[b.id] ? '<span class="pill">' + (/ready/.test(b.id) ? 'at ' + Math.min(PROG[b.id][0], PROG[b.id][1]) + '%' : Math.min(PROG[b.id][0], PROG[b.id][1]) + ' / ' + PROG[b.id][1]) + '</span>' : '') + '</div>';
     };
     var earned = BADGES.filter(function (b) { return got[b.id]; }), left = BADGES.filter(function (b) { return !got[b.id]; });
     var medal = function (b) { var when = got[b.id] > 946684800000 ? niceDate(got[b.id]) : 'Earned'; return '<div class="medal"><span class="medal-ic">' + (b.ic || '<svg class=ic aria-hidden=true><use href=#i-medal></use></svg>') + '</span><b>' + esc(b.t) + '</b><small>' + when + '</small></div>'; };
@@ -1358,7 +1363,7 @@
       var on = !!checks[u.id];
       html += '<button class="row check' + (on ? " checked" : "") + '" data-id="' + u.id + '" role="checkbox" aria-checked="' + (on ? "true" : "false") + '"><div class="checkbox">' + (on ? "&#10003;" : "") + '</div><div class="grow"><div class="ttl">' + checkText(u.t) + '</div></div></button>';
     });
-    html += '<div class="spacer"></div><a class="btn ghost" href="#/flash/pam670-1">Study uniform placement</a>' +
+    html += '<div class="spacer"></div>' + group("", [li("#/flash/pam670-1", "<svg class=ic aria-hidden=true><use href=#i-shirt></use></svg>", "Study uniform placement", "Flashcards from DA PAM 670-1")]) +
       (UNIFORM_CHECKS.some(function (u) { return checks[u.id]; }) ? '<div class="spacer"></div><button class="home-link danger-link" id="clear">Clear all checkmarks</button>' : '');
     var doneN = UNIFORM_CHECKS.filter(function (u) { return checks[u.id]; }).length;
     html = '<div class="check-prog"><b>' + doneN + ' of ' + UNIFORM_CHECKS.length + '</b> checked<div class="bar"><span style="width:' + Math.round(100 * doneN / UNIFORM_CHECKS.length) + '%"></span></div></div>' + html;
@@ -1531,7 +1536,7 @@
       var on = !!checks[u.id];
       html += '<button class="row check' + (on ? " checked" : "") + '" data-id="' + u.id + '" role="checkbox" aria-checked="' + (on ? "true" : "false") + '"><div class="checkbox">' + (on ? "&#10003;" : "") + '</div><div class="grow"><div class="ttl">' + checkText(u.t) + '</div></div></button>';
     });
-    html += '<div class="spacer"></div><a class="btn ghost" href="#/pub/boardskills">Board Know-How cards</a>';
+    html += '<div class="spacer"></div>' + group("", [li("#/pub/boardskills", "<svg class=ic aria-hidden=true><use href=#i-cards></use></svg>", "Board Know-How cards", "Records, the packet, and board-day basics")]);
     var doneN = RECORD_CHECKS.filter(function (u) { return checks[u.id]; }).length;
     html = '<div class="check-prog"><b>' + doneN + ' of ' + RECORD_CHECKS.length + '</b> checked<div class="bar"><span style="width:' + Math.round(100 * doneN / RECORD_CHECKS.length) + '%"></span></div></div>' + html;
     mount.innerHTML = groupChecks(html);
@@ -1715,7 +1720,7 @@
     if (head === "pub") return screenPub(parts[1]), tab(curTab === "search" ? "search" : "browse");
     if (head === "read") return screenRead(parts[1], parts[2]), tab(curTab === "search" ? "search" : "browse");
     if (head === "pick") return screenPick(parts[1]), modeTab();
-    if (head === "flash") return screenFlash(parts[1]), modeTab();
+    if (head === "flash") return screenFlash(parts[1], parts[2]), modeTab();
     if (head === "type") return screenType(parts[1]), modeTab();
     if (head === "quiz") return screenQuiz(parts[1]), modeTab();
     if (head === "board") return screenBoard(parts[1]), modeTab();

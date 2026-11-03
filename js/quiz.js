@@ -151,7 +151,7 @@
         }
         if (sb) sb.replaceWith(nav); else container.appendChild(nav);
         var last = container.querySelector(".flash-ref") || verdict;
-        if (last) setTimeout(function () { var why = container.querySelector(".verdict-why"), tgt = why || last, over = tgt.getBoundingClientRect().bottom - (window.innerHeight - 112), cd = container.querySelector(".card"), hd = container.querySelector(".mb-head"), room = cd ? cd.getBoundingClientRect().top - ((hd ? hd.getBoundingClientRect().bottom : 66) + 10) : over; if (!why) over = Math.min(over, Math.max(0, room)); if (over > 0) window.scrollBy({ top: over, behavior: "smooth" }); }, 30);
+        if (last) setTimeout(function () { var why = container.querySelector(".verdict-why"), tgt = why || last, over = tgt.getBoundingClientRect().bottom - (window.innerHeight - 112), cd = container.querySelector(".card"), hd = container.querySelector(".mb-head"), room = cd ? cd.getBoundingClientRect().top - ((hd ? hd.getBoundingClientRect().bottom : 66) + 10) : over; if (!why) { var vb = verdict ? verdict.getBoundingClientRect().bottom - (window.innerHeight - 112) : 0; over = Math.max(Math.min(over, Math.max(0, room)), vb); } if (over > 0) window.scrollBy({ top: over, behavior: "smooth" }); }, 30);
       }
 
       function showResults() {
@@ -165,6 +165,7 @@
         var nOfK = {}; questions.forEach(function (it) { var c = it.card, p = window.STUDY && STUDY.pubsById[c.pub]; var k = c.label || (p ? p.code + (p.title && p.title !== p.code ? " \u2014 " + p.title : "") : c.pub || "Your cards"); nOfK[k] = (nOfK[k] || 0) + 1; });
         var byPub = {}, pubOfK = {}; misses.forEach(function (c) { var p = window.STUDY && STUDY.pubsById[c.pub]; var k = c.label || (p ? p.code + (p.title && p.title !== p.code ? " \u2014 " + p.title : "") : c.pub || "Your cards"); byPub[k] = (byPub[k] || 0) + 1; pubOfK[k] = c.pub; });
         var weakK = Object.keys(byPub).sort(function (x, y) { return byPub[y] - byPub[x]; }).slice(0, 4);
+        if (weakK.every(function (k) { return byPub[k] < 2; })) weakK = [];   // one miss each: the miss list says it better
         var weakHtml = weakK.length ? '<h2 class="section">Weakest subjects</h2><div class="lg">' + weakK.map(function (k) { return '<a class="li" href="#/flash/' + encodeURIComponent(pubOfK[k] || "") + '"><span class="grow">' + (function () { var x = k.split(" \u2014 "); return '<span class="t" style="font-weight:700;">' + esc(x[0]) + '</span>' + (x.length > 1 ? '<span class="s">' + esc(x.slice(1).join(" \u2014 ")) + '</span>' : ''); })() + '<span class="s badge-bad">Missed ' + byPub[k] + ' of ' + (nOfK[k] || byPub[k]) + '</span></span><span class="chev" aria-hidden="true"><svg class=ic aria-hidden=true><use href=#i-chev></use></svg></span></a>'; }).join("") + '</div>' : '';
         var msg = pct >= 90 ? "Outstanding. You know this set cold." : pct >= 75 ? "Solid. Drill the few misses and it sticks." :
                   pct >= 60 ? "Passing. Review the misses below, then go again." : "Needs work. Drill the misses, then take another quiz.";

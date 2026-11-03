@@ -1109,3 +1109,11 @@ details.hero-how > summary { font-size: .85rem; font-weight: 700; cursor: pointe
 .timer-bar span { background: var(--gold) !important; }
 /* every fold summary is white */
 details.more-changes > summary { color: var(--text) !important; }
+
+/* ---------- v3.62 polish round 34 ---------- */
+.chip-row.seg4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.chip-row.seg4 .chip { text-align: center; padding-left: 0; padding-right: 0; }
+/* stacked big buttons share one size */
+.btn.ghost.lg, label.btn.ghost.lg { min-height: 64px !important; font-size: 1.15rem !important; }
+/* the search "more" button sits inside the end line */
+.end-line .btn { margin-top: 4px; }
