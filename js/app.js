@@ -393,7 +393,7 @@
     var freshBadges = checkBadges(coreIds, rs);
     var html = '<div class="hero">' +
         '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;"><div style="min-width:0;">' + head + '</div>' +
-          (streak ? '' : '<!--') + '<div style="text-align:right;flex:none;"><div style="font-size:1.6rem;font-weight:800;white-space:nowrap;"><svg class=ic aria-hidden=true><use href=#i-flame></use></svg> ' + streak + '</div><div class="sub" style="white-space:nowrap;">day streak</div>' + (Store.saverUsed() && Date.now() - Store.saverUsed() < 2 * 86400000 ? '<div class="sub" style="font-size:.85rem;">1 day forgiven</div>' : '') + '</div>' + (streak ? '' : '-->') + '</div>' +
+          (streak ? '' : '<!--') + '<div style="text-align:right;flex:none;"><div style="font-size:1.6rem;font-weight:800;white-space:nowrap;"><svg class=ic aria-hidden=true><use href=#i-flame></use></svg> ' + streak + '</div><div class="sub" style="white-space:nowrap;">day streak</div>' + (Store.saverUsed() && Date.now() - Store.saverUsed() < 2 * 86400000 ? '<div class="sub" style="font-size:.85rem;">1 missed day forgiven</div>' : '') + '</div>' + (streak ? '' : '-->') + '</div>' +
         (calm || recommended || notRec ? '' : (rs.seen === 0 && !streak ? '' : '<div class="bar"><span style="width:' + rs.ready + '%"></span></div>') +
           '<div class="sub" style="margin-top:6px;font-size:.85rem;">' + (dToB != null && dToB > 7 ? 'Board in ' + dToB + ' days \u2022 ' : '') + (daily.count >= dayTarget ? 'Today\u2019s cards done &#10003; The rest of the plan is extra.' : 'Today: ' + daily.count + ' of ' + dayTarget + ' cards') + '</div>' +
           '<details class="hero-more"><summary class="sub">' + (rs.weak.length ? 'Work on: ' + esc(rs.weak[0]) + (rs.weak.length > 1 ? ', plus ' + (rs.weak.length - 1) + ' more' : '') : 'How your score works') + '</summary>' +
@@ -499,13 +499,13 @@
       html += '<div class="muted" style="font-size:.85rem;margin:0 4px 10px;">Hands-free: the app reads each question, pauses for you to answer aloud, then reads the answer. Great for PT or the drive in — keep the screen on.</div>';
     var quizOk = function (c) { return !c.flashOnly && ((c.choices && c.choices.length >= 2) || (c.a && String(c.a).length <= 90)); };
     var cnt = function (cs) { var n = mode === "quiz" ? cs.filter(quizOk).length : mode === "drive" ? (Store.buildQueue(cs).length || cs.length) : cs.length; return n ? n + (mode === "quiz" ? " questions" : mode === "drive" ? " cards" : " cards") : 0; };
-    html += '<div class="muted" style="font-size:.85rem;margin:0 4px 8px;">' + (mode === "quiz" ? "Numbers are quiz questions (cards with a short answer)." : mode === "drive" ? "Numbers are cards due or new for you today." : "Numbers are cards in each set.") + '</div>';
+    html += '<div class="muted" style="font-size:.85rem;margin:0 4px 8px;">' + (mode === "quiz" ? "Numbers are quiz questions (cards with a short answer)." : mode === "drive" ? "Numbers are cards in each set." : "Numbers are cards in each set.") + '</div>';
     html += '<div class="lg pick-top">' + liDeck(route + "core", "<svg class=ic aria-hidden=true><use href=#i-star></use></svg> Board Core", "Recommended: what boards ask most", cnt(cardsForDeck("core")), "core") +
       liDeck(route + "all", "Everything", "All subjects, including deep detail", cnt(cardsForDeck("all")), "all") + '</div>';
     var pcats = {};
     STUDY.pubs.forEach(function (p) {
       var n = cnt(cardsForDeck(p.id));
-      if (!n) return;
+      if (!n || (mode === "board" && cardsForDeck(p.id).length < 3)) return;
       (pcats[p.cat] = pcats[p.cat] || []).push(liDeck(route + p.id, esc(p.code), p.code === p.title ? "" : esc(p.title), n, p.id));
     });
     html += '<details class="set-fold"><summary>Or pick one subject</summary>';
@@ -574,7 +574,7 @@
         (window.speechSynthesis ? '<label class="switch li"><input type="checkbox" id="listenOnly"' + (Store.settings().listenOnly ? " checked" : "") + '> <span class="grow"><span class="t">Listen-only</span><span class="s">Hear each question, don\u2019t read it</span></span></label>' : '') +
         '<label class="switch li"><input type="checkbox" id="sponsorMode"> <span class="grow"><span class="t">Sponsor holds this phone</span><span class="s">They read, see the answer, and grade you</span></span></label>' +
       '</div>' +
-      '<button class="btn gold lg" data-n="10"><svg class=ic aria-hidden=true><use href=#i-play></use></svg> Start a 10-question board</button>' +
+      '<button class="btn gold lg" data-n="10"><svg class=ic aria-hidden=true><use href=#i-play></use></svg> Start a ' + Math.min(10, cards.length) + '-question board</button>' +
       '<div class="muted center" style="font-size:.85rem;margin:6px 0 10px;" id="lenNote"></div>' +
       '<div class="lg-h" style="margin-top:2px;">Or start another length</div><div class="len-row"><button class="chip" data-n="5" data-quick="1"><b>5</b><small>quick</small></button><button class="chip" data-n="15"><b>15</b><small>longer</small></button><button class="chip" data-n="25"><b>25</b><small>longest</small></button></div>' +
       (/^(core|top|final)$/.test(deck) ? '<details class="set-fold" style="margin-top:14px;"><summary>Send or print a board for your sponsor</summary>' +
@@ -971,7 +971,7 @@
 
   // ---- Board Day content ----
   var UNIFORM_CHECKS = [
-    { id: "u0", t: "Confirm WHICH uniform your board memo calls for (often the AGSU) and inspect that one" },
+    { id: "u0", t: "Confirm which uniform your board memo calls for (often the AGSU) and inspect that one" },
     { id: "u1", t: "Haircut neat & tapered within AR 670-1; clean-shaven (mustache OK); sideburns trimmed above the ear-canal opening (AD 2026-09). Beard only with a signed medical ETP or approved religious accommodation, and carry the signed copy (AD 2025-13)" },
     { id: "u1b", t: "Grooming per AD 2025-18: men's hair at most 2 in on top and 1 in on the sides; buns at most 3 in; nails square or rounded (women at most 1/4 in, men not past the fingertip); no lipstick; men wear no earrings, women plain matched studs only" },
     { id: "u2", t: "Headgear per the memo, shaped and worn correctly: with the AGSU, the garrison cap (never the black beret, AD 2025-18); with the OCP, the patrol cap" },
@@ -1212,7 +1212,7 @@
     PROG["sponsor-board"] = [fB.sponsored ? 1 : 0, 1];
     var row = function (b) {
       var on = !!got[b.id], when = on && got[b.id] > 946684800000 ? ' • ' + niceDate(got[b.id]) : '';
-      return '<div class="li"' + (on ? '' : ' style="opacity:.6;"') + '><span class="li-ic" aria-hidden="true">' + (b.ic || "<svg class=ic aria-hidden=true><use href=#i-medal></use></svg>") + '</span><span class="grow"><span class="t">' + esc(b.t) + '</span><span class="s">' + esc(!on && PROG[b.id] && PROG[b.id][1] > PROG[b.id][0] ? (PROG[b.id][1] - PROG[b.id][0]) + (/ready/.test(b.id) ? ' points to go' : ' to go') : b.d) + when + '</span></span>' + (!on && PROG[b.id] ? '<span class="pill">' + (/ready/.test(b.id) ? 'at ' + Math.min(PROG[b.id][0], PROG[b.id][1]) + '%' : Math.min(PROG[b.id][0], PROG[b.id][1]) + ' / ' + PROG[b.id][1]) + '</span>' : '') + '</div>';
+      return '<div class="li"' + (on ? '' : ' style="opacity:.6;"') + '><span class="li-ic" aria-hidden="true">' + (b.ic || "<svg class=ic aria-hidden=true><use href=#i-medal></use></svg>") + '</span><span class="grow"><span class="t">' + esc(b.t) + '</span><span class="s">' + esc(!on && PROG[b.id] && PROG[b.id][1] > PROG[b.id][0] ? (PROG[b.id][1] - PROG[b.id][0]) + (/ready/.test(b.id) ? '% to go' : ' to go') : b.d) + when + '</span></span>' + (!on && PROG[b.id] ? '<span class="pill">' + (/ready/.test(b.id) ? 'at ' + Math.min(PROG[b.id][0], PROG[b.id][1]) + '%' : Math.min(PROG[b.id][0], PROG[b.id][1]) + ' / ' + PROG[b.id][1]) + '</span>' : '') + '</div>';
     };
     var earned = BADGES.filter(function (b) { return got[b.id]; }), left = BADGES.filter(function (b) { return !got[b.id]; });
     var medal = function (b) { var when = got[b.id] > 946684800000 ? niceDate(got[b.id]) : 'Earned'; return '<div class="medal"><span class="medal-ic">' + (b.ic || '<svg class=ic aria-hidden=true><use href=#i-medal></use></svg>') + '</span><b>' + esc(b.t) + '</b><small>' + when + '</small></div>'; };
@@ -1503,7 +1503,7 @@
       var gap = cut == null ? "" : blank ? '<div class="muted" style="margin-top:6px;font-size:.85rem;">Fill in all four categories (0 is fine) to compare with the cutoff.</div>' : total >= cut ? '<div style="margin-top:6px;" class="badge-good"><b>' + (total - cut) + ' points over the cutoff.</b></div>'
         : '<div style="margin-top:6px;"><b>' + (cut - total) + ' points short of the cutoff.</b> <span class="muted">The categories with the most room left are the fastest gains.</span></div>';
       var room = PTS.map(function (p) { return { t: p.t, left: p.max[rank] - Math.min(n("pt-" + p.k) || 0, p.max[rank]) }; }).sort(function (x, y) { return y.left - x.left; }).slice(0, 2);
-      var calm = (rank === "SGT" && !mount.querySelector("#ptxschool").checked) ? '<div class="muted" style="font-size:.85rem;margin-top:6px;">Don\u2019t panic if you\u2019re well short: that\u2019s normal before BLC. You don’t need BLC to pin on SGT (AR 600-8-19, para 1-34a), but graduating adds 150 points, the biggest single jump.</div>' : '';
+      var calm = (rank === "SGT" && !mount.querySelector("#ptxschool").checked && (n("pt-med") || 0) < 150) ? '<div class="muted" style="font-size:.85rem;margin-top:6px;">Don\u2019t panic if you\u2019re well short: that\u2019s normal before BLC. You don’t need BLC to pin on SGT (AR 600-8-19, para 1-34a), but graduating adds 150 points, the biggest single jump.</div>' : '';
       var stk = document.getElementById("ptSticky");
       if (!stk && window.IntersectionObserver) { new IntersectionObserver(function (es) { var b = document.getElementById("ptSticky"); if (b) b.classList.toggle("off", es[0].isIntersecting); }).observe(mount.querySelector("#ptTotal")); }
       if (!stk) { mount.addEventListener("focusin", function (e) { if (/INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) { var b = document.getElementById("ptSticky"); if (b) b.classList.add("typing"); } });

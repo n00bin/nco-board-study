@@ -64,6 +64,7 @@
     var who = window.Store && Store.settings().boardFor === "SSG" ? "Sergeant" : "Specialist";
     var pre = ["", who + ", ", "", "Tell the board, "][h % 4];
     if (!pre || !/^(What|Who|Whom|Whose|How|When|Which|Why|Where|Is|Are|Does|Do|Can|May|Should|Must|Under|Per|In|On|At|As|If)\b/.test(q)) return q;
+    if (pre === "Tell the board, " && !(/^(What|Who|How|When|Which|Why|Where)\b/.test(q) && /\?$/.test(q))) return q;
     return pre + (LOWER.test(q) ? q.charAt(0).toLowerCase() + q.slice(1) : q);
   }
   // short subject names for "Board member 2 will ask about ..."
@@ -143,7 +144,7 @@
       opts = opts || {};
       askPick = {};
       var pool = cards.filter(function (c) { return c.q && c.a && !(opts.full && c.id === "personal-11"); });
-      if (pool.length < 3) { container.innerHTML = '<div class="empty">A Mock Board needs at least 3 cards. Pick a bigger subject, or Board Core.</div>'; return; }
+      if (pool.length < 3) { container.innerHTML = '<div class="empty-state" style="padding:28px 0 12px;"><svg class=ic aria-hidden=true><use href=#i-alert></use></svg><div class="t">Too few cards for a board</div><div class="muted" style="margin-bottom:12px;">A Mock Board needs at least 3 cards.</div><a class="btn gold lg" href="#/pick/board">Pick another subject</a></div>'; return; }
       length = Math.min(length || 15, pool.length);
       var deck = opts.fixed ? pool.slice(0, length) : drawDeck(pool, length);
 
@@ -621,7 +622,7 @@
 
       // second chance on a missed question: the board comes back to it
       function comeback(c) {
-        var t = secs;
+        var t = timeFor(c);
         container.innerHTML = header("Second try") + timerHtml(t) +
           '<div class="card" style="border-color:var(--gold);"><div class="flash-tag">The board comes back to it</div>' +
             '<div class="muted" style="font-size:.85rem;margin-top:6px;">\u201cLet\u2019s go back to an earlier question.\u201d</div>' +

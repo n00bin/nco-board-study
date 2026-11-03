@@ -211,7 +211,7 @@
       function teach() {
         var c = lesson.cards[i], p = STUDY.pubsById[c.pub];
         container.innerHTML =
-          '<div class="q-count mb-head"><span>' + esc(lesson.title) + '</span><span class="pill">' + (i + 1) + ' / ' + lesson.cards.length + '</span></div><div class="progress-bar"><span style="width:' + Math.round(100 * (i + 1) / lesson.cards.length) + '%"></span></div>' +
+          '<div class="q-count mb-head"><span>' + esc(lesson.topics && lesson.topics.length ? lesson.topics[0] : lesson.title) + '</span><span class="pill">' + (i + 1) + ' / ' + lesson.cards.length + '</span></div><div class="progress-bar"><span style="width:' + Math.round(100 * (i + 1) / lesson.cards.length) + '%"></span></div>' +
           '<div class="card learn-card"><div class="flash-toprow"><span class="flash-tag">' + esc(p ? p.code : "") + (c.topic ? " • " + esc(c.topic) : "") + '</span>' +
             '<button class="mini" id="lSpeak" aria-label="Read aloud"><svg class=ic aria-hidden=true><use href=#i-speaker></use></svg></button></div>' +
             '<div class="learn-q">' + esc(c.q) + '</div>' +
@@ -242,7 +242,7 @@
         Store.markLessonDone(lesson.id, score == null ? null : Math.round((score / total) * 100));
         var p = score == null ? 100 : Math.round(100 * score / Math.max(1, total));
         
-        var line = (score == null) ? "Practice done. Nice work." : (score === total ? "Every card. Nice work." : "The ones you missed come back sooner in your reviews.");
+        var line = (score == null) ? "Practice done. Nice work." : (score === total ? "Every card. Nice work." : (total - score === 1 ? "The one you missed comes back sooner in your reviews." : "The ones you missed come back sooner in your reviews."));
         container.innerHTML =
           '<div class="ring-wrap"><div class="ring ' + (p >= 75 ? 'good' : p >= 60 ? 'mid' : 'bad') + '" style="--p:' + p + ';"><div class="ring-in">' + (score == null ? '&#10003;' : p + '%') + '</div></div>' + (score == null ? '' : '<small>' + score + ' of ' + total + (selfGraded ? ' on the first try' : ' right in practice') + '</small>') + '</div>' +
           '<div class="done-h">Lesson complete</div><p class="center muted" style="margin:0 0 6px;">' + esc(lesson.title) + '</p>' +
