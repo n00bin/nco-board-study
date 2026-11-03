@@ -1001,3 +1001,20 @@ details.pt-help[open] { border-left: 1px solid var(--line); border: 1px solid va
 #ptSticky { left: 50% !important; transform: translateX(-50%) !important; width: 100% !important; max-width: var(--maxw) !important; bottom: calc(61px + env(safe-area-inset-bottom)) !important; border-radius: 0 !important; border: none !important; border-top: 1px solid var(--gold) !important; box-shadow: 0 -10px 16px rgba(0,0,0,.45) !important; padding: 10px 16px !important; }
 #ptSticky.off { transform: translateX(-50%) translateY(12px) !important; }
 .sponsor-ans { border-color: var(--line) !important; background: var(--surface-2); }
+
+/* ---------- v3.54 polish round 26 ---------- */
+.hero { overflow: hidden; }
+#tIn { min-height: 84px; overflow-y: auto; }
+/* the score note sits exactly where the button was; the button hides underneath */
+.score-flash { left: 50% !important; transform: translateX(-50%) !important; width: calc(100% - 32px) !important; max-width: calc(var(--maxw) - 32px) !important; min-height: 58px !important; animation: none !important; }
+.flashing .grade-row, .flashing #rubricDone { visibility: hidden !important; }
+/* typed verdict: a status pill, not a link */
+.verdict-near { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 999px; background: rgba(255,204,51,.12); border: 1px solid rgba(255,204,51,.45); font-size: .92rem; margin-top: 6px; }
+.verdict-near::before { content: "\2248"; font-weight: 800; }
+/* a bigger Change chip */
+.li-btn .pill { min-height: 36px; display: inline-flex; align-items: center; padding: 0 14px; }
+/* one continuous print sheet */
+@media screen { .sheet { outline: none !important; box-shadow: 0 6px 18px rgba(0,0,0,.35) !important; } .sheet + .sheet { box-shadow: 0 8px 18px rgba(0,0,0,.35) !important; } }
+/* quiz choices keep their place when the mark appears */
+.choice { position: relative; padding-left: 40px !important; }
+.choice .mark { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); }

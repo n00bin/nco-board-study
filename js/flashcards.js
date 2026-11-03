@@ -195,6 +195,8 @@
             '<textarea class="input" id="tIn" rows="2" placeholder="Type your answer…"></textarea></div>' +
           '<button class="btn gold lg" id="tShow">Check answer</button>';
         var inp = container.querySelector("#tIn");
+        var grow = function () { inp.style.height = "auto"; inp.style.height = Math.min(Math.max(inp.scrollHeight + 2, 84), Math.round(window.innerHeight * 0.4)) + "px"; };
+        inp.addEventListener("input", grow); grow();
         inp.focus();
         inp.addEventListener("keydown", function (e) { if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) reveal(); });
         container.querySelector("#tShow").addEventListener("click", reveal);

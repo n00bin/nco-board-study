@@ -377,8 +377,8 @@
       : '<div class="big">' + rs.ready + '%</div><div class="sub">board-ready</div>';
     var freshBadges = checkBadges(coreIds, rs);
     var html = '<div class="hero">' +
-        '<div style="display:flex;justify-content:space-between;align-items:flex-end;"><div>' + head + '</div>' +
-          (streak ? '' : '<!--') + '<div style="text-align:right;white-space:nowrap;"><div style="font-size:1.6rem;font-weight:800;"><svg class=ic aria-hidden=true><use href=#i-flame></use></svg> ' + streak + '</div><div class="sub">day streak' + (Store.saverUsed() && Date.now() - Store.saverUsed() < 2 * 86400000 ? ' (1 missed day forgiven)' : '') + '</div></div>' + (streak ? '' : '-->') + '</div>' +
+        '<div style="display:flex;justify-content:space-between;align-items:flex-end;gap:10px;"><div style="min-width:0;">' + head + '</div>' +
+          (streak ? '' : '<!--') + '<div style="text-align:right;flex:none;"><div style="font-size:1.6rem;font-weight:800;white-space:nowrap;"><svg class=ic aria-hidden=true><use href=#i-flame></use></svg> ' + streak + '</div><div class="sub" style="white-space:nowrap;">day streak</div>' + (Store.saverUsed() && Date.now() - Store.saverUsed() < 2 * 86400000 ? '<div class="sub" style="font-size:.85rem;">1 day forgiven</div>' : '') + '</div>' + (streak ? '' : '-->') + '</div>' +
         (calm || recommended || notRec ? '' : (rs.seen === 0 && !streak ? '' : '<div class="bar"><span style="width:' + rs.ready + '%"></span></div>') +
           '<div class="sub" style="margin-top:6px;font-size:.85rem;">' + (dToB != null && dToB > 7 ? 'Board in ' + dToB + ' days \u2022 ' : '') + (daily.count >= dayTarget ? 'Today\u2019s cards done &#10003;' : 'Today: ' + daily.count + ' of ' + dayTarget + ' cards') + '</div>' +
           '<details class="hero-more"><summary class="sub">' + (rs.weak.length ? 'Work on: ' + esc(rs.weak[0]) + (rs.weak.length > 1 ? ' +' + (rs.weak.length - 1) : '') : 'How your score works') + '</summary>' +
@@ -1007,7 +1007,7 @@
     if (!window.IntersectionObserver) return;
     var mark = function (id) { chips.forEach(function (b) { var on = b.getAttribute("data-jump") === id; b.classList.toggle("on", on); if (on && b.scrollIntoView) { var row = b.parentElement; row.scrollTo({ left: b.offsetLeft - 24, behavior: "smooth" }); } }); };
     var heads = Array.prototype.map.call(chips, function (b) { return document.getElementById(b.getAttribute("data-jump")); }).filter(Boolean), cur = null, tick = false;
-    var spy = function () { tick = false; if (!row0.isConnected) { window.removeEventListener("scroll", onS); return; } var id = heads[0] && heads[0].id; heads.forEach(function (h) { if (h.getBoundingClientRect().top < 150) id = h.id; }); if (id !== cur) { cur = id; mark(id); } };
+    var spy = function () { tick = false; if (!row0.isConnected) { window.removeEventListener("scroll", onS); return; } var id = heads[0] && heads[0].id; var line = row0.getBoundingClientRect().bottom + window.innerHeight * 0.35; heads.forEach(function (h) { if (h.getBoundingClientRect().top < line) id = h.id; }); if (id !== cur) { cur = id; mark(id); } };
     var onS = function () { if (!tick) { tick = true; requestAnimationFrame(spy); } };
     window.addEventListener("scroll", onS, { passive: true }); spy();
   }
