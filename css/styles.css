@@ -1167,3 +1167,12 @@ mark { background: rgba(255,204,51,.42); color: #fff; font-weight: 600; }
 .drive-big svg.ic { width: 64px; height: 64px; opacity: .55; }
 /* cutoff tiles act as the rank switch */
 .cut-pair [data-r] { cursor: pointer; }
+
+/* ---------- v3.72 polish round 44 ---------- */
+/* a just-shown session button ignores a stray second tap for a moment */
+@keyframes armIn { 0% { opacity: .55; pointer-events: none; } 99% { pointer-events: none; } 100% { opacity: 1; pointer-events: auto; } }
+body.session #reveal, body.session .grade-row .btn, body.session #rubricDone, body.session #skipLocal { animation: armIn .4s ease-out; }
+/* done headings at the same weight as other headings */
+.done-h { font-weight: 700 !important; }
+/* Stop reads as stop */
+#dStop svg.ic { fill: currentColor; }

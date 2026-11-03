@@ -306,7 +306,7 @@
     planExtras = (sponsorNote || remind) ? '<div class="card">' + sponsorNote.replace("margin-top:8px;", "") + remind + '</div>' : '';
     var rsv = savedSession();
     var startBtn = (lastPlan.length >= 2 || rsv) ? '<button class="btn gold lg" id="startSess" style="margin-top:8px;"><svg class=ic aria-hidden=true><use href=#i-play></use></svg> ' + (rsv ? 'Continue: step ' + (rsv.i + 1) + ' of ' + rsv.items.length : 'Start today&#39;s session') + '</button>' + (rsv ? '<div class="center muted" style="font-size:.85rem;margin-top:6px;">Next: ' + esc(rsv.items[rsv.i].label.charAt(0).toUpperCase() + rsv.items[rsv.i].label.slice(1)) + '</div>' : '') +
-      '<button class="home-link" id="tenMin" style="margin-top:4px;">Only have 10 minutes?</button>' : '';
+      (rsv ? '' : '<button class="home-link" id="tenMin" style="margin-top:4px;">Only have 10 minutes?</button>') : '';
     var inS = items.filter(function (h) { return !/sponsor|sendprogress|settings/.test(h); }), outS = items.filter(function (h) { return /sponsor|sendprogress|settings/.test(h); });
     var steps = '<div class="plan-steps">' + (rsv ? rsv.items.map(function (it, k) { return '<a class="btn ghost plan-item' + (k < rsv.i ? ' done' : '') + '" data-n="' + (k + 1) + '" href="' + escAttr(it.href) + '">' + '<svg class=ic aria-hidden=true><use href=#i-' + (k < rsv.i ? 'check' : (it.ic || 'chev')) + '></use></svg> ' + esc(it.label.charAt(0).toUpperCase() + it.label.slice(1)) + '</a>'; }).join("") : inS.map(function (h, k) { return h.replace('plan-item" href=', 'plan-item" data-n="' + (k + 1) + '" href='); }).join("")) + '</div>' +
       (outS.length ? '<div class="lg-h" style="margin-top:10px;">Also this week</div><div class="plan-steps">' + outS.join("") + '</div>' : '');
@@ -952,7 +952,7 @@
       var q = mount.querySelector("#fq").value.trim(), a = mount.querySelector("#fa").value.trim();
       mount.querySelectorAll(".field-err").forEach(function (x) { x.remove(); });
       var bad = [["#fq", q, "Write the question."], ["#fa", a, "Write the answer."]].filter(function (f) { var el = mount.querySelector(f[0]); el.classList.toggle("invalid", !f[1]); return !f[1]; });
-      if (bad.length) { bad.forEach(function (f) { mount.querySelector(f[0]).insertAdjacentHTML("afterend", '<div class="field-err">' + f[2] + '</div>'); }); mount.querySelector(bad[0][0]).focus(); return; }
+      if (bad.length) { bad.forEach(function (f) { mount.querySelector(f[0]).insertAdjacentHTML("afterend", '<div class="field-err">' + f[2] + '</div>'); }); var f0 = mount.querySelector(bad[0][0]); f0.focus({ preventScroll: true }); f0.scrollIntoView({ block: "center", behavior: "smooth" }); return; }
       var card = { pub: mount.querySelector("#fp").value, topic: mount.querySelector("#ft").value.trim(), q: q, a: a };
       if (mc.checked) {
         var wrongs = Array.prototype.map.call(mount.querySelectorAll(".wrong"), function (i) { return i.value.trim(); }).filter(Boolean);
@@ -1152,7 +1152,7 @@
     }
     var pct = Math.round(100 * got / total);
     var sbClean = !bear.some(function (b) { return !b.ok; }) && !ids.some(function (id) { return byId[id] && byId[id].pub === "sit"; });
-    mount.innerHTML = '<div class="ring-wrap"><div class="ring ' + (pct >= 75 ? 'good' : pct >= 50 ? 'mid' : 'bad') + '" style="--p:' + pct + ';"><div class="ring-in">' + pct + '%</div></div><small>from your sponsor\'s board</small></div>' +
+    mount.innerHTML = '<div class="ring-wrap"><div class="ring ' + (pct >= 75 ? 'good' : pct >= 60 ? 'mid' : 'bad') + '" style="--p:' + pct + ';"><div class="ring-in">' + pct + '%</div></div><small>from your sponsor\'s board</small></div>' +
       (function () {
         var V = MockBoard.verdict(pct, bear.filter(function (b) { return !b.ok; }).map(function (b) { return b.label.toLowerCase(); }), ids.filter(function (id) { return byId[id] && byId[id].pub === "sit"; }).length);
         if (total < 8 && V.level !== "work") V = { level: "work", title: "Good practice", msg: pct + "% on a short board. Board-ready takes a full board of 10 or more questions." };
@@ -1232,7 +1232,7 @@
       calLine = '<div class="muted" style="font-size:.85rem;margin-top:6px;">When you tapped <b>I know it</b>, you were right <b>' + sp + '%</b> of the time' +
         (sp < 80 ? '. Say the whole answer before you tap it.' : '.') + '</div>';
     }
-    return '<div class="card"><div class="flash-tag">Your last 7 days</div><div style="display:flex;align-items:flex-end;height:52px;margin:6px 0;" aria-hidden="true">' + bars + '</div>' +
+    return '<div class="card"><div style="display:flex;align-items:flex-end;height:52px;margin:6px 0;" aria-hidden="true">' + bars + '</div>' +
       '<div class="muted" style="font-size:.85rem;">' + total + ' cards on ' + days + ' day' + (days === 1 ? '' : 's') + ' • ' + boards + ' Mock Board' + (boards === 1 ? '' : 's') + '</div><div class="btn-row" style="margin-top:8px;"><a class="btn ghost sm" href="#/sendprogress">Send my progress to my sponsor</a></div>' + calLine + '</div>';
   }
   // ---- progress snapshot: encoded into a link, shown on the sponsor's phone ----
@@ -1473,7 +1473,7 @@
     var hon = m["pts-xhon"] || "0";
     if (!mount._ptWired) { mount._ptWired = true; var ptTap = 0;
       mount.addEventListener("click", function (e) { if (e.target.closest && e.target.closest("details.pt-help > summary")) ptTap = Date.now(); var t = e.target.closest && e.target.closest(".cut-pair [data-r]"); if (!t) return; var c = mount.querySelector('#ptRank .chip[data-r="' + t.getAttribute("data-r") + '"]'); if (c && !c.classList.contains("on")) c.click(); });
-      mount.addEventListener("toggle", function (e) { var d = e.target; if (Date.now() - ptTap > 800 || !d.classList || !d.classList.contains("pt-help") || !d.open) return; mount.querySelectorAll("details.pt-help[open]").forEach(function (o) { if (o !== d) o.open = false; }); }, true); }
+      mount.addEventListener("toggle", function (e) { var d = e.target; if (Date.now() - ptTap > 800 || !d.classList || !d.classList.contains("pt-help") || !d.open) return; var top0 = d.getBoundingClientRect().top; mount.querySelectorAll("details.pt-help[open]").forEach(function (o) { if (o !== d) o.open = false; }); var dy = d.getBoundingClientRect().top - top0; if (Math.abs(dy) > 2) window.scrollBy(0, dy); }, true); }
     function convert(k) {   // fill a category from the helper inputs
       var v = null;
       if (k === "mil") { var h = n("ptxhits"), s = n("ptxaft"); if (h != null || s != null) { var rp = h != null ? riflePts(h, rank) : 0, ap = s != null ? aftPts(s) : 0; v = rp + ap;

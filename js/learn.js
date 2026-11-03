@@ -134,7 +134,7 @@
           (function () { var seen = STUDY.cards.filter(function (c) { if (!c.core) return false; var r = Store.recOf(c.id); return r && r.seen > 0; }).length;
             return seen && !doneN ? '<div class="sub" style="margin-top:4px;">You&#39;ve already studied ' + seen + ' Board Core cards in Flashcards. Lessons teach them step by step.</div>' : ''; })() +
           '<div class="bar"><span style="width:' + pct + '%"></span></div></div>' +
-        '<div class="card"><div class="muted">Learn it, then practice it. <b>For your board: finish Board 101, Fundamentals and Board Core.</b></div></div>';
+        '';
       if (next) html += '<a class="btn gold lg" href="#/lesson/' + next.id + '">' + (doneN ? "<svg class=ic aria-hidden=true><use href=#i-play></use></svg> Continue learning" : "<svg class=ic aria-hidden=true><use href=#i-play></use></svg> Start learning") + '</a><div class="spacer"></div>';
 
       var BOARD_PATH = { board101: 1, fundamentals: 1, core: 1, sit: 1, personal: 1 }, shownExtra = false;
