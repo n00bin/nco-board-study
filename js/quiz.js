@@ -86,6 +86,14 @@
           '<div id="choices"></div>' +
           '<div id="verdict" class="verdict" role="status" aria-live="polite"></div>' +
           '<button class="btn gold lg" id="submitBtn" disabled>Submit answer</button>';
+        setTimeout(function () {
+          var ch = container.querySelectorAll(".choice"), lastC = ch[ch.length - 1];
+          if (!lastC || !window.IntersectionObserver || lastC.getBoundingClientRect().bottom <= window.innerHeight - 100) return;
+          var sbt = container.querySelector("#submitBtn"); if (!sbt || !sbt.disabled) return;
+          sbt.textContent = "More choices below ↓";
+          var io = new IntersectionObserver(function (es) { if (es.some(function (e) { return e.isIntersecting; })) { if (sbt.isConnected && /More choices/.test(sbt.textContent)) sbt.textContent = "Submit answer"; io.disconnect(); } }, { rootMargin: "0px 0px -100px 0px" });
+          io.observe(lastC);
+        }, 60);
         var qsp = container.querySelector("#qSpeak"); if (qsp) qsp.addEventListener("click", function () { if (window.Speech) Speech.speak(item.q); });
         var qrp = container.querySelector("#qReport"); if (qrp) qrp.addEventListener("click", function () { if (window.App && App.reportCard) App.reportCard(item.card); });
         var box = container.querySelector("#choices");
@@ -108,7 +116,7 @@
         btn.classList.add("selected");
         selected = { btn: btn, opt: opt };
         var sb = container.querySelector("#submitBtn");
-        if (sb) sb.disabled = false;
+        if (sb) { sb.disabled = false; if (/More choices/.test(sb.textContent)) sb.textContent = "Submit answer"; }
       }
 
       function submit(btn, opt, item) {

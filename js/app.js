@@ -211,6 +211,7 @@
     try { sessionStorage.setItem("ncob-sess", JSON.stringify({ items: lastPlan, i: 0, t: Date.now() })); } catch (e) {}
     App.go(lastPlan[0].href);
   }
+  function shortStep(l) { var L = String(l).replace(/ of \d+ cards? due today$/, " cards due").replace(/ due today$/, " due"); return L.charAt(0).toUpperCase() + L.slice(1); }
   function sessionNextHtml() {
     var s; try { s = JSON.parse(sessionStorage.getItem("ncob-sess") || "null"); } catch (e) { s = null; }
     if (!s || !s.items || s.i >= s.items.length) return "";
@@ -219,7 +220,7 @@
     s.i++; try { sessionStorage.setItem("ncob-sess", JSON.stringify(s)); } catch (e) {}
     if (s.i >= s.items.length) { try { sessionStorage.removeItem("ncob-sess"); } catch (e) {} return '<div class="card center" style="border-color:var(--gold);"><b>&#10003; Today&#39;s session is done.</b> <span class="muted">Nice work. Come back tomorrow.</span></div><div class="spacer"></div>'; }
     var nx = s.items[s.i];
-    return '<div class="center muted" style="font-size:.85rem;margin-bottom:6px;">Next in today&#39;s session (' + (s.i + 1) + ' of ' + s.items.length + ')</div><button class="btn gold lg" data-sessnext="' + escAttr(nx.href) + '">' + (function () { var L = nx.label.replace(/ of \d+ cards? due today$/, " cards due").replace(/ due today$/, " due"); L = L.charAt(0).toUpperCase() + L.slice(1); var k = L.lastIndexOf(" "); return '<span>' + esc(L.slice(0, k + 1)) + '<span style="white-space:nowrap;">' + esc(L.slice(k + 1)) + '&nbsp;<svg class=ic aria-hidden=true><use href=#i-chev></use></svg></span></span>'; })() + '</button><div class="spacer"></div>';
+    return '<div class="center muted" style="font-size:.85rem;margin-bottom:6px;">Next in today&#39;s session (' + (s.i + 1) + ' of ' + s.items.length + ')</div><button class="btn gold lg" data-sessnext="' + escAttr(nx.href) + '">' + (function () { var L = shortStep(nx.label); var k = L.lastIndexOf(" "); return '<span>' + esc(L.slice(0, k + 1)) + '<span style="white-space:nowrap;">' + esc(L.slice(k + 1)) + '&nbsp;<svg class=ic aria-hidden=true><use href=#i-chev></use></svg></span></span>'; })() + '</button><div class="spacer"></div>';
   }
   // while today's session runs, each step shows where you are in it
   function sessionBanner() {
@@ -305,7 +306,7 @@
     var remind = (!Store.settings().remindersAdded && (days == null || days > 1)) ? '<div style="margin-top:8px;font-size:.85rem;"><a href="#/settings"><svg class=ic aria-hidden=true><use href=#i-bell></use></svg> Add study reminders to my calendar</a></div>' : '';
     planExtras = (sponsorNote || remind) ? '<div class="card">' + sponsorNote.replace("margin-top:8px;", "") + remind + '</div>' : '';
     var rsv = savedSession();
-    var startBtn = (lastPlan.length >= 2 || rsv) ? '<button class="btn gold lg" id="startSess" style="margin-top:8px;"><svg class=ic aria-hidden=true><use href=#i-play></use></svg> ' + (rsv ? 'Continue: step ' + (rsv.i + 1) + ' of ' + rsv.items.length : 'Start today&#39;s session') + '</button>' + (rsv ? '<div class="center muted" style="font-size:.85rem;margin-top:6px;">Next: ' + esc(rsv.items[rsv.i].label.charAt(0).toUpperCase() + rsv.items[rsv.i].label.slice(1)) + '</div>' : '') +
+    var startBtn = (lastPlan.length >= 2 || rsv) ? '<button class="btn gold lg" id="startSess" style="margin-top:8px;"><svg class=ic aria-hidden=true><use href=#i-play></use></svg> ' + (rsv ? 'Continue: step ' + (rsv.i + 1) + ' of ' + rsv.items.length : 'Start today&#39;s session') + '</button>' + (rsv ? '<div class="center muted" style="font-size:.85rem;margin-top:6px;">Next: ' + esc(shortStep(rsv.items[rsv.i].label)) + '</div>' : '') +
       (rsv ? '' : '<button class="home-link" id="tenMin" style="margin-top:4px;">Only have 10 minutes?</button>') : '';
     var inS = items.filter(function (h) { return !/sponsor|sendprogress|settings/.test(h); }), outS = items.filter(function (h) { return /sponsor|sendprogress|settings/.test(h); });
     var steps = '<div class="plan-steps">' + (rsv ? rsv.items.map(function (it, k) { return '<a class="btn ghost plan-item' + (k < rsv.i ? ' done' : '') + '" data-n="' + (k + 1) + '" href="' + escAttr(it.href) + '">' + '<svg class=ic aria-hidden=true><use href=#i-' + (k < rsv.i ? 'check' : (it.ic || 'chev')) + '></use></svg> ' + esc(it.label.charAt(0).toUpperCase() + it.label.slice(1)) + '</a>'; }).join("") : inS.map(function (h, k) { return h.replace('plan-item" href=', 'plan-item" data-n="' + (k + 1) + '" href='); }).join("")) + '</div>' +
@@ -391,7 +392,7 @@
       : '<div class="big">' + rs.ready + '%</div><div class="sub">board-ready</div>';
     var freshBadges = checkBadges(coreIds, rs);
     var html = '<div class="hero">' +
-        '<div style="display:flex;justify-content:space-between;align-items:flex-end;gap:10px;"><div style="min-width:0;">' + head + '</div>' +
+        '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;"><div style="min-width:0;">' + head + '</div>' +
           (streak ? '' : '<!--') + '<div style="text-align:right;flex:none;"><div style="font-size:1.6rem;font-weight:800;white-space:nowrap;"><svg class=ic aria-hidden=true><use href=#i-flame></use></svg> ' + streak + '</div><div class="sub" style="white-space:nowrap;">day streak</div>' + (Store.saverUsed() && Date.now() - Store.saverUsed() < 2 * 86400000 ? '<div class="sub" style="font-size:.85rem;">1 day forgiven</div>' : '') + '</div>' + (streak ? '' : '-->') + '</div>' +
         (calm || recommended || notRec ? '' : (rs.seen === 0 && !streak ? '' : '<div class="bar"><span style="width:' + rs.ready + '%"></span></div>') +
           '<div class="sub" style="margin-top:6px;font-size:.85rem;">' + (dToB != null && dToB > 7 ? 'Board in ' + dToB + ' days \u2022 ' : '') + (daily.count >= dayTarget ? 'Today\u2019s cards done &#10003; The rest of the plan is extra.' : 'Today: ' + daily.count + ' of ' + dayTarget + ' cards') + '</div>' +
@@ -575,7 +576,7 @@
       '</div>' +
       '<button class="btn gold lg" data-n="10"><svg class=ic aria-hidden=true><use href=#i-play></use></svg> Start a 10-question board</button>' +
       '<div class="muted center" style="font-size:.85rem;margin:6px 0 10px;" id="lenNote"></div>' +
-      '<div class="lg-h" style="margin-top:2px;">Or start another length</div><div class="len-row"><button class="chip" data-n="5" data-quick="1"><b>5</b><small>quick</small></button><button class="chip" data-n="15"><b>15</b><small>longer</small></button><button class="chip" data-n="25"><b>25</b><small>full-length</small></button></div>' +
+      '<div class="lg-h" style="margin-top:2px;">Or start another length</div><div class="len-row"><button class="chip" data-n="5" data-quick="1"><b>5</b><small>quick</small></button><button class="chip" data-n="15"><b>15</b><small>longer</small></button><button class="chip" data-n="25"><b>25</b><small>longest</small></button></div>' +
       (/^(core|top|final)$/.test(deck) ? '<details class="set-fold" style="margin-top:14px;"><summary>Send or print a board for your sponsor</summary>' +
         '<button class="btn ghost" id="sendSponsor" style="margin-top:8px;"><svg class=ic aria-hidden=true><use href=#i-send></use></svg> Send a board to my sponsor</button>' +
         '<div class="muted center" style="font-size:.85rem;margin:6px 0;">They open the link and run the same board on their phone, with the answers and checklists.</div>' +
@@ -644,7 +645,7 @@
     results.addEventListener("click", function (e) { if (e.target.closest("a.card")) try { sessionStorage.setItem("ncob-qy", String(window.scrollY)); } catch (x) {} });
     input.addEventListener("input", run); run();
     var y0 = 0; try { y0 = +sessionStorage.getItem("ncob-qy") || 0; sessionStorage.removeItem("ncob-qy"); } catch (e) {}
-    if (y0 && input.value) { if ("scrollRestoration" in history) history.scrollRestoration = "manual"; [30, 200, 450].forEach(function (ms) { setTimeout(function () { if (Math.abs(window.scrollY - y0) > 40) window.scrollTo(0, y0); }, ms); }); } else input.focus();
+    if (y0 && input.value) { if ("scrollRestoration" in history) history.scrollRestoration = "manual"; [30, 200, 450].forEach(function (ms) { setTimeout(function () { if (Math.abs(window.scrollY - y0) > 40) window.scrollTo(0, y0); }, ms); }); } else if (!input.value) input.focus();
   }
 
   // ---- More menu (stats + links) ----
@@ -1495,7 +1496,7 @@
       });
       var cut = n("pt-cut"); save("pt-cut");
       var blank = PTS.filter(function (p) { return n("pt-" + p.k) == null; }).length;
-      var gap = cut == null ? "" : blank ? '<div class="muted" style="margin-top:6px;">Fill in all four categories (0 is fine) to compare with the cutoff.</div>' : total >= cut ? '<div style="margin-top:6px;" class="badge-good"><b>' + (total - cut) + ' points over the cutoff.</b></div>'
+      var gap = cut == null ? "" : blank ? '<div class="muted" style="margin-top:6px;font-size:.85rem;">Fill in all four categories (0 is fine) to compare with the cutoff.</div>' : total >= cut ? '<div style="margin-top:6px;" class="badge-good"><b>' + (total - cut) + ' points over the cutoff.</b></div>'
         : '<div style="margin-top:6px;"><b>' + (cut - total) + ' points short of the cutoff.</b> <span class="muted">The categories with the most room left are the fastest gains.</span></div>';
       var room = PTS.map(function (p) { return { t: p.t, left: p.max[rank] - Math.min(n("pt-" + p.k) || 0, p.max[rank]) }; }).sort(function (x, y) { return y.left - x.left; }).slice(0, 2);
       var calm = (rank === "SGT" && !mount.querySelector("#ptxschool").checked) ? '<div class="muted" style="font-size:.85rem;margin-top:6px;">Don\u2019t panic if you\u2019re well short: that\u2019s normal before BLC. You don’t need BLC to pin on SGT (AR 600-8-19, para 1-34a), but graduating adds 150 points, the biggest single jump.</div>' : '';

@@ -169,8 +169,8 @@
       container.querySelector("#fProg").addEventListener("click", function (e) { if (e.target.closest && e.target.closest("#fDone")) { e.stopPropagation(); done(); } });
       container.querySelector("#fSpeakB").addEventListener("click", function (e) { e.stopPropagation(); Speech.speak(queue[i].a); });
       container.querySelector("#fReportB").addEventListener("click", function (e) { e.stopPropagation(); App.reportCard(queue[i]); });
-      container.querySelector("#cSure").addEventListener("click", function (e) { e.stopPropagation(); conf = "sure"; flip(); });
-      container.querySelector("#cUnsure").addEventListener("click", function (e) { e.stopPropagation(); conf = "unsure"; flip(); });
+      container.querySelector("#cSure").addEventListener("click", function (e) { e.stopPropagation(); conf = "sure"; container.querySelector("#fGrades").classList.remove("neutral"); flip(); });
+      container.querySelector("#cUnsure").addEventListener("click", function (e) { e.stopPropagation(); conf = "unsure"; container.querySelector("#fGrades").classList.add("neutral"); flip(); });
       container.querySelector("#gAgain").addEventListener("click", function (e) { e.stopPropagation(); grade("again"); });
       container.querySelector("#gGood").addEventListener("click", function (e) { e.stopPropagation(); grade("good"); });
       container.querySelector("#gEasy").addEventListener("click", function (e) { e.stopPropagation(); grade("easy"); });

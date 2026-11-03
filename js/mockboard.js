@@ -373,7 +373,7 @@
           '<div class="card"><div class="flash-tag">The board president</div>' +
             '<div class="q-text" style="margin-top:8px;">\u201cBefore you sit, let\u2019s see some drill.\u201d</div>' +
             '<div class="muted">' + (sponsor ? 'Call each command out loud. Watch for a sharp movement on the command of execution, then they hold the position until your next command.' : 'Stand up and do each command, sharply, on the command of execution. Hold each position until the next command.') + '</div></div>' +
-          '<div class="card">' + cmds.map(function (t, k) { return '<div class="row" style="margin-bottom:6px;"><div class="numbubble">' + (k + 1) + '</div><div class="grow"><div class="ttl" style="font-size:1.15rem;font-weight:700;">' + esc(t) + '</div></div></div>'; }).join("") +
+          '<div class="card">' + cmds.map(function (t, k) { return '<div class="row cmd-row" style="margin-bottom:6px;"><div class="numbubble">' + (k + 1) + '</div><div class="grow"><div class="ttl" style="font-size:1.15rem;font-weight:700;">' + esc(t) + '</div></div></div>'; }).join("") +
             (sponsor ? '' : '<button class="btn ghost" id="sayIt" style="margin-top:6px;"><svg class=ic aria-hidden=true><use href=#i-speaker></use></svg> Call the commands for me</button>') +
             '<details class="fb-fold"><summary>How to do these</summary><div class="muted" style="font-size:.92rem;">' + drillHints(cmds) + 'Then ' + (sponsor ? 'tell the Soldier to take their seat.' : 'wait for the president to tell you to take your seat.') + '</div></details></div>' +
           
@@ -609,7 +609,8 @@
         } else if (score < 0.5 && !opts.quick) {
           var at = s + 1;
           while (at < steps.length && steps[at].kind !== "member" && steps[at].kind !== "reportOut") at++;
-          steps.splice(at, 0, { kind: "comeback", c: c });
+          var cbN = 0; for (var z = s + 1; z < at; z++) if (steps[z].kind === "comeback") cbN++;
+          if (cbN < 2) steps.splice(at, 0, { kind: "comeback", c: c });   // the rest still go on the drill list
         }
         if (c.unfilled) return next();
         var fl = document.createElement("div"); fl.className = "score-flash result-flash " + (score >= 0.99 ? "ok" : score >= 0.66 ? "mid" : "bad");

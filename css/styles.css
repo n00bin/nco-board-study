@@ -1176,3 +1176,9 @@ body.session #reveal, body.session .grade-row .btn, body.session #rubricDone, bo
 .done-h { font-weight: 700 !important; }
 /* Stop reads as stop */
 #dStop svg.ic { fill: currentColor; }
+
+/* ---------- v3.73 polish round 45 ---------- */
+.more-cue { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(96px + env(safe-area-inset-bottom)); z-index: 21; background: var(--surface-2); color: var(--gold); border: 1px solid var(--gold); border-radius: 999px; padding: 8px 16px; font-size: .92rem; font-weight: 600; min-height: 40px; display: flex; align-items: center; cursor: pointer; box-shadow: 0 4px 14px rgba(0,0,0,.45); }
+.row.cmd-row { border: none !important; background: none !important; padding: 6px 0 !important; }
+/* a perfect score glows */
+.ring[style*="--p:100;"] { box-shadow: 0 0 0 4px rgba(92,184,92,.18), 0 0 28px rgba(92,184,92,.35); }
