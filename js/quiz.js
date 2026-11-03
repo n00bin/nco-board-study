@@ -79,7 +79,7 @@
         var item = questions[i];
         selected = null;
         container.innerHTML =
-          '<div class="q-count mb-head"><span>Question ' + (i + 1) + " of " + questions.length + '</span><span class="pill score-pill" id="qScore">Score ' + score + '</span></div><div class="progress-bar"><span style="width:' + Math.round(100 * i / questions.length) + '%"></span></div>' +
+          '<div class="q-count mb-head"><span>Question ' + (i + 1) + " of " + questions.length + '</span><span class="pill score-pill" id="qScore"' + (i >= 3 ? '' : ' hidden') + '>Score ' + (i ? Math.round(100 * score / i) : 0) + '%</span></div><div class="progress-bar"><span style="width:' + Math.round(100 * i / questions.length) + '%"></span></div>' +
           '<div class="card">' + (function () { var p = window.STUDY && STUDY.pubsById[item.card.pub]; var t = item.card.label || (p ? p.code : ""); return t ? '<div class="flash-tag">' + esc(t) + '</div>' : ''; })() + '<div class="q-text" style="margin:0;">' + esc(item.q) + '</div></div>' +
           '<div id="choices"></div>' +
           '<div id="verdict" class="verdict" role="status" aria-live="polite"></div>' +
@@ -120,7 +120,7 @@
         if (opt.correct) {
           btn.classList.add("correct"); mark(btn, true);
           score++; res.push(1);
-          var qc = container.querySelector("#qScore"); if (qc) qc.textContent = "Score " + score;
+          var qc = container.querySelector("#qScore");
           if (verdict) { verdict.className = "verdict ok"; verdict.textContent = "✓ Correct"; }
         } else {
           btn.classList.add("wrong"); mark(btn, false); misses.push(item.card); res.push(0);
@@ -131,6 +131,7 @@
             if (why) { var w = document.createElement("div"); w.className = "verdict-why"; w.innerHTML = "<b>" + (item.card.why ? "Why it matters:" : "The answer:") + "</b> "; w.appendChild(document.createTextNode(why)); verdict.appendChild(w); }
           }
         }
+        var qs = container.querySelector("#qScore"); if (qs && i + 1 >= 3) { qs.hidden = false; qs.textContent = "Score " + Math.round(100 * score / (i + 1)) + "%"; }
         var nav = document.createElement("button");
         nav.className = "btn gold lg"; nav.id = "qNext";
         nav.style.marginTop = "12px";
@@ -154,6 +155,7 @@
       function showResults() {
         if (!(opts && opts.onDone)) Store.recordQuiz(title, score, questions.length);   // lesson practice is not a "quiz"
         if (opts && opts.onDone) return opts.onDone(score, questions.length);
+        window.scrollTo(0, 0);
         var pct = Math.round((score / questions.length) * 100);
         var missHtml = misses.length ? '<details class="set-fold"><summary>Review your ' + misses.length + ' miss' + (misses.length === 1 ? '' : 'es') + '</summary>' + misses.map(function (c) { return '<div class="chg"><div style="font-weight:600;margin-bottom:4px;">' + esc(c.q) + '</div><div>' + esc(c.a) + '</div></div>'; }).join("") + '</details>' : '';
         var dots = '<div class="dots" aria-hidden="true">' + res.map(function (x) { return '<span class="dot ' + (x ? 'g' : 'r') + '"></span>'; }).join("") + '</div>' +
@@ -166,7 +168,7 @@
                   pct >= 60 ? "Passing, but review the misses." : "Needs work. Run it again.";
         container.innerHTML =
           '<div class="ring-wrap"><div class="ring ' + (pct >= 75 ? 'good' : pct >= 50 ? 'mid' : 'bad') + '" style="--p:' + pct + ';"><div class="ring-in">' + pct + '%</div></div><small>' + score + " of " + questions.length + ' correct</small></div>' +
-          dots + '<p class="center muted">' + msg + '</p>' +
+          '<div class="done-h">' + msg.split(". ")[0].replace(/\.$/, "") + '</div><p class="center muted" style="margin-top:0;">' + (msg.split(". ").slice(1).join(". ") || "Run it again to lock it in.") + '</p>' + dots +
           (misses.length ? '<button class="btn gold lg" id="drillQ"><svg class=ic aria-hidden=true><use href=#i-refresh></use></svg> Drill your ' + misses.length + ' miss' + (misses.length === 1 ? '' : 'es') + ' now</button>' : '') +
           weakHtml + missHtml + '<div class="spacer"></div><button class="btn ' + (misses.length ? 'ghost' : 'gold') + ' lg" id="again">Try another quiz</button>' +
           '<div class="spacer"></div>' +

@@ -378,7 +378,7 @@
       '<div class="hero">' +
         '<div style="display:flex;justify-content:space-between;align-items:flex-end;"><div>' + head + '</div>' +
           (streak ? '' : '<!--') + '<div style="text-align:right;white-space:nowrap;"><div style="font-size:1.6rem;font-weight:800;"><svg class=ic aria-hidden=true><use href=#i-flame></use></svg> ' + streak + '</div><div class="sub">day streak' + (Store.saverUsed() && Date.now() - Store.saverUsed() < 2 * 86400000 ? ' (1 missed day forgiven)' : '') + '</div></div>' + (streak ? '' : '-->') + '</div>' +
-        (calm || recommended || notRec ? '' : '<div class="bar"><span style="width:' + rs.ready + '%"></span></div>' +
+        (calm || recommended || notRec ? '' : (rs.seen === 0 && !streak ? '' : '<div class="bar"><span style="width:' + rs.ready + '%"></span></div>') +
           '<div class="sub" style="margin-top:6px;font-size:.85rem;">' + (dToB != null && dToB > 7 ? 'Board in ' + dToB + ' days \u2022 ' : '') + (daily.count >= dayTarget ? 'Today\u2019s cards done &#10003;' : 'Today: ' + daily.count + ' of ' + dayTarget + ' cards') + '</div>' +
           '<details class="hero-more"><summary class="sub">' + (rs.weak.length ? 'Work on: ' + esc(rs.weak[0]) + (rs.weak.length > 1 ? ' +' + (rs.weak.length - 1) : '') : 'How your score works') + '</summary>' +
           (function () {
@@ -444,8 +444,7 @@
     var pc = cardsForDeck(id), ids = pc.map(function (c) { return c.id; });
     var m = Math.round(Store.mastery(ids) * 100), counts = Store.counts(ids);
     mount.innerHTML =
-      '<div class="hero"><div class="sub" style="color:var(--gold);font-weight:700;">' + esc(p.code) + '</div>' +
-        '<div style="font-size:1.15rem;font-weight:700;margin:4px 0;">' + esc(p.title) + '</div>' +
+      '<div class="hero">' + (p.title !== p.code ? '<div style="font-size:1.15rem;font-weight:700;margin:0 0 4px;">' + esc(p.title) + '</div>' : '') +
         '<div class="sub">' + pc.length + ' cards • ' + m + '% mastered</div>' +
         '<div class="bar"><span style="width:' + m + '%"></span></div></div>' +
       '<div class="btn-row">' +
@@ -554,7 +553,7 @@
       '</div>' +
       '<button class="btn gold lg" data-n="10"><svg class=ic aria-hidden=true><use href=#i-play></use></svg> Start a 10-question board</button>' +
       '<div class="muted center" style="font-size:.85rem;margin:6px 0 10px;" id="lenNote"></div>' +
-      '<div class="lg-h" style="margin-top:2px;">Other lengths</div><div class="len-row"><button class="chip" data-n="5" data-quick="1"><b>5</b><small>quick board</small></button><button class="chip" data-n="15"><b>15</b><small>questions</small></button><button class="chip" data-n="25"><b>25</b><small>questions</small></button></div>' +
+      '<div class="lg-h" style="margin-top:2px;">Other lengths</div><div class="len-row"><button class="chip" data-n="5" data-quick="1"><b>5</b><small>quick</small></button><button class="chip" data-n="15"><b>15</b><small>standard</small></button><button class="chip" data-n="25"><b>25</b><small>long</small></button></div>' +
       (/^(core|top|final)$/.test(deck) ? '<details class="set-fold" style="margin-top:14px;"><summary>Practice with your sponsor</summary>' +
         '<button class="btn ghost" id="sendSponsor" style="margin-top:8px;"><svg class=ic aria-hidden=true><use href=#i-send></use></svg> Send a board to my sponsor</button>' +
         '<div class="muted center" style="font-size:.85rem;margin:6px 0;">They open the link and run the same board on their phone, with the answers and checklists.</div>' +
@@ -1724,8 +1723,10 @@
     App.toast("Could not save your progress: phone storage may be full. Export a backup from More.", 5000);
   });
 
+  var userFold = 0;
+  document.addEventListener("click", function (e) { if (e.target.closest && e.target.closest("summary")) userFold = Date.now(); }, true);
   document.addEventListener("toggle", function (e) {
-    var d = e.target; if (!d || d.tagName !== "DETAILS" || !d.open) return;
+    var d = e.target; if (!d || d.tagName !== "DETAILS" || !d.open || Date.now() - userFold > 800) return;
     var r = d.getBoundingClientRect(); if (r.bottom > window.innerHeight - 70) d.scrollIntoView({ block: "nearest", behavior: "smooth" });
   }, true);
   backBtn.addEventListener("click", function () { if (history.length > 1) history.back(); else App.go("#/"); });

@@ -33,7 +33,7 @@
 
   var FUND_OVERVIEW = "New to all of this? Start here. These lessons cover the bedrock every board expects you to know cold — the Army Values, the ranks and chain of command, the creeds, the general orders, and the Code of Conduct. Learn these first, then work through each publication.";
 
-  var CORE_OVERVIEW = "Next stop after Fundamentals. These are the questions boards ask most, pulled from every publication and ordered so the most-asked subjects come first. Finish this track and you've covered the core of the board. The publication tracks below go deeper.";
+  var CORE_OVERVIEW = "The questions boards ask most, most-asked first. Finish this track and you've covered the core of the board.";
   var CORE_ORDER = ["tc7-21-13", "ar600-8-19", "boardskills", "sit", "personal", "adp6-22", "ar600-20", "atp6-22-1", "ar600-52", "ar27-10", "ar670-1", "pam670-1", "ar600-25", "tc3-21-5", "tc7-22-7", "ar623-3", "ar600-8-22", "ar840-10", "fm7-22",
     "ar350-1", "stp21-1", "weapons", "ar735-5", "adp7-0", "fm7-0", "adp5-0", "atp5-19", "ar530-1", "ar600-85", "atp3-50-20", "ar608-1", "ar930-4", "ar385-10", "ad2019-33", "brs", "stp21-24", "adp3-0"];
 
@@ -101,7 +101,7 @@
       chunkLessons(cs, "core-" + pubId).forEach(function (l) { l.title = nm + (/[?!]$/.test(nm) ? " " : ": ") + l.title; l.pubName = nm; coreLessons.push(l); });
     });
     if (coreLessons.length)
-      tracks.push({ id: "core", title: "⭐ Board Core: the must-know questions", overview: CORE_OVERVIEW, lessons: coreLessons });
+      tracks.push({ id: "core", title: "Board Core: the must-know questions", overview: CORE_OVERVIEW, lessons: coreLessons });
     STUDY.pubs.forEach(function (p) {
       if (p.id === "mine" || p.id === "chain") return;
       var cards = all.filter(function (c) { return c.pub === p.id; });
@@ -167,7 +167,9 @@
       var tracks = buildTracks();
       var t = tracks.filter(function (x) { return x.id === trackId; })[0];
       if (!t) return Learn.hub(container);
-      var html = t.overview ? '<div class="card"><div class="muted">' + esc(t.overview) + '</div></div>' : '';
+      var html = t.overview ? '<div class="muted" style="margin:2px 4px 10px;">' + esc(t.overview) + '</div>' : '';
+      var nx = t.lessons.filter(function (l) { return !isDone(l); })[0];
+      if (nx) html += '<a class="btn gold lg" href="#/lesson/' + nx.id + '" style="margin-bottom:12px;"><svg class=ic aria-hidden=true><use href=#i-play></use></svg> ' + (t.lessons.indexOf(nx) ? 'Continue: lesson ' + (t.lessons.indexOf(nx) + 1) : 'Start lesson 1') + '</a>';
       var seenLead = {};
       t.lessons.forEach(function (l, k) {
         var done = isDone(l);

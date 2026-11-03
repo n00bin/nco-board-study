@@ -775,3 +775,13 @@ body.session .screen:has(.drive-ctl) { padding-bottom: 180px !important; }
 /* ---------- v3.36 polish round 9 ---------- */
 .verdict, #choices + .verdict, .flash-ref { scroll-margin-bottom: 120px; }
 details { scroll-margin-bottom: 90px; }
+
+/* ---------- v3.37 polish round 10 ---------- */
+/* the step progress is quiet; the timer is the loud bar */
+.mb-head + .progress-bar span { background: var(--text-dim); }
+.mb-head + .progress-bar { height: 3px; }
+/* one-line tags next to icon buttons */
+.flash-toprow .flash-tag { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; flex: 1; }
+/* Drive: the card owns the middle of the screen */
+body.session .drive-card { min-height: calc(100vh - 330px); display: flex; flex-direction: column; }
+.done-h svg.ic { color: var(--gold); }

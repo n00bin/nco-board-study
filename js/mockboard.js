@@ -278,7 +278,7 @@
         var kind = steps[s] && steps[s].kind, KL = { reportIn: "Reporting in", drill: "Facing movements", intro: "Tell us about yourself", member: "Next board member", reportOut: "Reporting out", follow: "Follow-up to question " + qNum };
         var txt = label ? label : (kind && kind !== "q" && KL[kind]) ? KL[kind] : curLocal ? "About your unit" : qNum ? "Question " + qNum + " of " + totalQ : "";
         return '<div class="q-count mb-head"><span>' + txt + '</span>' + (asked >= 3 ? '<span class="pill score-pill">Score ' + Math.round(100 * got / asked) + '%</span>' : '') + '</div>' +
-          '<div class="progress-bar"><span style="width:' + Math.round(100 * s / Math.max(1, steps.length)) + '%"></span></div>';
+          '<div class="progress-bar"><span style="width:' + Math.round(100 * Math.min(1, qNum / Math.max(1, totalQ))) + '%"></span></div>';
       }
       function timerHtml(t, why) {
         // say why the clock isn't the Settings value (long answers and scenarios get double time; the intro gets 90 s)
@@ -429,7 +429,9 @@
           if (stmt) onGrade(function (ok) { bearing.push({ label: "Tell us about yourself", ok: ok }); next(); });
           else container.querySelector("#introDone").addEventListener("click", function () {
             var n = 0; container.querySelectorAll(".ip").forEach(function (b) { if (b.checked) n++; });
-            bearing.push({ label: "Tell us about yourself", ok: n >= 3 }); next();
+            bearing.push({ label: "Tell us about yourself", ok: n >= 3 });
+            App.toast(n >= 3 ? "Good intro: " + n + " of 4 covered" : n + " of 4 covered. Add the rest next time.", 2200);
+            next();
           });
         };
         container.querySelector("#reveal").addEventListener("click", done);
@@ -582,7 +584,7 @@
         if (curStyle === "rapid" || opts.quick) fups = [];
         // A real board member presses on what you left out: ask about the first missed key point (bonus "why" boxes skipped)
         var gap = (left || []).map(function (k) { return c.points && c.points[k]; }).filter(function (p) { return p && !/^Said why it matters/i.test(p); })[0];
-        if (score >= 0.5 && score < 1 && gap && curStyle !== "rapid" && !opts.quick && !c.local && c.pub !== "personal") {
+        if (score >= 0.66 && score < 1 && gap && curStyle !== "rapid" && !opts.quick && !c.local && c.pub !== "personal") {
           var shortList = c.points.every(function (p) { return p.length <= 22 || /^Said why/i.test(p); });
           var nLeft = (left || []).filter(function (k) { return c.points[k] && !/^Said why/i.test(c.points[k]); }).length;
           var tp = c.topic ? String(c.topic).replace(/\s*\(.*\)\s*$/, "") : "";
@@ -669,7 +671,7 @@
       }
 
       function results() {
-        clearTimer(); Speech.stop(); releaseMic();
+        clearTimer(); Speech.stop(); releaseMic(); window.scrollTo(0, 0);
         Store.recordQuiz("Mock Board" + (opts.full ? " (full)" : "") + (sponsor ? " with sponsor" : ""), got, asked);
         var pct = asked ? Math.round((got / asked) * 100) : 0;
         var weak = Object.keys(perPub).map(function (k) { return perPub[k]; })
@@ -685,21 +687,23 @@
         if (deck.length < 8 && V.level !== "work") { V = { level: "work", title: "Good practice", msg: pct + "% on a short board. Board-ready takes a full board of 10 or more questions." }; msg = V.msg; }
         var nQ = deck.filter(function (c) { return !c.local; }).length, nF = Math.max(0, asked - nQ);
         var countLine = nQ + " question" + (nQ === 1 ? "" : "s") + (nF ? ", " + nF + " follow-up" + (nF === 1 ? "" : "s") + " or second tries" : "");
+        var strongB = pct >= 75 && !notReady && V.level !== "work" && deck.length >= 8;
+        var vTitle = strongB ? "Strong board" : V.title, vLine = strongB ? (missed.length ? "Tighten the " + missed.length + " miss" + (missed.length === 1 ? "" : "es") + ", then run another." : "Keep it sharp with a board every few days.")
+          : (msg.indexOf(V.title + ".") === 0 ? msg.slice(V.title.length + 1).trim() : msg);
         var html = '<div class="ring-wrap"><div class="ring ' + (pct >= 75 ? 'good' : pct >= 50 ? 'mid' : 'bad') + '" style="--p:' + pct + ';"><div class="ring-in">' + pct + '%</div></div><small>score</small></div>' +
+          '<div class="done-h">' + (strongB ? '<svg class=ic aria-hidden=true><use href=#i-trophy></use></svg> ' : '') + esc(vTitle) + '</div><p class="center muted" style="margin-top:0;">' + esc(vLine) + '</p>' +
           (function () {
             var full = qScores.filter(function (x) { return x >= 0.99; }).length, part = qScores.filter(function (x) { return x >= 0.66 && x < 0.99; }).length, miss = qScores.length - full - part;
             var cb = extras.filter(function (x) { return x.k === "cb"; }), fu = extras.filter(function (x) { return x.k === "fu"; });
             var cbOk = cb.filter(function (x) { return x.ok; }).length, fuOk = fu.filter(function (x) { return x.ok; }).length;
-            var legend = '<div class="dot-legend"><span><span class="dot g"></span>full</span><span><span class="dot a"></span>with gaps</span><span><span class="dot r"></span>missed</span>' + (extras.length ? '<span><span class="dot sq"></span>second try / follow-up</span>' : '') + '</div>';
+            var legend = '<div class="dot-legend">' + (full ? '<span><span class="dot g"></span>full</span>' : '') + (part ? '<span><span class="dot a"></span>with gaps</span>' : '') + (miss ? '<span><span class="dot r"></span>missed</span>' : '') + (extras.length ? '<span><span class="dot sq"></span>second try / follow-up</span>' : '') + '</div>';
             return '<div class="dots" aria-hidden="true">' + qScores.map(function (x) { return '<span class="dot ' + (x >= 0.99 ? 'g' : x >= 0.66 ? 'a' : 'r') + '"></span>'; }).join("") +
                 (extras.length ? '<span class="dot-gap"></span>' + extras.map(function (x) { return '<span class="dot sq ' + (x.ok ? 'g' : 'r') + '"></span>'; }).join("") : '') + '</div>' + legend +
               '<p class="center muted" style="font-size:.92rem;margin:4px 0 0;">' + countLine + '</p><details class="fb-fold score-how"><summary>How this was scored</summary><p class="muted" style="font-size:.92rem;margin:0 0 8px;">First answers: ' + full + ' full \u2022 ' + part + ' with gaps \u2022 ' + miss + ' missed' +
                 (cb.length ? '<br>Second tries: ' + cbOk + ' of ' + cb.length + ' recovered' : '') + (fu.length ? '<br>Follow-ups: ' + fuOk + ' of ' + fu.length + ' right' : '') +
                 '<br>The score counts every answer, with part credit for answers with gaps.</p></details>' +
               '';
-          })() + (pct >= 75 && !notReady && V.level !== "work" && deck.length >= 8
-            ? '<p class="center strong-line"><svg class=ic aria-hidden=true><use href=#i-trophy></use></svg> Strong board' + (missed.length ? ': tighten the ' + missed.length + ' miss' + (missed.length === 1 ? '' : 'es') + '.' : '. Keep it sharp.') + '</p>'
-            : notReady ? '<div class="verdict-line"><b>' + esc(V.title) + '.</b> ' + esc(msg) + '</div>' : '<p class="center muted">' + msg + '</p>') +
+          })() +
           // the next step first: drill the misses (or run another), then the details
           (missed.length && !sponsor ? '<button class="btn gold lg" id="drillMiss"><svg class=ic aria-hidden=true><use href=#i-refresh></use></svg> Drill your ' + missed.length + ' miss' + (missed.length === 1 ? '' : 'es') + ' now</button><div class="spacer"></div>' : '');
         if (bearing.length) {
@@ -716,16 +720,16 @@
           weak.forEach(function (p) { html += '<a class="li" href="#/flash/' + encodeURIComponent(p.id || "") + '"><span class="grow">' + subjHtml(p.code) + '</span><b class="badge-bad" style="white-space:nowrap;">missed ' + p.miss + ' of ' + p.n + '</b><span class="chev" aria-hidden="true"><svg class=ic aria-hidden=true><use href=#i-chev></use></svg></span></a>'; });
           html += '</div>';
         }
+        if (sponsor) html += '<h2 class="section">Your notes for the Soldier (optional)</h2><textarea class="input" id="sbNote" rows="3" maxlength="300" placeholder="e.g. Good bearing. Rambled on the intro; slow down on SHARP answers."></textarea>' +
+          '<div class="spacer"></div><button class="btn gold lg" id="sendBack"><svg class=ic aria-hidden=true><use href=#i-send></use></svg> Send results to the Soldier</button>' +
+          '<div class="muted center" style="font-size:.85rem;margin-top:6px;">They open the link on their phone: the score goes into their history and the questions they missed come back sooner.</div>';
         if (missed.length) {
-          html += '<details class="set-fold"' + (sponsor ? ' open' : '') + '><summary>Review ' + (sponsor ? 'their' : 'your') + ' ' + missed.length + ' miss' + (missed.length === 1 ? '' : 'es') + '</summary>';
+          html += '<details class="set-fold"><summary>Review ' + (sponsor ? 'their' : 'your') + ' ' + missed.length + ' miss' + (missed.length === 1 ? '' : 'es') + '</summary>';
           missed.forEach(function (m) {
             html += '<div class="card"><div class="flash-tag">' + esc(m.code) + '</div><div style="font-weight:600;margin-bottom:6px;">' + esc(m.q) + '</div><div class="muted">' + esc(m.a) + '</div></div>';
           });
           html += '</details>';
         }
-        if (sponsor) html += '<h2 class="section">Your notes for the Soldier (optional)</h2><textarea class="input" id="sbNote" rows="3" maxlength="300" placeholder="e.g. Good bearing. Rambled on the intro; slow down on SHARP answers."></textarea>' +
-          '<div class="spacer"></div><button class="btn gold lg" id="sendBack"><svg class=ic aria-hidden=true><use href=#i-send></use></svg> Send results to the Soldier</button>' +
-          '<div class="muted center" style="font-size:.85rem;margin-top:6px;">They open the link on their phone: the score goes into their history and the questions they missed come back sooner.</div>';
         html += (window.App && App.sessionNextHtml ? App.sessionNextHtml() : '') + '<div class="spacer"></div><button class="btn ' + (missed.length || sponsor ? 'ghost' : 'gold') + ' lg" id="again">Run another board</button><div class="spacer"></div><button class="btn ghost lg" id="home">Back to Home</button>';
         container.innerHTML = html;
         container.querySelector("#again").addEventListener("click", function () { MockBoard.render(container, cards, length, opts); });
