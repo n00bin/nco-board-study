@@ -150,7 +150,7 @@
         }
         if (sb) sb.replaceWith(nav); else container.appendChild(nav);
         var last = container.querySelector(".flash-ref") || verdict;
-        if (last) setTimeout(function () { var over = last.getBoundingClientRect().bottom - (window.innerHeight - 112), cd = container.querySelector(".card"), hd = container.querySelector(".mb-head"), room = cd ? cd.getBoundingClientRect().top - ((hd ? hd.getBoundingClientRect().bottom : 66) + 10) : over; over = Math.min(over, Math.max(0, room)); if (over > 0) window.scrollBy({ top: over, behavior: "smooth" }); }, 30);
+        if (last) setTimeout(function () { var why = container.querySelector(".verdict-why"), tgt = why || last, over = tgt.getBoundingClientRect().bottom - (window.innerHeight - 112), cd = container.querySelector(".card"), hd = container.querySelector(".mb-head"), room = cd ? cd.getBoundingClientRect().top - ((hd ? hd.getBoundingClientRect().bottom : 66) + 10) : over; if (!why) over = Math.min(over, Math.max(0, room)); if (over > 0) window.scrollBy({ top: over, behavior: "smooth" }); }, 30);
       }
 
       function showResults() {

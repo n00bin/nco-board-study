@@ -931,3 +931,15 @@ label b, .lbl b, .ch-l b { font-weight: 700 !important; }
 body.session .q-count.mb-head { box-shadow: 0 8px 10px -6px var(--bg); }
 #app:has(#timerChips) details.set-fold .card { border: none; background: transparent; padding: 4px 0; }
 .pills { align-items: center; }
+
+/* ---------- v3.49 polish round 21 ---------- */
+.dot { width: 13px; height: 13px; }
+.dots { gap: 7px; }
+.dot-legend { font-size: .85rem !important; gap: 12px; }
+.dot-legend .dot { width: 11px !important; height: 11px !important; }
+/* the score note sits in the pinned button slot, not over the rubric */
+.score-flash { bottom: calc(12px + env(safe-area-inset-bottom)) !important; min-height: 58px; display: flex; align-items: center; justify-content: center; }
+#fDone { min-height: 40px !important; padding: 0 14px !important; }
+.progress-bar { background: rgba(255,255,255,.14); }
+.li.static .t { color: var(--text) !important; font-weight: 600 !important; }
+details.more-changes > summary { color: var(--gold); }

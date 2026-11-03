@@ -342,7 +342,7 @@
       function fmt(x) { return (Math.round(x * 10) / 10).toString(); }
 
       function show() {
-        clearTimer(); window.scrollTo(0, 0); document.querySelectorAll(".toast").forEach(function (t) { t.remove(); });
+        marking = false; clearTimer(); window.scrollTo(0, 0); document.querySelectorAll(".toast").forEach(function (t) { t.remove(); });
         if (window.App) App.busy = function () { return container.isConnected; };
         var st = steps[s];
         if (st.kind === "q") { curLocal = !!st.c.local; curStyle = st.style || "standard"; curVoice = VOICES[st.mi || 0] || VOICES[0]; return question(st.c); }
@@ -575,7 +575,9 @@
       }
 
       var qScores = [], extras = [];   // extras: second tries and follow-ups, {k: 'cb'|'fu', ok}
+      var marking = false;
       function markQ(c, score, left) {
+        if (marking) return; marking = true;
         if (!c.local) qScores.push(score);          // score: 1 = got it, 0 = missed, fractions from the key-point rubric
         var ok = score >= 0.66;   // two of three key points is a pass; the key fact alone (kp1) is 0.75
         Store.grade(c.id, ok ? "good" : "again");

@@ -1,7 +1,7 @@
 /* NCO Board Study Guide content: 2123 cards across 45 subjects, built from 30+ Army publications,
    the 2019-2026 Army Directives, and DoD/TSP guidance (sources in the project folder). Checked against the sources 2026-11-02. */
 window.STUDY = {
-  meta: {"title":"NCO Board Study Guide","subtitle":"E-5 / E-6 Promotion Board","version":"3.48.0","updated":"2026-11-02","verified":"2026-11-01","cards":2123},
+  meta: {"title":"NCO Board Study Guide","subtitle":"E-5 / E-6 Promotion Board","version":"3.49.0","updated":"2026-11-02","verified":"2026-11-01","cards":2123},
   pubs: [
     {"id":"sit","code":"What Would You Do?","title":"Situational Leadership Scenarios","cat":"Board Skills"},
     {"id":"personal","code":"Personal Questions","title":"Tell Us About You","cat":"Board Skills"},
@@ -29,7 +29,7 @@ window.STUDY = {
     {"id":"ar530-1","code":"AR 530-1","title":"Operations Security (OPSEC)","cat":"Army Regulations"},
     {"id":"pam670-1","code":"DA PAM 670-1","title":"Uniform Wear & Placement Guide","cat":"Army Regulations"},
     {"id":"stp21-1","code":"STP 21-1","title":"Common Tasks — Warrior Skills Level 1","cat":"Soldier Skills & Readiness"},
-    {"id":"stp21-24","code":"STP 21-24","title":"Common Tasks (legacy subject; cards now cite current publications)","cat":"Soldier Skills & Readiness"},
+    {"id":"stp21-24","code":"STP 21-24","title":"Common Tasks (older edition)","cat":"Soldier Skills & Readiness"},
     {"id":"fm7-22","code":"FM 7-22","title":"Holistic Health and Fitness (H2F)","cat":"Soldier Skills & Readiness"},
     {"id":"tc7-21-13","code":"TC 7-21.13","title":"The Soldier's Guide","cat":"Soldier Skills & Readiness"},
     {"id":"tc7-22-7","code":"TC 7-22.7","title":"The NCO Guide (NCO History & Duties)","cat":"Soldier Skills & Readiness"},

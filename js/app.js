@@ -543,7 +543,7 @@
     var cards = cardsForDeck(deck), title = deckTitle(deck);
     var timer = Store.settings().timer;
     mount.innerHTML =
-      '<div class="setup-head"><div class="t"><svg class=ic aria-hidden=true><use href=#i-users></use></svg> ' + esc(title) + '</div><div class="muted">Answer out loud, like the real board \u2022 <a href="#/pick/board" class="sub-link">Change subject</a></div></div>' +
+      '<div class="setup-head"><div class="t"><svg class=ic aria-hidden=true><use href=#i-users></use></svg> ' + esc(title) + '</div><div class="muted">Answer out loud, like the real board</div><a href="#/pick/board" class="sub-link" style="display:inline-block;margin-top:4px;">Change subject</a></div>' +
       '<div class="lg opts">' +
         '<button type="button" class="li li-btn" id="tChange"><span class="grow"><span class="t">Timer: ' + (timer > 0 ? timer + ' seconds a question' : 'off') + '</span><span class="s">' + (timer > 0 ? 'Double for long answers and scenarios' : 'Answer at your own pace') + '</span></span><span class="pill">Change</span></button>' +
         '<div class="tchips" id="tChips" hidden><div class="chip-row seg5">' + [0, 20, 30, 45, 60].map(function (t) { return '<button type="button" class="chip' + (t === timer ? ' on' : '') + '" data-tt="' + t + '">' + (t ? t + 's' : 'Off') + '</button>'; }).join("") + '</div></div>' +
@@ -598,13 +598,17 @@
       // best matches first: the word in the topic or subject name, then in the question, then Board Core
       var safe = term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), rx = new RegExp("\\b" + safe, "i");
       var rank = function (c) { var p = STUDY.pubsById[c.pub] || {}; return (rx.test((c.topic || "") + " " + (p.code || "") + " " + (p.title || "")) ? 4 : 0) + (rx.test(c.q) ? 2 : 0) + (c.core ? 1 : 0); };
-      all.sort(function (a, b) { return rank(b) - rank(a); });
+      var wx = new RegExp("\\b" + safe + "\\b", "i"), whole = function (c) { return wx.test(c.q + " " + c.a + " " + (c.topic || "")); };
+      all.forEach(function (c) { c._w = whole(c) ? 1 : 0; });
+      all.sort(function (a, b) { return (b._w - a._w) || (rank(b) - rank(a)); });
       var hits = all.slice(0, 80);
       var note = all.length > hits.length ? '<div class="muted center" style="margin-bottom:8px;">Showing the first 80 of ' + all.length + ' matches. Type more to narrow it down.</div>' : '';
       var hl = function (s) { return esc(s).replace(new RegExp("(" + safe + ")", "ig"), "<mark>$1</mark>"); };
+      var nWhole = all.filter(function (c) { return c._w; }).length, divDone = false;
       results.innerHTML = hits.length ? '<div class="muted" style="font-size:.85rem;margin:4px 4px 8px;">' + all.length + ' result' + (all.length === 1 ? '' : 's') + '</div>' + note + hits.map(function (c) {
         var p = STUDY.pubsById[c.pub];
-        return '<a class="card" style="display:block;text-decoration:none;color:inherit;" href="#/read/' + escAttr(c.pub) + '/' + escAttr(c.id) + '"><div class="flash-tag tag-row">' + esc(p ? p.code : "") + (c.topic ? " • " + esc(c.topic) : "") + (c.core ? '<span class="pill core-pill inline">Core</span>' : '') + '</div>' +
+        var div = (!c._w && nWhole && !divDone) ? (divDone = true, '<div class="lg-h" style="margin-top:14px;">Inside longer words</div>') : '';
+        return div + '<a class="card" style="display:block;text-decoration:none;color:inherit;" href="#/read/' + escAttr(c.pub) + '/' + escAttr(c.id) + '"><div class="flash-tag tag-row">' + esc(p ? p.code : "") + (c.topic ? " • " + esc(c.topic) : "") + (c.core ? '<span class="pill core-pill inline">Core</span>' : '') + '</div>' +
           '<div style="font-weight:600;margin-bottom:6px;">' + hl(c.q) + '</div><div class="muted">' + hl(c.a) + '</div><div class="open-hint">Open in ' + esc(p ? p.code : "its subject") + ' <svg class=ic aria-hidden=true><use href=#i-chev></use></svg></div></a>';
       }).join("") : '<div class="empty">No matches. Try a shorter word, or one of these:</div>' + tryChips();
     }
@@ -1293,8 +1297,10 @@
     var all = allCards();
     var html = '<div class="card"><div class="muted">Boards check that you know the current rule, not the old one. Tap a change to see the cards.</div></div>';
     var first = true;
+    var shownC = 0;
     CHANGES.forEach(function (sec) {
       var cs = all.filter(sec.test); if (!cs.length) return;
+      if (shownC++ === 6) html += '<details class="set-fold more-changes"><summary><span class="grow">More changes</span></summary>';
       html += '<details class="set-fold"><summary><span class="grow">' + esc(sec.h) + '</span><span class="pill">' + cs.length + '</span></summary>';
       first = false;
       cs.forEach(function (c) {
@@ -1302,6 +1308,7 @@
       });
       html += '</details>';
     });
+    if (shownC > 6) html += '</details>';
     mount.innerHTML = html;
   }
 
@@ -1422,13 +1429,13 @@
       civ: '<label class="lbl" for="ptxhours">College semester hours (2 points each)</label>' + inp("ptxhours", "e.g. 15", "140px")
     };
     var html = '<div class="card"><div class="muted">A quick estimate. Tap <b>Figure it for me</b> to work out a category. Your real points come from your records (AR 600-8-19, para 3-14).</div></div>' +
-      '<div class="chip-row" id="ptRank">' + ["SGT", "SSG"].map(function (r) { return '<button class="chip' + (r === rank ? ' on' : '') + '" data-r="' + r + '">For ' + r + '</button>'; }).join("") + '</div>';
+      '<div class="chip-row" id="ptRank">' + ["SGT", "SSG"].map(function (r) { return '<button class="chip' + (r === rank ? ' on' : '') + '" data-r="' + r + '">For ' + r + '</button>'; }).join("") + '</div><div id="cutAuto" style="margin-top:10px;"></div>';
     PTS.forEach(function (p) {
       html += '<label class="lbl" for="pt-' + p.k + '"><b>' + esc(p.t) + '</b> (max ' + p.max[rank] + ')</label>' +
         '<input class="input" id="pt-' + p.k + '" inputmode="numeric" maxlength="3" placeholder="not set" value="' + escAttr(m["pts-" + p.k] || "") + '">' +
         '<details class="pt-help"' + (m["pts-x" + p.k] ? " open" : "") + '><summary class="muted" style="font-size:.85rem;margin-top:4px;"><svg class=ic aria-hidden=true><use href=#i-calc></use></svg> Figure it for me</summary><div class="muted" style="font-size:.85rem;margin:4px 0;">' + esc(p.h) + ' AR 600-8-19 (Mar 2026), ' + p.ref + '.</div>' + help[p.k] + '</details><div style="height:10px;"></div>';
     });
-    html += '<div id="cutAuto"></div><label class="lbl" for="pt-cut">This month\'s cutoff score for your MOS</label>' +
+    html += '<label class="lbl" for="pt-cut">This month\'s cutoff score for your MOS</label>' +
       '<input class="input" id="pt-cut" inputmode="numeric" maxlength="3" placeholder="e.g. 450" value="' + escAttr(m["pts-cut"] || "") + '">' +
       '<div class="card" id="ptTotal" style="margin-top:12px;border-color:var(--gold);"></div>';
     mount.innerHTML = html;
@@ -1497,7 +1504,7 @@
         '<div class="cut-pair"><div' + (rank === "SGT" ? ' class="mine"' : '') + '><small>SGT</small><b>' + cutTxt(pair[0]) + '</b></div><div' + (rank === "SSG" ? ' class="mine"' : '') + '><small>SSG</small><b>' + cutTxt(pair[1]) + '</b></div></div>' +
         '<div class="muted" style="font-size:.85rem;margin-top:8px;">' + (d.updated ? 'Updated ' + niceDate(new Date(d.updated + "T12:00:00").getTime()) + '. ' : '') + 'From the HQDA cutoff memo via <a href="' + escAttr(d.sourceUrl) + '" target="_blank" rel="noopener">mosroadmap.com</a>. Unofficial: confirm with your S1.' +
         (age != null && age > 45 ? ' <b style="color:var(--gold);">These may be out of date.</b>' : '') + '</div>' +
-        '<a class="cut-ippsa" href="https://hr.army.mil" target="_blank" rel="noopener"><svg class=ic aria-hidden=true><use href=#i-share></use></svg> See your own standing in IPPS-A (CAC)</a></div>';
+        '<a class="cut-ippsa" href="https://hr.army.mil" target="_blank" rel="noopener"><svg class=ic aria-hidden=true><use href=#i-ext></use></svg> See your own standing in IPPS-A (CAC)</a></div>';
       var ci = mount.querySelector("#pt-cut"), mm = Store.chain();
       if (mine != null && mine > 24 && mine < 798 && (!ci.value || mm["pts-cutauto"] === "1")) { ci.value = mine; save("pt-cut"); Store.setChainRole("pts-cutauto", "1"); update(); }
     });
