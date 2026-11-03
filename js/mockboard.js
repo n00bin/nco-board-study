@@ -72,7 +72,9 @@
     if (c.pub === "personal") return "you personally";
     var p = STUDY.pubsById[c.pub]; if (!p) return c.pub;
     var t = p.title.replace(/^.*?:\s*/, "").replace(/\s*\(.*\)\s*$/, "");
-    return /^[A-Z]{2,}/.test(p.code) && p.code.length <= 12 && t.length > 40 ? p.code : t.replace(/^The /, "the ");
+    var acr = (p.title.match(/\(([A-Z]{2,6})\)/) || [])[1];
+    if (t.length > 40) { var first = t.split(/,| and | \u2014 /)[0].trim(); return acr || (first.length <= 32 ? first.replace(/^The /, "the ") : p.code); }
+    return t.replace(/^The /, "the ");
   }
   function listJoin(a) { var sep = a.some(function (x) { return /,/.test(x); }) ? "; " : ", "; return a.length <= 1 ? a.join("") : a.slice(0, -1).join(sep) + (sep === "; " ? "; and " : " and ") + a[a.length - 1]; }
 
@@ -397,10 +399,10 @@
         container.innerHTML = header() +
           '<div class="card"><div class="flash-tag">Report to the board</div>' +
             (sponsor ? '<div class="q-text" style="margin-top:8px;">Call the Soldier in. Have them knock (if your SOP does), enter, and report to you out loud.</div>' +
-              '<div class="muted">Listen for: \u201cSergeant Major, (rank) (last name) reports to the President of the Board,\u201d a sharp salute held until you return it, and their correct rank.</div></div>'
+              '<div class="muted" style="margin-top:6px;">Listen for:</div><div class="say">\u201cSergeant Major, (rank) (last name) reports to the President of the Board.\u201d</div><div class="muted">A sharp salute held until you return it, and their correct rank.</div></div>'
             : '<div class="q-text" style="margin-top:8px;">You are called in. Stand up, walk in, and report — out loud, for real.</div>' +
-              (Store.chain()["memo-report"] ? '<div class="muted">Your memo\'s wording: <b>\u201c' + esc(Store.chain()["memo-report"]) + '\u201d</b></div></div>'
-                : '<div class="muted">\u201cSergeant Major, ' + esc(Store.settings().displayName || "(your rank) (your last name)") + ' reports to the President of the Board.\u201d Use your board memo\'s exact wording (you can save it under Board Day Prep \u2192 My Board Memo).</div></div>')) +
+              (Store.chain()["memo-report"] ? '<div class="say">\u201c' + esc(Store.chain()["memo-report"]) + '\u201d</div><div class="muted">Your memo\'s exact wording.</div></div>'
+                : '<div class="say">\u201cSergeant Major, ' + esc(Store.settings().displayName || "(your rank) (your last name)") + ' reports to the President of the Board.\u201d</div><div class="muted">Use your board memo\'s exact wording (save it under Board Day Prep \u2192 My Board Memo).</div></div>')) +
           '<button class="btn ghost" id="showSteps">Show the reporting steps</button><div id="stepsBox" hidden>' + stepsList(all.slice(1, 5)) + '</div><div class="spacer"></div>' +
           mirrorButton() + 
           gradeButtons("Needs work", "Clean", (sponsor ? 'Did they halt about two steps in front of you, salute and hold it, say their correct rank, and sit only when told?' : 'Honest check: halted two steps in front of the president, saluted and held it until returned, said your correct rank, sat only when told?'));
@@ -706,6 +708,7 @@
         var countLine = nQ + " question" + (nQ === 1 ? "" : "s") + (nFu ? ", " + nFu + " follow-up" + (nFu === 1 ? "" : "s") : "") + (nCb ? ", " + nCb + " second " + (nCb === 1 ? "try" : "tries") : "");
         var strongB = pct >= 75 && !notReady && V.level !== "work" && deck.length >= 8;
         var vTitle = strongB ? "Strong board" : V.title, vLine = strongB ? (missed.length ? (sponsor ? "Have them tighten the " : "Tighten the ") + missed.length + " miss" + (missed.length === 1 ? "" : "es") + ", then run another." : "Keep it sharp with a board every few days.")
+          : notReady && missed.length ? "Drill your " + missed.length + " miss" + (missed.length === 1 ? "" : "es") + ", then run it again. " + (msg.match(/tighten up (.*?) and run it again/) ? "Watch " + msg.match(/tighten up (.*?) and run it again/)[1] + "." : "")
           : (msg.indexOf(V.title + ".") === 0 ? msg.slice(V.title.length + 1).trim() : msg).replace(/^(Your|Their) answers scored \d+%\. /, "").replace(/^A real board also grades bearing and the situational questions, so /, "").replace(/^A board doesn\'t pass you on a percentage: it wants confident, complete answers\. /, "").replace(/^./, function (ch) { return ch.toUpperCase(); });
         var howFold = '';
         var html = (handheld ? '<div class="handback"><svg class=ic aria-hidden=true><use href=#i-handshake></use></svg><div><b>Hand the phone back to the Soldier.</b><br>Their score is saved on this phone.</div></div>' : '') + '<div class="ring-wrap"><div class="ring ' + (pct >= 75 && V.level !== "almost" ? 'good' : pct >= 50 ? 'mid' : 'bad') + '" style="--p:' + pct + ';"><div class="ring-in">' + pct + '%</div></div><small>' + (extras.length ? 'score, incl. second tries &amp; follow-ups' : 'score') + '</small></div>' +

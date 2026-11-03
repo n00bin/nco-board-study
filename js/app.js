@@ -381,7 +381,7 @@
           (streak ? '' : '<!--') + '<div style="text-align:right;flex:none;"><div style="font-size:1.6rem;font-weight:800;white-space:nowrap;"><svg class=ic aria-hidden=true><use href=#i-flame></use></svg> ' + streak + '</div><div class="sub" style="white-space:nowrap;">day streak</div>' + (Store.saverUsed() && Date.now() - Store.saverUsed() < 2 * 86400000 ? '<div class="sub" style="font-size:.85rem;">1 day forgiven</div>' : '') + '</div>' + (streak ? '' : '-->') + '</div>' +
         (calm || recommended || notRec ? '' : (rs.seen === 0 && !streak ? '' : '<div class="bar"><span style="width:' + rs.ready + '%"></span></div>') +
           '<div class="sub" style="margin-top:6px;font-size:.85rem;">' + (dToB != null && dToB > 7 ? 'Board in ' + dToB + ' days \u2022 ' : '') + (daily.count >= dayTarget ? 'Today\u2019s cards done &#10003; The rest of the plan is extra.' : 'Today: ' + daily.count + ' of ' + dayTarget + ' cards') + '</div>' +
-          '<details class="hero-more"><summary class="sub">' + (rs.weak.length ? 'Work on: ' + esc(rs.weak[0]) + (rs.weak.length > 1 ? ' +' + (rs.weak.length - 1) : '') : 'How your score works') + '</summary>' +
+          '<details class="hero-more"><summary class="sub">' + (rs.weak.length ? 'Work on: ' + esc(rs.weak[0]) + (rs.weak.length > 1 ? ' and ' + (rs.weak.length - 1) + ' more' : '') : 'How your score works') + '</summary>' +
           (function () {
             var q = Store.quizzes(), sp = q.filter(function (x) { return /with sponsor/.test(x.deck) && x.total; })[0], me = q.filter(function (x) { return /^Mock Board/.test(x.deck) && !/with sponsor/.test(x.deck) && x.total; }).slice(0, 5);
             if (!sp || !me.length) return '';
@@ -610,7 +610,7 @@
         var div = (!c._w && nWhole && !divDone) ? (divDone = true, '<div class="lg-h" style="margin-top:14px;">Inside longer words</div>') : '';
         return div + '<a class="card" style="display:block;text-decoration:none;color:inherit;" href="#/read/' + escAttr(c.pub) + '/' + escAttr(c.id) + '"><div class="flash-tag tag-row">' + esc(p ? p.code : "") + (c.topic ? " • " + esc(c.topic) : "") + (c.core ? '<span class="pill core-pill inline">Core</span>' : '') + '</div>' +
           '<div style="font-weight:600;margin-bottom:6px;">' + hl(c.q) + '</div><div class="muted">' + hl(c.a) + '</div><div class="open-hint">Open in ' + esc(p ? p.code : "its subject") + ' <svg class=ic aria-hidden=true><use href=#i-chev></use></svg></div></a>';
-      }).join("") + '<div class="muted center end-line">' + (all.length > hits.length ? 'Showing the top ' + hits.length + '. Type more to narrow it down.' : 'End of results') + '</div>' : '<div class="empty">No matches. Try a shorter word, or one of these:</div>' + tryChips();
+      }).join("") + '<div class="muted center end-line">' + (all.length > hits.length ? 'Showing the top ' + hits.length + '. Type more to narrow it down.' : 'End of results') + '</div>' : '<div class="empty-state" style="padding:28px 0 12px;"><svg class=ic aria-hidden=true><use href=#i-search></use></svg><div class="t">No matches for \u201c' + esc(input.value.trim()) + '\u201d</div><div class="muted" style="margin-bottom:6px;">Try a shorter word, or one of these:</div></div>' + tryChips();
     }
     try { var q0 = sessionStorage.getItem("ncob-q"); if (q0) input.value = q0; } catch (e) {}
     function tryChips() { return '<div class="chip-row">' + ["SHARP", "AFT", "hazing", "counseling", "NCOER", "Article 15", "waist-to-height", "kratom", "land navigation", "Army Values"].map(function (w) { return '<button class="chip" data-try="' + w + '">' + w + '</button>'; }).join("") + '</div>'; }
@@ -1349,12 +1349,12 @@
       html += '<button class="row check' + (on ? " checked" : "") + '" data-id="' + u.id + '" role="checkbox" aria-checked="' + (on ? "true" : "false") + '"><div class="checkbox">' + (on ? "&#10003;" : "") + '</div><div class="grow"><div class="ttl">' + checkText(u.t) + '</div></div></button>';
     });
     html += '<div class="spacer"></div><a class="btn ghost" href="#/flash/pam670-1">Study uniform placement</a>' +
-      '<div class="spacer"></div><button class="home-link danger-link" id="clear">Clear all checkmarks</button>';
+      (UNIFORM_CHECKS.some(function (u) { return checks[u.id]; }) ? '<div class="spacer"></div><button class="home-link danger-link" id="clear">Clear all checkmarks</button>' : '');
     var doneN = UNIFORM_CHECKS.filter(function (u) { return checks[u.id]; }).length;
     html = '<div class="check-prog"><b>' + doneN + ' of ' + UNIFORM_CHECKS.length + '</b> checked<div class="bar"><span style="width:' + Math.round(100 * doneN / UNIFORM_CHECKS.length) + '%"></span></div></div>' + html;
     mount.innerHTML = groupChecks(html);
     mount.querySelectorAll(".check").forEach(function (b) { b.addEventListener("click", function () { Store.toggleCheck(b.getAttribute("data-id")); screenUniform(); }); });
-    mount.querySelector("#clear").addEventListener("click", function () { if (!confirm("Clear all checkmarks?")) return; UNIFORM_CHECKS.forEach(function (u) { if (Store.checks()[u.id]) Store.toggleCheck(u.id); }); screenUniform(); });
+    if (mount.querySelector("#clear")) mount.querySelector("#clear").addEventListener("click", function () { if (!confirm("Clear all checkmarks?")) return; UNIFORM_CHECKS.forEach(function (u) { if (Store.checks()[u.id]) Store.toggleCheck(u.id); }); screenUniform(); });
   }
 
   // One list for the week before: records, the board memo, and what to carry. Ticks are saved like the uniform checklist.
@@ -1437,8 +1437,8 @@
         '<input class="input" id="pt-' + p.k + '" inputmode="numeric" maxlength="3" placeholder="not set" value="' + escAttr(m["pts-" + p.k] || "") + '">' +
         '<details class="pt-help"' + (m["pts-x" + p.k] ? " open" : "") + '><summary class="muted" style="font-size:.85rem;margin-top:4px;"><svg class=ic aria-hidden=true><use href=#i-calc></use></svg> Figure it for me</summary><div class="muted" style="font-size:.85rem;margin:4px 0;">' + esc(p.h) + ' AR 600-8-19 (Mar 2026), ' + p.ref + '.</div>' + help[p.k] + '</details><div style="height:10px;"></div>';
     });
-    html += '<label class="lbl" for="pt-cut">This month\'s cutoff score for your MOS</label>' +
-      '<input class="input" id="pt-cut" inputmode="numeric" maxlength="3" placeholder="e.g. 450" value="' + escAttr(m["pts-cut"] || "") + '">' +
+    html += '<details class="cut-other" id="cutOther" open><summary>Use a different cutoff</summary><label class="lbl" for="pt-cut" style="margin-top:4px;">Cutoff score to compare against</label>' +
+      '<input class="input" id="pt-cut" inputmode="numeric" maxlength="3" placeholder="e.g. 450" value="' + escAttr(m["pts-cut"] || "") + '"></details>' +
       '<div class="card" id="ptTotal" style="margin-top:12px;border-color:var(--gold);"></div>';
     mount.innerHTML = html;
     function n(id) { var e = mount.querySelector("#" + id); var v = parseInt(((e && e.value) || "").replace(/\D/g, ""), 10); return isNaN(v) ? null : v; }
@@ -1509,6 +1509,7 @@
         '<a class="cut-ippsa" href="https://hr.army.mil" target="_blank" rel="noopener"><svg class=ic aria-hidden=true><use href=#i-ext></use></svg> See your own standing in IPPS-A (CAC)</a></div>';
       var ci = mount.querySelector("#pt-cut"), mm = Store.chain();
       if (mine != null && mine > 24 && mine < 798 && (!ci.value || mm["pts-cutauto"] === "1")) { ci.value = mine; save("pt-cut"); Store.setChainRole("pts-cutauto", "1"); update(); }
+      var co = mount.querySelector("#cutOther"); if (co && mine != null && mine > 24 && mine < 798 && Store.chain()["pts-cutauto"] === "1") co.open = false;
     });
   }
 
@@ -1530,7 +1531,7 @@
   // a numbered step: the first clause bold, anything the Soldier says out loud as a callout
   function stepText(s) {
     var h = esc(s).replace(/\s*—\s*e\.g\.\s*"/, ': "');
-    var m = h.match(/^([^.:"]{2,78}[^.:\s"]{2}[.:])\s+(.*)$/);
+    var m = h.match(/^([^.:"]{2,78}[^.:\s"]{2}[.:])\s+(.*)$/) || h.match(/^(When [^,]{2,30},)\s+(.*)$/);
     if (m) h = '<b>' + m[1] + '</b> ' + m[2];
     return h.replace(/"([^"]{6,})"/g, '<span class="say">\u201c$1\u201d</span>').replace(/\u201c([^\u201d]{6,})\u201d(?![^<]*<\/span>)/g, '<span class="say">\u201c$1\u201d</span>');
   }
@@ -1539,6 +1540,7 @@
     var html = '<div class="card"><div class="muted">A general sequence — boards differ. Follow your local board SOP and appointment memo exactly.</div></div>';
     html += '<div class="lg">' + REPORTING_STEPS.map(function (s, i) { return '<div class="li steps-li"><span class="numbubble">' + (i + 1) + '</span><span class="grow" style="font-size:.92rem;">' + stepText(s) + '</span></div>'; }).join("") + '</div>';
     html += '<h2 class="section">Bearing tips</h2><div class="card"><div class="muted">Stand and sit at attention. Make eye contact. Speak loudly and clearly. Don\'t fidget. If you don\'t know an answer, say so honestly — never bluff.</div></div>';
+    html += group("", [li("#/board/core", "<svg class=ic aria-hidden=true><use href=#i-users></use></svg>", "Rehearse in a Mock Board", "Full board: report in, drill, then the questions")]);
     mount.innerHTML = html;
   }
 
@@ -1597,7 +1599,7 @@
       });
       html += '</details>';
     });
-    html += '<div class="spacer"></div><a class="btn gold lg" href="#/reporting"><svg class=ic aria-hidden=true><use href=#i-flag></use></svg> How to report to the board</a><div class="spacer"></div>' +
+    html += '<div class="spacer"></div><a class="btn ghost lg" href="#/reporting"><svg class=ic aria-hidden=true><use href=#i-flag></use></svg> How to report to the board</a><div class="spacer"></div>' +
       group("", [li("#/board/core", "<svg class=ic aria-hidden=true><use href=#i-users></use></svg>", "Rehearse in a Mock Board", "Full board: report in, drill, then the questions")]);
     mount.innerHTML = html;
   }

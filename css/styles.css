@@ -1028,3 +1028,17 @@ details.pt-help[open] { border-left: 1px solid var(--line); border: 1px solid va
 body.session .intro-note.result-flash { position: fixed; left: 50%; transform: translateX(-50%); width: calc(100% - 32px); max-width: calc(var(--maxw) - 32px); bottom: calc(12px + env(safe-area-inset-bottom)); min-height: 58px; display: flex; align-items: center; justify-content: center; margin: 0; z-index: 20; }
 /* nothing rests under the bottom fade */
 body.session .screen { padding-bottom: 150px !important; }
+
+/* ---------- v3.56 polish round 28 ---------- */
+/* one secondary button size */
+.btn.ghost:not(.sm) { min-height: 56px; font-size: 1rem; }
+/* typed verdict: status text, not a pill */
+.verdict-near { border: none !important; background: none !important; padding: 0 !important; border-radius: 0 !important; }
+/* one segmented style in Settings */
+.chip-row.seg3 .chip, .chip-row.seg2 .chip { font-size: .92rem; padding: 0 8px; min-height: 44px; }
+/* a progress bar you can see */
+.mb-head + .progress-bar { height: 5px !important; background: rgba(255,255,255,.18) !important; }
+.mb-head + .progress-bar span { background: var(--gold) !important; }
+.pill-btn { min-height: 34px !important; padding: 0 14px !important; }
+details.cut-other { margin-top: 10px; }
+details.cut-other > summary { color: var(--gold); font-weight: 600; font-size: .92rem; }

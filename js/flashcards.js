@@ -218,7 +218,7 @@
         var words = function (s) { var o = {}; String(s).toLowerCase().replace(/[^a-z0-9 ]+/g, " ").split(/\s+/).forEach(function (w) { if (w.length > 3 && !STOP[w]) o[w.replace(/(ing|ed|es|s)$/, "")] = 1; }); return Object.keys(o); };
         var aw = words(c.a), tw = words(typed), hit = aw.filter(function (w) { return tw.indexOf(w) >= 0; }).length, share = aw.length ? hit / aw.length : 0;
         var good = close || (aw.length >= 2 && share >= 0.6), near = !good && share >= 0.3;
-        var verdict = !typed ? "" : good ? '<div class="badge-good" style="font-weight:700;">&#10003; Looks right</div>' : near ? '<div class="verdict-near">Close: compare with the answer</div>' : '<div class="verdict-near">Compare with the answer</div>';
+        var verdict = !typed ? "" : good ? '<div class="badge-good" style="font-weight:700;">&#10003; Looks right</div>' : near ? '<div class="verdict-near">Close: compare with the answer</div>' : share < 0.15 ? '<div class="badge-bad" style="font-weight:700;">&#10007; Doesn&#39;t match the answer</div>' : '<div class="verdict-near">Compare with the answer</div>';
         container.innerHTML =
           '<div class="q-count mb-head"><span>' + esc(title) + ' \u2022 ' + reviewed + ' done</span><span class="pills"><span class="pill">' + (queue.length - i) + ' left</span>' + (reviewed >= 3 && queue.length - i > 3 ? '<button class="pill pill-btn tdone">Finish</button>' : '') + '</span></div><div class="progress-bar"><span style="width:' + Math.round(100 * i / Math.max(1, queue.length)) + '%"></span></div>' +
           '<div class="card"><div class="flash-tag">' + esc(pubCode(c)) + '</div>' +
