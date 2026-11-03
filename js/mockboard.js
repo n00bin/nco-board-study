@@ -271,7 +271,7 @@
         if (!secs) return 0;
         var L = String(c.a || "").length;
         if (L > 600) return 0;
-        return (L > 200 || (c.points && c.points.length > 1)) ? secs * 2 : secs;
+        return (L > 200 || c.pub === "sit") ? secs * 2 : secs;
       }
       function header(label) {
         var localN = deck.filter(function (c) { return c.local; }).length, totalQ = deck.length - localN;
@@ -396,7 +396,7 @@
               '<div class="muted">Listen for: "Sergeant Major, (rank) (last name) reports to the President of the Board," a sharp salute held until you return it, and their correct rank.</div></div>'
             : '<div class="q-text" style="margin-top:8px;">You are called in. Stand up, walk in, and report — out loud, for real.</div>' +
               (Store.chain()["memo-report"] ? '<div class="muted">Your memo\'s wording: <b>"' + esc(Store.chain()["memo-report"]) + '"</b></div></div>'
-                : '<div class="muted">"Sergeant Major, ' + esc(Store.settings().displayName || "(your rank) (your last name)") + ' reports to the President of the Board." Use your board memo\'s exact wording. <a href="#/memo">Add your memo\'s wording</a>.</div></div>')) +
+                : '<div class="muted">"Sergeant Major, ' + esc(Store.settings().displayName || "(your rank) (your last name)") + ' reports to the President of the Board." Use your board memo\'s exact wording (you can save it under Board Day Prep \u2192 My Board Memo).</div></div>')) +
           '<button class="btn ghost" id="showSteps">Show the reporting steps</button><div id="stepsBox" hidden>' + stepsList(all.slice(1, 5)) + '</div><div class="spacer"></div>' +
           mirrorButton() + '<p class="center muted">' + (sponsor ? 'Did they halt about two steps in front of you, salute and hold it, say their correct rank, and sit only when told?' : 'Honest check: halted two steps in front of the president, saluted and held it until returned, said your correct rank, sat only when told?') + '</p>' +
           gradeButtons("Needs work", "Clean");
@@ -411,7 +411,7 @@
             '<div class="q-text" style="margin-top:8px;">"Tell the board a little about yourself."</div></div>' +
           '<div class="card"><div class="muted" style="font-size:.92rem;">' + (sponsor ? 'Ask the Soldier to tell you about themselves. Listen for about a minute: who they are, job and unit, time in service, a real accomplishment or two, and their goals as an NCO. Are they saying it, not reciting it?' :
             'Answer out loud in about a minute, eyes on the president: who you are, your job and unit, time in service, a real accomplishment or two, and your goals as an NCO. Say it, don\'t read it.' +
-            (stmt ? '' : ' <a href="#/statement">Draft your opening statement first</a> (there\'s an example), then come back.')) + '</div></div>' +
+            (stmt ? '' : ' After this board, draft it under Board Day Prep \u2192 Opening Statement (there\'s an example).')) + '</div></div>' +
           recButton() + '<button class="btn gold lg" id="reveal">I\'m done</button>';
         if (autoRead) Speech.speak("Tell the board a little about yourself.");
         var done = function () {
@@ -543,7 +543,8 @@
 
       function subjHtml(s) { var x = String(s).split(" \u2014 "); return '<span class="t" style="font-weight:700;">' + esc(x[0]) + '</span>' + (x.length > 1 ? '<span class="s">' + esc(x.slice(1).join(" \u2014 ")) + '</span>' : ''); }
       function moreHtml(c) {
-        return (curStyle === "why" && c.pub !== "sit" && c.pub !== "personal" ? '' : whyHtml(c)) +
+        var whyLater = !opts.quick && curStyle !== "rapid" && c.follow && c.follow.some(function (f) { return /^why\b/i.test(f.q); });
+        return (curStyle === "why" && c.pub !== "sit" && c.pub !== "personal" || whyLater ? '' : whyHtml(c)) +
           (c.ref ? '<div class="flash-ref">Reference: ' + esc(c.ref) + '</div>' : '') +
           (c.sample && c.pub === "personal" ? '<div class="flash-ref" style="color:var(--text);margin-top:10px;"><b>Example answer (fictional Soldier):</b> ' + esc(c.sample) + '</div>' : '');
       }
@@ -678,21 +679,22 @@
         var pct = asked ? Math.round((got / asked) * 100) : 0;
         var weak = Object.keys(perPub).map(function (k) { return perPub[k]; })
           .filter(function (p) { return p.miss > 0; })
-          .sort(function (a, b) { return b.miss - a.miss; }).slice(0, 5);
+          .sort(function (a, b) { return b.miss - a.miss || b.n - a.n; }).slice(0, 4);
 
         // A real board weighs bearing and the required situational questions, not just the percentage.
         var bearingMiss = bearing.filter(function (b) { return !b.ok; }).map(function (b) { return b.label.toLowerCase(); });
         var pubOf = {}; cards.forEach(function (c) { pubOf[c.id] = c.pub; });
         var sitMiss = missedIds.filter(function (id, k) { return pubOf[id] === "sit" && missedIds.indexOf(id) === k; }).length;
         var V = verdict(pct, bearingMiss, sitMiss), notReady = V.level === "almost", msg = V.msg;
-        if (sponsor) msg = msg.replace(/^Your answers/, "Their answers").replace(/so tighten up/, "so have them tighten up");
+        if (sponsor) msg = msg.replace(/^Your answers/, "Their answers").replace(/so tighten up/, "so have them tighten up")
+          .replace(/Drill the misses/, "Have them drill the misses").replace(/Study the misses, then run it again/, "Have them study the misses, then run it again").replace(/Tighten the misses/, "Have them tighten the misses");
         if (deck.length < 8 && V.level !== "work") { V = { level: "work", title: "Good practice", msg: pct + "% on a short board. Board-ready takes a full board of 10 or more questions." }; msg = V.msg; }
         var nQ = deck.filter(function (c) { return !c.local; }).length, nF = Math.max(0, asked - nQ);
         var countLine = nQ + " question" + (nQ === 1 ? "" : "s") + (nF ? ", " + nF + " follow-up" + (nF === 1 ? "" : "s") + " or second tries" : "");
         var strongB = pct >= 75 && !notReady && V.level !== "work" && deck.length >= 8;
-        var vTitle = strongB ? "Strong board" : V.title, vLine = strongB ? (missed.length ? "Tighten the " + missed.length + " miss" + (missed.length === 1 ? "" : "es") + ", then run another." : "Keep it sharp with a board every few days.")
+        var vTitle = strongB ? "Strong board" : V.title, vLine = strongB ? (missed.length ? (sponsor ? "Have them tighten the " : "Tighten the ") + missed.length + " miss" + (missed.length === 1 ? "" : "es") + ", then run another." : "Keep it sharp with a board every few days.")
           : (msg.indexOf(V.title + ".") === 0 ? msg.slice(V.title.length + 1).trim() : msg);
-        var html = '<div class="ring-wrap"><div class="ring ' + (pct >= 75 ? 'good' : pct >= 50 ? 'mid' : 'bad') + '" style="--p:' + pct + ';"><div class="ring-in">' + pct + '%</div></div><small>score</small></div>' +
+        var html = '<div class="ring-wrap"><div class="ring ' + (pct >= 75 ? 'good' : pct >= 50 ? 'mid' : 'bad') + '" style="--p:' + pct + ';"><div class="ring-in">' + pct + '%</div></div><small>' + (extras.length ? 'score, incl. second tries &amp; follow-ups' : 'score') + '</small></div>' +
           '<div class="done-h">' + (strongB ? '<svg class=ic aria-hidden=true><use href=#i-trophy></use></svg> ' : '') + esc(vTitle) + '</div><p class="center muted" style="margin-top:0;">' + esc(vLine) + '</p>' +
           (function () {
             var full = qScores.filter(function (x) { return x >= 0.99; }).length, part = qScores.filter(function (x) { return x >= 0.66 && x < 0.99; }).length, miss = qScores.length - full - part;

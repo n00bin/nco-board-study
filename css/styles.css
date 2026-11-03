@@ -810,3 +810,6 @@ details.set-fold.score-how { max-width: none; margin: 8px 0 12px; }
 .track-prog { margin: 2px 4px 12px; font-size: .92rem; color: var(--text-dim); }
 .track-prog .bar { margin-top: 6px; }
 .ring-wrap + .done-h + .track-prog { max-width: 280px; margin: 0 auto 10px; text-align: center; }
+
+.mb-head + .progress-bar:has(+ .timer-big) { display: none; }
+#ptSticky { width: calc(100% - 32px); max-width: calc(var(--maxw) - 32px); }

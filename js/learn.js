@@ -214,7 +214,7 @@
             (c.ref ? '<div class="flash-ref">' + esc(c.ref) + '</div>' : '') + '</div>' +
           '<div class="btn-row lesson-nav">' +
             (i > 0 ? '<button class="btn ghost" id="lPrev">&#8592; Back</button>' : '') +
-            '<button class="btn gold" id="lNext">' + (i + 1 >= lesson.cards.length ? "Practice &#8594;" : "Next &#8594;") + '</button></div>';
+            '<button class="btn gold" id="lNext">' + (i + 1 >= lesson.cards.length ? "Practice <svg class=ic aria-hidden=true><use href=#i-chev></use></svg>" : "Next <svg class=ic aria-hidden=true><use href=#i-chev></use></svg>") + '</button></div>';
         container.querySelector("#lSpeak").addEventListener("click", function () { Speech.speak(c.q + ". " + c.a); });
         if (container.querySelector("#lPrev")) container.querySelector("#lPrev").addEventListener("click", function () { i--; teach(); });
         container.querySelector("#lNext").addEventListener("click", function () { if (i + 1 >= lesson.cards.length) practice(); else { i++; teach(); } });
@@ -225,6 +225,8 @@
         Speech.stop();
         var quizzable = lesson.cards.filter(function (c) { return !c.flashOnly && ((c.choices && c.choices.length >= 2 && typeof c.answer === "number") || (c.a && String(c.a).length <= 90)); });
         window.scrollTo(0, 0);
+        var at = document.getElementById("appTitle"); if (at) at.textContent = "Practice";
+        if (window.App && App.toast) App.toast("Now practice: " + lesson.title, 1800);
         if (quizzable.length >= 4) Quiz.render(container, lesson.cards, lesson.title, quizzable.length, { onDone: complete });
         else Flashcards.render(container, lesson.cards, lesson.title, { onDone: function () { complete(null, null); } });
       }
@@ -239,7 +241,7 @@
           (function () { var tr = tracks.filter(function (t) { return t.lessons.indexOf(lesson) >= 0; })[0]; if (!tr) return ''; var d = doneCount(tr.lessons);
             return '<div class="track-prog"><span>' + esc(tr.title.replace(/:.*$/, "")) + ': ' + d + ' of ' + tr.lessons.length + ' lessons</span><div class="bar"><span style="width:' + Math.round(100 * d / tr.lessons.length) + '%"></span></div></div>'; })() +
           '<p class="center muted">' + line + '</p><div class="spacer"></div>' + (window.App && App.sessionNextHtml ? App.sessionNextHtml() : '') +
-          (nextLesson ? '<button class="btn gold lg" id="next">Next lesson &#8594;</button><div class="spacer"></div>' : '') +
+          (nextLesson ? '<button class="btn gold lg" id="next">Next lesson <svg class=ic aria-hidden=true><use href=#i-chev></use></svg></button><div class="spacer"></div>' : '') +
           '<button class="btn ghost lg" id="path">Back to Learn</button>';
         if (nextLesson) container.querySelector("#next").addEventListener("click", function () { App.go("#/lesson/" + nextLesson.id); });
         container.querySelector("#path").addEventListener("click", function () { App.go("#/learn"); });

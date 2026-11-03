@@ -646,10 +646,10 @@
       '<div class="card"><label class="lbl" for="bDate" style="margin-top:0;">When is your board? (from your board memo)</label>' +
         '<input class="input" type="date" id="bDate" value="' + escAttr(s.boardDate || "") + '" />' +
         '<div class="muted" style="font-size:.85rem;margin-top:8px;">Home shows a countdown and how many new Board Core cards to learn each day.</div>' +
-        (s.boardDate ? '<button class="textlink" id="bClear" style="text-align:left;padding-left:0;">Clear board date</button>' : '') + '</div>' +
-      '<h2 class="section">Which board are you going to?</h2><div class="muted" style="font-size:.85rem;margin:0 4px 8px;">Hides the few facts that only apply to the other rank (like SSG time-in-service numbers).</div><div class="chip-row seg3" id="rankChips">' +
+        (s.boardDate ? '<button class="btn ghost sm" id="bClear" style="margin-top:10px;">Clear board date</button>' : '') + '</div>' +
+      '<h2 class="section">Which board are you going to?</h2><div class="card"><div class="muted" style="font-size:.85rem;margin:0 0 8px;">Hides the few facts that only apply to the other rank (like SSG time-in-service numbers).</div><div class="chip-row seg3" id="rankChips">' +
         [["SGT", "SGT (E-5)"], ["SSG", "SSG (E-6)"], ["BOTH", "Not sure"]].map(function (r) { return '<button class="chip' + ((s.boardFor || "BOTH") === r[0] ? ' on' : '') + '" data-r="' + r[0] + '">' + r[1] + '</button>'; }).join("") +
-      '</div>' +
+      '</div></div>' +
       '<h2 class="section">Study reminders</h2><div class="card"><div class="muted" style="font-size:.85rem;">Add a daily study reminder' + (s.boardDate ? ' (until your board)' : '') + ' and a weekly "sponsor board" reminder to your phone\'s calendar.</div>' +
         '<label class="lbl" for="remT">Remind me at</label><input class="input" type="time" id="remT" value="19:00" />' +
       (('Notification' in window) ? '<div class="spacer"></div><button class="btn ghost" id="notifyOn">' + (s.notify ? '<svg class=ic aria-hidden=true><use href=#i-bell></use></svg> Daily reminder is on' : '<svg class=ic aria-hidden=true><use href=#i-bell></use></svg> Turn on a daily reminder') + '</button><div class="muted" style="font-size:.85rem;margin-top:4px;">Notifications work in the installed Android app.</div>' : '') +
@@ -1092,6 +1092,7 @@
     mount.innerHTML = '<div class="ring-wrap"><div class="ring ' + (pct >= 75 ? 'good' : pct >= 50 ? 'mid' : 'bad') + '" style="--p:' + pct + ';"><div class="ring-in">' + pct + '%</div></div><small>from your sponsor\'s board</small></div>' +
       (function () {
         var V = MockBoard.verdict(pct, bear.filter(function (b) { return !b.ok; }).map(function (b) { return b.label.toLowerCase(); }), ids.filter(function (id) { return byId[id] && byId[id].pub === "sit"; }).length);
+        if (total < 8 && V.level !== "work") V = { level: "work", title: "Good practice", msg: pct + "% on a short board. Board-ready takes a full board of 10 or more questions." };
         return '<div class="card" style="border-color:' + (V.level === "ready" ? 'var(--good)' : 'var(--gold)') + ';text-align:center;"><b>' + esc(V.title) + '.</b> <span class="muted">' + esc(V.msg.indexOf(V.title + ".") === 0 ? V.msg.slice(V.title.length + 1).trim() : V.msg) + '</span></div>';
       })() +
       (selfPct != null ? '<div class="card"><div class="flash-tag">You vs. your sponsor</div><div class="muted">Your own Mock Boards average <b>' + selfPct + '%</b>. Your sponsor scored you <b>' + pct + '%</b>. ' +
@@ -1762,7 +1763,17 @@
     window.addEventListener("load", function () { navigator.serviceWorker.register("./sw.js").catch(function () {}); });
 
   // ---------------- go ----------------
-  window.addEventListener("hashchange", route);
+  // the phone's own Back (or swipe) during a running board or quiz: put the session back and ask
+  var lastHash = location.hash, leavingOK = false;
+  window.addEventListener("hashchange", function () {
+    if (!leavingOK && window.App && App.busy && App.busy()) {
+      var want = location.hash;
+      history.pushState(null, "", lastHash || "#/");
+      askLeave(function () { leavingOK = true; location.hash = want; });
+      return;
+    }
+    leavingOK = false; lastHash = location.hash; route();
+  });
   route();
   hideSplash(900);   // long enough to read the version, short enough not to annoy
 })();
