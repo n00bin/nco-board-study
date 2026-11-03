@@ -288,12 +288,12 @@
       // once a week, a real person: a sponsor board beats any app
       var weekAgo = Date.now() - 7 * 86400000;
       var sponsored = Store.quizzes().some(function (q) { return /with sponsor/.test(q.deck) && q.date > weekAgo; });
-      if (!sponsored && (days == null || days > 7)) items.push('<a href="#/board/core"><svg class=ic aria-hidden=true><use href=#i-handshake></use></svg> This week: ask your sponsor to run a board with you (sponsor mode)</a>');
+      if (!sponsored && (days == null || days > 7)) items.push('<a href="#/board/core"><svg class=ic aria-hidden=true><use href=#i-handshake></use></svg> Ask your sponsor to run a board with you (sponsor mode)</a>');
       var sentAt = +(Store.chain()["sent-progress"] || 0);
       if (sponsored && Date.now() - sentAt > 7 * 86400000 && (days == null || days > 1)) items.push('<a href="#/sendprogress"><svg class=ic aria-hidden=true><use href=#i-send></use></svg> Send your sponsor this week\u2019s progress</a>');
     }
     // remember today's plan for the one-button session (skip the sponsor/settings nudges)
-    lastPlan = items.map(function (h) { var mm = h.match(/href="([^"]+)">([\s\S]*?)<\/a>/); return mm ? { href: mm[1], label: mm[2].replace(/<[^>]+>/g, "").replace(/&[#\w]+;/g, "").trim() } : null; })
+    lastPlan = items.map(function (h) { var mm = h.match(/href="([^"]+)">([\s\S]*?)<\/a>/); return mm ? { href: mm[1], label: mm[2].replace(/<[^>]+>/g, "").replace(/&[#\w]+;/g, "").trim(), ic: ((mm[2].match(/#i-([a-z-]+)/) || [])[1] || "") } : null; })
       .filter(function (x) { return x && !/sponsor|sendprogress|settings/.test(x.href + x.label); });
     // style each item as a full-width button (default links are unreadable dark blue on this background)
     items = items.map(function (h) { return h.replace('<a href=', '<a class="btn ghost plan-item" href='); });
@@ -308,7 +308,7 @@
     var startBtn = (lastPlan.length >= 2 || rsv) ? '<button class="btn gold lg" id="startSess" style="margin-top:8px;"><svg class=ic aria-hidden=true><use href=#i-play></use></svg> ' + (rsv ? 'Continue: step ' + (rsv.i + 1) + ' of ' + rsv.items.length : 'Start today&#39;s session') + '</button>' + (rsv ? '<div class="center muted" style="font-size:.85rem;margin-top:6px;">Next: ' + esc(rsv.items[rsv.i].label.charAt(0).toUpperCase() + rsv.items[rsv.i].label.slice(1)) + '</div>' : '') +
       '<button class="home-link" id="tenMin" style="margin-top:4px;">Only have 10 minutes?</button>' : '';
     var inS = items.filter(function (h) { return !/sponsor|sendprogress|settings/.test(h); }), outS = items.filter(function (h) { return /sponsor|sendprogress|settings/.test(h); });
-    var steps = '<div class="plan-steps">' + (rsv ? rsv.items.map(function (it, k) { return '<a class="btn ghost plan-item' + (k < rsv.i ? ' done' : '') + '" data-n="' + (k + 1) + '" href="' + escAttr(it.href) + '">' + (k < rsv.i ? '&#10003; ' : '') + esc(it.label.charAt(0).toUpperCase() + it.label.slice(1)) + '</a>'; }).join("") : inS.map(function (h, k) { return h.replace('plan-item" href=', 'plan-item" data-n="' + (k + 1) + '" href='); }).join("")) + '</div>' +
+    var steps = '<div class="plan-steps">' + (rsv ? rsv.items.map(function (it, k) { return '<a class="btn ghost plan-item' + (k < rsv.i ? ' done' : '') + '" data-n="' + (k + 1) + '" href="' + escAttr(it.href) + '">' + '<svg class=ic aria-hidden=true><use href=#i-' + (k < rsv.i ? 'check' : (it.ic || 'chev')) + '></use></svg> ' + esc(it.label.charAt(0).toUpperCase() + it.label.slice(1)) + '</a>'; }).join("") : inS.map(function (h, k) { return h.replace('plan-item" href=', 'plan-item" data-n="' + (k + 1) + '" href='); }).join("")) + '</div>' +
       (outS.length ? '<div class="lg-h" style="margin-top:10px;">Also this week</div><div class="plan-steps">' + outS.join("") + '</div>' : '');
     return '<div class="card"><div class="flash-tag">' + esc(title) + '</div>' + startBtn +
       (startBtn ? '<details class="plan-more"><summary>See today\u2019s steps</summary>' + steps + '</details>' : steps) + blank + triageNote + '</div>';
@@ -395,7 +395,7 @@
           (streak ? '' : '<!--') + '<div style="text-align:right;flex:none;"><div style="font-size:1.6rem;font-weight:800;white-space:nowrap;"><svg class=ic aria-hidden=true><use href=#i-flame></use></svg> ' + streak + '</div><div class="sub" style="white-space:nowrap;">day streak</div>' + (Store.saverUsed() && Date.now() - Store.saverUsed() < 2 * 86400000 ? '<div class="sub" style="font-size:.85rem;">1 day forgiven</div>' : '') + '</div>' + (streak ? '' : '-->') + '</div>' +
         (calm || recommended || notRec ? '' : (rs.seen === 0 && !streak ? '' : '<div class="bar"><span style="width:' + rs.ready + '%"></span></div>') +
           '<div class="sub" style="margin-top:6px;font-size:.85rem;">' + (dToB != null && dToB > 7 ? 'Board in ' + dToB + ' days \u2022 ' : '') + (daily.count >= dayTarget ? 'Today\u2019s cards done &#10003; The rest of the plan is extra.' : 'Today: ' + daily.count + ' of ' + dayTarget + ' cards') + '</div>' +
-          '<details class="hero-more"><summary class="sub">' + (rs.weak.length ? 'Work on: ' + esc(rs.weak[0]) + (rs.weak.length > 1 ? ' and ' + (rs.weak.length - 1) + ' more' : '') : 'How your score works') + '</summary>' +
+          '<details class="hero-more"><summary class="sub">' + (rs.weak.length ? 'Work on: ' + esc(rs.weak[0]) + (rs.weak.length > 1 ? ', plus ' + (rs.weak.length - 1) + ' more' : '') : 'How your score works') + '</summary>' +
           (function () {
             var q = Store.quizzes(), sp = q.filter(function (x) { return /with sponsor/.test(x.deck) && x.total; })[0], me = q.filter(function (x) { return /^Mock Board/.test(x.deck) && !/with sponsor/.test(x.deck) && x.total; }).slice(0, 5);
             if (!sp || !me.length) return '';
@@ -430,6 +430,7 @@
     var ss0 = mount.querySelector("#startSess"); if (ss0) ss0.addEventListener("click", startSession);
     var tm0 = mount.querySelector("#tenMin"); if (tm0) tm0.addEventListener("click", function () {
       lastPlan = [{ href: "#/flash/ten", label: "10-minute review" }, { href: "#/board/core", label: "if you have 5 more minutes: a 5-minute Mock Board" }];
+      try { sessionStorage.removeItem("ncob-sess"); } catch (e) {}
       startSession();
     });
     var iok = mount.querySelector("#iosOk"); if (iok) iok.addEventListener("click", function () { Store.setSetting("iosTipDone", true); mount.querySelector("#iosTip").remove(); });
@@ -496,7 +497,7 @@
     if (mode === "drive")
       html += '<div class="muted" style="font-size:.85rem;margin:0 4px 10px;">Hands-free: the app reads each question, pauses for you to answer aloud, then reads the answer. Great for PT or the drive in — keep the screen on.</div>';
     var quizOk = function (c) { return !c.flashOnly && ((c.choices && c.choices.length >= 2) || (c.a && String(c.a).length <= 90)); };
-    var cnt = function (cs) { var n = mode === "quiz" ? cs.filter(quizOk).length : mode === "drive" ? (Store.buildQueue(cs).length || cs.length) : cs.length; return n ? n + (mode === "quiz" ? " questions" : mode === "drive" ? " due" : " cards") : 0; };
+    var cnt = function (cs) { var n = mode === "quiz" ? cs.filter(quizOk).length : mode === "drive" ? (Store.buildQueue(cs).length || cs.length) : cs.length; return n ? n + (mode === "quiz" ? " questions" : mode === "drive" ? " today" : " cards") : 0; };
     html += '<div class="muted" style="font-size:.85rem;margin:0 4px 8px;">' + (mode === "quiz" ? "Numbers are quiz questions (cards with a short answer)." : mode === "drive" ? "Numbers are cards due or new for you today." : "Numbers are cards in each set.") + '</div>';
     html += '<div class="lg pick-top">' + liDeck(route + "core", "<svg class=ic aria-hidden=true><use href=#i-star></use></svg> Board Core", "Recommended: what boards ask most", cnt(cardsForDeck("core")), "core") +
       liDeck(route + "all", "Everything", "All subjects, including deep detail", cnt(cardsForDeck("all")), "all") + '</div>';
@@ -1407,7 +1408,7 @@
     var m = Store.chain();
     var html = '<div class="card"><div class="muted">Type the key parts of your board memo here. When you report in on a Full Mock Board, the app shows your memo\'s exact wording.</div></div>';
     MEMO_FIELDS.forEach(function (f) {
-      html += '<label class="lbl" for="memo-' + f.k + '"><b>' + esc(f.t) + '</b> <span class="muted" style="font-weight:400;">' + esc(f.h) + '</span></label><textarea class="input" id="memo-' + f.k + '" rows="2" placeholder="' + escAttr(f.ph) + '">' + esc(m["memo-" + f.k] || "") + '</textarea>';
+      html += '<label class="lbl" for="memo-' + f.k + '"><b>' + esc(f.t) + '</b><span class="muted" style="display:block;font-weight:400;font-size:.85rem;margin-top:2px;">' + esc(f.h) + '</span></label><textarea class="input" id="memo-' + f.k + '" rows="2" placeholder="' + escAttr(f.ph) + '">' + esc(m["memo-" + f.k] || "") + '</textarea>';
     });
     html += '<div class="spacer"></div><button class="btn gold lg" id="memoSave">Done</button>';
     mount.innerHTML = html;
