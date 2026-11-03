@@ -211,7 +211,7 @@
     try { sessionStorage.setItem("ncob-sess", JSON.stringify({ items: lastPlan, i: 0, t: Date.now() })); } catch (e) {}
     App.go(lastPlan[0].href);
   }
-  function shortStep(l) { var L = String(l).replace(/ of \d+ cards? due today$/, " cards due").replace(/ due today$/, " due"); return L.charAt(0).toUpperCase() + L.slice(1); }
+  function shortStep(l) { var L = String(l).replace(/\s*\(\d+ left\)$/, "").replace(/ of \d+ cards? due today$/, " cards due").replace(/ due today$/, " due"); return L.charAt(0).toUpperCase() + L.slice(1); }
   function sessionNextHtml() {
     var s; try { s = JSON.parse(sessionStorage.getItem("ncob-sess") || "null"); } catch (e) { s = null; }
     if (!s || !s.items || s.i >= s.items.length) return "";
@@ -498,7 +498,7 @@
     if (mode === "drive")
       html += '<div class="muted" style="font-size:.85rem;margin:0 4px 10px;">Hands-free: the app reads each question, pauses for you to answer aloud, then reads the answer. Great for PT or the drive in — keep the screen on.</div>';
     var quizOk = function (c) { return !c.flashOnly && ((c.choices && c.choices.length >= 2) || (c.a && String(c.a).length <= 90)); };
-    var cnt = function (cs) { var n = mode === "quiz" ? cs.filter(quizOk).length : mode === "drive" ? (Store.buildQueue(cs).length || cs.length) : cs.length; return n ? n + (mode === "quiz" ? " questions" : mode === "drive" ? " today" : " cards") : 0; };
+    var cnt = function (cs) { var n = mode === "quiz" ? cs.filter(quizOk).length : mode === "drive" ? (Store.buildQueue(cs).length || cs.length) : cs.length; return n ? n + (mode === "quiz" ? " questions" : mode === "drive" ? " cards" : " cards") : 0; };
     html += '<div class="muted" style="font-size:.85rem;margin:0 4px 8px;">' + (mode === "quiz" ? "Numbers are quiz questions (cards with a short answer)." : mode === "drive" ? "Numbers are cards due or new for you today." : "Numbers are cards in each set.") + '</div>';
     html += '<div class="lg pick-top">' + liDeck(route + "core", "<svg class=ic aria-hidden=true><use href=#i-star></use></svg> Board Core", "Recommended: what boards ask most", cnt(cardsForDeck("core")), "core") +
       liDeck(route + "all", "Everything", "All subjects, including deep detail", cnt(cardsForDeck("all")), "all") + '</div>';
@@ -686,7 +686,7 @@
       '</div></div>' +
       '<h2 class="section">Your MOS</h2><div class="card" id="mosCard"><label class="lbl" for="mosIn" style="margin-top:0;">MOS code</label>' +
         '<input class="input" id="mosIn" maxlength="3" autocapitalize="characters" placeholder="e.g. 25B" value="' + escAttr(s.mos || "") + '" style="max-width:140px;text-transform:uppercase;">' + 
-        '<div class="chip-row seg2" id="compChips" style="margin-top:10px;"><button class="chip' + (s.comp !== "agr" ? ' on' : '') + '" data-c="ac">Active Duty</button><button class="chip' + (s.comp === "agr" ? ' on' : '') + '" data-c="agr">AGR</button></div>' +
+        '<div class="lbl" style="margin-top:12px;">Cutoff list</div><div class="chip-row seg2" id="compChips" style="margin-top:4px;"><button class="chip' + (s.comp !== "agr" ? ' on' : '') + '" data-c="ac">Active Duty</button><button class="chip' + (s.comp === "agr" ? ' on' : '') + '" data-c="agr">AGR</button></div>' +
         '<div class="muted" id="mosCut" style="font-size:.85rem;margin-top:8px;">Fills in this month&#39;s cutoff on the Points worksheet.</div></div>' +
       '<h2 class="section">Study reminders</h2><div class="card"><div class="muted" style="font-size:.85rem;">Add a daily study reminder' + (s.boardDate ? ' (until your board)' : '') + ' and a weekly "sponsor board" reminder to your phone\'s calendar.</div>' +
         '<label class="lbl" for="remT">Remind me at</label><input class="input" type="time" id="remT" value="19:00" />' +
@@ -1698,7 +1698,8 @@
     window.scrollTo(0, 0);
     // practice screens get the whole phone (no tab bar; the main button pins to the bottom); sponsor pages get a guest shell
     document.body.classList.toggle("session", /^(flash|type|drive|lesson|sheetin|sponsor)$/.test(head));
-    document.body.classList.toggle("guest", /^(sponsor|sheet|sbresult|progress|takecards)$/.test(head));
+    var landed = !window.__ncobRouted; window.__ncobRouted = true;
+    document.body.classList.toggle("guest", /^(sponsor|progress|takecards)$/.test(head) || (landed && /^(sheet|sbresult)$/.test(head)));
     setTimeout(sessionBanner, 0);
 
     if (head === "") return screenHome(), tab("home");

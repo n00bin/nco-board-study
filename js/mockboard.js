@@ -375,7 +375,7 @@
             '<div class="muted">' + (sponsor ? 'Call each command out loud. Watch for a sharp movement on the command of execution, then they hold the position until your next command.' : 'Stand up and do each command, sharply, on the command of execution. Hold each position until the next command.') + '</div></div>' +
           '<div class="card">' + cmds.map(function (t, k) { return '<div class="row cmd-row" style="margin-bottom:6px;"><div class="numbubble">' + (k + 1) + '</div><div class="grow"><div class="ttl" style="font-size:1.15rem;font-weight:700;">' + esc(t) + '</div></div></div>'; }).join("") +
             (sponsor ? '' : '<div class="btn-pair" style="margin-top:6px;"><button class="btn ghost" id="sayIt"><svg class=ic aria-hidden=true><use href=#i-speaker></use></svg> Call them</button>' + mirrorButton(true) + '</div><div id="mirrorBox"></div>') +
-            '<div class="muted" style="margin-top:10px;">' + (sponsor ? 'Grade it: crisp, on the command of execution, back to attention each time?' : 'Grade yourself: crisp, on the command of execution, back to attention each time?') + '</div><details class="fb-fold"><summary>How to do these</summary><div class="muted" style="font-size:.92rem;">' + drillHints(cmds) + 'Then ' + (sponsor ? 'tell the Soldier to take their seat.' : 'wait for the president to tell you to take your seat.') + '</div></details></div>' +
+            '<div class="honest-line">' + (sponsor ? 'Grade it: crisp, on the command of execution, back to attention each time?' : 'Grade yourself: crisp, on the command of execution, back to attention each time?') + '</div><details class="fb-fold"><summary>How to do these</summary><div class="muted" style="font-size:.92rem;">' + drillHints(cmds) + 'Then ' + (sponsor ? 'tell the Soldier to take their seat.' : 'wait for the president to tell you to take your seat.') + '</div></details></div>' +
                     gradeButtons("Needs work", "Clean");
         setTimeout(wireMirror, 0);
         var say = container.querySelector("#sayIt");
@@ -597,7 +597,8 @@
           var nLeft = (left || []).filter(function (k) { return c.points[k] && !/^Said why/i.test(c.points[k]); }).length;
           var tp = c.topic ? String(c.topic).replace(/\s*\(.*\)\s*$/, "") : "";
           tp = tp.replace(/\s+[-\u2013\u2014:]\s+.*$/, "");
-          if (tp) tp = tp.split(" ").map(function (w) { return /^[A-Z0-9]{2,}/.test(w) ? w : w.toLowerCase(); }).join(" ");   // keep acronyms like AFTB, SHARP
+          if (tp) tp = tp.split(" ").map(function (w) { return /^[A-Z0-9]{2,}/.test(w) ? w : w.toLowerCase(); }).join(" ");
+          if (tp && !/^(the|a|an|your|their)\s/i.test(tp) && !/^[A-Z0-9]{2,}/.test(tp)) tp = "the " + tp;   // keep acronyms like AFTB, SHARP
           var cue = c.pub === "sit" ? "What else would you do, Sergeant?" : shortList ? (nLeft > 1 ? "You left some out. What's the rest of it?" : "You left one out. What's the rest of it?") : "There's more to it. What else should the board hear" + (tp ? " about " + tp : "") + "?";
           fups = [{ q: cue, a: "The part left out: " + gap.replace(/\.$/, "") + "." + (c.why ? " " + c.why : ""), ref: c.ref, adaptive: true }];
         }
