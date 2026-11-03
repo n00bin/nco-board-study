@@ -1024,7 +1024,7 @@
   function jumpChips(cats) { return '<div class="jump-wrap"><div class="chip-row jump-row">' + cats.map(function (c, k) { return '<button class="chip" data-jump="cat' + k + '">' + esc(c.replace(/ &amp; .*| & .*/, "")) + '</button>'; }).join("") + '</div></div>'; }
   function wireJumpSpy() {
     var chips = mount.querySelectorAll("[data-jump]"); if (!chips.length) return;
-    var row0 = chips[0].parentElement, edge = function () { row0.classList.toggle("fade-l", row0.scrollLeft > 4); row0.classList.toggle("fade-r", row0.scrollLeft + row0.clientWidth < row0.scrollWidth - 4); };
+    var row0 = chips[0].parentElement, edge = function () { row0.classList.toggle("fade-l", row0.scrollLeft > 0); row0.classList.toggle("fade-r", row0.scrollLeft + row0.clientWidth < row0.scrollWidth - 4); };
     row0.addEventListener("scroll", edge, { passive: true }); edge();
     if (!window.IntersectionObserver) return;
     var mark = function (id) { chips.forEach(function (b) { var on = b.getAttribute("data-jump") === id; b.classList.toggle("on", on); if (on && b.scrollIntoView) { var row = b.parentElement; row.scrollTo({ left: b === chips[0] ? 0 : b.offsetLeft - row.offsetLeft - 28, behavior: "smooth" }); } }); };
@@ -1152,7 +1152,7 @@
       (function () {
         var V = MockBoard.verdict(pct, bear.filter(function (b) { return !b.ok; }).map(function (b) { return b.label.toLowerCase(); }), ids.filter(function (id) { return byId[id] && byId[id].pub === "sit"; }).length);
         if (total < 8 && V.level !== "work") V = { level: "work", title: "Good practice", msg: pct + "% on a short board. Board-ready takes a full board of 10 or more questions." };
-        var line = (V.msg.indexOf(V.title + ".") === 0 ? V.msg.slice(V.title.length + 1).trim() : V.msg).replace(/^(Your|Their) answers scored \d+%\. /, "");
+        var line = (V.msg.indexOf(V.title + ".") === 0 ? V.msg.slice(V.title.length + 1).trim() : V.msg).replace(/^(Your|Their) answers scored \d+%\. /, "").replace(/^A real board also grades bearing and the situational questions, so /, "").replace(/^A board doesn\'t pass you on a percentage: it wants confident, complete answers\. /, "").replace(/^./, function (ch) { return ch.toUpperCase(); });
         return '<div class="done-h">' + esc(V.title) + '</div><p class="center muted" style="margin-top:0;">' + esc(line) + '</p>' +
           (ids.length ? (Store.setChainRole("last-misses", ids.join(",")), '<a class="btn gold lg" href="#/flash/misses"><svg class=ic aria-hidden=true><use href=#i-refresh></use></svg> Drill your ' + ids.length + ' miss' + (ids.length === 1 ? '' : 'es') + ' now</a>') : '<a class="btn gold lg" href="#/board/core">Run a Mock Board on your own</a>');
       })() +
@@ -1225,8 +1225,7 @@
     if (cal.sureN >= 10) {
       var sp = Math.round(100 * cal.sureRight / cal.sureN);
       calLine = '<div class="muted" style="font-size:.85rem;margin-top:6px;">When you tapped <b>I know it</b>, you were right <b>' + sp + '%</b> of the time' +
-        (sp < 80 ? '. Say the whole answer before you tap it: the board won\u2019t give partial credit for "I knew that."' : '. Your confidence is well calibrated.') +
-        (cal.unsureN >= 5 ? ' When unsure: ' + Math.round(100 * cal.unsureRight / cal.unsureN) + '%.' : '') + '</div>';
+        (sp < 80 ? '. Say the whole answer before you tap it.' : '.') + '</div>';
     }
     return '<div class="card"><div class="flash-tag">Your last 7 days</div><div style="display:flex;align-items:flex-end;height:52px;margin:6px 0;" aria-hidden="true">' + bars + '</div>' +
       '<div class="muted" style="font-size:.85rem;">' + total + ' cards on ' + days + ' day' + (days === 1 ? '' : 's') + ' • ' + boards + ' Mock Board' + (boards === 1 ? '' : 's') + '</div><div class="btn-row" style="margin-top:8px;"><a class="btn ghost sm" href="#/sendprogress">Send my progress to my sponsor</a></div>' + calLine + '</div>';
@@ -1308,7 +1307,7 @@
         var eds = Object.keys(by[k].ed).sort(function (x, y) { return by[k].ed[y] - by[k].ed[x]; });
         var pub = STUDY.pubs.filter(function (p) { return p.code === k; })[0];
         var inner = '<span class="grow"><span class="t" style="font-weight:600;">' + esc(k) + '</span><span class="s">' + esc(eds[0]) + ' \u2022 cited by ' + by[k].n + ' card' + (by[k].n === 1 ? '' : 's') + '</span></span>';
-        return pub ? '<a class="li" href="#/pub/' + escAttr(pub.id) + '">' + inner + '<span class="chev" aria-hidden="true"><svg class=ic aria-hidden=true><use href=#i-chev></use></svg></span></a>' : '<div class="li static">' + inner.replace('</span></span>', ' \u2022 cited only</span></span>') + '</div>';
+        return pub ? '<a class="li" href="#/pub/' + escAttr(pub.id) + '">' + inner + '<span class="chev" aria-hidden="true"><svg class=ic aria-hidden=true><use href=#i-chev></use></svg></span></a>' : '<div class="li static">' + inner.replace('</span></span>', '</span></span>') + '</div>';
       }; var G = {}, order = [];
         rows.forEach(function (k) { var g = (k.match(/^(DA PAM|ADP|ATP|AD|AR|FM|TC|STP|GTA|ALARACT)\b/) || [0, "Other"])[1]; if (!G[g]) { G[g] = []; order.push(g); } G[g].push(rowFn(k)); });
         order.sort(function (x, y) { return x === "Other" ? 1 : y === "Other" ? -1 : x.localeCompare(y); });
@@ -1457,7 +1456,7 @@
       '<div class="chip-row" id="ptRank">' + ["SGT", "SSG"].map(function (r) { return '<button class="chip' + (r === rank ? ' on' : '') + '" data-r="' + r + '">For ' + r + '</button>'; }).join("") + '</div><div id="cutAuto" style="margin-top:10px;"></div>';
     PTS.forEach(function (p) {
       html += '<label class="lbl" for="pt-' + p.k + '"><b>' + esc(p.t) + '</b> (max ' + p.max[rank] + ')</label>' +
-        '<input class="input" id="pt-' + p.k + '" inputmode="numeric" maxlength="3" placeholder="not set" value="' + escAttr(m["pts-" + p.k] || "") + '">' +
+        '<input class="input" id="pt-' + p.k + '" inputmode="numeric" maxlength="3" placeholder="0\u2013' + p.max[rank] + '" value="' + escAttr(m["pts-" + p.k] || "") + '">' +
         '<details class="pt-help"' + (m["pts-x" + p.k] ? " open" : "") + '><summary class="muted" style="font-size:.85rem;margin-top:4px;"><svg class=ic aria-hidden=true><use href=#i-calc></use></svg> Figure it for me</summary><div class="muted" style="font-size:.85rem;margin:4px 0;">' + esc(p.h) + ' AR 600-8-19 (Mar 2026), ' + p.ref + '.</div>' + help[p.k] + '</details><div style="height:10px;"></div>';
     });
     html += '<details class="set-fold cut-other" id="cutOther" open><summary>Use a different cutoff</summary><label class="lbl" for="pt-cut" style="margin-top:4px;">Cutoff score to compare against</label>' +

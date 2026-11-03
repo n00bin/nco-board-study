@@ -227,7 +227,7 @@
             (typed ? '<div class="muted">You wrote: ' + esc(typed) + '</div>' + verdict + '<hr class="div">' : '') +
             '<div class="flash-tag">Answer</div><div class="flash-a">' + esc(c.a).replace(/\n/g, "<br>") + '</div>' +
             (c.ref ? '<div class="flash-ref">Reference: ' + esc(c.ref) + '</div>' : '') + '</div>' +
-          '<div class="flash-hint">' + GRADE_HINT + '</div>' +
+          (reviewed < 2 ? '<div class="flash-hint">' + GRADE_HINT + '</div>' : '') +
           '<div class="grade-row' + (good ? '' : (!typed || share < 0.15) ? ' neutral miss-em' : ' neutral') + '">' + GRADE_BTNS + '</div>';
         container.querySelector("#gAgain").addEventListener("click", function () { grade("again"); });
         container.querySelectorAll(".tdone").forEach(function (b) { b.addEventListener("click", typedDone); });

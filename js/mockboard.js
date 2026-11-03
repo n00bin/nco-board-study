@@ -279,7 +279,7 @@
       function header(label) {
         var localN = deck.filter(function (c) { return c.local; }).length, totalQ = deck.length - localN;
         var kind = steps[s] && steps[s].kind, KL = { reportIn: "Reporting in", drill: "Facing movements", intro: "Tell us about yourself", member: "Next board member", reportOut: "Reporting out", follow: "Follow-up to question " + qNum };
-        var txt = label ? label : (kind && kind !== "q" && KL[kind]) ? KL[kind] : curLocal ? "About your unit (" + Math.min(unitAt, localN) + " of " + localN + ")" : qNum ? "Question " + qNum : "";
+        var txt = label ? label : (kind && kind !== "q" && KL[kind]) ? KL[kind] : curLocal ? "Your leaders & unit (" + Math.min(unitAt, localN) + " of " + localN + ")" : qNum ? "Question " + qNum : "";
         return '<div class="q-count mb-head"><span>' + txt + '</span>' + '<span class="pills">' + (qNum ? '<span class="pill">' + Math.min(qNum, totalQ) + ' / ' + totalQ + '</span>' : (function () { var op = steps.filter(function (x) { return x.kind === "reportIn" || x.kind === "drill" || x.kind === "intro"; }); var at = op.indexOf(steps[s]); return at >= 0 ? '<span class="pill">Opening ' + (at + 1) + ' of ' + op.length + '</span>' : ''; })()) + (asked >= 1 ? '<span class="pill score-pill">Score ' + Math.round(100 * got / asked) + '%</span>' : qNum ? '<span class="pill score-pill">Score \u2013</span>' : '') + '</span>' + '</div>' +
           '<div class="progress-bar"><span style="width:' + (qNum ? Math.round(100 * Math.min(1, Math.max(0, qNum - (kind === "q" ? 1 : 0)) / Math.max(1, totalQ))) : (function () { var op = steps.filter(function (x) { return x.kind === "reportIn" || x.kind === "drill" || x.kind === "intro"; }), at = op.indexOf(steps[s]); return at >= 0 ? Math.round(8 * (at + 1) / op.length) : 0; })()) + '%"></span></div>';
       }
@@ -326,7 +326,7 @@
       function onRubric(fn, c) {
         // if the checklist is still below the fold, the first tap takes you to it instead of scoring an unticked answer
         var btn = container.querySelector("#rubricDone"), rc = btn.previousElementSibling, gate = false;
-        var firstBox = rc && rc.querySelector("label.switch");
+        var boxes = rc ? rc.querySelectorAll("label.switch") : [], firstBox = boxes.length ? boxes[boxes.length - 1] : null;
         if (window.IntersectionObserver && firstBox && firstBox.getBoundingClientRect().bottom > window.innerHeight - 110) {
           gate = true; btn.textContent = sponsor ? "Tick what they said \u2193" : "Tick what you said \u2193";
           var io = new IntersectionObserver(function (es) { if (es.some(function (e) { return e.isIntersecting; })) { gate = false; btn.textContent = "Score this answer"; io.disconnect(); } }, { rootMargin: "0px 0px -110px 0px" });
@@ -415,8 +415,7 @@
           '<div class="card"><div class="flash-tag">The board president</div>' +
             '<div class="q-text" style="margin-top:8px;">\u201cTell the board a little about yourself.\u201d</div></div>' +
           '<div class="card"><div class="muted" style="font-size:.92rem;">' + (sponsor ? 'Ask the Soldier to tell you about themselves. Listen for about a minute: who they are, job and unit, time in service, a real accomplishment or two, and their goals as an NCO. Are they saying it, not reciting it?' :
-            'Answer out loud in about a minute, eyes on the president: who you are, your job and unit, time in service, a real accomplishment or two, and your goals as an NCO. Say it, don\'t read it.' +
-            (stmt ? '' : ' After this board, draft it under Board Day Prep \u2192 Opening Statement (there\'s an example).')) + '</div></div>' +
+            'About a minute, out loud: who you are, your job, a real win or two, and your goals.') + '</div></div>' +
           recButton() + '<button class="btn gold lg" id="reveal">' + (sponsor ? 'They\'re done' : 'I\'m done') + '</button>';
         if (autoRead) Speech.speak("Tell the board a little about yourself.");
         var done = function () {
@@ -633,7 +632,7 @@
         var cbs = container.querySelector("#cbSpeak"); if (cbs) cbs.addEventListener("click", function () { Speech.speak(qt(c), curVoice); });
         var gradeIt = function (ok) {
           var pp = perPub[c.pub] || (perPub[c.pub] = { n: 0, miss: 0, code: pubLabel(c), id: c.pub });
-          pp.n++; asked++; if (ok) got++; else pp.miss++;
+          asked++; if (ok) got++;
           extras.push({ k: "cb", ok: ok });
           next();
         };
@@ -664,8 +663,8 @@
         var fus = container.querySelector("#fuSpeak"); if (fus) fus.addEventListener("click", function () { Speech.speak(f.q, curVoice); });
         var gradeFollow = function (ok) {
           var pp = perPub[c.pub] || (perPub[c.pub] = { n: 0, miss: 0, code: pubLabel(c), id: c.pub });
-          pp.n++; asked++; extras.push({ k: "fu", ok: ok });
-          if (ok) got++; else { pp.miss++; missed.push({ q: f.q, a: f.a, code: "Follow-up" }); }
+          asked++; extras.push({ k: "fu", ok: ok });
+          if (ok) got++; else missed.push({ q: f.q, a: f.a, code: "Follow-up" });
           next();
         };
         if (sponsor) { onGrade(function (ok) { clearTimer(); gradeFollow(ok); }); runTimer(t, function () { var n = container.querySelector("#tNum"); if (n) n.textContent = "Time!"; }); return; }
@@ -709,8 +708,8 @@
         var nFu = extras.filter(function (x) { return x.k === "fu"; }).length, nCb = extras.filter(function (x) { return x.k === "cb"; }).length;
         var countLine = nQ + " question" + (nQ === 1 ? "" : "s") + (nFu ? ", " + nFu + " follow-up" + (nFu === 1 ? "" : "s") : "") + (nCb ? ", " + nCb + " second " + (nCb === 1 ? "try" : "tries") : "");
         var strongB = pct >= 75 && !notReady && V.level !== "work" && deck.length >= 8;
-        var vTitle = strongB ? "Strong board" : V.title, vLine = strongB ? (missed.length ? (sponsor && !handheld ? "Have them tighten the " : "Tighten the ") + pl(missed.length, "answer") + " below, then run another." : "Keep it sharp with a board every few days.")
-          : notReady && missed.length ? (sponsor && !handheld ? "Have them drill " : "Drill ") + (drillN ? "the " + pl(drillN, "card") + " below" : "what\u2019s below") + ", then run it again. " + (msg.match(/tighten up (.*?) and run it again/) ? "Watch " + msg.match(/tighten up (.*?) and run it again/)[1] + "." : "")
+        var vTitle = strongB ? "Strong board" : V.title, vLine = strongB ? (missed.length ? (sponsor && !handheld ? "They get " + pl(drillN || missed.length, "card") + " to tighten when they open your link." : "Tighten the " + pl(drillN || missed.length, "card") + " below, then run another.") : "Keep it sharp with a board every few days.")
+          : notReady && missed.length ? (sponsor && !handheld ? (drillN ? "Your link gives them " + pl(drillN, "card") + " to drill. " : "") : "Drill " + (drillN ? "the " + pl(drillN, "card") + " below" : "what\u2019s below") + ", then run it again. ") + (msg.match(/tighten up (.*?) and run it again/) ? "Watch " + msg.match(/tighten up (.*?) and run it again/)[1] + "." : "")
           : (msg.indexOf(V.title + ".") === 0 ? msg.slice(V.title.length + 1).trim() : msg).replace(/^(Your|Their) answers scored \d+%\. /, "").replace(/^A real board also grades bearing and the situational questions, so /, "").replace(/^A board doesn\'t pass you on a percentage: it wants confident, complete answers\. /, "").replace(/^./, function (ch) { return ch.toUpperCase(); });
         var howFold = '';
         var html = (handheld ? '<div class="handback"><svg class=ic aria-hidden=true><use href=#i-handshake></use></svg><div><b>Hand the phone back to the Soldier.</b><br>Their score is saved on this phone.</div></div>' : '') + '<div class="ring-wrap"><div class="ring ' + (pct >= 75 ? 'good' : pct >= 50 ? 'mid' : 'bad') + '" style="--p:' + pct + ';"><div class="ring-in">' + pct + '%</div></div><small>' + (extras.length ? 'score, incl. second tries &amp; follow-ups' : 'score') + '</small></div>' +
@@ -744,11 +743,11 @@
         if (weak.length) {
           html += '<h2 class="section">Weakest subjects</h2><div class="lg">';
           var gst = document.body.classList.contains("guest");
-          weak.forEach(function (p) { var inner = '<span class="grow">' + subjHtml(p.code) + '<span class="s badge-bad">Missed ' + p.miss + ' of ' + p.n + '</span></span>'; html += gst ? '<div class="li">' + inner + '</div>' : '<a class="li" href="#/flash/' + encodeURIComponent(p.id || "") + '">' + inner + '<span class="chev" aria-hidden="true"><svg class=ic aria-hidden=true><use href=#i-chev></use></svg></span></a>'; });
+          weak.forEach(function (p) { var inner = '<span class="grow">' + subjHtml(p.code) + '<span class="s badge-bad">Missed ' + p.miss + ' of ' + p.n + ' question' + (p.n === 1 ? '' : 's') + '</span></span>'; html += gst ? '<div class="li">' + inner + '</div>' : '<a class="li" href="#/flash/' + encodeURIComponent(p.id || "") + '">' + inner + '<span class="chev" aria-hidden="true"><svg class=ic aria-hidden=true><use href=#i-chev></use></svg></span></a>'; });
           html += '</div>';
         }
         if (missed.length) {
-          html += '<details class="set-fold"><summary>Review ' + (sponsor && !handheld ? 'their' : 'your') + ' ' + pl(missed.length, 'answer') + ' to tighten</summary>';
+          html += '<details class="set-fold"><summary>Review ' + (sponsor && !handheld ? 'their' : 'your') + ' answers to tighten</summary>';
           missed.forEach(function (m) {
             html += '<div class="card"><div class="flash-tag">' + esc(m.code) + '</div><div style="font-weight:600;margin-bottom:6px;">' + esc(m.q) + '</div><div class="muted">' + esc(m.a) + '</div></div>';
           });
