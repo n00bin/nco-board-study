@@ -291,6 +291,7 @@
         var left = t, bar = container.querySelector("#tBar"), num = container.querySelector("#tNum");
         num.textContent = left + "s";
         timer = setInterval(function () {
+          if (document.querySelector(".leave-sheet")) return;   // paused while "Leave this session?" is open
           left--;
           if (!container.querySelector("#tBar")) { clearTimer(); return; } // navigated away
           bar.style.width = Math.max(0, (left / t) * 100) + "%";
@@ -702,23 +703,22 @@
         var strongB = pct >= 75 && !notReady && V.level !== "work" && deck.length >= 8;
         var vTitle = strongB ? "Strong board" : V.title, vLine = strongB ? (missed.length ? (sponsor ? "Have them tighten the " : "Tighten the ") + missed.length + " miss" + (missed.length === 1 ? "" : "es") + ", then run another." : "Keep it sharp with a board every few days.")
           : (msg.indexOf(V.title + ".") === 0 ? msg.slice(V.title.length + 1).trim() : msg).replace(/^(Your|Their) answers scored \d+%\. /, "").replace(/^A real board also grades bearing and the situational questions, so /, "").replace(/^A board doesn\'t pass you on a percentage: it wants confident, complete answers\. /, "").replace(/^./, function (ch) { return ch.toUpperCase(); });
-        var html = '<div class="ring-wrap"><div class="ring ' + (pct >= 75 ? 'good' : pct >= 50 ? 'mid' : 'bad') + '" style="--p:' + pct + ';"><div class="ring-in">' + pct + '%</div></div><small>' + (extras.length ? 'score, incl. second tries &amp; follow-ups' : 'score') + '</small></div>' +
+        var html = (handheld ? '<div class="handback"><svg class=ic aria-hidden=true><use href=#i-handshake></use></svg><div><b>Hand the phone back to the Soldier.</b><br>Their score is saved on this phone.</div></div>' : '') + '<div class="ring-wrap"><div class="ring ' + (pct >= 75 ? 'good' : pct >= 50 ? 'mid' : 'bad') + '" style="--p:' + pct + ';"><div class="ring-in">' + pct + '%</div></div><small>' + (extras.length ? 'score, incl. second tries &amp; follow-ups' : 'score') + '</small></div>' +
           '<div class="done-h">' + (strongB ? '<svg class=ic aria-hidden=true><use href=#i-trophy></use></svg> ' : '') + esc(vTitle) + '</div><p class="center muted" style="margin-top:0;">' + esc(vLine) + '</p>' +
           (function () {
-            var full = qScores.filter(function (x) { return x >= 0.99; }).length, part = qScores.filter(function (x) { return x > 0 && x < 0.99; }).length, miss = qScores.length - full - part;
+            var full = qScores.filter(function (x) { return x >= 0.99; }).length, part = qScores.filter(function (x) { return x >= 0.66 && x < 0.99; }).length, thin = qScores.filter(function (x) { return x > 0 && x < 0.66; }).length, miss = qScores.length - full - part - thin;
             var cb = extras.filter(function (x) { return x.k === "cb"; }), fu = extras.filter(function (x) { return x.k === "fu"; });
             var cbOk = cb.filter(function (x) { return x.ok; }).length, fuOk = fu.filter(function (x) { return x.ok; }).length;
-            var legend = '<div class="dot-legend">' + (full ? '<span><span class="dot g"></span>full</span>' : '') + (part ? '<span><span class="dot a"></span>with gaps</span>' : '') + (miss ? '<span><span class="dot r"></span>missed</span>' : '') + '' + '</div>';
-            return (extras.length ? '<div class="dots-sub">First answers</div>' : '') + '<div class="dots" aria-hidden="true">' + qScores.map(function (x) { return '<span class="dot ' + (x >= 0.99 ? 'g' : x > 0 ? 'a' : 'r') + '"></span>'; }).join("") +
+            var legend = '<div class="dot-legend">' + (full ? '<span><span class="dot g"></span>full</span>' : '') + (part ? '<span><span class="dot a"></span>passed with gaps</span>' : '') + (thin ? '<span><span class="dot p"></span>partly</span>' : '') + (miss ? '<span><span class="dot r"></span>missed</span>' : '') + '' + '</div>';
+            return (extras.length ? '<div class="dots-sub">First answers</div>' : '') + '<div class="dots" aria-hidden="true">' + qScores.map(function (x) { return '<span class="dot ' + (x >= 0.99 ? 'g' : x >= 0.66 ? 'a' : x > 0 ? 'p' : 'r') + '"></span>'; }).join("") +
                 '</div>' + (extras.length ? '<div class="dots-sub">Second tries &amp; follow-ups</div><div class="dots">' + extras.map(function (x) { return '<span class="dot sq ' + (x.ok ? 'g' : 'r') + '"></span>'; }).join("") + '</div>' : '') + legend +
-              '<p class="center muted" style="font-size:.92rem;margin:4px 0 0;">' + countLine + '</p><details class="set-fold score-how"><summary>How this was scored</summary><p class="muted" style="font-size:.92rem;margin:0 0 8px;">First answers: ' + full + ' full \u2022 ' + part + ' with gaps \u2022 ' + miss + ' missed' +
+              '<p class="center muted" style="font-size:.92rem;margin:4px 0 0;">' + countLine + '</p><details class="set-fold score-how"><summary>How this was scored</summary><p class="muted" style="font-size:.92rem;margin:0 0 8px;">First answers: ' + full + ' full \u2022 ' + part + ' passed with gaps \u2022 ' + (thin ? thin + ' partly \u2022 ' : '') + miss + ' missed' +
                 (cb.length ? '<br>Second tries: ' + cbOk + ' of ' + cb.length + ' recovered' : '') + (fu.length ? '<br>Follow-ups: ' + fuOk + ' of ' + fu.length + ' right' : '') +
                 '<br>The score counts every answer, with part credit for answers with gaps. A real board also weighs bearing and the situational questions, and wants confident, complete answers, not just a percentage.</p></details>' +
               '';
           })() +
           // the next step first: drill the misses (or run another), then the details
           (missed.length && (!sponsor || handheld) ? '<button class="btn gold lg" id="drillMiss"><svg class=ic aria-hidden=true><use href=#i-refresh></use></svg> Drill the ' + missed.length + ' you didn\'t pass</button><div class="spacer"></div>' : '');
-        if (handheld) html += '<div class="intro-note">Hand the phone back to the Soldier. Their score is saved here.</div>';
         if (sponsor && !handheld) html += '<h2 class="section">Your notes for the Soldier (optional)</h2><textarea class="input" id="sbNote" rows="3" maxlength="300" placeholder="e.g. Good bearing. Rambled on the intro; slow down on SHARP answers."></textarea>' +
           '<div class="spacer"></div><button class="btn gold lg" id="sendBack"><svg class=ic aria-hidden=true><use href=#i-send></use></svg> Send results to the Soldier</button>' +
           '<div class="muted center" style="font-size:.85rem;margin-top:6px;">They open the link on their phone: the score goes into their history and the questions they missed come back sooner.</div>';
@@ -733,7 +733,8 @@
         }
         if (weak.length) {
           html += '<h2 class="section">Weakest subjects</h2><div class="lg">';
-          weak.forEach(function (p) { html += '<a class="li" href="#/flash/' + encodeURIComponent(p.id || "") + '"><span class="grow">' + subjHtml(p.code) + '</span><b class="badge-bad" style="white-space:nowrap;">missed ' + p.miss + ' of ' + p.n + '</b><span class="chev" aria-hidden="true"><svg class=ic aria-hidden=true><use href=#i-chev></use></svg></span></a>'; });
+          var gst = document.body.classList.contains("guest");
+          weak.forEach(function (p) { var inner = '<span class="grow">' + subjHtml(p.code) + '</span><b class="badge-bad" style="white-space:nowrap;">missed ' + p.miss + ' of ' + p.n + '</b>'; html += gst ? '<div class="li">' + inner + '</div>' : '<a class="li" href="#/flash/' + encodeURIComponent(p.id || "") + '">' + inner + '<span class="chev" aria-hidden="true"><svg class=ic aria-hidden=true><use href=#i-chev></use></svg></span></a>'; });
           html += '</div>';
         }
         if (missed.length) {

@@ -887,3 +887,16 @@ body.session .q-count.mb-head { position: sticky; top: calc(56px + env(safe-area
 .drive-card .flash-a { font-size: 1.35rem !important; }
 .medal-grid { align-items: stretch; }
 .medal { justify-content: flex-start; min-height: 150px; }
+
+/* ---------- v3.45 polish round 18 ---------- */
+.handback { display: flex; gap: 12px; align-items: center; padding: 14px; margin: 4px 0 12px; border-radius: var(--radius); border: 1.5px solid var(--gold); background: var(--surface-2); color: var(--text); }
+.handback svg.ic { width: 30px; height: 30px; color: var(--gold); flex: none; }
+.dot.p { background: linear-gradient(90deg, #e5726e 50%, transparent 50%); box-shadow: inset 0 0 0 2px #e5726e; }
+.li-btn { width: 100%; text-align: left; background: none; border: none; color: inherit; font: inherit; cursor: pointer; }
+.tchips { padding: 4px 12px 12px; }
+.input.invalid { border-color: #e5726e !important; }
+.field-err { color: #ff9b96; font-size: .85rem; margin: 4px 2px 0; font-weight: 600; }
+/* timed steps keep a quiet step bar above the timer */
+.mb-head + .progress-bar:has(+ .timer-big) { display: block !important; height: 2px; margin-bottom: 4px; }
+/* one pinned height for single buttons and grade rows */
+body.session .grade-row .btn, body.session #reveal, body.session #rubricDone, body.session #introDone, body.session #qNext, body.session #submitBtn, body.session #ready, body.session #skipLocal { min-height: 58px; padding-top: 10px; padding-bottom: 10px; }

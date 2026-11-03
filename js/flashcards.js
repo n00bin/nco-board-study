@@ -150,7 +150,7 @@
         if (opts && opts.onDone) return opts.onDone(reviewed);
         container.innerHTML =
           finishHtml(first) + '<div class="spacer"></div>' + (window.App && App.sessionNextHtml ? App.sessionNextHtml() : '') +
-          (hasMiss(first) && nextStep() ? '<button id="again" hidden></button>' : '<button class="btn ' + (hasMiss(first) ? 'ghost' : 'gold') + ' lg" id="again">Study more</button>') + nextStep() + '<div class="spacer"></div>' +
+          (hasMiss(first) && nextStep() ? '<button id="again" hidden></button>' : '<button class="btn ' + (hasMiss(first) ? 'ghost' : 'gold') + ' lg" id="again"><svg class=ic aria-hidden=true><use href=#i-cards></use></svg> Study more</button>') + nextStep() + '<div class="spacer"></div>' +
           '<button class="home-link" id="home">Back to Home</button>';
         container.querySelector("#again").addEventListener("click", function () { Flashcards.render(container, cards, title, opts); });
         container.querySelector("#home").addEventListener("click", function () { App.go("#/"); });
@@ -230,7 +230,7 @@
         i++;
         if (i >= queue.length) {
           container.innerHTML = finishHtml(first) + '<div class="spacer"></div>' +
-            (hasMiss(first) && nextStep() ? '<button id="again" hidden></button>' : '<button class="btn ' + (hasMiss(first) ? 'ghost' : 'gold') + ' lg" id="again">Study more</button>') + nextStep() + '<div class="spacer"></div><button class="home-link" id="home">Back to Home</button>';
+            (hasMiss(first) && nextStep() ? '<button id="again" hidden></button>' : '<button class="btn ' + (hasMiss(first) ? 'ghost' : 'gold') + ' lg" id="again"><svg class=ic aria-hidden=true><use href=#i-cards></use></svg> Study more</button>') + nextStep() + '<div class="spacer"></div><button class="home-link" id="home">Back to Home</button>';
           container.querySelector("#again").addEventListener("click", function () { Flashcards.renderTyped(container, cards, title); });
           container.querySelector("#home").addEventListener("click", function () { App.go("#/"); });
           return;

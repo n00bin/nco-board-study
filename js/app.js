@@ -480,7 +480,7 @@
     if (mode === "drive")
       html += '<div class="card"><div class="muted">Hands-free: the app reads each question, pauses for you to answer aloud, then reads the answer. Great for PT or the drive in — keep the screen on.</div></div>';
     var quizOk = function (c) { return !c.flashOnly && ((c.choices && c.choices.length >= 2) || (c.a && String(c.a).length <= 90)); };
-    var cnt = function (cs) { var n = mode === "quiz" ? cs.filter(quizOk).length : mode === "drive" ? (Store.buildQueue(cs).length || cs.length) : cs.length; return n ? n + (mode === "quiz" ? " Qs" : mode === "drive" ? " to play" : "") : 0; };
+    var cnt = function (cs) { var n = mode === "quiz" ? cs.filter(quizOk).length : mode === "drive" ? (Store.buildQueue(cs).length || cs.length) : cs.length; return n ? n + (mode === "quiz" ? " questions" : mode === "drive" ? " due" : " cards") : 0; };
     html += '<div class="muted" style="font-size:.85rem;margin:0 4px 8px;">' + (mode === "quiz" ? "Numbers are quiz questions (cards with a short answer)." : mode === "drive" ? "Numbers are cards due or new for you today." : "Numbers are cards in each set.") + '</div>';
     html += '<div class="lg pick-top">' + liDeck(route + "core", "<svg class=ic aria-hidden=true><use href=#i-star></use></svg> Board Core", "Recommended: the must-know questions boards ask most", cnt(cardsForDeck("core")), "core") +
       liDeck(route + "all", "Everything", "All subjects, including deep detail", cnt(cardsForDeck("all")), "all") + '</div>';
@@ -545,7 +545,8 @@
     mount.innerHTML =
       '<div class="setup-head"><div class="t"><svg class=ic aria-hidden=true><use href=#i-users></use></svg> ' + esc(title) + '</div><div class="muted">Answer out loud, like the real board</div></div>' +
       '<div class="lg opts">' +
-        '<a class="li" href="#/settings/timer"><span class="grow"><span class="t">Timer: ' + (timer > 0 ? timer + ' seconds a question' : 'off') + '</span><span class="s">' + (timer > 0 ? 'Double for long answers and scenarios' : 'Answer at your own pace') + '</span></span><span class="pill">Change</span></a>' +
+        '<button type="button" class="li li-btn" id="tChange"><span class="grow"><span class="t">Timer: ' + (timer > 0 ? timer + ' seconds a question' : 'off') + '</span><span class="s">' + (timer > 0 ? 'Double for long answers and scenarios' : 'Answer at your own pace') + '</span></span><span class="pill">Change</span></button>' +
+        '<div class="tchips" id="tChips" hidden><div class="chip-row seg5">' + [0, 20, 30, 45, 60].map(function (t) { return '<button type="button" class="chip' + (t === timer ? ' on' : '') + '" data-tt="' + t + '">' + (t ? t + 's' : 'Off') + '</button>'; }).join("") + '</div></div>' +
         '<label class="switch li"><input type="checkbox" id="fullBoard"' + (Store.settings().fullBoard !== false ? " checked" : "") + '> <span class="grow"><span class="t">Full board</span><span class="s">Report in, drill, introduce yourself</span></span></label>' +
         (window.speechSynthesis ? '<label class="switch li"><input type="checkbox" id="listenOnly"' + (Store.settings().listenOnly ? " checked" : "") + '> <span class="grow"><span class="t">Listen-only</span><span class="s">Hear each question, don\u2019t read it</span></span></label>' : '') +
         '<label class="switch li"><input type="checkbox" id="sponsorMode"> <span class="grow"><span class="t">Sponsor holds this phone</span><span class="s">They read, see the answer, and grade you</span></span></label>' +
@@ -557,6 +558,8 @@
         '<button class="btn ghost" id="sendSponsor" style="margin-top:8px;"><svg class=ic aria-hidden=true><use href=#i-send></use></svg> Send a board to my sponsor</button>' +
         '<div class="muted center" style="font-size:.85rem;margin:6px 0;">They open the link and run the same board on their phone, with the answers and checklists.</div>' +
         '<button class="btn ghost" id="printSheet"><svg class=ic aria-hidden=true><use href=#i-print></use></svg> Print a paper board instead</button></details>' : '');
+    var tch = mount.querySelector("#tChange"); if (tch) tch.addEventListener("click", function () { var b = mount.querySelector("#tChips"); b.hidden = !b.hidden; });
+    mount.querySelectorAll("[data-tt]").forEach(function (b) { b.addEventListener("click", function () { Store.setSetting("timer", parseInt(b.getAttribute("data-tt"), 10)); screenBoard(deck); App.toast("Timer saved", 1200); }); });
     var lenNote = function () { mount.querySelector("#lenNote").textContent = mount.querySelector("#fullBoard").checked ? "Full board, 10 questions: about 15 to 20 minutes. On a bus? Turn Full board off." : "Questions only: about 5 to 8 minutes for 10."; };
     mount.querySelector("#fullBoard").addEventListener("change", lenNote); lenNote();
     var ps = mount.querySelector("#printSheet");
@@ -621,7 +624,7 @@
     var quizzes = Store.quizzes();
     var html =
       group("Study", [li("#/pick/board", "<svg class=ic aria-hidden=true><use href=#i-users></use></svg>", "Mock Board", "Practice the oral board"), li("#/boardday", "<svg class=ic aria-hidden=true><use href=#i-clipboard></use></svg>", "Board Day Prep", "Room, uniform, reporting, memo")]) +
-      group("You and your sponsor", [li("#/sendprogress", "<svg class=ic aria-hidden=true><use href=#i-send></use></svg>", "Send my progress", "Your sponsor sees your weak spots"), li("#/mycards", "<svg class=ic aria-hidden=true><use href=#i-pen></use></svg>", "My Cards", "Your unit's smart book, your MOS"), li("#/badges", "<svg class=ic aria-hidden=true><use href=#i-medal></use></svg>", "Badges", "Milestones you've earned")]) +
+      group("You and your sponsor", [li("#/sendprogress", "<svg class=ic aria-hidden=true><use href=#i-send></use></svg>", "Send My Progress", "Your sponsor sees your weak spots"), li("#/mycards", "<svg class=ic aria-hidden=true><use href=#i-pen></use></svg>", "My Cards", "Your unit's smart book, your MOS"), li("#/badges", "<svg class=ic aria-hidden=true><use href=#i-medal></use></svg>", "Badges", "Milestones you've earned")]) +
       group("App", (deferredPrompt ? ['<a class="li" href="#/more" id="installRow"><span class="li-ic" aria-hidden="true"><svg class=ic aria-hidden=true><use href=#i-install></use></svg></span><span class="grow"><span class="t">Install the app</span><span class="s">Opens like an app and works offline</span></span><span class="chev" aria-hidden="true"><svg class=ic aria-hidden=true><use href=#i-chev></use></svg></span></a>'] : []).concat([li("#/settings", "<svg class=ic aria-hidden=true><use href=#i-sliders></use></svg>", "Settings", "Board date, goal, timer, reminders"), li("#/share", "<svg class=ic aria-hidden=true><use href=#i-share></use></svg>", "Share &amp; QR code", "Send the app to a friend or your squad"), li("#/backup", "<svg class=ic aria-hidden=true><use href=#i-download></use></svg>", "Backup &amp; restore", "Save your progress to a file"), li("#/sources", "<svg class=ic aria-hidden=true><use href=#i-bookmark></use></svg>", "Sources &amp; editions", "Which regulation each card comes from")]));
     html += '<details class="set-fold"><summary>Recent quizzes &amp; boards (' + Math.min(10, quizzes.length) + ')</summary>' + (quizzes.length ? quizzes.slice(0, 10).map(function (q) {
       var pct = Math.round((q.score / q.total) * 100), cls = pct >= 75 ? "badge-good" : pct >= 60 ? "" : "badge-bad";
@@ -786,7 +789,7 @@
         '<img src="./icons/qr.png" alt="QR code to open the app" style="width:200px;height:200px;border-radius:12px;background:#fff;padding:8px;" />' +
         '<div class="muted url-line">' + esc(APP_URL.replace(/^https?:\/\//, "").replace(/\/$/, "")) + '</div></div>' +
       '<div class="btn-row"><button class="btn gold lg" id="share"><svg class=ic aria-hidden=true><use href=#i-share></use></svg> Share</button><button class="btn ghost lg" id="copy"><svg class=ic aria-hidden=true><use href=#i-copy></use></svg> Copy</button></div>' +
-      '<div class="spacer"></div><a class="btn ghost lg" href="#/kit"><svg class=ic aria-hidden=true><use href=#i-print></use></svg> Print a share kit</a>' +
+      '<div class="spacer"></div><a class="btn ghost lg" href="#/kit"><svg class=ic aria-hidden=true><use href=#i-print></use></svg> Print the Share Kit</a>' +
       '<h2 class="section">Install it on your phone</h2>' +
       '<div class="card"><div class="ttl"><b>Android (Chrome):</b> Chrome menu &#8942; &#8594; Install app (or Add to Home screen). Or use More &#8594; Install the app.</div>' +
         '<div class="ttl" style="margin-top:8px;"><b>iPhone (Safari):</b> open the link in Safari, tap Share <svg class=ic aria-hidden=true><use href=#i-upload></use></svg>, then Add to Home Screen, then Add. Open it from the new icon; it works offline after the first visit.</div></div>' +
@@ -902,7 +905,9 @@
     mc.addEventListener("change", function () { mcWrap.hidden = !mc.checked; });
     mount.querySelector("#save").addEventListener("click", function () {
       var q = mount.querySelector("#fq").value.trim(), a = mount.querySelector("#fa").value.trim();
-      if (!q || !a) { App.toast("Please fill in the question and answer."); return; }
+      mount.querySelectorAll(".field-err").forEach(function (x) { x.remove(); });
+      var bad = [["#fq", q, "Write the question."], ["#fa", a, "Write the answer."]].filter(function (f) { var el = mount.querySelector(f[0]); el.classList.toggle("invalid", !f[1]); return !f[1]; });
+      if (bad.length) { bad.forEach(function (f) { mount.querySelector(f[0]).insertAdjacentHTML("afterend", '<div class="field-err">' + f[2] + '</div>'); }); mount.querySelector(bad[0][0]).focus(); return; }
       var card = { pub: mount.querySelector("#fp").value, topic: mount.querySelector("#ft").value.trim(), q: q, a: a };
       if (mc.checked) {
         var wrongs = Array.prototype.map.call(mount.querySelectorAll(".wrong"), function (i) { return i.value.trim(); }).filter(Boolean);
@@ -1516,10 +1521,10 @@
     var html = '<div class="card"><div class="muted">What a board is and how it runs (AR 600-8-19, Mar 2026). Your board memo has your time, place, uniform and reporting wording.</div></div>' +
       '<h2 class="section">Step by step</h2>';
     [ "Before: check your records and points are current, confirm the uniform and time in your board memo, and arrive early.",
-      "When called: knock if your SOP says so, enter, halt about two steps in front of the president, salute, and report: \"Sergeant Major, (your rank and last name) reports to the President of the Board.\"",
+      "When called: enter and report in. Report to the Board has the exact steps and wording.",
       "Some boards have you do a few facing movements first. Then sit only when directed, at attention. The president may ask you to tell the board about yourself.",
       "Each board member asks questions in turn: leadership, Army programs, basic Soldiering, world affairs, and required situational questions on things like harassment, assault, abuse, and suicide.",
-      "The president asks last and closes the board. When dismissed: stand, salute, hold until returned, face about, and march out.",
+      "The president asks last and closes the board, then you report out (also on Report to the Board).",
       "After: each voting member votes yes or no and the majority decides. The promotion authority makes the final call. If you aren't recommended, your first-line leader counsels you in writing on how to improve (AR 600-8-19, para 1-33)." ]
       .forEach(function (t, i) { html += (i ? '' : '<div class="lg">') + '<div class="li steps-li"><span class="numbubble">' + (i + 1) + '</span><span class="grow" style="font-size:.92rem;">' + stepText(t) + '</span></div>'; });
     html += '</div>';
@@ -1655,7 +1660,7 @@
   function tab(name) { curTab = name; try { sessionStorage.setItem("ncob-tab", name); } catch (e) {} document.querySelectorAll(".tab").forEach(function (t) { var on = t.getAttribute("data-tab") === name; t.classList.toggle("active", on); if (on) t.setAttribute("aria-current", "page"); else t.removeAttribute("aria-current"); }); }
   var SHORT = { "What the Board Room Is Like": "Board Room", "Records & What to Bring": "Records", "Promotion Points Worksheet": "Points", "Know Your Army & Your Job": "Know Your Army",
     "What Changed Recently": "What's New", "Board Sheet for Your Sponsor": "Sponsor Sheet", "Sponsor Board Results": "Sponsor Results", "Enter Paper Board Results": "Paper Results",
-    "Start My MOS Cards": "My MOS Cards", "Board Prep Progress": "Progress", "Sources & Editions": "Sources", "Promotion Points": "Points", "Add Shared Cards": "Shared Cards", "Send My Progress": "Send Progress" };
+    "Start My MOS Cards": "My MOS Cards", "Board Prep Progress": "Progress", "Sources & Editions": "Sources", "Promotion Points": "Points", "Add Shared Cards": "Shared Cards", "Send My Progress": "Send My Progress" };
   function setTitle(t, showBack) {
     titleEl.textContent = SHORT[t] || t;
     var h = (location.hash || "#/").replace(/^#\//, "").split("/")[0];
