@@ -97,6 +97,9 @@
       s.settings.iosTipDone = !!d.settings.iosTipDone;
       s.settings.listenOnly = !!d.settings.listenOnly;
       s.settings.boardResult = /^\d{4}-\d{2}-\d{2}\|(Recommended|Not recommended|Board postponed)$/.test(d.settings.boardResult || "") ? d.settings.boardResult : "";
+      // your MOS and component, for this month's cutoff scores
+      s.settings.mos = /^[0-9]{2}[A-Z0-9]$/.test(String(d.settings.mos || "").toUpperCase()) ? String(d.settings.mos).toUpperCase() : "";
+      s.settings.comp = d.settings.comp === "agr" ? "agr" : "ac";
     }
     return s;
   }

@@ -64,7 +64,9 @@
         return;
       }
 
+      var shown = "q";
       function paint(phase) {
+        shown = phase;
         var c = deck[i];
         var p = STUDY.pubsById[c.pub];
         var phaseLabel = !playing ? "<svg class=ic aria-hidden=true><use href=#i-pause></use></svg> Paused" : phase === "q" ? "<svg class=ic aria-hidden=true><use href=#i-speaker></use></svg> Question…" : phase === "listen" ? "<svg class=ic aria-hidden=true><use href=#i-mic></use></svg> Your turn — answer aloud" : "<svg class=ic aria-hidden=true><use href=#i-check></use></svg> Answer";
@@ -111,7 +113,7 @@
         step();
       }
       function skip() { gen++; clearTimer(); Speech.stop(); if (!playing) { playing = true; container.querySelector && requestWake(); } if (i + 1 >= deck.length && !loop) return finish(); i = (i + 1) % deck.length; step(); }
-      function pause() { playing = false; gen++; clearTimer(); Speech.stop(); paint("a"); }
+      function pause() { playing = false; gen++; clearTimer(); Speech.stop(); paint(shown || "q"); }
       function resume() { playing = true; requestWake(); step(); }
 
       function finish(upTo) {

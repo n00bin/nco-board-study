@@ -182,14 +182,14 @@
       if (!cards.length) { container.innerHTML = '<div class="empty">' + EMPTY + '</div>'; return; }
       var queue = Store.buildQueue(cards, cards.length > 60 ? 30 : undefined).slice();
       if (!queue.length) queue = cards.slice();
-      var i = 0, reviewed = 0, first = {};
+      var i = 0, reviewed = 0, passed = 0, first = {};
 
       function pubCode(c) { if (c.label) return c.label; var p = STUDY.pubsById[c.pub]; return p ? p.code : ""; }
 
       function ask() {
         var c = queue[i];
         container.innerHTML =
-          '<div class="q-count mb-head"><span>' + esc(title) + ' \u2022 ' + reviewed + ' done</span><span class="pills"><span class="pill">' + (queue.length - i) + ' left</span>' + (reviewed >= 3 && queue.length - i > 3 ? '<button class="pill pill-btn tdone">Finish</button>' : '') + '</span></div><div class="progress-bar"><span style="width:' + Math.round(100 * i / Math.max(1, queue.length)) + '%"></span></div>' +
+          '<div class="q-count mb-head"><span>' + esc(title) + ' \u2022 ' + passed + ' done</span><span class="pills"><span class="pill">' + (queue.length - i) + ' left</span>' + (reviewed >= 3 && queue.length - i > 3 ? '<button class="pill pill-btn tdone">Finish</button>' : '') + '</span></div><div class="progress-bar"><span style="width:' + Math.round(100 * passed / Math.max(1, passed + queue.length - i)) + '%"></span></div>' +
           '<div class="card"><div class="flash-toprow"><span class="flash-tag">' + esc(/\b(regulation|publication|pamphlet|field manual|doctrine)\b|\b(which|what) (AR|FM|ADP|ATP|TC|DA PAM)\b/i.test(c.q) ? "Name the publication" : pubCode(c)) + '</span><span><button class="mini" id="tSpeak" aria-label="Read aloud"><svg class=ic aria-hidden=true><use href=#i-speaker></use></svg></button><button class="mini" id="tReport" aria-label="Report a problem with this card"><svg class=ic aria-hidden=true><use href=#i-flag></use></svg></button></span></div>' +
             '<div class="flash-q" style="margin-bottom:14px;">' + esc(c.q) + '</div>' +
             '<textarea class="input" id="tIn" rows="2" placeholder="Type your answer…"></textarea></div>' +
@@ -220,7 +220,7 @@
         var good = close || (aw.length >= 2 && share >= 0.6), near = !good && share >= 0.3;
         var verdict = !typed ? "" : good ? '<div class="badge-good" style="font-weight:700;">&#10003; Looks right</div>' : near ? '<div class="verdict-near">Close: compare with the answer</div>' : share < 0.15 ? '<div class="badge-bad" style="font-weight:700;">&#10007; Doesn&#39;t match the answer</div>' : '<div class="verdict-near">Compare with the answer</div>';
         container.innerHTML =
-          '<div class="q-count mb-head"><span>' + esc(title) + ' \u2022 ' + reviewed + ' done</span><span class="pills"><span class="pill">' + (queue.length - i) + ' left</span>' + (reviewed >= 3 && queue.length - i > 3 ? '<button class="pill pill-btn tdone">Finish</button>' : '') + '</span></div><div class="progress-bar"><span style="width:' + Math.round(100 * i / Math.max(1, queue.length)) + '%"></span></div>' +
+          '<div class="q-count mb-head"><span>' + esc(title) + ' \u2022 ' + passed + ' done</span><span class="pills"><span class="pill">' + (queue.length - i) + ' left</span>' + (reviewed >= 3 && queue.length - i > 3 ? '<button class="pill pill-btn tdone">Finish</button>' : '') + '</span></div><div class="progress-bar"><span style="width:' + Math.round(100 * passed / Math.max(1, passed + queue.length - i)) + '%"></span></div>' +
           '<div class="card"><div class="flash-tag">' + esc(pubCode(c)) + '</div>' +
             '<div class="flash-q" style="margin:6px 0 10px;">' + esc(c.q) + '</div>' +
             (typed ? '<div class="muted">You wrote: ' + esc(typed) + '</div>' + verdict + '<hr class="div">' : '') +
@@ -237,7 +237,7 @@
       function grade(g) {
         var c = queue[i];
         Store.grade(c.id, g); reviewed++; if (!(c.id in first)) first[c.id] = g;
-        if (g === "again") queue.push(c);
+        if (g === "again") queue.push(c); else passed++;
         i++;
         if (i >= queue.length) return typedDone();
         ask();

@@ -261,7 +261,7 @@
           '<div class="flash-a" style="margin-top:6px;">' + esc(a).replace(/\n/g, "<br>") + '</div>' + (ref ? '<div class="flash-ref">Reference: ' + esc(ref) + '</div>' : "") + (why || "") + '</div>';
       }
 
-      var s = 0, got = 0, asked = 0, missed = [], qNum = 0, missedIds = [];
+      var s = 0, got = 0, asked = 0, missed = [], qNum = 0, missedIds = [], unitAt = 0;
       var bearing = [];          // {label, ok} for the reporting/intro steps
       var perPub = {};           // pub -> {n, miss, code}
       var secs = (Store.settings().timer | 0);
@@ -280,7 +280,7 @@
         var localN = deck.filter(function (c) { return c.local; }).length, totalQ = deck.length - localN;
         var kind = steps[s] && steps[s].kind, KL = { reportIn: "Reporting in", drill: "Facing movements", intro: "Tell us about yourself", member: "Next board member", reportOut: "Reporting out", follow: "Follow-up to question " + qNum };
         var txt = label ? label : (kind && kind !== "q" && KL[kind]) ? KL[kind] : curLocal ? "About your unit" : qNum ? "Question " + qNum : "";
-        return '<div class="q-count mb-head"><span>' + txt + '</span>' + '<span class="pills">' + (qNum ? '<span class="pill">' + Math.min(qNum, totalQ) + ' / ' + totalQ + '</span>' : (function () { var op = steps.filter(function (x) { return x.kind === "reportIn" || x.kind === "drill" || x.kind === "intro"; }); var at = op.indexOf(steps[s]); return at >= 0 ? '<span class="pill">Opening ' + (at + 1) + ' of ' + op.length + '</span>' : ''; })()) + (asked >= 3 ? '<span class="pill score-pill">Score ' + Math.round(100 * got / asked) + '%</span>' : '') + '</span>' + '</div>' +
+        return '<div class="q-count mb-head"><span>' + txt + '</span>' + '<span class="pills">' + (curLocal && kind === "q" && localN ? '<span class="pill">Unit ' + Math.min(unitAt, localN) + ' of ' + localN + '</span>' : qNum ? '<span class="pill">' + Math.min(qNum, totalQ) + ' / ' + totalQ + '</span>' : (function () { var op = steps.filter(function (x) { return x.kind === "reportIn" || x.kind === "drill" || x.kind === "intro"; }); var at = op.indexOf(steps[s]); return at >= 0 ? '<span class="pill">Opening ' + (at + 1) + ' of ' + op.length + '</span>' : ''; })()) + (asked >= 3 ? '<span class="pill score-pill">Score ' + Math.round(100 * got / asked) + '%</span>' : '') + '</span>' + '</div>' +
           '<div class="progress-bar"><span style="width:' + Math.round(100 * Math.min(1, qNum / Math.max(1, totalQ))) + '%"></span></div>';
       }
       function timerHtml(t, why) {
@@ -303,7 +303,7 @@
         }, 1000);
       }
       function gradeButtons(missLabel, gotLabel, cap) {
-        return '<div class="grade-row' + (cap ? ' has-cap' : '') + '">' + (cap ? '<div class="grade-cap">' + cap + '</div>' : '') + '<button class="btn grade-again" id="miss">' + (missLabel || "Missed") + '</button>' +
+        return (cap ? '<div class="card honest-cap"><div class="flash-tag">Grade it honestly</div><div style="margin-top:4px;">' + cap.replace(/^Honest check: /, "") + '</div></div>' : '') + '<div class="grade-row">' + '<button class="btn grade-again" id="miss">' + (missLabel || "Missed") + '</button>' +
           '<button class="btn grade-good" id="got">' + (gotLabel || "Got it") + '</button></div>';
       }
       function onGrade(fn) {
@@ -320,7 +320,7 @@
           '<div class="muted" style="font-size:.85rem;margin-top:4px;">' + rule + '</div>' +
           c.points.map(function (pt, k) {
             var bonus = /^Said why it matters/i.test(pt);
-            return '<label class="switch" style="margin-top:10px;"><input type="checkbox" class="kp" data-k="' + k + '"> <span>' + (c.kp1 && k === 0 ? (pt.length > 60 ? '<b>Said the key fact</b> <span class="muted" style="font-size:.85rem;">(' + esc(pt.slice(0, 48).replace(/\s+\S*$/, "")) + '\u2026)</span>' : '<b>' + esc(pt) + '</b> <span class="muted" style="font-size:.85rem;">(the key fact)</span>') : esc(pt) + (bonus ? ' <span class="muted" style="font-size:.85rem;">(bonus)</span>' : '')) + '</span></label>';
+            return '<label class="switch kp-row"><input type="checkbox" class="kp" data-k="' + k + '"> <span>' + (c.kp1 && k === 0 ? (pt.length > 60 ? '<b>Said the key fact</b> <span class="muted" style="font-size:.85rem;">(' + esc(pt.slice(0, 48).replace(/\s+\S*$/, "")) + '\u2026)</span>' : '<b>' + esc(pt) + '</b> <span class="muted" style="font-size:.85rem;">(the key fact)</span>') : esc(pt) + (bonus ? ' <span class="muted" style="font-size:.85rem;">(bonus)</span>' : '')) + '</span></label>';
           }).join("") + '</div><button class="btn gold lg" id="rubricDone">Score this answer</button>';
       }
       function onRubric(fn, c) {
@@ -378,7 +378,7 @@
             '<details class="fb-fold"><summary>How to do these</summary><div class="muted" style="font-size:.92rem;">' + drillHints(cmds) + 'Then ' + (sponsor ? 'tell the Soldier to take their seat.' : 'wait for the president to tell you to take your seat.') + '</div></details></div>' +
           
           mirrorButton() +
-          gradeButtons("Needs work", "Clean", (sponsor ? 'Were the movements crisp, on the command of execution, back to attention each time?' : 'Honest check: crisp, on the command of execution, back to attention each time?'));
+          gradeButtons("Needs work", "Clean", (sponsor ? 'Were the movements crisp, on the command of execution, back to attention each time?' : 'Were your movements crisp, on the command of execution, and back to attention each time?'));
         setTimeout(wireMirror, 0);
         var say = container.querySelector("#sayIt");
         if (say) say.addEventListener("click", function () {
@@ -403,10 +403,10 @@
             : '<div class="q-text" style="margin-top:8px;">You are called in. Stand up, walk in, and report — out loud, for real.</div>' +
               (Store.chain()["memo-report"] ? '<div class="say">\u201c' + esc(Store.chain()["memo-report"]) + '\u201d</div><div class="muted">Your memo\'s exact wording.</div></div>'
                 : '<div class="say">\u201cSergeant Major, ' + esc(Store.settings().displayName || "(your rank) (your last name)") + ' reports to the President of the Board.\u201d</div><div class="muted">Use your board memo\'s exact wording (save it under Board Day Prep \u2192 My Board Memo).</div></div>')) +
-          '<button class="btn ghost" id="showSteps">Show the reporting steps</button><div id="stepsBox" hidden>' + stepsList(all.slice(1, 5)) + '</div><div class="spacer"></div>' +
+          '<button class="btn ghost" id="showSteps"><svg class=ic aria-hidden=true><use href=#i-clipboard></use></svg> <span>Show the reporting steps</span></button><div id="stepsBox" hidden>' + stepsList(all.slice(1, 5)) + '</div><div class="spacer"></div>' +
           mirrorButton() + 
-          gradeButtons("Needs work", "Clean", (sponsor ? 'Did they halt about two steps in front of you, salute and hold it, say their correct rank, and sit only when told?' : 'Honest check: halted two steps in front of the president, saluted and held it until returned, said your correct rank, sat only when told?'));
-        container.querySelector("#showSteps").addEventListener("click", function () { var b = container.querySelector("#stepsBox"); b.hidden = !b.hidden; this.textContent = b.hidden ? "Show the reporting steps" : "Hide the reporting steps"; });
+          gradeButtons("Needs work", "Clean", (sponsor ? 'Did they halt about two steps in front of you, salute and hold it, say their correct rank, and sit only when told?' : 'Did you halt two steps in front of the president, hold your salute until it was returned, say your correct rank, and sit only when told?'));
+        container.querySelector("#showSteps").addEventListener("click", function () { var b = container.querySelector("#stepsBox"); b.hidden = !b.hidden; this.querySelector("span").textContent = b.hidden ? "Show the reporting steps" : "Hide the reporting steps"; });
         wireMirror();
         onGrade(function (ok) { bearing.push({ label: "Reporting in", ok: ok }); next(); });
       }
@@ -472,7 +472,7 @@
       var curStyle = "standard", curLocal = false;
       var VOICES = [{ pitch: 1, rate: 0.98 }, { pitch: 0.8, rate: 0.92 }, { pitch: 1.2, rate: 1.05 }, { pitch: 0.9, rate: 0.9 }], curVoice = VOICES[0];
       function question(c) {
-        if (!c.local) qNum++;
+        if (!c.local) qNum++; else unitAt++;
         var cs = timeFor(c); curLimit = cs || 0;
         if (curStyle === "rapid" && secs && c.pub !== "sit" && c.pub !== "personal") cs = Math.min(cs || 20, 20);
         container.innerHTML = header() + timerHtml(cs) +

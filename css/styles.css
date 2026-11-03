@@ -1042,3 +1042,20 @@ body.session .screen { padding-bottom: 150px !important; }
 .pill-btn { min-height: 34px !important; padding: 0 14px !important; }
 details.cut-other { margin-top: 10px; }
 details.cut-other > summary { color: var(--gold); font-weight: 600; font-size: .92rem; }
+
+/* ---------- v3.57 polish round 29 ---------- */
+/* rubric and checklist ticks: the whole row is the target */
+label.switch.kp-row, .card label.switch { min-height: 44px; margin-top: 2px !important; padding: 4px 0; }
+/* the honest-check caption is part of the page */
+.honest-cap { border-style: dashed; }
+/* a scrolled-to card is never under the sticky header */
+html { scroll-padding-top: calc(72px + env(safe-area-inset-top)); }
+.card, h2, .section-h { scroll-margin-top: calc(72px + env(safe-area-inset-top)); }
+/* one header height whether or not Finish shows */
+.q-count.mb-head { min-height: 40px; align-items: center; }
+.q-count.mb-head .pill, .q-count.mb-head .pill-btn { min-height: 30px !important; height: 30px; display: inline-flex; align-items: center; box-sizing: border-box; line-height: 1; }
+/* a sticky search box */
+.search-wrap { position: sticky; top: calc(56px + env(safe-area-inset-top)); z-index: 6; background: var(--bg); padding: 8px 0; margin-top: -8px; }
+/* jump chips: a short, fixed fade so no half-chip sliver shows at the edge */
+.jump-row.fade-l { -webkit-mask-image: linear-gradient(90deg, transparent, #000 22px) !important; mask-image: linear-gradient(90deg, transparent, #000 22px) !important; }
+.jump-row.fade-l.fade-r { -webkit-mask-image: linear-gradient(90deg, transparent, #000 22px, #000 86%, transparent) !important; mask-image: linear-gradient(90deg, transparent, #000 22px, #000 86%, transparent) !important; }
