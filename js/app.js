@@ -293,7 +293,7 @@
     var remind = (!Store.settings().remindersAdded && (days == null || days > 1)) ? '<div style="margin-top:8px;font-size:.85rem;"><a href="#/settings"><svg class=ic aria-hidden=true><use href=#i-bell></use></svg> Add study reminders to my calendar</a></div>' : '';
     planExtras = (sponsorNote || remind) ? '<div class="card">' + sponsorNote.replace("margin-top:8px;", "") + remind + '</div>' : '';
     var startBtn = lastPlan.length >= 2 ? '<button class="btn gold lg" id="startSess" style="margin-top:8px;"><svg class=ic aria-hidden=true><use href=#i-play></use></svg> Start today&#39;s session</button>' +
-      '<button class="btn ghost" id="tenMin" style="margin-top:8px;">Only have 10 minutes?</button>' : '';
+      '<button class="home-link" id="tenMin" style="margin-top:4px;">Only have 10 minutes?</button>' : '';
     var inS = items.filter(function (h) { return !/sponsor|sendprogress|settings/.test(h); }), outS = items.filter(function (h) { return /sponsor|sendprogress|settings/.test(h); });
     var steps = '<div class="plan-steps">' + inS.map(function (h, k) { return h.replace('plan-item" href=', 'plan-item" data-n="' + (k + 1) + '" href='); }).join("") + '</div>' +
       (outS.length ? '<div class="lg-h" style="margin-top:10px;">Also this week</div><div class="plan-steps">' + outS.join("") + '</div>' : '');
@@ -673,9 +673,9 @@
       html += '<h2 class="section">Mock Board voice check</h2><div class="card"><label class="switch"><input type="checkbox" id="voiceAuto"' + (!s.voiceOff ? ' checked' : '') + '> <span>Listen to my answers and pre-tick the key points I said (needs the microphone; may need a connection)</span></label><div class="muted" style="font-size:.85rem;margin-top:6px;">Voice check uses your phone\u2019s speech service (Google or Apple), so your spoken answer leaves the phone while it listens. It stays off for personal and your-unit questions. Record my answer stays on the phone.</div></div>';
     // fold the sections people rarely change, so the page isn't one long scroll
     var r0 = html.indexOf('<h2 class="section">Study reminders</h2>'), r1 = html.indexOf('<h2 class="section">Daily goal (minimum)</h2>');
-    if (r0 > 0 && r1 > r0) html = html.slice(0, r0) + '<details class="set-fold"><summary>Study reminders</summary>' + html.slice(r0, r1).replace('<h2 class="section">Study reminders</h2>', '') + '</details>' + html.slice(r1);
+    if (r0 > 0 && r1 > r0) html = html.slice(0, r0) + '<h2 class="section">Reminders</h2><details class="set-fold" style="margin-top:0;"><summary>Study reminders</summary>' + html.slice(r0, r1).replace('<h2 class="section">Study reminders</h2>', '') + '</details>' + html.slice(r1);
     var t0 = html.indexOf('<h2 class="section">Mock Board timer</h2>');
-    if (t0 > 0) html = html.slice(0, t0) + '<details class="set-fold"' + (focus === "timer" ? ' open' : '') + '><summary>Mock Board, Drive Mode &amp; voice</summary>' + html.slice(t0) + '</details>';
+    if (t0 > 0) html = html.slice(0, t0) + '<h2 class="section">Practice</h2><details class="set-fold" style="margin-top:0;"' + (focus === "timer" ? ' open' : '') + '><summary>Mock Board, Drive Mode &amp; voice</summary>' + html.slice(t0) + '</details>';
     mount.innerHTML = html;
     if (focus === "timer") setTimeout(function () { var tc = mount.querySelector("#timerChips"); if (tc) tc.scrollIntoView({ block: "center" }); }, 30);
 
@@ -974,7 +974,7 @@
   }
   function niceDate(ms) { var d = new Date(ms); return d.getDate() + " " + MON[d.getMonth()] + " " + d.getFullYear(); }
   function group(title, rows, id) { return (title ? '<div class="lg-h"' + (id ? ' id="' + id + '"' : '') + '>' + title + '</div>' : '') + '<div class="lg">' + rows.join("") + '</div>'; }
-  function jumpChips(cats) { return '<div class="chip-row jump-row">' + cats.map(function (c, k) { return '<button class="chip" data-jump="cat' + k + '">' + esc(c.replace(/ &amp; .*| & .*/, "")) + '</button>'; }).join("") + '</div>'; }
+  function jumpChips(cats) { return '<div class="jump-wrap"><div class="chip-row jump-row">' + cats.map(function (c, k) { return '<button class="chip" data-jump="cat' + k + '">' + esc(c.replace(/ &amp; .*| & .*/, "")) + '</button>'; }).join("") + '</div></div>'; }
   function wireJumps() { mount.querySelectorAll("[data-jump]").forEach(function (b) { b.addEventListener("click", function () { var t = document.getElementById(b.getAttribute("data-jump")); if (t) t.scrollIntoView({ behavior: "smooth", block: "start" }); }); }); }
 
   function screenBoardDay() {
@@ -1168,7 +1168,7 @@
         (cal.unsureN >= 5 ? ' When unsure: ' + Math.round(100 * cal.unsureRight / cal.unsureN) + '%.' : '') + '</div>';
     }
     return '<div class="card"><div class="flash-tag">Your last 7 days</div><div style="display:flex;align-items:flex-end;height:52px;margin:6px 0;" aria-hidden="true">' + bars + '</div>' +
-      '<div class="muted" style="font-size:.85rem;">' + total + ' cards on ' + days + ' day' + (days === 1 ? '' : 's') + ' • ' + boards + ' Mock Board' + (boards === 1 ? '' : 's') + '</div><div class="chip-row seg2" style="margin-top:8px;"><a class="chip" href="#/sendprogress">Send to sponsor</a><a class="chip" href="#/badges">Badges</a></div>' + calLine + '</div>';
+      '<div class="muted" style="font-size:.85rem;">' + total + ' cards on ' + days + ' day' + (days === 1 ? '' : 's') + ' • ' + boards + ' Mock Board' + (boards === 1 ? '' : 's') + '</div><div class="btn-row" style="margin-top:8px;"><a class="btn ghost sm" href="#/sendprogress">Send to sponsor</a><a class="btn ghost sm" href="#/badges">Badges</a></div>' + calLine + '</div>';
   }
   // ---- progress snapshot: encoded into a link, shown on the sponsor's phone ----
   function b64e(o) { return btoa(unescape(encodeURIComponent(JSON.stringify(o)))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, ""); }
@@ -1242,12 +1242,12 @@
       var k = m[1].trim(), e = m[2].trim(); if (!by[k]) by[k] = { n: 0, ed: {} }; by[k].n++; by[k].ed[e] = (by[k].ed[e] || 0) + 1;
     });
     var rows = Object.keys(by).filter(function (k) { return by[k].n >= 2; }).sort(function (x, y) { return x.localeCompare(y, undefined, { numeric: true }); });
-    mount.innerHTML = '<div class="card"><div class="muted">Each subject&#39;s edition, and how many cards cite it. Last checked ' + esc(STUDY.meta.updated ? niceDate(new Date(STUDY.meta.updated + "T12:00:00").getTime()) : "") + '. Unofficial study aid; your board memo and SOP come first.</div></div>' +
+    mount.innerHTML = '<div class="card"><div class="muted">Each subject&#39;s edition, and how many cards cite it. Last checked ' + esc(STUDY.meta.updated ? niceDate(new Date(STUDY.meta.updated + "T12:00:00").getTime()) : "") + '.</div></div>' +
       '<div class="lg">' + rows.map(function (k) {
         var eds = Object.keys(by[k].ed).sort(function (x, y) { return by[k].ed[y] - by[k].ed[x]; });
         var pub = STUDY.pubs.filter(function (p) { return p.code === k; })[0];
         var inner = '<span class="grow"><span class="t" style="font-weight:600;">' + esc(k) + '</span><span class="s">' + esc(eds[0]) + ' \u2022 cited by ' + by[k].n + ' card' + (by[k].n === 1 ? '' : 's') + '</span></span>';
-        return pub ? '<a class="li" href="#/pub/' + escAttr(pub.id) + '">' + inner + '<span class="chev" aria-hidden="true"><svg class=ic aria-hidden=true><use href=#i-chev></use></svg></span></a>' : '<div class="li">' + inner + '</div>';
+        return pub ? '<a class="li" href="#/pub/' + escAttr(pub.id) + '">' + inner + '<span class="chev" aria-hidden="true"><svg class=ic aria-hidden=true><use href=#i-chev></use></svg></span></a>' : '<div class="li static">' + inner + '</div>';
       }).join("") + '</div>' +
       '<div class="muted center" style="font-size:.85rem;margin-top:12px;">Spot a problem? Use the flag on any card.</div>';
   }
@@ -1296,7 +1296,7 @@
   function screenUniform() {
     setTitle("Uniform Inspection", true);
     var checks = Store.checks();
-    var html = '<div class="card"><div class="muted">Tap each item once you&#39;ve checked it. Your board memo and local SOP have the final say.</div></div>' +
+    var html = '<div class="card"><div class="muted">Tap each item once you&#39;ve checked it.</div></div>' +
       '<details class="set-fold" style="margin-top:0;"><summary>Picture: where the main items go on the AGSU coat</summary>' + UNIFORM_SVG +
         '<div class="muted" style="font-size:.85rem;margin-top:6px;">Simple sketch, not to scale, shown as you face the Soldier (their right is on your left). From DA PAM 670-1 and AD 2025-18; your board memo and local SOP have the final say.</div><div style="height:8px;"></div></details>';
     UNIFORM_CHECKS.forEach(function (u) {
@@ -1334,7 +1334,7 @@
   function screenMemo() {
     setTitle("My Board Memo", true);
     var m = Store.chain();
-    var html = '<div class="card"><div class="muted">Your board memo and local SOP always come first. Type the key parts here. When you report in on a Full Mock Board, the app shows your memo\'s exact wording.</div></div>';
+    var html = '<div class="card"><div class="muted">Type the key parts of your board memo here. When you report in on a Full Mock Board, the app shows your memo\'s exact wording.</div></div>';
     MEMO_FIELDS.forEach(function (f) {
       html += '<label class="lbl" for="memo-' + f.k + '"><b>' + esc(f.t) + '</b>: ' + esc(f.h) + '</label><textarea class="input" id="memo-' + f.k + '" rows="2" placeholder="' + escAttr(f.ph) + '">' + esc(m["memo-" + f.k] || "") + '</textarea>';
     });
@@ -1442,7 +1442,7 @@
   function screenRecords() {
     setTitle("Records & What to Bring", true);
     var checks = Store.checks();
-    var html = '<div class="card"><div class="muted">Do this the week before your board. Your board memo and local SOP always come first.</div></div>';
+    var html = '<div class="card"><div class="muted">Do this the week before your board.</div></div>';
     RECORD_CHECKS.forEach(function (u) {
       var on = !!checks[u.id];
       html += '<button class="row check' + (on ? " checked" : "") + '" data-id="' + u.id + '" role="checkbox" aria-checked="' + (on ? "true" : "false") + '"><div class="checkbox">' + (on ? "&#10003;" : "") + '</div><div class="grow"><div class="ttl">' + checkText(u.t) + '</div></div></button>';

@@ -826,3 +826,19 @@ a.home-link { line-height: 48px; }
 .stop-ic svg.ic { width: 40px; height: 40px; }
 #ptSticky.typing { opacity: 0; pointer-events: none; }
 .rv-row > [hidden] { display: none !important; }
+
+/* ---------- v3.41 polish round 14 ---------- */
+.jump-row { position: sticky; top: calc(56px + env(safe-area-inset-top)); z-index: 6; background: var(--bg); padding-top: 8px !important; margin-top: -8px; }
+.lg-h, [id^="cat"] { scroll-margin-top: 124px; }
+.pills { display: inline-flex; gap: 6px; flex: none; }
+.intro-note { text-align: center; font-weight: 700; padding: 10px 12px; margin: 8px 0 10px; border-radius: var(--radius); border: 1px solid var(--good); color: var(--good); background: var(--surface-2); }
+.intro-note.warn { border-color: var(--gold); color: var(--gold); }
+details.home-more > .card { border: none; background: transparent; padding: 4px 2px 10px; box-shadow: none; }
+.li.static .t { font-weight: 500 !important; color: var(--text-dim); }
+body.session:has(#reveal, #rubricDone, #introDone, #qNext, #submitBtn)::after, body.session:has(#ready, #skipLocal)::after { height: calc(100px + env(safe-area-inset-bottom)); background: linear-gradient(to bottom, rgba(20,22,15,0), var(--bg) 38px); }
+.empty-state { padding-left: 0; padding-right: 0; }
+@media screen { .no-print + .sheet::before { content: "PRINT PREVIEW"; display: block; font-size: .85rem; letter-spacing: 1px; color: #7a7d6c; margin-bottom: 8px; font-weight: 700; } .sheet { outline: 6px solid var(--surface-2); } }
+.flash-tag { letter-spacing: .5px; }
+/* sticky jump chips: the wrapper is solid, only the chips fade at the edge */
+.jump-row { position: static !important; background: none; margin-top: 0; padding-top: 0 !important; }
+.jump-wrap { position: sticky; top: calc(56px + env(safe-area-inset-top)); z-index: 6; background: var(--bg); padding: 8px 0 2px; margin: -8px 0 6px; }

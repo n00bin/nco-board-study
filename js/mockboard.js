@@ -74,7 +74,7 @@
     var t = p.title.replace(/^.*?:\s*/, "").replace(/\s*\(.*\)\s*$/, "");
     return /^[A-Z]{2,}/.test(p.code) && p.code.length <= 12 && t.length > 40 ? p.code : t.replace(/^The /, "the ");
   }
-  function listJoin(a) { return a.length <= 1 ? a.join("") : a.slice(0, -1).join(", ") + " and " + a[a.length - 1]; }
+  function listJoin(a) { var sep = a.some(function (x) { return /,/.test(x); }) ? "; " : ", "; return a.length <= 1 ? a.join("") : a.slice(0, -1).join(sep) + (sep === "; " ? "; and " : " and ") + a[a.length - 1]; }
 
   // Voice check: optional speech-to-text that pre-ticks the key points you actually said (Chrome on Android/desktop).
   var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -277,7 +277,7 @@
         var localN = deck.filter(function (c) { return c.local; }).length, totalQ = deck.length - localN;
         var kind = steps[s] && steps[s].kind, KL = { reportIn: "Reporting in", drill: "Facing movements", intro: "Tell us about yourself", member: "Next board member", reportOut: "Reporting out", follow: "Follow-up to question " + qNum };
         var txt = label ? label : (kind && kind !== "q" && KL[kind]) ? KL[kind] : curLocal ? "About your unit" : qNum ? "Question " + qNum : "";
-        return '<div class="q-count mb-head"><span>' + txt + '</span>' + (asked >= 3 ? '<span class="pill score-pill">Score ' + Math.round(100 * got / asked) + '%</span>' : qNum ? '<span class="pill">' + Math.min(qNum, totalQ) + ' / ' + totalQ + '</span>' : '') + '</div>' +
+        return '<div class="q-count mb-head"><span>' + txt + '</span>' + '<span class="pills">' + (qNum ? '<span class="pill">' + Math.min(qNum, totalQ) + ' / ' + totalQ + '</span>' : '') + (asked >= 3 ? '<span class="pill score-pill">Score ' + Math.round(100 * got / asked) + '%</span>' : '') + '</span>' + '</div>' +
           '<div class="progress-bar"><span style="width:' + Math.round(100 * Math.min(1, qNum / Math.max(1, totalQ))) + '%"></span></div>';
       }
       function timerHtml(t, why) {
@@ -432,8 +432,8 @@
           else container.querySelector("#introDone").addEventListener("click", function () {
             var n = 0; container.querySelectorAll(".ip").forEach(function (b) { if (b.checked) n++; });
             bearing.push({ label: "Tell us about yourself", ok: n >= 3 });
-            var bt = container.querySelector("#introDone"); bt.disabled = true; bt.classList.add("result-flash"); if (n < 3) bt.classList.add("warn");
-            bt.textContent = n >= 3 ? "\u2713 Good intro: " + n + " of 4 covered" : n + " of 4 covered. Add the rest next time";
+            var bt = container.querySelector("#introDone"); bt.disabled = true; bt.textContent = "Next: the board";
+            bt.insertAdjacentHTML("beforebegin", '<div class="intro-note result-flash' + (n < 3 ? ' warn' : '') + '">' + (n >= 3 ? '\u2713 Good intro: ' + n + ' of 4 covered.' : n + ' of 4 covered. Add the rest next time.') + '</div>');
             setTimeout(next, 1300);
           });
         };
@@ -691,7 +691,8 @@
           .replace(/Drill the misses/, "Have them drill the misses").replace(/Study the misses, then run it again/, "Have them study the misses, then run it again").replace(/Tighten the misses/, "Have them tighten the misses");
         if (deck.length < 8 && V.level !== "work") { V = { level: "work", title: "Good practice", msg: pct + "% on a short board. Board-ready takes a full board of 10 or more questions." }; msg = V.msg; }
         var nQ = deck.filter(function (c) { return !c.local; }).length, nF = Math.max(0, asked - nQ);
-        var countLine = nQ + " question" + (nQ === 1 ? "" : "s") + (nF ? ", " + nF + " follow-up" + (nF === 1 ? "" : "s") + " or second tries" : "");
+        var nFu = extras.filter(function (x) { return x.k === "fu"; }).length, nCb = extras.filter(function (x) { return x.k === "cb"; }).length;
+        var countLine = nQ + " question" + (nQ === 1 ? "" : "s") + (nFu ? ", " + nFu + " follow-up" + (nFu === 1 ? "" : "s") : "") + (nCb ? ", " + nCb + " second " + (nCb === 1 ? "try" : "tries") : "");
         var strongB = pct >= 75 && !notReady && V.level !== "work" && deck.length >= 8;
         var vTitle = strongB ? "Strong board" : V.title, vLine = strongB ? (missed.length ? (sponsor ? "Have them tighten the " : "Tighten the ") + missed.length + " miss" + (missed.length === 1 ? "" : "es") + ", then run another." : "Keep it sharp with a board every few days.")
           : (msg.indexOf(V.title + ".") === 0 ? msg.slice(V.title.length + 1).trim() : msg).replace(/^(Your|Their) answers scored \d+%\. /, "");
@@ -701,7 +702,7 @@
             var full = qScores.filter(function (x) { return x >= 0.99; }).length, part = qScores.filter(function (x) { return x >= 0.66 && x < 0.99; }).length, miss = qScores.length - full - part;
             var cb = extras.filter(function (x) { return x.k === "cb"; }), fu = extras.filter(function (x) { return x.k === "fu"; });
             var cbOk = cb.filter(function (x) { return x.ok; }).length, fuOk = fu.filter(function (x) { return x.ok; }).length;
-            var legend = '<div class="dot-legend">' + (full ? '<span><span class="dot g"></span>full</span>' : '') + (part ? '<span><span class="dot a"></span>with gaps</span>' : '') + (miss ? '<span><span class="dot r"></span>missed</span>' : '') + (extras.length ? '<span><span class="dot sq"></span>second try / follow-up</span>' : '') + '</div>';
+            var legend = '<div class="dot-legend">' + (full ? '<span><span class="dot g"></span>full</span>' : '') + (part ? '<span><span class="dot a"></span>with gaps</span>' : '') + (miss ? '<span><span class="dot r"></span>missed</span>' : '') + (extras.length ? '<span><span class="dot sq"></span>retry</span>' : '') + '</div>';
             return '<div class="dots" aria-hidden="true">' + qScores.map(function (x) { return '<span class="dot ' + (x >= 0.99 ? 'g' : x >= 0.66 ? 'a' : 'r') + '"></span>'; }).join("") +
                 (extras.length ? '<span class="dot-gap"></span>' + extras.map(function (x) { return '<span class="dot sq ' + (x.ok ? 'g' : 'r') + '"></span>'; }).join("") : '') + '</div>' + legend +
               '<p class="center muted" style="font-size:.92rem;margin:4px 0 0;">' + countLine + '</p><details class="set-fold score-how"><summary>How this was scored</summary><p class="muted" style="font-size:.92rem;margin:0 0 8px;">First answers: ' + full + ' full \u2022 ' + part + ' with gaps \u2022 ' + miss + ' missed' +
