@@ -1101,3 +1101,11 @@ details.hero-how > summary { font-size: .85rem; font-weight: 700; cursor: pointe
 /* quiz choices: no indent; the mark sits on the right */
 .choice { padding-left: 16px !important; padding-right: 40px !important; }
 .choice .mark { left: auto !important; right: 14px; margin: 0 !important; }
+
+/* ---------- v3.61 polish round 33 ---------- */
+/* partial credit: a half-filled gold dot */
+.dot.p { background: linear-gradient(90deg, var(--gold) 50%, transparent 50%) !important; box-shadow: inset 0 0 0 2px var(--gold) !important; }
+/* the countdown bar: gold, short, under its number */
+.timer-bar span { background: var(--gold) !important; }
+/* every fold summary is white */
+details.more-changes > summary { color: var(--text) !important; }

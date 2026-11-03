@@ -71,7 +71,7 @@
         var p = STUDY.pubsById[c.pub];
         var phaseLabel = !playing ? "<svg class=ic aria-hidden=true><use href=#i-pause></use></svg> Paused" : phase === "q" ? "<svg class=ic aria-hidden=true><use href=#i-speaker></use></svg> Question…" : phase === "listen" ? "<svg class=ic aria-hidden=true><use href=#i-mic></use></svg> Your turn — answer aloud" : "<svg class=ic aria-hidden=true><use href=#i-check></use></svg> Answer";
         container.innerHTML =
-          '<div class="q-count mb-head"><span>' + esc(title) + '</span><span class="pill">' + (i + 1) + ' of ' + deck.length + '</span></div>' +
+          '<div class="q-count mb-head"><span>' + esc(title) + '</span><span class="pill">' + (i + 1) + ' of ' + deck.length + '</span></div><div class="progress-bar"><span style="width:' + Math.round(100 * i / Math.max(1, deck.length)) + '%"></span></div>' +
           '<div class="card drive-card"><div class="flash-tag">' + esc(p ? p.code : "") + '</div>' +
             '<div class="phase" id="phase">' + phaseLabel + '</div>' +
             '<div class="flash-q" style="margin:10px 0;font-size:1.3em;line-height:1.4;">' + esc(c.oral || c.q) + '</div>' +

@@ -213,7 +213,7 @@
     s.i++; try { sessionStorage.setItem("ncob-sess", JSON.stringify(s)); } catch (e) {}
     if (s.i >= s.items.length) { try { sessionStorage.removeItem("ncob-sess"); } catch (e) {} return '<div class="card center" style="border-color:var(--gold);"><b>&#10003; Today&#39;s session is done.</b> <span class="muted">Nice work. Come back tomorrow.</span></div><div class="spacer"></div>'; }
     var nx = s.items[s.i];
-    return '<div class="center muted" style="font-size:.85rem;margin-bottom:6px;">Next in today&#39;s session (' + (s.i + 1) + ' of ' + s.items.length + ')</div><button class="btn gold lg" data-sessnext="' + escAttr(nx.href) + '">' + esc(nx.label.charAt(0).toUpperCase() + nx.label.slice(1)) + ' &#8594;</button><div class="spacer"></div>';
+    return '<div class="center muted" style="font-size:.85rem;margin-bottom:6px;">Next in today&#39;s session (' + (s.i + 1) + ' of ' + s.items.length + ')</div><button class="btn gold lg" data-sessnext="' + escAttr(nx.href) + '">' + esc(nx.label.charAt(0).toUpperCase() + nx.label.slice(1)) + '&nbsp;&#8594;</button><div class="spacer"></div>';
   }
   // while today's session runs, each step shows where you are in it
   function sessionBanner() {
@@ -592,7 +592,7 @@
   function screenSearch() {
     setTitle("Search", true);
     mount.innerHTML = '<div class="search-wrap"><span class="search-ic" aria-hidden="true"><svg class=ic aria-hidden=true><use href=#i-search></use></svg></span><input class="input" id="q" type="search" aria-label="Search questions and answers" placeholder="Search questions & answers..." autocomplete="off" /><button class="search-x" id="qx" aria-label="Clear search" hidden>&#10005;</button></div><div id="results" style="margin-top:12px;" aria-live="polite"></div>';
-    var input = mount.querySelector("#q"), results = mount.querySelector("#results");
+    var input = mount.querySelector("#q"), results = mount.querySelector("#results"), partTerm = "";
     function run() {
       var term = input.value.trim().toLowerCase();
       mount.querySelector("#qx").hidden = !input.value;
@@ -607,6 +607,8 @@
       var wx = new RegExp("\\b" + safe + "\\b", "i"), whole = function (c) { return wx.test(c.q + " " + c.a + " " + (c.topic || "")); };
       all.forEach(function (c) { c._w = whole(c) ? 1 : 0; });
       all.sort(function (a, b) { return (b._w - a._w) || (rank(b) - rank(a)); });
+      var nPart = all.filter(function (c) { return !c._w; }).length, hidePart = nPart && all.length - nPart >= 3 && partTerm !== term;
+      if (hidePart) all = all.filter(function (c) { return c._w; });
       var hits = all.slice(0, 80);
       var note = all.length > hits.length ? '<div class="muted center" style="margin-bottom:8px;">Showing the first 80 of ' + all.length + ' matches. Type more to narrow it down.</div>' : '';
       var hlW = new RegExp("\\b(" + safe + ")\\b", "ig"), hlP = new RegExp("(" + safe + ")", "ig"), hlRx = hlP;
@@ -617,11 +619,11 @@
         var div = (!c._w && nWhole && !divDone) ? (divDone = true, '<div class="lg-h" style="margin-top:14px;">Inside longer words</div>') : '';
         return div + '<a class="card" style="display:block;text-decoration:none;color:inherit;" href="#/read/' + escAttr(c.pub) + '/' + escAttr(c.id) + '"><div class="flash-tag tag-row">' + esc(p ? p.code : "") + (c.topic ? " • " + esc(c.topic) : "") + (c.core ? '<span class="pill core-pill inline">Core</span>' : '') + '</div>' +
           '<div style="font-weight:600;margin-bottom:6px;">' + hl(c.q) + '</div><div class="muted">' + hl(c.a) + '</div><div class="open-hint">Open in ' + esc(p ? p.code : "its subject") + ' <svg class=ic aria-hidden=true><use href=#i-chev></use></svg></div></a>';
-      }).join("") + '<div class="muted center end-line">' + (all.length > hits.length ? 'Showing the top ' + hits.length + '. Type more to narrow it down.' : 'End of results') + '</div>' : '<div class="empty-state" style="padding:28px 0 12px;"><svg class=ic aria-hidden=true><use href=#i-search></use></svg><div class="t">No matches for \u201c' + esc(input.value.trim()) + '\u201d</div><div class="muted" style="margin-bottom:6px;">Try a shorter word, or one of these:</div></div>' + tryChips();
+      }).join("") + '<div class="muted center end-line">' + (all.length > hits.length ? 'Showing the top ' + hits.length + '. Type more to narrow it down.' : 'End of results') + '</div>' + (hidePart ? '<button class="btn ghost" id="showPart">Show ' + nPart + ' more inside longer words</button>' : '') : '<div class="empty-state" style="padding:28px 0 12px;"><svg class=ic aria-hidden=true><use href=#i-search></use></svg><div class="t">No matches for \u201c' + esc(input.value.trim()) + '\u201d</div><div class="muted" style="margin-bottom:6px;">Try a shorter word, or one of these:</div></div>' + tryChips();
     }
     try { var q0 = sessionStorage.getItem("ncob-q"); if (q0) input.value = q0; } catch (e) {}
     function tryChips() { return '<div class="chip-row">' + ["SHARP", "AFT", "hazing", "counseling", "NCOER", "Article 15", "waist-to-height", "kratom", "land navigation", "Army Values"].map(function (w) { return '<button class="chip" data-try="' + w + '">' + w + '</button>'; }).join("") + '</div>'; }
-    results.addEventListener("click", function (e) { var b = e.target.closest("[data-try]"); if (b) { input.value = b.getAttribute("data-try"); run(); } });
+    results.addEventListener("click", function (e) { var b = e.target.closest("[data-try]"); if (b) { input.value = b.getAttribute("data-try"); run(); } if (e.target.closest("#showPart")) { partTerm = input.value.trim().toLowerCase(); run(); } });
     mount.querySelector("#qx").addEventListener("click", function () { input.value = ""; run(); input.focus(); });
     results.addEventListener("click", function (e) { if (e.target.closest("a.card")) try { sessionStorage.setItem("ncob-qy", String(window.scrollY)); } catch (x) {} });
     input.addEventListener("input", run); run();
@@ -1133,7 +1135,7 @@
     }
     var pct = Math.round(100 * got / total);
     var sbClean = !bear.some(function (b) { return !b.ok; }) && !ids.some(function (id) { return byId[id] && byId[id].pub === "sit"; });
-    mount.innerHTML = '<div class="ring-wrap"><div class="ring ' + (pct >= 75 && sbClean ? 'good' : pct >= 50 ? 'mid' : 'bad') + '" style="--p:' + pct + ';"><div class="ring-in">' + pct + '%</div></div><small>from your sponsor\'s board</small></div>' +
+    mount.innerHTML = '<div class="ring-wrap"><div class="ring ' + (pct >= 75 ? 'good' : pct >= 50 ? 'mid' : 'bad') + '" style="--p:' + pct + ';"><div class="ring-in">' + pct + '%</div></div><small>from your sponsor\'s board</small></div>' +
       (function () {
         var V = MockBoard.verdict(pct, bear.filter(function (b) { return !b.ok; }).map(function (b) { return b.label.toLowerCase(); }), ids.filter(function (id) { return byId[id] && byId[id].pub === "sit"; }).length);
         if (total < 8 && V.level !== "work") V = { level: "work", title: "Good practice", msg: pct + "% on a short board. Board-ready takes a full board of 10 or more questions." };
@@ -1832,7 +1834,7 @@
     o.querySelector("#lvStay").focus();
   }
   backBtn.addEventListener("click", function (e) {
-    if (window.App && App.busy && App.busy()) { e.stopImmediatePropagation(); return askLeave(function () { if (history.length > 1) history.back(); else App.go("#/"); }); }
+    if (window.App && App.busy && App.busy()) { e.stopImmediatePropagation(); return askLeave(function () { if (/^#\/(board|quiz)\/[^/]+$/.test(location.hash)) { window.scrollTo(0, 0); route(); } else if (history.length > 1) history.back(); else App.go("#/"); }); }
   }, true);
   backBtn.addEventListener("click", function () { if (history.length > 1) history.back(); else App.go("#/"); });
 
