@@ -284,7 +284,7 @@ h2.section { font-size: 1rem; color: var(--text-dim); text-transform: uppercase;
 .verdict.ok { color: var(--good); }
 .verdict.no { color: #e5726e; }
 .choice:disabled { cursor: default; opacity: 1; }
-.q-text { font-size: 1.15rem; font-weight: 600; margin: 8px 4px 16px; line-height: 1.35; }
+.q-text { font-size: 1.15rem; font-weight: 600; margin: 8px 0 16px; line-height: 1.35; }
 .q-count { color: var(--text-dim); font-size: .85rem; text-align: center; }
 
 /* score ring */
@@ -1155,3 +1155,15 @@ html { scroll-padding-top: 0 !important; }
 /* a search highlight you can see */
 mark { background: rgba(255,204,51,.42); color: #fff; font-weight: 600; }
 .cap-note { font-size: .85rem; margin-top: 6px; color: var(--gold); }
+
+/* ---------- v3.70 polish round 42 ---------- */
+/* Today's plan: the 10-minute link sits close under its button */
+#tenMin { margin-top: 0 !important; margin-bottom: 0 !important; }
+/* long tags stay on one line beside the card's icon buttons */
+.flash-toprow .flash-tag { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.flash-toprow { gap: 8px; }
+/* Drive: a big phase sign or countdown in the open space */
+.drive-big { text-align: center; font-size: 3.4rem; font-weight: 800; color: var(--gold); margin: 6vh 0 0; min-height: 72px; font-variant-numeric: tabular-nums; }
+.drive-big svg.ic { width: 64px; height: 64px; opacity: .55; }
+/* cutoff tiles act as the rank switch */
+.cut-pair [data-r] { cursor: pointer; }

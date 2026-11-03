@@ -204,11 +204,11 @@
   // the last day is about calm and bearing (no new material), the last week is review, a late start gets the Top 100.
   var lastPlan = [], planExtras = "";
   // ---- today's session: run the plan in order; each finished screen offers the next step ----
-  function savedSession() { var s; try { s = JSON.parse(sessionStorage.getItem("ncob-sess") || "null"); } catch (e) { s = null; } return s && s.items && s.i > 0 && s.i < s.items.length ? s : null; }
+  function savedSession() { var s; try { s = JSON.parse(sessionStorage.getItem("ncob-sess") || "null"); } catch (e) { s = null; } return s && s.items && s.i < s.items.length && (s.i > 0 || (s.t && Date.now() - s.t < 3600000)) ? s : null; }
   function startSession() {
     var rs = savedSession(); if (rs) return App.go(rs.items[rs.i].href);
     if (!lastPlan.length) return;
-    try { sessionStorage.setItem("ncob-sess", JSON.stringify({ items: lastPlan, i: 0 })); } catch (e) {}
+    try { sessionStorage.setItem("ncob-sess", JSON.stringify({ items: lastPlan, i: 0, t: Date.now() })); } catch (e) {}
     App.go(lastPlan[0].href);
   }
   function sessionNextHtml() {
@@ -548,7 +548,7 @@
     mount.innerHTML =
       '<div class="setup-head"><div class="t"><svg class=ic aria-hidden=true><use href=#i-check></use></svg> ' + esc(title) + '</div><div class="muted">' + quizN + ' quiz questions</div><a href="#/pick/quiz" class="pill pill-link" style="display:inline-flex;margin-top:8px;">Change subject</a></div>' +
       '<button class="btn gold lg" data-n="10"><svg class=ic aria-hidden=true><use href=#i-play></use></svg> Start 10 questions</button>' +
-      '<div class="lg-h" style="margin-top:2px;">Other lengths</div><div class="len-row"><button class="chip" data-n="5"><b>5</b><small>quick</small></button><button class="chip" data-n="20"><b>20</b><small>questions</small></button><button class="chip" data-n="999"><b>' + quizN + '</b><small>the whole set</small></button></div>' +
+      '<div class="lg-h" style="margin-top:2px;">Or start another length</div><div class="len-row"><button class="chip" data-n="5"><b>5</b><small>quick</small></button><button class="chip" data-n="20"><b>20</b><small>questions</small></button><button class="chip" data-n="999"><b>' + quizN + '</b><small>the whole set</small></button></div>' +
       (function () {
         var past = Store.quizzes().filter(function (x) { return x.deck === title && x.total; }).slice(0, 3);
         return '<h2 class="section">What&#39;s in this quiz</h2><div class="card"><div class="muted" style="font-size:.92rem;">' + quizN + ' of the ' + cards.length + ' cards in ' + esc(title) + ' have a short answer you can pick from four choices. Long answers (creeds, scenarios) stay in Flashcards and the Mock Board.</div></div>' +
@@ -574,7 +574,7 @@
       '</div>' +
       '<button class="btn gold lg" data-n="10"><svg class=ic aria-hidden=true><use href=#i-play></use></svg> Start a 10-question board</button>' +
       '<div class="muted center" style="font-size:.85rem;margin:6px 0 10px;" id="lenNote"></div>' +
-      '<div class="lg-h" style="margin-top:2px;">Other lengths</div><div class="len-row"><button class="chip" data-n="5" data-quick="1"><b>5</b><small>quick</small></button><button class="chip" data-n="15"><b>15</b><small>longer</small></button><button class="chip" data-n="25"><b>25</b><small>full-length</small></button></div>' +
+      '<div class="lg-h" style="margin-top:2px;">Or start another length</div><div class="len-row"><button class="chip" data-n="5" data-quick="1"><b>5</b><small>quick</small></button><button class="chip" data-n="15"><b>15</b><small>longer</small></button><button class="chip" data-n="25"><b>25</b><small>full-length</small></button></div>' +
       (/^(core|top|final)$/.test(deck) ? '<details class="set-fold" style="margin-top:14px;"><summary>Send or print a board for your sponsor</summary>' +
         '<button class="btn ghost" id="sendSponsor" style="margin-top:8px;"><svg class=ic aria-hidden=true><use href=#i-send></use></svg> Send a board to my sponsor</button>' +
         '<div class="muted center" style="font-size:.85rem;margin:6px 0;">They open the link and run the same board on their phone, with the answers and checklists.</div>' +
@@ -1203,6 +1203,7 @@
     var coreB = STUDY.cards.filter(function (c) { return c.core && rankOk(c); }).map(function (c) { return c.id; }), fB = badgeFacts(coreB, readyScore(coreB));
     var PROG = { "core-50": [fB.seen, 50], "core-150": [fB.seen, 150], "core-all": [fB.seen, fB.total], "boards-5": [fB.boards, 5], "streak-7": [fB.streak, 7], "ready-50": [fB.ready, 50], "ready-80": [fB.ready, 80] };
     var b1 = window.Learn && Learn.trackDone && Learn.trackDone("board101"); if (b1) PROG.board101 = b1;
+    PROG["sponsor-board"] = [fB.sponsored ? 1 : 0, 1];
     var row = function (b) {
       var on = !!got[b.id], when = on && got[b.id] > 946684800000 ? ' • ' + niceDate(got[b.id]) : '';
       return '<div class="li"' + (on ? '' : ' style="opacity:.6;"') + '><span class="li-ic" aria-hidden="true">' + (b.ic || "<svg class=ic aria-hidden=true><use href=#i-medal></use></svg>") + '</span><span class="grow"><span class="t">' + esc(b.t) + '</span><span class="s">' + esc(!on && PROG[b.id] && PROG[b.id][1] > PROG[b.id][0] ? (PROG[b.id][1] - PROG[b.id][0]) + (/ready/.test(b.id) ? ' points to go' : ' to go') : b.d) + when + '</span></span>' + (!on && PROG[b.id] ? '<span class="pill">' + (/ready/.test(b.id) ? 'at ' + Math.min(PROG[b.id][0], PROG[b.id][1]) + '%' : Math.min(PROG[b.id][0], PROG[b.id][1]) + ' / ' + PROG[b.id][1]) + '</span>' : '') + '</div>';
@@ -1469,6 +1470,9 @@
     function n(id) { var e = mount.querySelector("#" + id); var v = parseInt(((e && e.value) || "").replace(/\D/g, ""), 10); return isNaN(v) ? null : v; }
     function save(id) { var e = mount.querySelector("#" + id); Store.setChainRole("pts-" + id.replace(/^pt-|^pt/, ""), (e.value || "").replace(/\D/g, "").slice(0, 4)); }
     var hon = m["pts-xhon"] || "0";
+    if (!mount._ptWired) { mount._ptWired = true; var ptTap = 0;
+      mount.addEventListener("click", function (e) { if (e.target.closest && e.target.closest("details.pt-help > summary")) ptTap = Date.now(); var t = e.target.closest && e.target.closest(".cut-pair [data-r]"); if (!t) return; var c = mount.querySelector('#ptRank .chip[data-r="' + t.getAttribute("data-r") + '"]'); if (c && !c.classList.contains("on")) c.click(); });
+      mount.addEventListener("toggle", function (e) { var d = e.target; if (Date.now() - ptTap > 800 || !d.classList || !d.classList.contains("pt-help") || !d.open) return; mount.querySelectorAll("details.pt-help[open]").forEach(function (o) { if (o !== d) o.open = false; }); }, true); }
     function convert(k) {   // fill a category from the helper inputs
       var v = null;
       if (k === "mil") { var h = n("ptxhits"), s = n("ptxaft"); if (h != null || s != null) { var rp = h != null ? riflePts(h, rank) : 0, ap = s != null ? aftPts(s) : 0; v = rp + ap;
@@ -1529,7 +1533,7 @@
       if (!pair) { box.innerHTML = '<div class="card cut-card"><b>' + esc(st0.mos) + '</b> isn&#39;t on the ' + esc(d.cycle) + ' ' + (st0.comp === "agr" ? "AGR" : "Active Duty") + ' list. Check the MOS in Settings, or ask your S1.</div>'; return; }
       var mine = pair[rank === "SSG" ? 1 : 0];
       box.innerHTML = '<div class="card cut-card"><div class="flash-tag">' + esc(d.cycle) + ' cutoff \u2022 ' + esc(st0.mos) + (st0.comp === "agr" ? ' (AGR)' : '') + '</div>' +
-        '<div class="cut-pair"><div' + (rank === "SGT" ? ' class="mine"' : '') + '><small>SGT</small><b>' + cutTxt(pair[0]) + '</b></div><div' + (rank === "SSG" ? ' class="mine"' : '') + '><small>SSG</small><b>' + cutTxt(pair[1]) + '</b></div></div>' +
+        '<div class="cut-pair"><div data-r="SGT"' + (rank === "SGT" ? ' class="mine"' : '') + '><small>SGT</small><b>' + cutTxt(pair[0]) + '</b></div><div data-r="SSG"' + (rank === "SSG" ? ' class="mine"' : '') + '><small>SSG</small><b>' + cutTxt(pair[1]) + '</b></div></div>' +
         '<div class="muted" style="font-size:.85rem;margin-top:8px;">' + (d.updated ? 'Updated ' + niceDate(new Date(d.updated + "T12:00:00").getTime()) + '. ' : '') + 'From the HQDA cutoff memo via <a href="' + escAttr(d.sourceUrl) + '" target="_blank" rel="noopener">mosroadmap.com</a>. Unofficial: confirm with your S1.' +
         (age != null && age > 45 ? ' <b style="color:var(--gold);">These may be out of date.</b>' : '') + '</div>' +
         '<a class="cut-ippsa" href="https://hr.army.mil" target="_blank" rel="noopener"><svg class=ic aria-hidden=true><use href=#i-ext></use></svg> See your own standing in IPPS-A (CAC)</a></div>';

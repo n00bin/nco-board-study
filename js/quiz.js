@@ -81,11 +81,13 @@
         if (window.App && !(opts && opts.onDone)) App.busy = function () { return (i > 0 || !!container.querySelector("#qNext")) && container.isConnected; };
         selected = null;
         container.innerHTML =
-          '<div class="q-count mb-head"><span>' + (opts && opts.onDone ? 'Practice \u2022 question ' : 'Question ') + (i + 1) + '</span><span class="pills"><span class="pill">' + (i + 1) + ' / ' + questions.length + '</span><span class="pill score-pill" id="qScore">' + (i >= 1 ? 'Score ' + Math.round(100 * score / i) + '%' : 'Score \u2013') + '</span></span></div><div class="progress-bar"><span style="width:' + Math.round(100 * i / questions.length) + '%"></span></div>' +
-          '<div class="card">' + (function () { var p = window.STUDY && STUDY.pubsById[item.card.pub]; var t = /\b(which|what) (regulation|publication|pamphlet|field manual|manual|AR|FM|ADP|ADRP|ATP|TC|DA PAM)\b|\b(regulation|publication|pamphlet|manual) (covers|prescribes|governs|sets)\b/i.test(item.q) ? "Name the publication" : item.card.label || (p ? p.code : ""); return t ? '<div class="flash-tag">' + esc(t) + '</div>' : ''; })() + '<div class="q-text" style="margin:0;">' + esc(item.q) + '</div></div>' +
+          '<div class="q-count mb-head"><span>' + (opts && opts.onDone ? 'Practice \u2022 question ' : 'Question ') + (i + 1) + '</span><span class="pills"><span class="pill score-pill" id="qScore"' + (i >= 1 ? '' : ' style="visibility:hidden;"') + '>' + (i >= 1 ? 'Score ' + Math.round(100 * score / i) + '%' : 'Score 0%') + '</span><span class="pill">' + (i + 1) + ' / ' + questions.length + '</span></span></div><div class="progress-bar"><span style="width:' + Math.round(100 * i / questions.length) + '%"></span></div>' +
+          '<div class="card">' + (function () { var p = window.STUDY && STUDY.pubsById[item.card.pub]; var t = /\b(which|what) (regulation|publication|pamphlet|field manual|manual|AR|FM|ADP|ADRP|ATP|TC|DA PAM)\b|\b(regulation|publication|pamphlet|manual) (covers|prescribes|governs|sets)\b/i.test(item.q) ? "Name the publication" : item.card.label || (p ? p.code : ""); return '<div class="flash-toprow"><span class="flash-tag">' + esc(t || "") + '</span><span><button class="mini" id="qSpeak" aria-label="Read aloud"><svg class=ic aria-hidden=true><use href=#i-speaker></use></svg></button><button class="mini" id="qReport" aria-label="Report a problem with this card"><svg class=ic aria-hidden=true><use href=#i-flag></use></svg></button></span></div>'; })() + '<div class="q-text" style="margin:0;">' + esc(item.q) + '</div></div>' +
           '<div id="choices"></div>' +
           '<div id="verdict" class="verdict" role="status" aria-live="polite"></div>' +
           '<button class="btn gold lg" id="submitBtn" disabled>Submit answer</button>';
+        var qsp = container.querySelector("#qSpeak"); if (qsp) qsp.addEventListener("click", function () { if (window.Speech) Speech.speak(item.q); });
+        var qrp = container.querySelector("#qReport"); if (qrp) qrp.addEventListener("click", function () { if (window.App && App.reportCard) App.reportCard(item.card); });
         var box = container.querySelector("#choices");
         item.options.forEach(function (opt) {
           var b = document.createElement("button");
@@ -133,7 +135,7 @@
             if (why) { var w = document.createElement("div"); w.className = "verdict-why"; w.innerHTML = "<b>" + (item.card.why ? "Why it matters:" : "The answer:") + "</b> "; w.appendChild(document.createTextNode(why)); verdict.appendChild(w); }
           }
         }
-        var qs = container.querySelector("#qScore"); if (qs && i + 1 >= 1) { qs.hidden = false; qs.textContent = "Score " + Math.round(100 * score / (i + 1)) + "%"; }
+        var qs = container.querySelector("#qScore"); if (qs && i + 1 >= 1) { qs.hidden = false; qs.style.visibility = ""; qs.textContent = "Score " + Math.round(100 * score / (i + 1)) + "%"; }
         var nav = document.createElement("button");
         nav.className = "btn gold lg"; nav.id = "qNext";
         nav.style.marginTop = "12px";

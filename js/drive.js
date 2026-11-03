@@ -77,6 +77,7 @@
             '<div class="flash-q" style="margin:10px 0;font-size:1.3em;line-height:1.4;">' + esc(c.oral || c.q) + '</div>' +
             (phase === "a" ? '<hr class="div"><div class="flash-a" style="font-size:1.2em;line-height:1.4;">' + esc(c.a).replace(/\n/g, "<br>") + '</div>' : '') +
           '</div>' +
+          '<div class="drive-big" id="dBig" aria-hidden="true">' + (!playing ? '<svg class=ic><use href=#i-pause></use></svg>' : phase === "q" ? '<svg class=ic><use href=#i-speaker></use></svg>' : phase === "listen" ? '' : '<svg class=ic><use href=#i-check></use></svg>') + '</div>' +
           '<div class="drive-ctl"><div class="drive-sub">' +
             '<button class="btn ghost sm' + (loop ? ' on' : '') + '" id="dLoop">' + (loop ? "<svg class=ic aria-hidden=true><use href=#i-refresh></use></svg> Repeat: on" : "<svg class=ic aria-hidden=true><use href=#i-refresh></use></svg> Repeat: off") + '</button>' +
             '<button class="btn ghost sm" id="dStop"><svg class=ic aria-hidden=true><use href=#i-stop></use></svg> Stop</button></div><div class="btn-row">' +
@@ -97,7 +98,7 @@
           if (!playing || myGen !== gen) return;
           paint("listen");
           var wait = gap * ((c.pub === "sit" || c.pub === "personal" || String(c.a).length > 200) ? 3 : 1), t0 = Date.now();
-          var tick = function () { var ph = container.querySelector("#phase"); if (!playing || myGen !== gen || !ph || shown !== "listen") return; var left = Math.max(0, Math.ceil(wait - (Date.now() - t0) / 1000)); ph.innerHTML = '<svg class=ic aria-hidden=true><use href=#i-mic></use></svg> Your turn: answer aloud <b class="cd">' + left + 's</b>'; if (left > 0) setTimeout(tick, 250); };
+          var tick = function () { var ph = container.querySelector("#phase"); if (!playing || myGen !== gen || !ph || shown !== "listen") return; var left = Math.max(0, Math.ceil(wait - (Date.now() - t0) / 1000)); ph.innerHTML = '<svg class=ic aria-hidden=true><use href=#i-mic></use></svg> Your turn: answer aloud <b class="cd">' + left + 's</b>'; var bg = container.querySelector("#dBig"); if (bg) bg.textContent = left; if (left > 0) setTimeout(tick, 250); };
           tick();
           timer = setTimeout(function () {
             if (!playing || myGen !== gen) return;
