@@ -340,7 +340,8 @@
       function fmt(x) { return (Math.round(x * 10) / 10).toString(); }
 
       function show() {
-        clearTimer();
+        clearTimer(); document.querySelectorAll(".toast").forEach(function (t) { t.remove(); });
+        if (window.App) App.busy = function () { return container.isConnected; };
         var st = steps[s];
         if (st.kind === "q") { curLocal = !!st.c.local; curStyle = st.style || "standard"; curVoice = VOICES[st.mi || 0] || VOICES[0]; return question(st.c); }
         if (st.kind === "follow") return followUp(st);
@@ -430,8 +431,9 @@
           else container.querySelector("#introDone").addEventListener("click", function () {
             var n = 0; container.querySelectorAll(".ip").forEach(function (b) { if (b.checked) n++; });
             bearing.push({ label: "Tell us about yourself", ok: n >= 3 });
-            App.toast(n >= 3 ? "Good intro: " + n + " of 4 covered" : n + " of 4 covered. Add the rest next time.", 2200);
-            next();
+            var bt = container.querySelector("#introDone"); bt.disabled = true; bt.classList.add("result-flash");
+            bt.textContent = n >= 3 ? "\u2713 Good intro: " + n + " of 4 covered" : n + " of 4 covered. Add the rest next time";
+            setTimeout(next, 1300);
           });
         };
         container.querySelector("#reveal").addEventListener("click", done);
@@ -671,7 +673,7 @@
       }
 
       function results() {
-        clearTimer(); Speech.stop(); releaseMic(); window.scrollTo(0, 0);
+        clearTimer(); Speech.stop(); releaseMic(); window.scrollTo(0, 0); if (window.App) App.busy = null;
         Store.recordQuiz("Mock Board" + (opts.full ? " (full)" : "") + (sponsor ? " with sponsor" : ""), got, asked);
         var pct = asked ? Math.round((got / asked) * 100) : 0;
         var weak = Object.keys(perPub).map(function (k) { return perPub[k]; })
@@ -699,7 +701,7 @@
             var legend = '<div class="dot-legend">' + (full ? '<span><span class="dot g"></span>full</span>' : '') + (part ? '<span><span class="dot a"></span>with gaps</span>' : '') + (miss ? '<span><span class="dot r"></span>missed</span>' : '') + (extras.length ? '<span><span class="dot sq"></span>second try / follow-up</span>' : '') + '</div>';
             return '<div class="dots" aria-hidden="true">' + qScores.map(function (x) { return '<span class="dot ' + (x >= 0.99 ? 'g' : x >= 0.66 ? 'a' : 'r') + '"></span>'; }).join("") +
                 (extras.length ? '<span class="dot-gap"></span>' + extras.map(function (x) { return '<span class="dot sq ' + (x.ok ? 'g' : 'r') + '"></span>'; }).join("") : '') + '</div>' + legend +
-              '<p class="center muted" style="font-size:.92rem;margin:4px 0 0;">' + countLine + '</p><details class="fb-fold score-how"><summary>How this was scored</summary><p class="muted" style="font-size:.92rem;margin:0 0 8px;">First answers: ' + full + ' full \u2022 ' + part + ' with gaps \u2022 ' + miss + ' missed' +
+              '<p class="center muted" style="font-size:.92rem;margin:4px 0 0;">' + countLine + '</p><details class="set-fold score-how"><summary>How this was scored</summary><p class="muted" style="font-size:.92rem;margin:0 0 8px;">First answers: ' + full + ' full \u2022 ' + part + ' with gaps \u2022 ' + miss + ' missed' +
                 (cb.length ? '<br>Second tries: ' + cbOk + ' of ' + cb.length + ' recovered' : '') + (fu.length ? '<br>Follow-ups: ' + fuOk + ' of ' + fu.length + ' right' : '') +
                 '<br>The score counts every answer, with part credit for answers with gaps.</p></details>' +
               '';

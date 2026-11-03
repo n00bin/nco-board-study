@@ -77,6 +77,7 @@
 
       function paintQuestion() {
         var item = questions[i];
+        if (window.App && !(opts && opts.onDone)) App.busy = function () { return i > 0 && container.isConnected; };
         selected = null;
         container.innerHTML =
           '<div class="q-count mb-head"><span>Question ' + (i + 1) + " of " + questions.length + '</span><span class="pill score-pill" id="qScore"' + (i >= 3 ? '' : ' hidden') + '>Score ' + (i ? Math.round(100 * score / i) : 0) + '%</span></div><div class="progress-bar"><span style="width:' + Math.round(100 * i / questions.length) + '%"></span></div>' +
@@ -155,7 +156,7 @@
       function showResults() {
         if (!(opts && opts.onDone)) Store.recordQuiz(title, score, questions.length);   // lesson practice is not a "quiz"
         if (opts && opts.onDone) return opts.onDone(score, questions.length);
-        window.scrollTo(0, 0);
+        window.scrollTo(0, 0); if (window.App) App.busy = null;
         var pct = Math.round((score / questions.length) * 100);
         var missHtml = misses.length ? '<details class="set-fold"><summary>Review your ' + misses.length + ' miss' + (misses.length === 1 ? '' : 'es') + '</summary>' + misses.map(function (c) { return '<div class="chg"><div style="font-weight:600;margin-bottom:4px;">' + esc(c.q) + '</div><div>' + esc(c.a) + '</div></div>'; }).join("") + '</details>' : '';
         var dots = '<div class="dots" aria-hidden="true">' + res.map(function (x) { return '<span class="dot ' + (x ? 'g' : 'r') + '"></span>'; }).join("") + '</div>' +

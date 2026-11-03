@@ -294,7 +294,9 @@
     planExtras = (sponsorNote || remind) ? '<div class="card">' + sponsorNote.replace("margin-top:8px;", "") + remind + '</div>' : '';
     var startBtn = lastPlan.length >= 2 ? '<button class="btn gold lg" id="startSess" style="margin-top:8px;"><svg class=ic aria-hidden=true><use href=#i-play></use></svg> Start today&#39;s session</button>' +
       '<button class="btn ghost" id="tenMin" style="margin-top:8px;">Only have 10 minutes?</button>' : '';
-    var steps = '<div class="plan-steps">' + items.join("") + '</div>';
+    var inS = items.filter(function (h) { return !/sponsor|sendprogress|settings/.test(h); }), outS = items.filter(function (h) { return /sponsor|sendprogress|settings/.test(h); });
+    var steps = '<div class="plan-steps">' + inS.map(function (h, k) { return h.replace('plan-item" href=', 'plan-item" data-n="' + (k + 1) + '" href='); }).join("") + '</div>' +
+      (outS.length ? '<div class="lg-h" style="margin-top:10px;">Also this week</div><div class="plan-steps">' + outS.join("") + '</div>' : '');
     return '<div class="card"><div class="flash-tag">' + esc(title) + '</div>' + startBtn +
       (startBtn ? '<details class="plan-more"><summary>See today\u2019s steps</summary>' + steps + '</details>' : steps) + blank + triageNote + '</div>';
   }
@@ -546,7 +548,7 @@
     mount.innerHTML =
       '<div class="setup-head"><div class="t"><svg class=ic aria-hidden=true><use href=#i-users></use></svg> ' + esc(title) + '</div><div class="muted">Answer out loud, like the real board</div></div>' +
       '<div class="lg opts">' +
-        '<a class="li" href="#/settings"><span class="grow"><span class="t">Timer: ' + (timer > 0 ? timer + ' seconds a question' : 'off') + '</span><span class="s">' + (timer > 0 ? 'Double for long answers and scenarios' : 'Answer at your own pace') + '</span></span><span class="pill">Change</span></a>' +
+        '<a class="li" href="#/settings/timer"><span class="grow"><span class="t">Timer: ' + (timer > 0 ? timer + ' seconds a question' : 'off') + '</span><span class="s">' + (timer > 0 ? 'Double for long answers and scenarios' : 'Answer at your own pace') + '</span></span><span class="pill">Change</span></a>' +
         '<label class="switch li"><input type="checkbox" id="fullBoard"' + (Store.settings().fullBoard !== false ? " checked" : "") + '> <span class="grow"><span class="t">Full board</span><span class="s">Report in, drill, introduce yourself</span></span></label>' +
         (window.speechSynthesis ? '<label class="switch li"><input type="checkbox" id="listenOnly"' + (Store.settings().listenOnly ? " checked" : "") + '> <span class="grow"><span class="t">Listen-only</span><span class="s">Hear each question, don\u2019t read it</span></span></label>' : '') +
         '<label class="switch li"><input type="checkbox" id="sponsorMode"> <span class="grow"><span class="t">Sponsor holds the phone</span><span class="s">They read, see the answer, and grade you</span></span></label>' +
@@ -635,7 +637,7 @@
   }
 
   // ---- Settings ----
-  function screenSettings() {
+  function screenSettings(focus) {
     setTitle("Settings", true);
     var s = Store.settings(), daily = Store.daily();
     var timers = [0, 20, 30, 45, 60];
@@ -673,8 +675,9 @@
     var r0 = html.indexOf('<h2 class="section">Study reminders</h2>'), r1 = html.indexOf('<h2 class="section">Daily goal (minimum)</h2>');
     if (r0 > 0 && r1 > r0) html = html.slice(0, r0) + '<details class="set-fold"><summary>Study reminders</summary>' + html.slice(r0, r1).replace('<h2 class="section">Study reminders</h2>', '') + '</details>' + html.slice(r1);
     var t0 = html.indexOf('<h2 class="section">Mock Board timer</h2>');
-    if (t0 > 0) html = html.slice(0, t0) + '<details class="set-fold"><summary>Mock Board, Drive Mode &amp; voice</summary>' + html.slice(t0) + '</details>';
+    if (t0 > 0) html = html.slice(0, t0) + '<details class="set-fold"' + (focus === "timer" ? ' open' : '') + '><summary>Mock Board, Drive Mode &amp; voice</summary>' + html.slice(t0) + '</details>';
     mount.innerHTML = html;
+    if (focus === "timer") setTimeout(function () { var tc = mount.querySelector("#timerChips"); if (tc) tc.scrollIntoView({ block: "center" }); }, 30);
 
     mount.querySelector("#bDate").addEventListener("change", function (e) {
       var v = e.target.value;
@@ -786,7 +789,7 @@
         '<img src="./icons/qr.png" alt="QR code to open the app" style="width:200px;height:200px;border-radius:12px;background:#fff;padding:8px;" />' +
         '<div class="muted url-line">' + esc(APP_URL.replace(/^https?:\/\//, "").replace(/\/$/, "")) + '</div></div>' +
       '<div class="btn-row"><button class="btn gold lg" id="share"><svg class=ic aria-hidden=true><use href=#i-share></use></svg> Share</button><button class="btn ghost lg" id="copy"><svg class=ic aria-hidden=true><use href=#i-copy></use></svg> Copy</button></div>' +
-      '<div class="spacer"></div><a class="btn ghost" href="#/kit"><svg class=ic aria-hidden=true><use href=#i-print></use></svg> Print a share kit</a>' +
+      '<div class="spacer"></div><a class="btn ghost lg" href="#/kit"><svg class=ic aria-hidden=true><use href=#i-print></use></svg> Print a share kit</a>' +
       '<h2 class="section">Install it on your phone</h2>' +
       '<div class="card"><div class="ttl"><b>Android (Chrome):</b> Chrome menu &#8942; &#8594; Install app (or Add to Home screen). Or use More &#8594; Install the app.</div>' +
         '<div class="ttl" style="margin-top:8px;"><b>iPhone (Safari):</b> open the link in Safari, tap Share <svg class=ic aria-hidden=true><use href=#i-upload></use></svg>, then Add to Home Screen, then Add. Open it from the new icon; it works offline after the first visit.</div></div>' +
@@ -810,7 +813,7 @@
     var cards = Store.userCards();
     var html = '<a class="btn gold lg" href="#/mycards/new"><svg class=ic aria-hidden=true><use href=#i-plus></use></svg> Add a card</a>' +
       group("", [li("#/mos", "<svg class=ic aria-hidden=true><use href=#i-wrench></use></svg>", "Start my MOS cards", "Your job questions")]) +
-      '<div class="card" style="margin-top:12px;"><div class="muted">Add your unit\'s smart-book items — chain of command, command policies, local SOPs — anything your board might ask that isn\'t in the manuals.</div></div>';
+      (cards.length ? '<div class="card" style="margin-top:12px;"><div class="muted">Add your unit\'s smart-book items — chain of command, command policies, local SOPs — anything your board might ask that isn\'t in the manuals.</div></div>' : '');
     if (cards.length) {
       html += '<h2 class="section">' + cards.length + ' custom card' + (cards.length > 1 ? "s" : "") + '</h2>';
       cards.forEach(function (c) {
@@ -1056,10 +1059,9 @@
     allCards().forEach(function (c) { byId[c.id] = c; });
     var cards = want.map(function (id) { return byId[id]; }).filter(Boolean);
     if (cards.length < 3) { mount.innerHTML = badLink('The board link is incomplete. Ask the Soldier to send it again.'); return; }
-    mount.innerHTML = '<div class="card"><div class="flash-tag">You are the board</div><div class="muted">A Soldier asked you to run a practice board. You\'ll see each question with its answer and a checklist of key points. ' +
-      'Read the question aloud, listen, then grade what they actually said. At the end, read them their score and their weakest subjects.</div></div>' +
+    mount.innerHTML = '<div class="card"><div class="flash-tag">You are the board</div><div class="muted">A Soldier asked you to run a practice board. Read each question aloud, listen, then tick what they actually said.</div></div>' +
       '<label class="switch card"><input type="checkbox" id="sbFull" checked> <span><b>Full board</b>: reporting in, drill, "tell us about yourself," then the questions</span></label>' +
-      '<button class="btn gold lg" id="sbGo"><svg class=ic aria-hidden=true><use href=#i-play></use></svg> Start the board (' + cards.length + ' questions)</button>' +
+      '<button class="btn gold lg" id="sbGo"><svg class=ic aria-hidden=true><use href=#i-play></use></svg> Start the board</button><div class="muted center" style="font-size:.85rem;margin:-4px 0 8px;">' + cards.length + ' questions</div>' +
       '<div class="spacer"></div><a class="btn ghost" href="#/sheet/' + escAttr(want.join(",")) + '"><svg class=ic aria-hidden=true><use href=#i-print></use></svg> Print a paper board</a>';
     mount.querySelector("#sbGo").addEventListener("click", function () {
       MockBoard.render(mount, cards, cards.length, { full: mount.querySelector("#sbFull").checked, sponsor: true, fixed: true });
@@ -1141,8 +1143,9 @@
       return '<div class="li"' + (on ? '' : ' style="opacity:.6;"') + '><span class="li-ic" aria-hidden="true">' + (b.ic || "<svg class=ic aria-hidden=true><use href=#i-medal></use></svg>") + '</span><span class="grow"><span class="t">' + esc(b.t) + '</span><span class="s">' + esc(b.d) + when + '</span></span>' + (!on && PROG[b.id] ? '<span class="pill">' + (/ready/.test(b.id) ? Math.min(PROG[b.id][0], PROG[b.id][1]) + '% of ' + PROG[b.id][1] + '%' : Math.min(PROG[b.id][0], PROG[b.id][1]) + ' / ' + PROG[b.id][1]) + '</span>' : '') + '</div>';
     };
     var earned = BADGES.filter(function (b) { return got[b.id]; }), left = BADGES.filter(function (b) { return !got[b.id]; });
+    var medal = function (b) { var when = got[b.id] > 946684800000 ? niceDate(got[b.id]) : 'Earned'; return '<div class="medal"><span class="medal-ic">' + (b.ic || '<svg class=ic aria-hidden=true><use href=#i-medal></use></svg>') + '</span><b>' + esc(b.t) + '</b><small>' + when + '</small></div>'; };
     mount.innerHTML = '<div class="muted" style="font-size:.85rem;margin:2px 4px 8px;">Small wins on the way to your board. They stay on this phone.</div>' +
-      (earned.length ? group("Earned (" + earned.length + ")", earned.map(row)) : '') +
+      (earned.length ? '<div class="lg-h">Earned (' + earned.length + ')</div><div class="medal-grid">' + earned.map(medal).join("") + '</div>' : '') +
       (left.length ? group("Still to earn (" + left.length + ")", left.map(row)) : '');
   }
 
@@ -1571,6 +1574,7 @@
 
   // ---------------- router ----------------
   function route() {
+    if (window.App) App.busy = null;
     if (window.MockBoard) MockBoard.stop();
     if (window.Drive) Drive.stop();
     if (window.Speech) Speech.stop();
@@ -1590,7 +1594,7 @@
     if (head === "browse") return screenBrowse(), tab("browse");
     if (head === "search") return screenSearch(), tab("search");
     if (head === "more") return screenMore(), tab("more");
-    if (head === "settings") return screenSettings(), tab("more");
+    if (head === "settings") return screenSettings(parts[1]), tab("more");
     if (head === "backup") return screenBackup(), tab("more");
     if (head === "share") return screenShare(), tab("more");
     if (head === "kit") return screenKit(), tab("more");
@@ -1728,6 +1732,19 @@
   document.addEventListener("toggle", function (e) {
     var d = e.target; if (!d || d.tagName !== "DETAILS" || !d.open || Date.now() - userFold > 800) return;
     var r = d.getBoundingClientRect(); if (r.bottom > window.innerHeight - 70) d.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  }, true);
+  function askLeave(go) {
+    var o = document.createElement("div"); o.className = "leave-sheet"; o.setAttribute("role", "dialog"); o.setAttribute("aria-modal", "true");
+    o.innerHTML = '<div class="leave-box"><div class="t">Leave this session?</div><div class="muted">You&#39;ll lose your place. Cards you already graded stay graded.</div>' +
+      '<button class="btn gold lg" id="lvStay">Keep going</button><div class="spacer"></div><button class="btn ghost lg" id="lvGo">Leave</button></div>';
+    document.body.appendChild(o);
+    o.querySelector("#lvStay").addEventListener("click", function () { o.remove(); });
+    o.querySelector("#lvGo").addEventListener("click", function () { o.remove(); App.busy = null; go(); });
+    o.addEventListener("click", function (e) { if (e.target === o) o.remove(); });
+    o.querySelector("#lvStay").focus();
+  }
+  backBtn.addEventListener("click", function (e) {
+    if (window.App && App.busy && App.busy()) { e.stopImmediatePropagation(); return askLeave(function () { if (history.length > 1) history.back(); else App.go("#/"); }); }
   }, true);
   backBtn.addEventListener("click", function () { if (history.length > 1) history.back(); else App.go("#/"); });
 

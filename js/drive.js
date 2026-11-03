@@ -84,7 +84,7 @@
         container.querySelector("#dPause").addEventListener("click", function () { playing ? pause() : resume(); });
         container.querySelector("#dNext").addEventListener("click", function () { skip(); });
         container.querySelector("#dLoop").addEventListener("click", function () { loop = !loop; container.querySelector("#dLoop").className = "btn ghost sm" + (loop ? " on" : ""); container.querySelector("#dLoop").innerHTML = loop ? "<svg class=ic aria-hidden=true><use href=#i-refresh></use></svg> Repeat: on" : "<svg class=ic aria-hidden=true><use href=#i-refresh></use></svg> Repeat: off"; });
-        container.querySelector("#dStop").addEventListener("click", function () { Drive.stop(); App.go("#/"); });
+        container.querySelector("#dStop").addEventListener("click", function () { finish(i); });
       }
 
       function step() {
@@ -114,10 +114,12 @@
       function pause() { playing = false; gen++; clearTimer(); Speech.stop(); paint("a"); }
       function resume() { playing = true; requestWake(); step(); }
 
-      function finish() {
+      function finish(upTo) {
         Drive.stop();
+        var n = upTo == null ? deck.length : upTo, p = Math.round(100 * n / Math.max(1, deck.length));
         container.innerHTML =
-          '<div class="ring-wrap"><div class="ring"><svg class=ic aria-hidden=true><use href=#i-check></use></svg><small>Played ' + deck.length + ' cards</small></div></div>' +
+          '<div class="ring-wrap"><div class="ring ' + (upTo == null ? 'good' : 'mid') + '" style="--p:' + p + ';"><div class="ring-in">' + n + '</div></div><small>card' + (n === 1 ? '' : 's') + ' played</small></div>' +
+          '<div class="done-h">' + (upTo == null ? 'Drive Mode done' : 'Stopped') + '</div><p class="center muted" style="margin-top:0;">' + (upTo == null ? 'You heard every card in this set.' : n + ' of ' + deck.length + ' cards. Pick up again any time; due cards come first.') + '</p>' +
           '<p class="center muted">Drive Mode complete.</p><div class="spacer"></div>' +
           '<button class="btn gold lg" id="again">Play again</button><div class="spacer"></div>' +
           '<button class="btn ghost" id="home">Back to Home</button>';

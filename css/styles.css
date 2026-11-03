@@ -785,3 +785,28 @@ details { scroll-margin-bottom: 90px; }
 /* Drive: the card owns the middle of the screen */
 body.session .drive-card { min-height: calc(100vh - 330px); display: flex; flex-direction: column; }
 .done-h svg.ic { color: var(--gold); }
+
+/* ---------- v3.38 polish round 11 ---------- */
+.leave-sheet { position: fixed; inset: 0; z-index: 100; background: rgba(0,0,0,.6); display: flex; align-items: flex-end; justify-content: center; }
+.leave-box { width: 100%; max-width: var(--maxw); background: var(--surface); border-top: 1px solid var(--gold); border-radius: 16px 16px 0 0; padding: 18px 16px calc(16px + env(safe-area-inset-bottom)); }
+.leave-box .t { font-size: 1.15rem; font-weight: 800; margin-bottom: 4px; }
+.leave-box .muted { margin-bottom: 14px; }
+/* length buttons look like buttons */
+.len-row .chip { background: transparent; border: 1.5px solid rgba(255,204,51,.5); }
+.len-row .chip b { color: var(--gold); }
+/* tags wrap to two lines instead of being cut */
+.flash-toprow .flash-tag { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+details.set-fold.score-how { max-width: none; margin: 8px 0 12px; }
+.btn.result-flash:disabled { opacity: 1; filter: none; background: var(--surface-2); color: var(--good); border: 1px solid var(--good); }
+/* results legend matches the marks */
+.dot-legend .dot.sq { background: var(--text-dim) !important; border: none !important; }
+/* badges */
+.medal-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 14px; }
+.medal { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px 6px 10px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 4px; animation: ringpop .4s ease-out; }
+.medal-ic { width: 52px; height: 52px; border-radius: 50%; display: grid; place-items: center; background: radial-gradient(circle at 35% 30%, #ffe27a, var(--gold) 55%, #b88a10); color: #1a1a0e; font-size: 1.35rem; box-shadow: 0 0 0 3px rgba(255,204,51,.2); }
+.medal-ic svg.ic { color: #1a1a0e; }
+.medal b { font-size: .85rem; line-height: 1.2; }
+.medal small { font-size: .85rem; color: var(--text-dim); }
+.track-prog { margin: 2px 4px 12px; font-size: .92rem; color: var(--text-dim); }
+.track-prog .bar { margin-top: 6px; }
+.ring-wrap + .done-h + .track-prog { max-width: 280px; margin: 0 auto 10px; text-align: center; }

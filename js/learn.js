@@ -167,7 +167,9 @@
       var tracks = buildTracks();
       var t = tracks.filter(function (x) { return x.id === trackId; })[0];
       if (!t) return Learn.hub(container);
-      var html = t.overview ? '<div class="muted" style="margin:2px 4px 10px;">' + esc(t.overview) + '</div>' : '';
+      var tdn = doneCount(t.lessons);
+      var html = '<div class="track-prog"><span>' + tdn + ' of ' + t.lessons.length + ' lessons done</span><div class="bar"><span style="width:' + Math.round(100 * tdn / Math.max(1, t.lessons.length)) + '%"></span></div></div>' +
+        (t.overview ? '<div class="muted" style="margin:2px 4px 10px;">' + esc(t.overview) + '</div>' : '');
       var nx = t.lessons.filter(function (l) { return !isDone(l); })[0];
       if (nx) html += '<a class="btn gold lg" href="#/lesson/' + nx.id + '" style="margin-bottom:12px;"><svg class=ic aria-hidden=true><use href=#i-play></use></svg> ' + (t.lessons.indexOf(nx) ? 'Continue: lesson ' + (t.lessons.indexOf(nx) + 1) : 'Start lesson 1') + '</a>';
       var seenLead = {};
@@ -234,6 +236,8 @@
         container.innerHTML =
           '<div class="ring-wrap"><div class="ring ' + (p >= 75 ? 'good' : p >= 50 ? 'mid' : 'bad') + '" style="--p:' + p + ';"><div class="ring-in">' + (score == null ? '&#10003;' : p + '%') + '</div></div><small>' + esc(lesson.title) + '</small></div>' +
           '<div class="done-h">Lesson complete</div>' +
+          (function () { var tr = tracks.filter(function (t) { return t.lessons.indexOf(lesson) >= 0; })[0]; if (!tr) return ''; var d = doneCount(tr.lessons);
+            return '<div class="track-prog"><span>' + esc(tr.title.replace(/:.*$/, "")) + ': ' + d + ' of ' + tr.lessons.length + ' lessons</span><div class="bar"><span style="width:' + Math.round(100 * d / tr.lessons.length) + '%"></span></div></div>'; })() +
           '<p class="center muted">' + line + '</p><div class="spacer"></div>' + (window.App && App.sessionNextHtml ? App.sessionNextHtml() : '') +
           (nextLesson ? '<button class="btn gold lg" id="next">Next lesson &#8594;</button><div class="spacer"></div>' : '') +
           '<button class="btn ghost lg" id="path">Back to Learn</button>';
