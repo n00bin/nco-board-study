@@ -97,7 +97,7 @@
         var left = queue.length - i, mins = Math.max(1, Math.round(left * 15 / 60));
         container.querySelector("#fBar").style.width = Math.round(100 * passed / Math.max(1, passed + left)) + "%";
         container.querySelector("#fProg").innerHTML = '<span>' + (opts && opts.onDone ? 'Practice' : esc(title)) + ' \u2022 ' + passed + ' done</span><span class="pills"><span class="pill" title="about ' + mins + ' min">' + left + ' left</span>' + (reviewed >= 3 && left > 3 ? '<button class="fin-btn" id="fDone"><span class="pill pill-btn">Finish</span></button>' : '') + '</span>';
-        container.querySelector("#fTagF").textContent = (/\b(regulation|publication|pamphlet|field manual|doctrine)\b|\b(which|what) (AR|FM|ADP|ATP|TC|DA PAM)\b/i.test(c.q) ? "Name the publication" : pubCode(c)) + (c.adv ? " \u2022 Advanced" : "");   // topic only on the back: it can give the answer away
+        container.querySelector("#fTagF").textContent = (/\b(which|what) (regulation|publication|pamphlet|field manual|manual|AR|FM|ADP|ADRP|ATP|TC|DA PAM)\b|\b(regulation|publication|pamphlet|manual) (covers|prescribes|governs|sets)\b/i.test(c.q) ? "Name the publication" : pubCode(c)) + (c.adv ? " \u2022 Advanced" : "");   // topic only on the back: it can give the answer away
         container.querySelector("#fTagB").textContent = pubCode(c) || "Answer";
         container.querySelector("#fQ").textContent = c.q;
         // Wait for the flip-back animation before swapping in the next answer, so it never flashes.
@@ -191,7 +191,7 @@
         var c = queue[i];
         container.innerHTML =
           '<div class="q-count mb-head"><span>' + esc(title) + ' \u2022 ' + passed + ' done</span><span class="pills"><span class="pill">' + (queue.length - i) + ' left</span>' + (reviewed >= 3 && queue.length - i > 3 ? '<button class="fin-btn tdone"><span class="pill pill-btn">Finish</span></button>' : '') + '</span></div><div class="progress-bar"><span style="width:' + Math.round(100 * passed / Math.max(1, passed + queue.length - i)) + '%"></span></div>' +
-          '<div class="card"><div class="flash-toprow"><span class="flash-tag">' + esc(/\b(regulation|publication|pamphlet|field manual|doctrine)\b|\b(which|what) (AR|FM|ADP|ATP|TC|DA PAM)\b/i.test(c.q) ? "Name the publication" : pubCode(c)) + '</span><span><button class="mini" id="tSpeak" aria-label="Read aloud"><svg class=ic aria-hidden=true><use href=#i-speaker></use></svg></button><button class="mini" id="tReport" aria-label="Report a problem with this card"><svg class=ic aria-hidden=true><use href=#i-flag></use></svg></button></span></div>' +
+          '<div class="card"><div class="flash-toprow"><span class="flash-tag">' + esc(/\b(which|what) (regulation|publication|pamphlet|field manual|manual|AR|FM|ADP|ADRP|ATP|TC|DA PAM)\b|\b(regulation|publication|pamphlet|manual) (covers|prescribes|governs|sets)\b/i.test(c.q) ? "Name the publication" : pubCode(c)) + '</span><span><button class="mini" id="tSpeak" aria-label="Read aloud"><svg class=ic aria-hidden=true><use href=#i-speaker></use></svg></button><button class="mini" id="tReport" aria-label="Report a problem with this card"><svg class=ic aria-hidden=true><use href=#i-flag></use></svg></button></span></div>' +
             '<div class="flash-q" style="margin-bottom:14px;">' + esc(c.q) + '</div>' +
             '<textarea class="input" id="tIn" rows="2" placeholder="Type your answer…"></textarea></div>' +
           '<button class="btn gold lg" id="tShow">Check answer</button>';

@@ -82,7 +82,7 @@
         selected = null;
         container.innerHTML =
           '<div class="q-count mb-head"><span>' + (opts && opts.onDone ? 'Practice \u2022 question ' : 'Question ') + (i + 1) + '</span><span class="pills"><span class="pill">' + (i + 1) + ' / ' + questions.length + '</span><span class="pill score-pill" id="qScore">' + (i >= 1 ? 'Score ' + Math.round(100 * score / i) + '%' : 'Score \u2013') + '</span></span></div><div class="progress-bar"><span style="width:' + Math.round(100 * i / questions.length) + '%"></span></div>' +
-          '<div class="card">' + (function () { var p = window.STUDY && STUDY.pubsById[item.card.pub]; var t = /\b(regulation|publication|pamphlet|field manual|doctrine)\b|\b(which|what) (AR|FM|ADP|ATP|TC|DA PAM)\b/i.test(item.q) ? "Name the publication" : item.card.label || (p ? p.code : ""); return t ? '<div class="flash-tag">' + esc(t) + '</div>' : ''; })() + '<div class="q-text" style="margin:0;">' + esc(item.q) + '</div></div>' +
+          '<div class="card">' + (function () { var p = window.STUDY && STUDY.pubsById[item.card.pub]; var t = /\b(which|what) (regulation|publication|pamphlet|field manual|manual|AR|FM|ADP|ADRP|ATP|TC|DA PAM)\b|\b(regulation|publication|pamphlet|manual) (covers|prescribes|governs|sets)\b/i.test(item.q) ? "Name the publication" : item.card.label || (p ? p.code : ""); return t ? '<div class="flash-tag">' + esc(t) + '</div>' : ''; })() + '<div class="q-text" style="margin:0;">' + esc(item.q) + '</div></div>' +
           '<div id="choices"></div>' +
           '<div id="verdict" class="verdict" role="status" aria-live="polite"></div>' +
           '<button class="btn gold lg" id="submitBtn" disabled>Submit answer</button>';

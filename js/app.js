@@ -305,7 +305,7 @@
     var remind = (!Store.settings().remindersAdded && (days == null || days > 1)) ? '<div style="margin-top:8px;font-size:.85rem;"><a href="#/settings"><svg class=ic aria-hidden=true><use href=#i-bell></use></svg> Add study reminders to my calendar</a></div>' : '';
     planExtras = (sponsorNote || remind) ? '<div class="card">' + sponsorNote.replace("margin-top:8px;", "") + remind + '</div>' : '';
     var rsv = savedSession();
-    var startBtn = (lastPlan.length >= 2 || rsv) ? '<button class="btn gold lg" id="startSess" style="margin-top:8px;"><svg class=ic aria-hidden=true><use href=#i-play></use></svg> ' + (rsv ? 'Continue: step ' + (rsv.i + 1) + ' of ' + rsv.items.length : 'Start today&#39;s session') + '</button>' +
+    var startBtn = (lastPlan.length >= 2 || rsv) ? '<button class="btn gold lg" id="startSess" style="margin-top:8px;"><svg class=ic aria-hidden=true><use href=#i-play></use></svg> ' + (rsv ? 'Continue: step ' + (rsv.i + 1) + ' of ' + rsv.items.length : 'Start today&#39;s session') + '</button>' + (rsv ? '<div class="center muted" style="font-size:.85rem;margin-top:6px;">Next: ' + esc(rsv.items[rsv.i].label.charAt(0).toUpperCase() + rsv.items[rsv.i].label.slice(1)) + '</div>' : '') +
       '<button class="home-link" id="tenMin" style="margin-top:4px;">Only have 10 minutes?</button>' : '';
     var inS = items.filter(function (h) { return !/sponsor|sendprogress|settings/.test(h); }), outS = items.filter(function (h) { return /sponsor|sendprogress|settings/.test(h); });
     var steps = '<div class="plan-steps">' + (rsv ? rsv.items.map(function (it, k) { return '<a class="btn ghost plan-item' + (k < rsv.i ? ' done' : '') + '" data-n="' + (k + 1) + '" href="' + escAttr(it.href) + '">' + (k < rsv.i ? '&#10003; ' : '') + esc(it.label.charAt(0).toUpperCase() + it.label.slice(1)) + '</a>'; }).join("") : inS.map(function (h, k) { return h.replace('plan-item" href=', 'plan-item" data-n="' + (k + 1) + '" href='); }).join("")) + '</div>' +
@@ -422,9 +422,9 @@
       // 4) new badges and board week stay in view; the rest folds into one row
       (freshBadges.length || (dToB != null && dToB >= 0 && dToB <= 7) ? group("", (dToB != null && dToB >= 0 && dToB <= 7 ? [li("#/boardday", "<svg class=ic aria-hidden=true><use href=#i-clipboard></use></svg>", "Board Day Prep", "Room, reporting, uniform, records, your memo")] : [])
         .concat(freshBadges.length ? [li("#/badges", "<svg class=ic aria-hidden=true><use href=#i-medal></use></svg>", "New badge" + (freshBadges.length > 1 ? "s" : ""), esc(freshBadges.length > 2 ? freshBadges.slice(0, 2).join(", ") + " and " + (freshBadges.length - 2) + " more" : freshBadges.join(" and ")))] : [])) : '') +
-      '<details class="set-fold home-more"><summary>More: your week, board prep, subjects</summary>' + weeklyRecap() +
       group("", (dToB != null && dToB >= 0 && dToB <= 7 ? [] : [li("#/boardday", "<svg class=ic aria-hidden=true><use href=#i-clipboard></use></svg>", "Board Day Prep", "Room, reporting, uniform, records, your memo")]).concat([li("#/browse", "<svg class=ic aria-hidden=true><use href=#i-books></use></svg>", "All subjects", "Every publication and topic")])
-        .concat(!Store.settings().remindersAdded && (dToB == null || dToB > 1) ? [li("#/settings", "<svg class=ic aria-hidden=true><use href=#i-bell></use></svg>", "Study reminders", "Add them to your calendar")] : [])) + '</details>';
+        .concat(!Store.settings().remindersAdded && (dToB == null || dToB > 1) ? [li("#/settings", "<svg class=ic aria-hidden=true><use href=#i-bell></use></svg>", "Study reminders", "Add them to your calendar")] : [])) +
+      '<details class="set-fold home-more"><summary>Your week</summary>' + weeklyRecap() + '</details>';
     mount.innerHTML = html;
     wireBoardResult(rs);
     var ss0 = mount.querySelector("#startSess"); if (ss0) ss0.addEventListener("click", startSession);
@@ -477,6 +477,8 @@
         '<div style="margin-top:6px;">' + esc(c.a).replace(/\n/g, "<br>") + '</div>' + (c.changed ? '<div class="flash-ref" style="color:var(--gold);"><svg class=ic aria-hidden=true><use href=#i-alert></use></svg> ' + esc(c.changed) + '</div>' : '') +
         (c.ref ? '<div class="flash-ref">' + esc(c.ref) + '</div>' : '') + '</div>'; }).join("");
     if (mount.querySelector("#cat0") && mount.querySelector("#cat1")) { mount.firstElementChild.insertAdjacentHTML("afterend", jumpChips(["Board Core", "More detail"])); wireJumps(); }
+    mount.insertAdjacentHTML("beforeend", '<div class="spacer"></div>' + group("", [li("#/flash/" + encodeURIComponent(id), "<svg class=ic aria-hidden=true><use href=#i-cards></use></svg>", "Study these as flashcards", "Say each answer before you look"), li("#/quiz/" + encodeURIComponent(id), "<svg class=ic aria-hidden=true><use href=#i-check></use></svg>", "Quiz me on " + esc(p.code), "Multiple choice, with why it matters")]) + '<button class="home-link" id="toTop" style="display:block;margin:14px auto 0;">Back to top</button>');
+    mount.querySelector("#toTop").addEventListener("click", function () { window.scrollTo({ top: 0, behavior: "smooth" }); });
     if (focus) { var fc = mount.querySelector('[data-cid="' + String(focus).replace(/"/g, "") + '"]'); if (fc) { fc.classList.add("focus-card"); setTimeout(function () { fc.scrollIntoView({ block: "center" }); }, 30); } }
   }
 
@@ -544,7 +546,7 @@
     // same rule quiz.js uses: long-answer and flash-only cards are not quizzed
     var quizN = cards.filter(function (c) { return !c.flashOnly && ((c.choices && c.choices.length >= 2) || (c.a && String(c.a).length <= 90)); }).length;
     mount.innerHTML =
-      '<div class="setup-head"><div class="t"><svg class=ic aria-hidden=true><use href=#i-check></use></svg> ' + esc(title) + '</div><div class="muted">' + quizN + ' quiz questions</div></div>' +
+      '<div class="setup-head"><div class="t"><svg class=ic aria-hidden=true><use href=#i-check></use></svg> ' + esc(title) + '</div><div class="muted">' + quizN + ' quiz questions</div><a href="#/pick/quiz" class="pill pill-link" style="display:inline-flex;margin-top:8px;">Change subject</a></div>' +
       '<button class="btn gold lg" data-n="10"><svg class=ic aria-hidden=true><use href=#i-play></use></svg> Start 10 questions</button>' +
       '<div class="lg-h" style="margin-top:2px;">Other lengths</div><div class="len-row"><button class="chip" data-n="5"><b>5</b><small>quick</small></button><button class="chip" data-n="20"><b>20</b><small>questions</small></button><button class="chip" data-n="999"><b>' + quizN + '</b><small>the whole set</small></button></div>' +
       (function () {
@@ -605,7 +607,7 @@
   function screenSearch() {
     setTitle("Search", true);
     mount.innerHTML = '<div class="search-wrap"><span class="search-ic" aria-hidden="true"><svg class=ic aria-hidden=true><use href=#i-search></use></svg></span><input class="input" id="q" type="search" aria-label="Search questions and answers" placeholder="Search questions & answers..." autocomplete="off" /><button class="search-x" id="qx" aria-label="Clear search" hidden>&#10005;</button></div><div id="results" style="margin-top:12px;" aria-live="polite"></div>';
-    var input = mount.querySelector("#q"), results = mount.querySelector("#results"), partTerm = "";
+    var input = mount.querySelector("#q"), results = mount.querySelector("#results"), partTerm = "", allTerm = "";
     function run() {
       var term = input.value.trim().toLowerCase();
       mount.querySelector("#qx").hidden = !input.value;
@@ -622,8 +624,8 @@
       all.sort(function (a, b) { return (b._w - a._w) || (rank(b) - rank(a)); });
       var nPart = all.filter(function (c) { return !c._w; }).length, hidePart = nPart && all.length - nPart >= 3 && partTerm !== term;
       if (hidePart) all = all.filter(function (c) { return c._w; });
-      var hits = all.slice(0, 80);
-      var note = all.length > hits.length ? '<div class="muted center" style="margin-bottom:8px;">Showing the first 80 of ' + all.length + ' matches. Type more to narrow it down.</div>' : '';
+      var hits = all.slice(0, allTerm === term ? 80 : 20);
+      var note = all.length > 80 && hits.length === 80 ? '<div class="muted center" style="margin-bottom:8px;">Showing the first 80 of ' + all.length + ' matches. Type more to narrow it down.</div>' : '';
       var hlW = new RegExp("\\b(" + safe + ")\\b", "ig"), hlP = new RegExp("(" + safe + ")", "ig"), hlRx = hlP;
       var hl = function (s) { return esc(s).replace(hlRx, "<mark>$1</mark>"); };
       var nWhole = all.filter(function (c) { return c._w; }).length, divDone = false;
@@ -632,11 +634,11 @@
         var div = (!c._w && nWhole && !divDone) ? (divDone = true, '<div class="lg-h" style="margin-top:14px;">Inside longer words</div>') : '';
         return div + '<a class="card" style="display:block;text-decoration:none;color:inherit;" href="#/read/' + escAttr(c.pub) + '/' + escAttr(c.id) + '"><div class="flash-tag tag-row">' + esc(p ? p.code : "") + (c.topic ? " • " + esc(c.topic) : "") + (c.core ? '<span class="pill core-pill inline">Core</span>' : '') + '</div>' +
           '<div style="font-weight:600;margin-bottom:6px;">' + hl(c.q) + '</div><div class="muted sr-a">' + hl(c.a) + '</div><div class="open-hint">Open in ' + esc(p ? p.code : "its subject") + ' <svg class=ic aria-hidden=true><use href=#i-chev></use></svg></div></a>';
-      }).join("") + '<div class="muted center end-line">' + (hidePart ? '<button class="btn ghost" id="showPart">Show ' + nPart + ' more inside longer words</button></div>' : (all.length > hits.length ? 'Showing the top ' + hits.length + '. Type more to narrow it down.' : 'End of results') + '</div>') : '<div class="empty-state" style="padding:28px 0 12px;"><svg class=ic aria-hidden=true><use href=#i-search></use></svg><div class="t">No matches for \u201c' + esc(input.value.trim()) + '\u201d</div><div class="muted" style="margin-bottom:6px;">Try a shorter word, or one of these:</div></div>' + tryChips();
+      }).join("") + '<div class="muted center end-line">' + (all.length > hits.length && hits.length === 20 ? '<button class="btn ghost" id="showAll">Show all ' + Math.min(all.length, 80) + ' results</button></div>' : hidePart ? '<button class="btn ghost" id="showPart">Show ' + nPart + ' more inside longer words</button></div>' : (all.length > hits.length ? 'Showing the top ' + hits.length + '. Type more to narrow it down.' : 'End of results') + '</div>') : '<div class="empty-state" style="padding:28px 0 12px;"><svg class=ic aria-hidden=true><use href=#i-search></use></svg><div class="t">No matches for \u201c' + esc(input.value.trim()) + '\u201d</div><div class="muted" style="margin-bottom:6px;">Try a shorter word, or one of these:</div></div>' + tryChips();
     }
     try { var q0 = sessionStorage.getItem("ncob-q"); if (q0) input.value = q0; } catch (e) {}
     function tryChips() { return '<div class="chip-row">' + ["SHARP", "AFT", "hazing", "counseling", "NCOER", "Article 15", "waist-to-height", "kratom", "land navigation", "Army Values"].map(function (w) { return '<button class="chip" data-try="' + w + '">' + w + '</button>'; }).join("") + '</div>'; }
-    results.addEventListener("click", function (e) { var b = e.target.closest("[data-try]"); if (b) { input.value = b.getAttribute("data-try"); run(); } if (e.target.closest("#showPart")) { partTerm = input.value.trim().toLowerCase(); run(); } });
+    results.addEventListener("click", function (e) { var b = e.target.closest("[data-try]"); if (b) { input.value = b.getAttribute("data-try"); run(); } if (e.target.closest("#showPart")) { partTerm = input.value.trim().toLowerCase(); run(); } if (e.target.closest("#showAll")) { var y = window.scrollY; allTerm = input.value.trim().toLowerCase(); run(); window.scrollTo(0, y); } });
     mount.querySelector("#qx").addEventListener("click", function () { input.value = ""; run(); input.focus(); });
     results.addEventListener("click", function (e) { if (e.target.closest("a.card")) try { sessionStorage.setItem("ncob-qy", String(window.scrollY)); } catch (x) {} });
     input.addEventListener("input", run); run();
@@ -1016,7 +1018,8 @@
   function flashSaved() { var s = document.getElementById("savedTick"); if (!s) { s = document.createElement("div"); s.id = "savedTick"; s.className = "saved-tick"; document.body.appendChild(s); } s.textContent = "Saved \u2713"; s.classList.add("on"); clearTimeout(flashSaved.t); flashSaved.t = setTimeout(function () { s.classList.remove("on"); }, 1200); }
   // "Haircut neat; clean-shaven..." -> bold first clause, the rest smaller
   function checkText(t) {
-    var m = String(t).match(/^([^;:]{6,60}?)([;:])\s*([\s\S]+)$/) || String(t).match(/^([^,.(]{6,48}?)([,(.])\s*([\s\S]+)$/);
+    var m = String(t).match(/^([^;:]{6,90}?)([;:])\s*([\s\S]+)$/) || String(t).match(/^([^.]{6,64}?\.)\s+([\s\S]+)$/);
+    if (m && m.length === 3) m = [m[0], m[1].replace(/\.$/, ""), ".", m[2]];
     return m ? '<b>' + esc(m[1]) + '</b><span class="ck-d">' + esc((m[2] === "(" ? "(" : "") + m[3].replace(/^[a-z]/, function (ch) { return ch.toUpperCase(); })) + '</span>' : '<b>' + esc(t) + '</b>';
   }
   function niceDate(ms) { var d = new Date(ms); return d.getDate() + " " + MON[d.getMonth()] + " " + d.getFullYear(); }
@@ -1403,7 +1406,7 @@
     var m = Store.chain();
     var html = '<div class="card"><div class="muted">Type the key parts of your board memo here. When you report in on a Full Mock Board, the app shows your memo\'s exact wording.</div></div>';
     MEMO_FIELDS.forEach(function (f) {
-      html += '<label class="lbl" for="memo-' + f.k + '"><b>' + esc(f.t) + '</b>: ' + esc(f.h) + '</label><textarea class="input" id="memo-' + f.k + '" rows="2" placeholder="' + escAttr(f.ph) + '">' + esc(m["memo-" + f.k] || "") + '</textarea>';
+      html += '<label class="lbl" for="memo-' + f.k + '"><b>' + esc(f.t) + '</b> <span class="muted" style="font-weight:400;">' + esc(f.h) + '</span></label><textarea class="input" id="memo-' + f.k + '" rows="2" placeholder="' + escAttr(f.ph) + '">' + esc(m["memo-" + f.k] || "") + '</textarea>';
     });
     html += '<div class="spacer"></div><button class="btn gold lg" id="memoSave">Done</button>';
     mount.innerHTML = html;
@@ -1449,7 +1452,7 @@
       med: '<label class="switch card" style="margin-top:6px;"><input type="checkbox" id="ptxschool"' + (m["pts-xschool"] ? " checked" : "") + '> <span>I graduated ' + school + ' (+150)</span></label>' +
         '<label class="lbl" for="ptxweeks">Resident military courses in ATRRS: total weeks (4 points a week, up to ' + (rank === "SSG" ? 115 : 110) + ')</label>' + inp("ptxweeks", "e.g. 2", "120px") +
         '<label class="lbl" for="ptxcbt">Online courses (ATRRS self-development, Army e-Learning): total hours (1 point per 5 hours, up to 90)</label>' + inp("ptxcbt", "e.g. 40", "120px") +
-        '<div class="chip-row seg3" id="ptxhon">' + [["0", "None", "+0"], ["20", "Comdt\u2019s list", "+20"], ["40", "DHG / DLG", "+40"]].map(function (h) { return '<button class="chip' + ((m["pts-xhon"] || "0") === h[0] ? " on" : "") + '" data-h="' + h[0] + '">' + esc(h[1]) + (h[2] ? '<small>' + h[2] + '</small>' : '') + '</button>'; }).join("") + '</div>',
+        '<div class="lbl" style="margin-top:12px;">Honors at graduation</div><div class="chip-row seg3" id="ptxhon">' + [["0", "None", "+0"], ["20", "Comdt\u2019s list", "+20"], ["40", "DHG / DLG", "+40"]].map(function (h) { return '<button class="chip' + ((m["pts-xhon"] || "0") === h[0] ? " on" : "") + '" data-h="' + h[0] + '">' + esc(h[1]) + (h[2] ? '<small>' + h[2] + '</small>' : '') + '</button>'; }).join("") + '</div>',
       civ: '<label class="lbl" for="ptxhours">College semester hours (2 points each)</label>' + inp("ptxhours", "e.g. 15", "140px")
     };
     var html = '<div class="card"><div class="muted">A quick estimate. Tap <b>Figure it for me</b> to work out a category. Your real points come from your records (AR 600-8-19, para 3-14).</div></div>' +
@@ -1474,7 +1477,7 @@
       if (k === "med") { var sc = mount.querySelector("#ptxschool").checked, wk = n("ptxweeks"), cb = n("ptxcbt");
         if (sc || wk != null || cb != null) v = (sc ? 150 + (+hon) : 0) + Math.min((wk || 0) * 4, rank === "SSG" ? 115 : 110) + Math.min(Math.floor((cb || 0) / 5), 90); }
       if (k === "civ") { var hr = n("ptxhours"); if (hr != null) v = hr * 2; }
-      if (v != null) { mount.querySelector("#pt-" + k).value = String(v); Store.setChainRole("pts-x" + k, "1"); }
+      if (v != null) { var P0 = PTS.filter(function (p) { return p.k === k; })[0], capV = P0 ? P0.max[rank] : v; if (v > capV) { App.toast("That works out to " + v + ", but this category counts only up to " + capV + ".", 3500); v = capV; } mount.querySelector("#pt-" + k).value = String(v); Store.setChainRole("pts-x" + k, "1"); }
       update();
     }
     function update() {

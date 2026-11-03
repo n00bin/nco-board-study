@@ -242,9 +242,9 @@
         Store.markLessonDone(lesson.id, score == null ? null : Math.round((score / total) * 100));
         var p = score == null ? 100 : Math.round(100 * score / Math.max(1, total));
         
-        var line = (score == null) ? "Practice done. Nice work." : selfGraded ? "You knew " + score + " of " + total + " on the first try." : "You got " + score + " of " + total + " in practice.";
+        var line = (score == null) ? "Practice done. Nice work." : (score === total ? "Every card. Nice work." : "The ones you missed come back sooner in your reviews.");
         container.innerHTML =
-          '<div class="ring-wrap"><div class="ring ' + (p >= 75 ? 'good' : p >= 50 ? 'mid' : 'bad') + '" style="--p:' + p + ';"><div class="ring-in">' + (score == null ? '&#10003;' : p + '%') + '</div></div>' + (score == null ? '' : '<small>' + (selfGraded ? 'knew it the first time' : 'right in practice') + '</small>') + '</div>' +
+          '<div class="ring-wrap"><div class="ring ' + (p >= 75 ? 'good' : p >= 50 ? 'mid' : 'bad') + '" style="--p:' + p + ';"><div class="ring-in">' + (score == null ? '&#10003;' : p + '%') + '</div></div>' + (score == null ? '' : '<small>' + score + ' of ' + total + (selfGraded ? ' on the first try' : ' right in practice') + '</small>') + '</div>' +
           '<div class="done-h">Lesson complete</div><p class="center muted" style="margin:0 0 6px;">' + esc(lesson.title) + '</p>' +
           (function () { var tr = tracks.filter(function (t) { return t.lessons.indexOf(lesson) >= 0; })[0]; if (!tr) return ''; var d = doneCount(tr.lessons);
             return '<div class="track-prog"><span>' + esc(tr.title.replace(/:.*$/, "")) + ': ' + d + ' of ' + tr.lessons.length + (tr.lessons.length === 1 ? ' lesson' : ' lessons') + '</span><div class="bar"><span style="width:' + Math.round(100 * d / tr.lessons.length) + '%"></span></div></div>'; })() +

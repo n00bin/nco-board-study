@@ -125,9 +125,9 @@
     var fix = bearingMiss.map(function (b) { return /^tell us/i.test(b) ? "\u201cTell us about yourself\u201d" : b; }).concat(sitMiss ? [sitMiss + " situational question" + (sitMiss > 1 ? "s" : "")] : []);
     if (pct >= 75 && fix.length) return { level: "almost", title: "Almost board-ready", msg: "Your answers scored " + pct + "%. A real board also grades bearing and the situational questions, so tighten up " + listJoin2(fix) + " and run it again." };
     if (pct >= 90) return { level: "ready", title: "Board-ready", msg: "Board-ready. Keep it sharp with a board every few days." };
-    if (pct >= 75) return { level: "ready", title: "Strong", msg: "Strong. Tighten the answers below." };
-    if (pct >= 60) return { level: "work", title: "Getting there", msg: "A board doesn't pass you on a percentage: it wants confident, complete answers. Drill the cards below" + (fix.length ? ", work on " + listJoin2(fix) : "") + ", and run it again." };
-    return { level: "work", title: "Needs work", msg: "Needs work. Study the answers below, then run it again" + (fix.length ? ", and practice " + listJoin2(fix) : "") + "." };
+    if (pct >= 75) return { level: "ready", title: "Strong", msg: "Strong. Tighten what you missed." };
+    if (pct >= 60) return { level: "work", title: "Getting there", msg: "A board doesn't pass you on a percentage: it wants confident, complete answers. Drill what you missed" + (fix.length ? ", work on " + listJoin2(fix) : "") + ", and run it again." };
+    return { level: "work", title: "Needs work", msg: "Needs work. Drill what you missed, then run it again" + (fix.length ? ", and practice " + listJoin2(fix) : "") + "." };
   }
 
   var MockBoard = {
@@ -280,7 +280,7 @@
         var localN = deck.filter(function (c) { return c.local; }).length, totalQ = deck.length - localN;
         var kind = steps[s] && steps[s].kind, KL = { reportIn: "Reporting in", drill: "Facing movements", intro: "Tell us about yourself", member: "Next board member", reportOut: "Reporting out", follow: "Follow-up to question " + qNum };
         var txt = label ? label : (kind && kind !== "q" && KL[kind]) ? KL[kind] : curLocal ? "Your leaders & unit (" + Math.min(unitAt, localN) + " of " + localN + ")" : qNum ? "Question " + qNum : "";
-        return '<div class="q-count mb-head"><span>' + txt + '</span>' + '<span class="pills">' + (qNum ? '<span class="pill">' + Math.min(qNum, totalQ) + ' / ' + totalQ + '</span>' : (function () { var op = steps.filter(function (x) { return x.kind === "reportIn" || x.kind === "drill" || x.kind === "intro"; }); var at = op.indexOf(steps[s]); return at >= 0 ? '<span class="pill">Opening ' + (at + 1) + ' of ' + op.length + '</span>' : ''; })()) + (asked >= 1 ? '<span class="pill score-pill">Score ' + Math.round(100 * got / asked) + '%</span>' : qNum ? '<span class="pill score-pill">Score \u2013</span>' : '') + '</span>' + '</div>' +
+        return '<div class="q-count mb-head"><span>' + txt + '</span>' + '<span class="pills">' + (qNum || kind === "member" ? '<span class="pill">' + Math.min(qNum, totalQ) + ' / ' + totalQ + '</span>' : (function () { var op = steps.filter(function (x) { return x.kind === "reportIn" || x.kind === "drill" || x.kind === "intro"; }); var at = op.indexOf(steps[s]); return at >= 0 ? '<span class="pill">Opening ' + (at + 1) + ' of ' + op.length + '</span>' : ''; })()) + (asked >= 1 ? '<span class="pill score-pill">Score ' + Math.round(100 * got / asked) + '%</span>' : qNum ? '<span class="pill score-pill">Score \u2013</span>' : '') + '</span>' + '</div>' +
           '<div class="progress-bar"><span style="width:' + (qNum ? Math.round(100 * Math.min(1, Math.max(0, qNum - (kind === "q" ? 1 : 0)) / Math.max(1, totalQ))) : (function () { var op = steps.filter(function (x) { return x.kind === "reportIn" || x.kind === "drill" || x.kind === "intro"; }), at = op.indexOf(steps[s]); return at >= 0 ? Math.round(8 * (at + 1) / op.length) : 0; })()) + '%"></span></div>';
       }
       function timerHtml(t, why) {
@@ -475,7 +475,7 @@
         if (curStyle === "rapid" && secs && c.pub !== "sit" && c.pub !== "personal") cs = Math.min(cs || 20, 20);
         container.innerHTML = header() + timerHtml(cs) +
           // Only the publication is shown on the question side: topic labels can give the answer away.
-          '<div class="card"><div class="flash-toprow"><span class="flash-tag">' + esc(/\b(regulation|publication|pamphlet|field manual|doctrine)\b|\b(which|what) (AR|FM|ADP|ATP|TC|DA PAM)\b/i.test(qt(c)) ? "Name the publication" : pubCode(c)) + (c.adv ? ' \u2022 Advanced' : '') + '</span>' +
+          '<div class="card"><div class="flash-toprow"><span class="flash-tag">' + esc(/\b(which|what) (regulation|publication|pamphlet|field manual|manual|AR|FM|ADP|ADRP|ATP|TC|DA PAM)\b|\b(regulation|publication|pamphlet|manual) (covers|prescribes|governs|sets)\b/i.test(qt(c)) ? "Name the publication" : pubCode(c)) + (c.adv ? ' \u2022 Advanced' : '') + '</span>' +
             '<span><button class="mini" id="mSpeak" aria-label="Read aloud"><svg class=ic aria-hidden=true><use href=#i-speaker></use></svg></button>' +
             '<button class="mini" id="mReport" aria-label="Report a problem with this card"><svg class=ic aria-hidden=true><use href=#i-flag></use></svg></button></span></div>' +
             qShow(qt(c)) + '</div>' +
@@ -701,7 +701,7 @@
         var V = verdict(pct, bearingMiss, sitMiss), notReady = V.level === "almost", msg = V.msg;
         var handheld = sponsor && !document.body.classList.contains("guest");
         if (sponsor && !handheld) msg = msg.replace(/^Your answers/, "Their answers").replace(/so tighten up/, "so have them tighten up")
-          .replace(/Drill the cards below/, "Have them drill the cards below").replace(/Study the answers below/, "Have them study the answers below").replace(/Tighten the answers below/, "Have them tighten the answers below");
+          .replace(/Drill what you missed/, "Have them drill what they missed").replace(/Tighten what you missed/, "Have them tighten what they missed");
         if (asked < 8 && V.level !== "work") { V = { level: "work", title: "Good practice", msg: pct + "% on a short board. Board-ready takes a full board of 10 or more questions." }; msg = V.msg; }
         var drillN = missedIds.filter(function (id, k) { return missedIds.indexOf(id) === k; }).length, pl = function (n, w) { return n + " " + w + (n === 1 ? "" : "s"); };
         var nQ = qScores.length, nF = Math.max(0, asked - nQ);
