@@ -1117,3 +1117,9 @@ details.more-changes > summary { color: var(--text) !important; }
 .btn.ghost.lg, label.btn.ghost.lg { min-height: 64px !important; font-size: 1.15rem !important; }
 /* the search "more" button sits inside the end line */
 .end-line .btn { margin-top: 4px; }
+
+/* ---------- v3.63 polish round 35 ---------- */
+/* three-up chip grids shrink with the screen; long labels wrap instead of widening the page */
+.seg3 { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
+.seg3 .chip, .chip-row.seg4 .chip, .chip-row.seg5 .chip { min-width: 0; overflow-wrap: anywhere; white-space: normal; }
+.seg3 .chip { border-radius: 14px; }

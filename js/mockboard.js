@@ -220,7 +220,7 @@
         stopMirror();
       };
       var mirror = { stream: null };
-      function mirrorButton(short) { return (!sponsor && navigator.mediaDevices && navigator.mediaDevices.getUserMedia) ? (short ? '<button class="btn ghost" id="mirrorBtn"><svg class=ic aria-hidden=true><use href=#i-mirror></use></svg> Mirror</button>' : '<button class="btn ghost" id="mirrorBtn"><svg class=ic aria-hidden=true><use href=#i-mirror></use></svg> Mirror (front camera)</button><div id="mirrorBox"></div><div class="spacer"></div>') : ''; }
+      function mirrorButton(short) { return (!sponsor && navigator.mediaDevices && navigator.mediaDevices.getUserMedia) ? (short ? '<button class="btn ghost" id="mirrorBtn"><svg class=ic aria-hidden=true><use href=#i-mirror></use></svg> Mirror</button>' : '<button class="btn ghost" id="mirrorBtn"><svg class=ic aria-hidden=true><use href=#i-mirror></use></svg> Mirror</button><div id="mirrorBox"></div><div class="spacer"></div>') : ''; }
       function stopMirror() { if (mirror.stream) { mirror.stream.getTracks().forEach(function (t) { t.stop(); }); mirror.stream = null; } }
       function wireMirror() {
         var b = container.querySelector("#mirrorBtn"); if (!b) return;
@@ -410,24 +410,24 @@
         onGrade(function (ok) { bearing.push({ label: "Reporting in", ok: ok }); next(); });
       }
       function intro() {
-        var t = secs ? 90 : 0, stmt = Store.statement();
+        var t = secs ? 90 : 0, stmt = (sponsor && document.body.classList.contains("guest")) ? "" : Store.statement();
         container.innerHTML = header() + timerHtml(t, "Aim for about a minute (90 seconds max)") +
           '<div class="card"><div class="flash-tag">The board president</div>' +
             '<div class="q-text" style="margin-top:8px;">\u201cTell the board a little about yourself.\u201d</div></div>' +
           '<div class="card"><div class="muted" style="font-size:.92rem;">' + (sponsor ? 'Ask the Soldier to tell you about themselves. Listen for about a minute: who they are, job and unit, time in service, a real accomplishment or two, and their goals as an NCO. Are they saying it, not reciting it?' :
             'Answer out loud in about a minute, eyes on the president: who you are, your job and unit, time in service, a real accomplishment or two, and your goals as an NCO. Say it, don\'t read it.' +
             (stmt ? '' : ' After this board, draft it under Board Day Prep \u2192 Opening Statement (there\'s an example).')) + '</div></div>' +
-          recButton() + '<button class="btn gold lg" id="reveal">I\'m done</button>';
+          recButton() + '<button class="btn gold lg" id="reveal">' + (sponsor ? 'They\'re done' : 'I\'m done') + '</button>';
         if (autoRead) Speech.speak("Tell the board a little about yourself.");
         var done = function () {
           clearTimer();
           container.innerHTML = header() +
-            (stmt ? '<div class="card"><div class="flash-tag">Your opening statement</div><div class="flash-a" style="white-space:pre-wrap;">' + esc(stmt) + '</div></div>' +
+            (stmt ? '<div class="card"><div class="flash-tag">' + (sponsor ? 'Their' : 'Your') + ' opening statement</div><div class="flash-a" style="white-space:pre-wrap;">' + esc(stmt) + '</div></div>' +
                     '<div id="playback"></div>' +
-                    '<p class="center muted">Did you deliver it smoothly, without reading it, in about a minute?</p>' + gradeButtons("Needs work", "Clean")
+                    '<p class="center muted">' + (sponsor ? 'Did they' : 'Did you') + ' deliver it smoothly, without reading it, in about a minute?</p>' + gradeButtons("Needs work", "Clean")
                   // no draft yet: score what you said against the parts of a good answer instead
-                  : '<div class="card" style="border-color:var(--gold);"><div class="flash-tag">Did you cover these?</div>' +
-                      ["Your rank, name, job, and unit", "Your time in service", "One or two real accomplishments", "Your goals as an NCO"].map(function (t) {
+                  : '<div class="card" style="border-color:var(--gold);"><div class="flash-tag">' + (sponsor ? 'Did they cover these?' : 'Did you cover these?') + '</div>' +
+                      (sponsor ? ["Their rank, name, job, and unit", "Their time in service", "One or two real accomplishments", "Their goals as an NCO"] : ["Your rank, name, job, and unit", "Your time in service", "One or two real accomplishments", "Your goals as an NCO"]).map(function (t) {
                         return '<label class="switch" style="margin-top:10px;"><input type="checkbox" class="ip"> <span>' + esc(t) + '</span></label>'; }).join("") +
                       '</div>' +
                     '<div id="playback"></div><button class="btn gold lg" id="introDone">Score this answer</button>');

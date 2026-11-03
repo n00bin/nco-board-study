@@ -238,6 +238,7 @@
       }
 
       function complete(score, total, selfGraded) {
+        var sessN = '';
         Store.markLessonDone(lesson.id, score == null ? null : Math.round((score / total) * 100));
         var p = score == null ? 100 : Math.round(100 * score / Math.max(1, total));
         
@@ -247,8 +248,9 @@
           '<div class="done-h">Lesson complete</div><p class="center muted" style="margin:0 0 6px;">' + esc(lesson.title) + '</p>' +
           (function () { var tr = tracks.filter(function (t) { return t.lessons.indexOf(lesson) >= 0; })[0]; if (!tr) return ''; var d = doneCount(tr.lessons);
             return '<div class="track-prog"><span>' + esc(tr.title.replace(/:.*$/, "")) + ': ' + d + ' of ' + tr.lessons.length + (tr.lessons.length === 1 ? ' lesson' : ' lessons') + '</span><div class="bar"><span style="width:' + Math.round(100 * d / tr.lessons.length) + '%"></span></div></div>'; })() +
-          '<p class="center muted">' + line + '</p><div class="spacer"></div>' + (window.App && App.sessionNextHtml ? App.sessionNextHtml() : '') +
-          (nextLesson ? '<button class="btn gold lg" id="next">Next lesson <svg class=ic aria-hidden=true><use href=#i-chev></use></svg></button><div class="muted center" style="font-size:.85rem;margin:6px 0 4px;">Up next: ' + esc(String(nextLesson.title).replace(/^.*?:\s*/, "")) + '</div><div class="spacer"></div>' : '') +
+          '<p class="center muted">' + line + '</p><div class="spacer"></div>' + (sessN = (window.App && App.sessionNextHtml ? App.sessionNextHtml() : '')) +
+          (nextLesson && sessN ? '<button class="home-link" id="next" style="display:block;margin:0 auto 10px;">Or start the next lesson: ' + esc(String(nextLesson.title).replace(/^.*?:\s*/, "")) + '</button>' : '') +
+          (nextLesson && !sessN ? '<button class="btn gold lg" id="next">Next lesson <svg class=ic aria-hidden=true><use href=#i-chev></use></svg></button><div class="muted center" style="font-size:.85rem;margin:6px 0 4px;">Up next: ' + esc(String(nextLesson.title).replace(/^.*?:\s*/, "")) + '</div><div class="spacer"></div>' : '') +
           '<button class="home-link" id="path">Back to Learn</button>';
         if (nextLesson) container.querySelector("#next").addEventListener("click", function () { App.go("#/lesson/" + nextLesson.id); });
         container.querySelector("#path").addEventListener("click", function () { App.go("#/learn"); });

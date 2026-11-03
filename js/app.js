@@ -1009,7 +1009,7 @@
   // "Haircut neat; clean-shaven..." -> bold first clause, the rest smaller
   function checkText(t) {
     var m = String(t).match(/^([^;:]{6,60}?)([;:])\s*([\s\S]+)$/) || String(t).match(/^([^,.(]{6,48}?)([,(.])\s*([\s\S]+)$/);
-    return m ? '<b>' + esc(m[1]) + '</b><span class="ck-d">' + esc((m[2] === "(" ? "(" : "") + m[3]) + '</span>' : '<b>' + esc(t) + '</b>';
+    return m ? '<b>' + esc(m[1]) + '</b><span class="ck-d">' + esc((m[2] === "(" ? "(" : "") + m[3].replace(/^[a-z]/, function (ch) { return ch.toUpperCase(); })) + '</span>' : '<b>' + esc(t) + '</b>';
   }
   function niceDate(ms) { var d = new Date(ms); return d.getDate() + " " + MON[d.getMonth()] + " " + d.getFullYear(); }
   function group(title, rows, id) { return (title ? '<div class="lg-h"' + (id ? ' id="' + id + '"' : '') + '>' + title + '</div>' : '') + '<div class="lg">' + rows.join("") + '</div>'; }
@@ -1442,7 +1442,7 @@
       med: '<label class="switch card" style="margin-top:6px;"><input type="checkbox" id="ptxschool"' + (m["pts-xschool"] ? " checked" : "") + '> <span>I graduated ' + school + ' (+150)</span></label>' +
         '<label class="lbl" for="ptxweeks">Resident military courses in ATRRS: total weeks (4 points a week, up to ' + (rank === "SSG" ? 115 : 110) + ')</label>' + inp("ptxweeks", "e.g. 2", "120px") +
         '<label class="lbl" for="ptxcbt">Online courses (ATRRS self-development, Army e-Learning): total hours (1 point per 5 hours, up to 90)</label>' + inp("ptxcbt", "e.g. 40", "120px") +
-        '<div class="chip-row seg3" id="ptxhon">' + [["0", "None"], ["20", "Comdt&#39;s list<small>+20</small>"], ["40", "DHG / DLG<small>+40</small>"]].map(function (h) { return '<button class="chip' + ((m["pts-xhon"] || "0") === h[0] ? " on" : "") + '" data-h="' + h[0] + '">' + esc(h[1]) + '</button>'; }).join("") + '</div>',
+        '<div class="chip-row seg3" id="ptxhon">' + [["0", "None", ""], ["20", "Comdt\u2019s list", "+20"], ["40", "DHG / DLG", "+40"]].map(function (h) { return '<button class="chip' + ((m["pts-xhon"] || "0") === h[0] ? " on" : "") + '" data-h="' + h[0] + '">' + esc(h[1]) + (h[2] ? '<small>' + h[2] + '</small>' : '') + '</button>'; }).join("") + '</div>',
       civ: '<label class="lbl" for="ptxhours">College semester hours (2 points each)</label>' + inp("ptxhours", "e.g. 15", "140px")
     };
     var html = '<div class="card"><div class="muted">A quick estimate. Tap <b>Figure it for me</b> to work out a category. Your real points come from your records (AR 600-8-19, para 3-14).</div></div>' +
