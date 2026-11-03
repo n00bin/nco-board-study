@@ -695,19 +695,19 @@
         var countLine = nQ + " question" + (nQ === 1 ? "" : "s") + (nFu ? ", " + nFu + " follow-up" + (nFu === 1 ? "" : "s") : "") + (nCb ? ", " + nCb + " second " + (nCb === 1 ? "try" : "tries") : "");
         var strongB = pct >= 75 && !notReady && V.level !== "work" && deck.length >= 8;
         var vTitle = strongB ? "Strong board" : V.title, vLine = strongB ? (missed.length ? (sponsor ? "Have them tighten the " : "Tighten the ") + missed.length + " miss" + (missed.length === 1 ? "" : "es") + ", then run another." : "Keep it sharp with a board every few days.")
-          : (msg.indexOf(V.title + ".") === 0 ? msg.slice(V.title.length + 1).trim() : msg).replace(/^(Your|Their) answers scored \d+%\. /, "");
+          : (msg.indexOf(V.title + ".") === 0 ? msg.slice(V.title.length + 1).trim() : msg).replace(/^(Your|Their) answers scored \d+%\. /, "").replace(/^A real board also grades bearing and the situational questions, so /, "").replace(/^A board doesn\'t pass you on a percentage: it wants confident, complete answers\. /, "").replace(/^./, function (ch) { return ch.toUpperCase(); });
         var html = '<div class="ring-wrap"><div class="ring ' + (pct >= 75 ? 'good' : pct >= 50 ? 'mid' : 'bad') + '" style="--p:' + pct + ';"><div class="ring-in">' + pct + '%</div></div><small>' + (extras.length ? 'score, incl. second tries &amp; follow-ups' : 'score') + '</small></div>' +
           '<div class="done-h">' + (strongB ? '<svg class=ic aria-hidden=true><use href=#i-trophy></use></svg> ' : '') + esc(vTitle) + '</div><p class="center muted" style="margin-top:0;">' + esc(vLine) + '</p>' +
           (function () {
             var full = qScores.filter(function (x) { return x >= 0.99; }).length, part = qScores.filter(function (x) { return x >= 0.66 && x < 0.99; }).length, miss = qScores.length - full - part;
             var cb = extras.filter(function (x) { return x.k === "cb"; }), fu = extras.filter(function (x) { return x.k === "fu"; });
             var cbOk = cb.filter(function (x) { return x.ok; }).length, fuOk = fu.filter(function (x) { return x.ok; }).length;
-            var legend = '<div class="dot-legend">' + (full ? '<span><span class="dot g"></span>full</span>' : '') + (part ? '<span><span class="dot a"></span>with gaps</span>' : '') + (miss ? '<span><span class="dot r"></span>missed</span>' : '') + (extras.length ? '<span><span class="dot sq"></span>retry</span>' : '') + '</div>';
+            var legend = '<div class="dot-legend">' + (full ? '<span><span class="dot g"></span>full</span>' : '') + (part ? '<span><span class="dot a"></span>with gaps</span>' : '') + (miss ? '<span><span class="dot r"></span>missed</span>' : '') + '' + '</div>';
             return '<div class="dots" aria-hidden="true">' + qScores.map(function (x) { return '<span class="dot ' + (x >= 0.99 ? 'g' : x >= 0.66 ? 'a' : 'r') + '"></span>'; }).join("") +
-                (extras.length ? '<span class="dot-gap"></span>' + extras.map(function (x) { return '<span class="dot sq ' + (x.ok ? 'g' : 'r') + '"></span>'; }).join("") : '') + '</div>' + legend +
+                '</div>' + (extras.length ? '<div class="dots-sub">Second tries &amp; follow-ups</div><div class="dots">' + extras.map(function (x) { return '<span class="dot sq ' + (x.ok ? 'g' : 'r') + '"></span>'; }).join("") + '</div>' : '') + legend +
               '<p class="center muted" style="font-size:.92rem;margin:4px 0 0;">' + countLine + '</p><details class="set-fold score-how"><summary>How this was scored</summary><p class="muted" style="font-size:.92rem;margin:0 0 8px;">First answers: ' + full + ' full \u2022 ' + part + ' with gaps \u2022 ' + miss + ' missed' +
                 (cb.length ? '<br>Second tries: ' + cbOk + ' of ' + cb.length + ' recovered' : '') + (fu.length ? '<br>Follow-ups: ' + fuOk + ' of ' + fu.length + ' right' : '') +
-                '<br>The score counts every answer, with part credit for answers with gaps.</p></details>' +
+                '<br>The score counts every answer, with part credit for answers with gaps. A real board also weighs bearing and the situational questions, and wants confident, complete answers, not just a percentage.</p></details>' +
               '';
           })() +
           // the next step first: drill the misses (or run another), then the details
@@ -736,10 +736,10 @@
           });
           html += '</details>';
         }
-        html += (window.App && App.sessionNextHtml ? App.sessionNextHtml() : '') + '<div class="spacer"></div><button class="btn ' + (missed.length || sponsor ? 'ghost' : 'gold') + ' lg" id="again">Run another board</button><div class="spacer"></div><button class="home-link" id="home">Back to Home</button>';
+        html += (window.App && App.sessionNextHtml ? App.sessionNextHtml() : '') + '<div class="spacer"></div><button class="btn ' + (missed.length || sponsor ? 'ghost' : 'gold') + ' lg" id="again">Run another board</button><div class="spacer"></div>' + (document.body.classList.contains("guest") ? '' : '<button class="home-link" id="home">Back to Home</button>') + '';
         container.innerHTML = html;
         container.querySelector("#again").addEventListener("click", function () { MockBoard.render(container, cards, length, opts); });
-        container.querySelector("#home").addEventListener("click", function () { App.go("#/"); });
+        var hm0 = container.querySelector("#home"); if (hm0) hm0.addEventListener("click", function () { App.go("#/"); });
         var dm = container.querySelector("#drillMiss");
         if (dm) dm.addEventListener("click", function () {
           Store.setChainRole("last-misses", missedIds.filter(function (id, k) { return missedIds.indexOf(id) === k; }).slice(0, 40).join(","));

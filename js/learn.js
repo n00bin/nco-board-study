@@ -225,7 +225,7 @@
         Speech.stop();
         var quizzable = lesson.cards.filter(function (c) { return !c.flashOnly && ((c.choices && c.choices.length >= 2 && typeof c.answer === "number") || (c.a && String(c.a).length <= 90)); });
         window.scrollTo(0, 0);
-        var at = document.getElementById("appTitle"); if (at) at.textContent = "Practice: " + lesson.title.replace(/^.*?:\s*/, "");
+
         if (quizzable.length >= 4) Quiz.render(container, lesson.cards, lesson.title, quizzable.length, { onDone: complete });
         else Flashcards.render(container, lesson.cards, lesson.title, { onDone: function () { complete(null, null); } });
       }
@@ -233,7 +233,7 @@
       function complete(score, total) {
         Store.markLessonDone(lesson.id, score == null ? null : Math.round((score / total) * 100));
         var p = score == null ? 100 : Math.round(100 * score / Math.max(1, total));
-        var at0 = document.getElementById("appTitle"); if (at0) at0.textContent = "Learn";
+        
         var line = (score == null) ? "Practice done. Missed cards come back sooner in your reviews." : "You got " + score + " of " + total + " in practice.";
         container.innerHTML =
           '<div class="ring-wrap"><div class="ring ' + (p >= 75 ? 'good' : p >= 50 ? 'mid' : 'bad') + '" style="--p:' + p + ';"><div class="ring-in">' + (score == null ? '&#10003;' : p + '%') + '</div></div><small>' + esc(lesson.title) + '</small></div>' +

@@ -27,6 +27,7 @@
       '<div class="done-h">Session complete</div>' +
       '<p class="center muted" style="margin-top:0;">' + n + ' card' + (n === 1 ? '' : 's') + ' \u2022 ' + (known - easy) + ' got it' + (easy ? ' \u2022 ' + easy + ' easy' : '') + ' \u2022 ' + miss + ' missed</p>' +
       '<div class="dots" aria-hidden="true">' + ids.slice(0, 80).map(function (k) { return '<span class="dot ' + (first[k] === "again" ? 'r' : 'g') + '"></span>'; }).join("") + '</div>' +
+      '<div class="dot-legend"><span><span class="dot g"></span>knew it</span><span><span class="dot r"></span>missed</span></div>' +
       (miss ? (Store.setChainRole("last-misses", ids.filter(function (k) { return first[k] === "again"; }).slice(0, 40).join(",")), '<a class="btn gold lg" href="#/flash/misses"><svg class=ic aria-hidden=true><use href=#i-refresh></use></svg> Drill your ' + miss + ' miss' + (miss === 1 ? '' : 'es') + ' now</a>') : '');
   }
   function nextStep() {
@@ -94,7 +95,7 @@
         conf = undefined;
         var left = queue.length - i, mins = Math.max(1, Math.round(left * 15 / 60));
         container.querySelector("#fBar").style.width = Math.round(100 * passed / Math.max(1, passed + left)) + "%";
-        container.querySelector("#fProg").innerHTML = '<span>' + passed + ' done' + (reviewed > passed ? ' \u2022 misses come back' : '') + '</span><span class="pill">' + left + ' to go \u2022 ~' + mins + ' min</span>';
+        container.querySelector("#fProg").innerHTML = '<span>' + (opts && opts.onDone ? 'Practice \u2022 ' : '') + passed + ' done' + (reviewed > passed ? ' \u2022 misses come back' : '') + '</span><span class="pill">' + left + ' to go \u2022 ~' + mins + ' min</span>';
         container.querySelector("#fTagF").textContent = pubCode(c) + (c.adv ? " \u2022 Advanced" : "");   // topic only on the back: it can give the answer away
         container.querySelector("#fTagB").textContent = pubCode(c) || "Answer";
         container.querySelector("#fQ").textContent = c.q;

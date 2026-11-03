@@ -842,3 +842,10 @@ body.session:has(#reveal, #rubricDone, #introDone, #qNext, #submitBtn)::after, b
 /* sticky jump chips: the wrapper is solid, only the chips fade at the edge */
 .jump-row { position: static !important; background: none; margin-top: 0; padding-top: 0 !important; }
 .jump-wrap { position: sticky; top: calc(56px + env(safe-area-inset-top)); z-index: 6; background: var(--bg); padding: 8px 0 2px; margin: -8px 0 6px; }
+
+/* ---------- v3.42 polish round 15 ---------- */
+.jump-row .chip.on { border-color: var(--gold); color: var(--gold); background: var(--surface-2); }
+.dots-sub { text-align: center; font-size: .85rem; color: var(--text-dim); margin: 6px 0 2px; }
+.uni-legend { list-style: none; margin: 10px 0 6px; padding: 0; }
+.uni-legend li { display: flex; gap: 10px; align-items: flex-start; margin: 8px 0; font-size: .92rem; }
+.uni-legend li > b { flex: none; width: 24px; height: 24px; border-radius: 50%; background: var(--gold); color: #1a1a0e; display: grid; place-items: center; font-size: .85rem; }

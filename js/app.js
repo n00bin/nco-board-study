@@ -555,7 +555,7 @@
       '</div>' +
       '<button class="btn gold lg" data-n="10"><svg class=ic aria-hidden=true><use href=#i-play></use></svg> Start a 10-question board</button>' +
       '<div class="muted center" style="font-size:.85rem;margin:6px 0 10px;" id="lenNote"></div>' +
-      '<div class="lg-h" style="margin-top:2px;">Other lengths</div><div class="len-row"><button class="chip" data-n="5" data-quick="1"><b>5</b><small>quick</small></button><button class="chip" data-n="15"><b>15</b><small>standard</small></button><button class="chip" data-n="25"><b>25</b><small>long</small></button></div>' +
+      '<div class="lg-h" style="margin-top:2px;">Other lengths</div><div class="len-row"><button class="chip" data-n="5" data-quick="1"><b>5</b><small>quick</small></button><button class="chip" data-n="15"><b>15</b><small>longer</small></button><button class="chip" data-n="25"><b>25</b><small>full-length</small></button></div>' +
       (/^(core|top|final)$/.test(deck) ? '<details class="set-fold" style="margin-top:14px;"><summary>Practice with your sponsor</summary>' +
         '<button class="btn ghost" id="sendSponsor" style="margin-top:8px;"><svg class=ic aria-hidden=true><use href=#i-send></use></svg> Send a board to my sponsor</button>' +
         '<div class="muted center" style="font-size:.85rem;margin:6px 0;">They open the link and run the same board on their phone, with the answers and checklists.</div>' +
@@ -673,9 +673,9 @@
       html += '<h2 class="section">Mock Board voice check</h2><div class="card"><label class="switch"><input type="checkbox" id="voiceAuto"' + (!s.voiceOff ? ' checked' : '') + '> <span>Listen to my answers and pre-tick the key points I said (needs the microphone; may need a connection)</span></label><div class="muted" style="font-size:.85rem;margin-top:6px;">Voice check uses your phone\u2019s speech service (Google or Apple), so your spoken answer leaves the phone while it listens. It stays off for personal and your-unit questions. Record my answer stays on the phone.</div></div>';
     // fold the sections people rarely change, so the page isn't one long scroll
     var r0 = html.indexOf('<h2 class="section">Study reminders</h2>'), r1 = html.indexOf('<h2 class="section">Daily goal (minimum)</h2>');
-    if (r0 > 0 && r1 > r0) html = html.slice(0, r0) + '<h2 class="section">Reminders</h2><details class="set-fold" style="margin-top:0;"><summary>Study reminders</summary>' + html.slice(r0, r1).replace('<h2 class="section">Study reminders</h2>', '') + '</details>' + html.slice(r1);
+    if (r0 > 0 && r1 > r0) html = html.slice(0, r0) + '<h2 class="section">Reminders</h2><details class="set-fold" style="margin-top:0;"><summary>Calendar &amp; notification reminders</summary>' + html.slice(r0, r1).replace('<h2 class="section">Study reminders</h2>', '') + '</details>' + html.slice(r1);
     var t0 = html.indexOf('<h2 class="section">Mock Board timer</h2>');
-    if (t0 > 0) html = html.slice(0, t0) + '<h2 class="section">Practice</h2><details class="set-fold" style="margin-top:0;"' + (focus === "timer" ? ' open' : '') + '><summary>Mock Board, Drive Mode &amp; voice</summary>' + html.slice(t0) + '</details>';
+    if (t0 > 0) html = html.slice(0, t0) + '<h2 class="section">Practice</h2><details class="set-fold" style="margin-top:0;"' + (focus === "timer" ? ' open' : '') + '><summary>Mock Board timer, Drive pause &amp; voice</summary>' + html.slice(t0) + '</details>';
     mount.innerHTML = html;
     if (focus === "timer") setTimeout(function () { var tc = mount.querySelector("#timerChips"); if (tc) tc.scrollIntoView({ block: "center" }); }, 30);
 
@@ -745,7 +745,7 @@
       '<label class="btn ghost lg" for="impFile"><svg class=ic aria-hidden=true><use href=#i-upload></use></svg> Import a backup</label>' +
       '<input type="file" id="impFile" accept="application/json,.json" hidden>' +
       '<h2 class="section">Reset</h2>' +
-      '<button class="btn danger" id="resetCards">Reset card progress only</button><div class="spacer"></div>' +
+      '<button class="btn danger" id="resetCards">Reset card progress only</button><div class="muted" style="font-size:.85rem;margin:6px 2px 0;">Clears what you&#39;ve studied and when cards are due. Keeps your notes, chain of command, memo and settings.</div><div class="spacer"></div>' +
       '<button class="btn danger" id="resetAll">Erase everything</button><div class="muted center" style="font-size:.85rem;margin-top:6px;">Deletes your progress and your own cards on this phone.</div>';
     mount.querySelector("#exp").addEventListener("click", function () {
       var d = new Date(), name = "nco-board-progress-" + d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0") + ".json";
@@ -946,12 +946,13 @@
       '<rect x="192" y="97" width="12" height="6"/><rect x="205" y="97" width="12" height="6"/></g>' +   // ribbons above the wearer's left pocket
     '<g fill="#ffcc33"><rect x="30" y="214" width="22" height="3"/><rect x="30" y="219" width="22" height="3"/></g>' +   // overseas bars, wearer's right sleeve
     '<g stroke="#ffcc33" stroke-width="3"><line x1="268" y1="222" x2="288" y2="208"/><line x1="268" y1="228" x2="288" y2="214"/></g>' +   // service stripes, wearer's left sleeve
-    '<g font-size="11" fill="#f2efe4" font-family="sans-serif">' +
-      '<text x="4" y="112">Nameplate: centered</text><text x="4" y="125">on right pocket flap</text><line x1="96" y1="122" x2="80" y2="118" stroke="#f2efe4"/>' +
-      '<text x="196" y="70">Ribbons: centered 1/8"</text><text x="196" y="82">above left pocket</text>' +
-      '<text x="4" y="254">Overseas bars: right</text><text x="4" y="266">sleeve, 4" from bottom</text>' +
-      '<text x="196" y="254">Service stripes: left</text><text x="196" y="266">sleeve, 4" from bottom</text>' +
-    '</g></svg>';
+    '<line x1="60" y1="128" x2="98" y2="128" stroke="#ffcc33" stroke-width="1.5"/><circle cx="60" cy="128" r="13" fill="#ffcc33"/><text x="60" y="133" text-anchor="middle" font-size="15" font-weight="800" fill="#1a1a0e" font-family="sans-serif">1</text>' +
+    '<line x1="262" y1="92" x2="224" y2="100" stroke="#ffcc33" stroke-width="1.5"/><circle cx="262" cy="92" r="13" fill="#ffcc33"/><text x="262" y="97" text-anchor="middle" font-size="15" font-weight="800" fill="#1a1a0e" font-family="sans-serif">2</text>' +
+    '<line x1="22" y1="188" x2="40" y2="214" stroke="#ffcc33" stroke-width="1.5"/><circle cx="22" cy="188" r="13" fill="#ffcc33"/><text x="22" y="193" text-anchor="middle" font-size="15" font-weight="800" fill="#1a1a0e" font-family="sans-serif">3</text>' +
+    '<line x1="298" y1="188" x2="280" y2="210" stroke="#ffcc33" stroke-width="1.5"/><circle cx="298" cy="188" r="13" fill="#ffcc33"/><text x="298" y="193" text-anchor="middle" font-size="15" font-weight="800" fill="#1a1a0e" font-family="sans-serif">4</text>' +
+    '</svg>' +
+    '<ol class="uni-legend"><li><b>1</b><span><b>Nameplate:</b> centered on the right pocket flap.</span></li><li><b>2</b><span><b>Ribbons:</b> centered 1/8 inch above the left pocket.</span></li>' +
+    '<li><b>3</b><span><b>Overseas bars:</b> right sleeve, 4 inches from the bottom.</span></li><li><b>4</b><span><b>Service stripes:</b> left sleeve, 4 inches from the bottom.</span></li></ol>';
   var REPORTING_STEPS = [
     "Arrive early. Know each board member's name, rank, and position.",
     "Wait to be called. When directed, approach the door and knock if your SOP requires it.",
@@ -975,7 +976,13 @@
   function niceDate(ms) { var d = new Date(ms); return d.getDate() + " " + MON[d.getMonth()] + " " + d.getFullYear(); }
   function group(title, rows, id) { return (title ? '<div class="lg-h"' + (id ? ' id="' + id + '"' : '') + '>' + title + '</div>' : '') + '<div class="lg">' + rows.join("") + '</div>'; }
   function jumpChips(cats) { return '<div class="jump-wrap"><div class="chip-row jump-row">' + cats.map(function (c, k) { return '<button class="chip" data-jump="cat' + k + '">' + esc(c.replace(/ &amp; .*| & .*/, "")) + '</button>'; }).join("") + '</div></div>'; }
-  function wireJumps() { mount.querySelectorAll("[data-jump]").forEach(function (b) { b.addEventListener("click", function () { var t = document.getElementById(b.getAttribute("data-jump")); if (t) t.scrollIntoView({ behavior: "smooth", block: "start" }); }); }); }
+  function wireJumpSpy() {
+    var chips = mount.querySelectorAll("[data-jump]"); if (!chips.length || !window.IntersectionObserver) return;
+    var mark = function (id) { chips.forEach(function (b) { var on = b.getAttribute("data-jump") === id; b.classList.toggle("on", on); if (on && b.scrollIntoView) { var row = b.parentElement; row.scrollTo({ left: b.offsetLeft - 24, behavior: "smooth" }); } }); };
+    var io = new IntersectionObserver(function (es) { es.forEach(function (e) { if (e.isIntersecting) mark(e.target.id); }); }, { rootMargin: "-130px 0px -60% 0px" });
+    chips.forEach(function (b) { var t = document.getElementById(b.getAttribute("data-jump")); if (t) io.observe(t); });
+  }
+  function wireJumps() { setTimeout(wireJumpSpy, 0); mount.querySelectorAll("[data-jump]").forEach(function (b) { b.addEventListener("click", function () { var t = document.getElementById(b.getAttribute("data-jump")); if (t) t.scrollIntoView({ behavior: "smooth", block: "start" }); }); }); }
 
   function screenBoardDay() {
     setTitle("Board Day Prep", true);
@@ -1093,7 +1100,9 @@
       (function () {
         var V = MockBoard.verdict(pct, bear.filter(function (b) { return !b.ok; }).map(function (b) { return b.label.toLowerCase(); }), ids.filter(function (id) { return byId[id] && byId[id].pub === "sit"; }).length);
         if (total < 8 && V.level !== "work") V = { level: "work", title: "Good practice", msg: pct + "% on a short board. Board-ready takes a full board of 10 or more questions." };
-        return '<div class="card" style="border-color:' + (V.level === "ready" ? 'var(--good)' : 'var(--gold)') + ';text-align:center;"><b>' + esc(V.title) + '.</b> <span class="muted">' + esc(V.msg.indexOf(V.title + ".") === 0 ? V.msg.slice(V.title.length + 1).trim() : V.msg) + '</span></div>';
+        var line = (V.msg.indexOf(V.title + ".") === 0 ? V.msg.slice(V.title.length + 1).trim() : V.msg).replace(/^(Your|Their) answers scored \d+%\. /, "");
+        return '<div class="done-h">' + esc(V.title) + '</div><p class="center muted" style="margin-top:0;">' + esc(line) + '</p>' +
+          (ids.length ? (Store.setChainRole("last-misses", ids.join(",")), '<a class="btn gold lg" href="#/flash/misses"><svg class=ic aria-hidden=true><use href=#i-refresh></use></svg> Drill your ' + ids.length + ' miss' + (ids.length === 1 ? '' : 'es') + ' now</a>') : '<a class="btn gold lg" href="#/board/core">Run a Mock Board on your own</a>');
       })() +
       (selfPct != null ? '<div class="card"><div class="flash-tag">You vs. your sponsor</div><div class="muted">Your own Mock Boards average <b>' + selfPct + '%</b>. Your sponsor scored you <b>' + pct + '%</b>. ' +
         (selfPct - pct >= 10 ? 'You grade yourself about ' + (selfPct - pct) + ' points higher than your sponsor does. Next time, only give yourself a key point if you said it out loud, clearly.' : selfPct - pct <= -10 ? 'Your sponsor scored you higher than you score yourself. You know more than you think.' : 'Your own grading is close to your sponsor&#39;s. You can trust your practice scores.') + '</div></div>' : '') +
@@ -1101,8 +1110,7 @@
       (note ? '<div class="card" style="border-color:var(--gold);"><div class="flash-tag">Your sponsor\'s notes</div><div style="white-space:pre-wrap;">' + esc(note) + '</div></div>' : '') +
       '<p class="center muted">' + (fresh ? "Saved to your history. " : "Already saved. ") + (ids.length ? "The questions you missed will come back sooner in your reviews:" : "No misses. Nice work.") + '</p>' +
       ids.map(function (id) { var c = byId[id]; return c ? '<details class="set-fold"><summary>' + esc(c.q) + '</summary><div style="padding:0 2px 10px;">' + esc(c.a) + '</div></details>' : ""; }).join("") +
-      (ids.length ? (Store.setChainRole("last-misses", ids.join(",")), '<div class="spacer"></div><a class="btn gold lg" href="#/flash/misses"><svg class=ic aria-hidden=true><use href=#i-refresh></use></svg> Drill your ' + ids.length + ' miss' + (ids.length === 1 ? '' : 'es') + ' now</a><div class="spacer"></div><a class="home-link" href="#/">Back to Home</a>')
-        : '<div class="spacer"></div><a class="btn gold lg" href="#/board/core">Run a Mock Board on your own</a><div class="spacer"></div><a class="home-link" href="#/">Back to Home</a>');
+      '<div class="spacer"></div><a class="home-link" href="#/">Back to Home</a>';
   }
 
 
@@ -1141,7 +1149,7 @@
     var PROG = { "core-50": [fB.seen, 50], "core-150": [fB.seen, 150], "core-all": [fB.seen, fB.total], "boards-5": [fB.boards, 5], "streak-7": [fB.streak, 7], "ready-50": [fB.ready, 50], "ready-80": [fB.ready, 80] };
     var row = function (b) {
       var on = !!got[b.id], when = on && got[b.id] > 946684800000 ? ' • ' + niceDate(got[b.id]) : '';
-      return '<div class="li"' + (on ? '' : ' style="opacity:.6;"') + '><span class="li-ic" aria-hidden="true">' + (b.ic || "<svg class=ic aria-hidden=true><use href=#i-medal></use></svg>") + '</span><span class="grow"><span class="t">' + esc(b.t) + '</span><span class="s">' + esc(b.d) + when + '</span></span>' + (!on && PROG[b.id] ? '<span class="pill">' + (/ready/.test(b.id) ? Math.min(PROG[b.id][0], PROG[b.id][1]) + '% of ' + PROG[b.id][1] + '%' : Math.min(PROG[b.id][0], PROG[b.id][1]) + ' / ' + PROG[b.id][1]) + '</span>' : '') + '</div>';
+      return '<div class="li"' + (on ? '' : ' style="opacity:.6;"') + '><span class="li-ic" aria-hidden="true">' + (b.ic || "<svg class=ic aria-hidden=true><use href=#i-medal></use></svg>") + '</span><span class="grow"><span class="t">' + esc(b.t) + '</span><span class="s">' + esc(!on && PROG[b.id] && PROG[b.id][1] > PROG[b.id][0] ? (PROG[b.id][1] - PROG[b.id][0]) + ' to go' : b.d) + when + '</span></span>' + (!on && PROG[b.id] ? '<span class="pill">' + (/ready/.test(b.id) ? Math.min(PROG[b.id][0], PROG[b.id][1]) + '% of ' + PROG[b.id][1] + '%' : Math.min(PROG[b.id][0], PROG[b.id][1]) + ' / ' + PROG[b.id][1]) + '</span>' : '') + '</div>';
     };
     var earned = BADGES.filter(function (b) { return got[b.id]; }), left = BADGES.filter(function (b) { return !got[b.id]; });
     var medal = function (b) { var when = got[b.id] > 946684800000 ? niceDate(got[b.id]) : 'Earned'; return '<div class="medal"><span class="medal-ic">' + (b.ic || '<svg class=ic aria-hidden=true><use href=#i-medal></use></svg>') + '</span><b>' + esc(b.t) + '</b><small>' + when + '</small></div>'; };
@@ -1247,7 +1255,7 @@
         var eds = Object.keys(by[k].ed).sort(function (x, y) { return by[k].ed[y] - by[k].ed[x]; });
         var pub = STUDY.pubs.filter(function (p) { return p.code === k; })[0];
         var inner = '<span class="grow"><span class="t" style="font-weight:600;">' + esc(k) + '</span><span class="s">' + esc(eds[0]) + ' \u2022 cited by ' + by[k].n + ' card' + (by[k].n === 1 ? '' : 's') + '</span></span>';
-        return pub ? '<a class="li" href="#/pub/' + escAttr(pub.id) + '">' + inner + '<span class="chev" aria-hidden="true"><svg class=ic aria-hidden=true><use href=#i-chev></use></svg></span></a>' : '<div class="li static">' + inner + '</div>';
+        return pub ? '<a class="li" href="#/pub/' + escAttr(pub.id) + '">' + inner + '<span class="chev" aria-hidden="true"><svg class=ic aria-hidden=true><use href=#i-chev></use></svg></span></a>' : '<div class="li static">' + inner.replace('</span></span>', ' \u2022 cited only</span></span>') + '</div>';
       }).join("") + '</div>' +
       '<div class="muted center" style="font-size:.85rem;margin-top:12px;">Spot a problem? Use the flag on any card.</div>';
   }

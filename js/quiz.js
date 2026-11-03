@@ -77,10 +77,10 @@
 
       function paintQuestion() {
         var item = questions[i];
-        if (window.App && !(opts && opts.onDone)) App.busy = function () { return i > 0 && container.isConnected; };
+        if (window.App && !(opts && opts.onDone)) App.busy = function () { return (i > 0 || !!container.querySelector("#qNext")) && container.isConnected; };
         selected = null;
         container.innerHTML =
-          '<div class="q-count mb-head"><span>Question ' + (i + 1) + '</span><span class="pills"><span class="pill">' + (i + 1) + ' / ' + questions.length + '</span><span class="pill score-pill" id="qScore"' + (i >= 3 ? '' : ' hidden') + '>Score ' + (i ? Math.round(100 * score / i) : 0) + '%</span></span></div><div class="progress-bar"><span style="width:' + Math.round(100 * i / questions.length) + '%"></span></div>' +
+          '<div class="q-count mb-head"><span>' + (opts && opts.onDone ? 'Practice \u2022 question ' : 'Question ') + (i + 1) + '</span><span class="pills"><span class="pill">' + (i + 1) + ' / ' + questions.length + '</span><span class="pill score-pill" id="qScore"' + (i >= 3 ? '' : ' hidden') + '>Score ' + (i ? Math.round(100 * score / i) : 0) + '%</span></span></div><div class="progress-bar"><span style="width:' + Math.round(100 * i / questions.length) + '%"></span></div>' +
           '<div class="card">' + (function () { var p = window.STUDY && STUDY.pubsById[item.card.pub]; var t = item.card.label || (p ? p.code : ""); return t ? '<div class="flash-tag">' + esc(t) + '</div>' : ''; })() + '<div class="q-text" style="margin:0;">' + esc(item.q) + '</div></div>' +
           '<div id="choices"></div>' +
           '<div id="verdict" class="verdict" role="status" aria-live="polite"></div>' +
@@ -150,7 +150,7 @@
         }
         if (sb) sb.replaceWith(nav); else container.appendChild(nav);
         var last = container.querySelector(".flash-ref") || verdict;
-        if (last && last.scrollIntoView) setTimeout(function () { last.scrollIntoView({ block: "nearest", behavior: "smooth" }); }, 30);
+        if (last) setTimeout(function () { var over = last.getBoundingClientRect().bottom - (window.innerHeight - 112); if (over > 0) window.scrollBy({ top: over, behavior: "smooth" }); }, 30);
       }
 
       function showResults() {
@@ -165,8 +165,8 @@
         var byPub = {}, pubOfK = {}; misses.forEach(function (c) { var p = window.STUDY && STUDY.pubsById[c.pub]; var k = c.label || (p ? p.code + (p.title && p.title !== p.code ? " \u2014 " + p.title : "") : c.pub || "Your cards"); byPub[k] = (byPub[k] || 0) + 1; pubOfK[k] = c.pub; });
         var weakK = Object.keys(byPub).sort(function (x, y) { return byPub[y] - byPub[x]; }).slice(0, 4);
         var weakHtml = weakK.length ? '<h2 class="section">Weakest subjects</h2><div class="lg">' + weakK.map(function (k) { return '<a class="li" href="#/flash/' + encodeURIComponent(pubOfK[k] || "") + '"><span class="grow">' + (function () { var x = k.split(" \u2014 "); return '<span class="t" style="font-weight:700;">' + esc(x[0]) + '</span>' + (x.length > 1 ? '<span class="s">' + esc(x.slice(1).join(" \u2014 ")) + '</span>' : ''); })() + '</span><b class="badge-bad" style="white-space:nowrap;">missed ' + byPub[k] + ' of ' + (nOfK[k] || byPub[k]) + '</b><span class="chev" aria-hidden="true"><svg class=ic aria-hidden=true><use href=#i-chev></use></svg></span></a>'; }).join("") + '</div>' : '';
-        var msg = pct >= 90 ? "Outstanding." : pct >= 75 ? "Solid. Keep drilling." :
-                  pct >= 60 ? "Passing, but review the misses." : "Needs work. Run it again.";
+        var msg = pct >= 90 ? "Outstanding. You know this set cold." : pct >= 75 ? "Solid. Drill the few misses and it sticks." :
+                  pct >= 60 ? "Passing. Review the misses below, then go again." : "Needs work. Drill the misses, then take another quiz.";
         container.innerHTML =
           '<div class="ring-wrap"><div class="ring ' + (pct >= 75 ? 'good' : pct >= 50 ? 'mid' : 'bad') + '" style="--p:' + pct + ';"><div class="ring-in">' + pct + '%</div></div><small>' + score + " of " + questions.length + ' correct</small></div>' +
           '<div class="done-h">' + msg.split(". ")[0].replace(/\.$/, "") + '</div><p class="center muted" style="margin-top:0;">' + (msg.split(". ").slice(1).join(". ") || "Run it again to lock it in.") + '</p>' + dots +

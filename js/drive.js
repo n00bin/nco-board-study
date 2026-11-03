@@ -122,7 +122,7 @@
             : '<div class="stop-ic"><svg class=ic aria-hidden=true><use href=#i-headphones></use></svg></div>') +
           '<div class="done-h">' + (upTo == null ? 'Drive Mode done' : 'Stopped') + '</div><p class="center muted" style="margin-top:0;">' + (upTo == null ? 'You heard every card in this set.' : 'Stopped on card ' + (n + 1) + ' of ' + deck.length + '. Pick up again any time; due cards come first.') + '</p>' +
           '<div class="spacer"></div>' +
-          '<button class="btn gold lg" id="again">' + (upTo == null ? 'Play again' : 'Start again') + '</button><div class="spacer"></div>' +
+          '<button class="btn gold lg" id="again">' + (upTo == null ? 'Play again' : 'Pick up again') + '</button><div class="spacer"></div>' +
           '<button class="home-link" id="home">Back to Home</button>';
         container.querySelector("#again").addEventListener("click", function () { Drive.render(container, cards, title); });
         container.querySelector("#home").addEventListener("click", function () { App.go("#/"); });
