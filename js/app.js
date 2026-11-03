@@ -582,7 +582,11 @@
         '<div class="muted center" style="font-size:.85rem;margin:6px 0;">They open the link and run the same board on their phone, with the answers and checklists.</div>' +
         '<button class="btn ghost" id="printSheet"><svg class=ic aria-hidden=true><use href=#i-print></use></svg> Print a paper board instead</button></details>' : '');
     var tch = mount.querySelector("#tChange"); if (tch) tch.addEventListener("click", function () { var b = mount.querySelector("#tChips"); b.hidden = !b.hidden; tch.querySelector(".pill").textContent = b.hidden ? "Change" : "Done"; });
-    mount.querySelectorAll("[data-tt]").forEach(function (b) { b.addEventListener("click", function () { Store.setSetting("timer", parseInt(b.getAttribute("data-tt"), 10)); screenBoard(deck); App.toast("Timer saved", 1200); }); });
+    mount.querySelectorAll("[data-tt]").forEach(function (b) { b.addEventListener("click", function () {
+      var tv = parseInt(b.getAttribute("data-tt"), 10); Store.setSetting("timer", tv);
+      mount.querySelectorAll("[data-tt]").forEach(function (o) { o.classList.toggle("on", o === b); });
+      var tc = mount.querySelector("#tChange"); if (tc) { tc.querySelector(".t").textContent = "Timer: " + (tv > 0 ? tv + "s per question" : "off"); tc.querySelector(".s").textContent = tv > 0 ? "Double for long answers and scenarios" : "Answer at your own pace"; tc.querySelector(".pill").textContent = "Change"; }
+      mount.querySelector("#tChips").hidden = true; App.toast("Timer saved", 1200); }); });
     var lenNote = function () { mount.querySelector("#lenNote").textContent = mount.querySelector("#fullBoard").checked ? "Full board, 10 questions: about 15 to 20 minutes. On a bus? Turn Full board off." : "Questions only: about 5 to 8 minutes for 10."; };
     mount.querySelector("#fullBoard").addEventListener("change", lenNote); lenNote();
     var ps = mount.querySelector("#printSheet");
@@ -631,7 +635,7 @@
       var hlW = new RegExp("\\b(" + safe + ")\\b", "ig"), hlP = new RegExp("(" + safe + ")", "ig"), hlRx = hlP;
       var hl = function (s) { return esc(s).replace(hlRx, "<mark>$1</mark>"); };
       var nWhole = all.filter(function (c) { return c._w; }).length, divDone = false;
-      results.innerHTML = hits.length ? '<div class="muted" style="font-size:.85rem;margin:4px 4px 8px;">' + all.length + ' result' + (all.length === 1 ? '' : 's') + '</div>' + note + hits.map(function (c) {
+      results.innerHTML = hits.length ? '<div class="muted" style="font-size:.85rem;margin:4px 4px 8px;">' + (hits.length < all.length ? 'Showing ' + hits.length + ' of ' + all.length + ' results' : all.length + ' result' + (all.length === 1 ? '' : 's')) + '</div>' + note + hits.map(function (c) {
         var p = STUDY.pubsById[c.pub]; hlRx = c._w ? hlW : hlP;
         var div = (!c._w && nWhole && !divDone) ? (divDone = true, '<div class="lg-h" style="margin-top:14px;">Inside longer words</div>') : '';
         return div + '<a class="card" style="display:block;text-decoration:none;color:inherit;" href="#/read/' + escAttr(c.pub) + '/' + escAttr(c.id) + '"><div class="flash-tag tag-row">' + esc(p ? p.code : "") + (c.topic ? " • " + esc(c.topic) : "") + (c.core ? '<span class="pill core-pill inline">Core</span>' : '') + '</div>' +
@@ -681,7 +685,7 @@
         [["SGT", "SGT (E-5)"], ["SSG", "SSG (E-6)"], ["BOTH", "Not sure"]].map(function (r) { return '<button class="chip' + ((s.boardFor || "BOTH") === r[0] ? ' on' : '') + '" data-r="' + r[0] + '">' + r[1] + '</button>'; }).join("") +
       '</div></div>' +
       '<h2 class="section">Your MOS</h2><div class="card" id="mosCard"><label class="lbl" for="mosIn" style="margin-top:0;">MOS code</label>' +
-        '<input class="input" id="mosIn" maxlength="3" autocapitalize="characters" placeholder="e.g. 25B" value="' + escAttr(s.mos || "") + '" style="max-width:140px;text-transform:uppercase;">' +
+        '<input class="input" id="mosIn" maxlength="3" autocapitalize="characters" placeholder="e.g. 25B" value="' + escAttr(s.mos || "") + '" style="max-width:140px;text-transform:uppercase;">' + (s.mos ? '' : '<div class="muted" style="font-size:.85rem;margin-top:6px;">Shows this month\u2019s SGT and SSG cutoff on Points.</div>') +
         '<div class="chip-row seg2" id="compChips" style="margin-top:10px;"><button class="chip' + (s.comp !== "agr" ? ' on' : '') + '" data-c="ac">Active Duty</button><button class="chip' + (s.comp === "agr" ? ' on' : '') + '" data-c="agr">AGR</button></div>' +
         '<div class="muted" id="mosCut" style="font-size:.85rem;margin-top:8px;">Fills in this month&#39;s cutoff on the Points worksheet.</div></div>' +
       '<h2 class="section">Study reminders</h2><div class="card"><div class="muted" style="font-size:.85rem;">Add a daily study reminder' + (s.boardDate ? ' (until your board)' : '') + ' and a weekly "sponsor board" reminder to your phone\'s calendar.</div>' +
@@ -1596,7 +1600,7 @@
       '<div id="exBox" hidden><div class="card" style="margin-top:10px;"><div class="flash-tag">Example (fictional Soldier: write your own)</div><div style="white-space:pre-wrap;margin-top:6px;">' +
         esc(SAMPLE_STATEMENT) + '</div><div class="muted" style="font-size:.85rem;margin-top:8px;">Keep yours about a minute. Say it, don\'t read it. Be specific: real duties, real accomplishments, real goals.</div></div></div>' +
       '<div class="spacer"></div><button class="btn gold lg" id="save">Done</button>';
-    mount.querySelector("#save").addEventListener("click", function () { Store.setStatement(mount.querySelector("#stmt").value); App.toast("Saved"); App.go("#/boardday"); });
+    mount.querySelector("#save").addEventListener("click", function () { Store.setStatement(mount.querySelector("#stmt").value); App.toast("Saved"); if (history.length > 1) history.back(); else App.go("#/boardday"); });
     mount.querySelector("#stmt").addEventListener("input", function () { Store.setStatement(this.value); flashSaved(); });
     mount.querySelector("#ex").addEventListener("click", function () { var b = mount.querySelector("#exBox"); b.hidden = !b.hidden; });
     mount.querySelector("#tmpl").addEventListener("click", function () { var t = mount.querySelector("#stmt"); if (!t.value.trim() || confirm("Replace current text with the template?")) t.value = skeleton; });

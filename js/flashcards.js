@@ -139,7 +139,7 @@
         var c = queue[i];
         Store.grade(c.id, g, conf);
         reviewed++; if (!(c.id in first)) first[c.id] = g;
-        if (g === "again") queue.push(c);   // loop back later this session
+        if (g === "again") { queue.push(c); if (!window.__ncobAgainTip) { window.__ncobAgainTip = 1; if (window.App && App.toast) App.toast("It comes back in a few cards", 1600); } }   // loop back later this session
         else passed++;
         i++;
         if (i >= queue.length) return done();
