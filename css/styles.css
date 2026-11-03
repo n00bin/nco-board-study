@@ -868,3 +868,22 @@ select.input { padding-right: 40px; text-overflow: ellipsis; white-space: nowrap
 body.session .drive-ctl #dPause { background: var(--gold); color: #1a1a0e; border-color: var(--gold); }
 body.session .drive-ctl #dPause svg.ic { color: #1a1a0e; }
 .splash-ver { text-align: center; }
+
+/* ---------- v3.44 polish round 17 ---------- */
+.grade-row.has-cap { flex-wrap: wrap; }
+.grade-cap { flex: 1 0 100%; text-align: center; font-size: .92rem; color: var(--text-dim); margin-bottom: 8px; }
+.score-flash { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(96px + env(safe-area-inset-bottom)); z-index: 20; max-width: calc(var(--maxw) - 48px); width: calc(100% - 48px);
+  text-align: center; font-weight: 800; padding: 12px 14px; border-radius: var(--radius); background: var(--surface-2); border: 1.5px solid var(--gold); color: var(--gold); box-shadow: 0 8px 22px rgba(0,0,0,.5); animation: ringpop .25s ease-out; }
+.score-flash.ok { border-color: var(--good); color: var(--good); }
+.score-flash.bad { border-color: #e5726e; color: #ff9b96; }
+.flashing .grade-row, .flashing #rubricDone { pointer-events: none; opacity: .5; }
+.open-hint { margin-top: 8px; font-size: .85rem; color: var(--gold); font-weight: 600; display: flex; align-items: center; gap: 2px; }
+.open-hint svg.ic { width: 16px; height: 16px; }
+.search-ic { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text-dim); pointer-events: none; display: inline-flex; }
+.search-wrap .input { padding-left: 42px; }
+/* the session header stays in view */
+body.session .q-count.mb-head { position: sticky; top: calc(56px + env(safe-area-inset-top)); z-index: 5; background: var(--bg); padding: 6px 0; margin: -6px 0 0; }
+.drive-card .flash-q { font-size: 1.6rem !important; line-height: 1.35 !important; }
+.drive-card .flash-a { font-size: 1.35rem !important; }
+.medal-grid { align-items: stretch; }
+.medal { justify-content: flex-start; min-height: 150px; }

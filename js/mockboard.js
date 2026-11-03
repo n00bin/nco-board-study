@@ -298,8 +298,8 @@
           if (left <= 0) { clearTimer(); onEnd(); }
         }, 1000);
       }
-      function gradeButtons(missLabel, gotLabel) {
-        return '<div class="grade-row"><button class="btn grade-again" id="miss">' + (missLabel || "Missed") + '</button>' +
+      function gradeButtons(missLabel, gotLabel, cap) {
+        return '<div class="grade-row' + (cap ? ' has-cap' : '') + '">' + (cap ? '<div class="grade-cap">' + cap + '</div>' : '') + '<button class="btn grade-again" id="miss">' + (missLabel || "Missed") + '</button>' +
           '<button class="btn grade-good" id="got">' + (gotLabel || "Got it") + '</button></div>';
       }
       function onGrade(fn) {
@@ -371,9 +371,9 @@
           '<div class="card">' + cmds.map(function (t, k) { return '<div class="row" style="margin-bottom:6px;"><div class="numbubble">' + (k + 1) + '</div><div class="grow"><div class="ttl" style="font-size:1.15rem;font-weight:700;">' + esc(t) + '</div></div></div>'; }).join("") +
             (sponsor ? '' : '<button class="btn ghost" id="sayIt" style="margin-top:6px;"><svg class=ic aria-hidden=true><use href=#i-speaker></use></svg> Call the commands for me</button>') +
             '<details class="fb-fold"><summary>How to do these</summary><div class="muted" style="font-size:.92rem;">' + drillHints(cmds) + 'Then ' + (sponsor ? 'tell the Soldier to take their seat.' : 'wait for the president to tell you to take your seat.') + '</div></details></div>' +
-          '<p class="center muted">' + (sponsor ? 'Were the movements crisp, on the command of execution, back to attention each time?' : 'Honest check: crisp, on the command of execution, back to attention each time?') + '</p>' +
+          
           mirrorButton() +
-          gradeButtons("Needs work", "Clean");
+          gradeButtons("Needs work", "Clean", (sponsor ? 'Were the movements crisp, on the command of execution, back to attention each time?' : 'Honest check: crisp, on the command of execution, back to attention each time?'));
         setTimeout(wireMirror, 0);
         var say = container.querySelector("#sayIt");
         if (say) say.addEventListener("click", function () {
@@ -399,8 +399,8 @@
               (Store.chain()["memo-report"] ? '<div class="muted">Your memo\'s wording: <b>"' + esc(Store.chain()["memo-report"]) + '"</b></div></div>'
                 : '<div class="muted">"Sergeant Major, ' + esc(Store.settings().displayName || "(your rank) (your last name)") + ' reports to the President of the Board." Use your board memo\'s exact wording (you can save it under Board Day Prep \u2192 My Board Memo).</div></div>')) +
           '<button class="btn ghost" id="showSteps">Show the reporting steps</button><div id="stepsBox" hidden>' + stepsList(all.slice(1, 5)) + '</div><div class="spacer"></div>' +
-          mirrorButton() + '<p class="center muted">' + (sponsor ? 'Did they halt about two steps in front of you, salute and hold it, say their correct rank, and sit only when told?' : 'Honest check: halted two steps in front of the president, saluted and held it until returned, said your correct rank, sat only when told?') + '</p>' +
-          gradeButtons("Needs work", "Clean");
+          mirrorButton() + 
+          gradeButtons("Needs work", "Clean", (sponsor ? 'Did they halt about two steps in front of you, salute and hold it, say their correct rank, and sit only when told?' : 'Honest check: halted two steps in front of the president, saluted and held it until returned, said your correct rank, sat only when told?'));
         container.querySelector("#showSteps").addEventListener("click", function () { var b = container.querySelector("#stepsBox"); b.hidden = !b.hidden; this.textContent = b.hidden ? "Show the reporting steps" : "Hide the reporting steps"; });
         wireMirror();
         onGrade(function (ok) { bearing.push({ label: "Reporting in", ok: ok }); next(); });
@@ -432,7 +432,7 @@
           else container.querySelector("#introDone").addEventListener("click", function () {
             var n = 0; container.querySelectorAll(".ip").forEach(function (b) { if (b.checked) n++; });
             bearing.push({ label: "Tell us about yourself", ok: n >= 3 });
-            var bt = container.querySelector("#introDone"); bt.disabled = true; bt.textContent = "Next: the board";
+            var bt = container.querySelector("#introDone"); bt.disabled = true; bt.style.visibility = "hidden";
             bt.insertAdjacentHTML("beforebegin", '<div class="intro-note result-flash' + (n < 3 ? ' warn' : '') + '">' + (n >= 3 ? '\u2713 Good intro: ' + n + ' of 4 covered.' : n + ' of 4 covered. Add the rest next time.') + '</div>');
             setTimeout(next, 1300);
           });
@@ -604,7 +604,12 @@
           while (at < steps.length && steps[at].kind !== "member" && steps[at].kind !== "reportOut") at++;
           steps.splice(at, 0, { kind: "comeback", c: c });
         }
-        next();
+        if (c.unfilled) return next();
+        var fl = document.createElement("div"); fl.className = "score-flash result-flash " + (score >= 0.99 ? "ok" : score >= 0.66 ? "mid" : "bad");
+        fl.textContent = score >= 0.99 ? "\u2713 Full answer" : score >= 0.66 ? "With gaps: " + Math.round(score * 100) + "%" + (score >= 0.5 && fups.length ? ". A follow-up is coming." : "") : score > 0 ? Math.round(score * 100) + "%. The board will come back to it." : "Missed. The board will come back to it.";
+        if (opts.quick && score < 0.66) fl.textContent = score > 0 ? Math.round(score * 100) + "%. It goes on your drill list." : "Missed. It goes on your drill list.";
+        container.appendChild(fl); container.classList.add("flashing");
+        setTimeout(function () { container.classList.remove("flashing"); next(); }, 900);
       }
 
       // second chance on a missed question: the board comes back to it
@@ -687,6 +692,7 @@
         var pubOf = {}; cards.forEach(function (c) { pubOf[c.id] = c.pub; });
         var sitMiss = missedIds.filter(function (id, k) { return pubOf[id] === "sit" && missedIds.indexOf(id) === k; }).length;
         var V = verdict(pct, bearingMiss, sitMiss), notReady = V.level === "almost", msg = V.msg;
+        var handheld = sponsor && !document.body.classList.contains("guest");
         if (sponsor) msg = msg.replace(/^Your answers/, "Their answers").replace(/so tighten up/, "so have them tighten up")
           .replace(/Drill the misses/, "Have them drill the misses").replace(/Study the misses, then run it again/, "Have them study the misses, then run it again").replace(/Tighten the misses/, "Have them tighten the misses");
         if (deck.length < 8 && V.level !== "work") { V = { level: "work", title: "Good practice", msg: pct + "% on a short board. Board-ready takes a full board of 10 or more questions." }; msg = V.msg; }
@@ -711,8 +717,9 @@
               '';
           })() +
           // the next step first: drill the misses (or run another), then the details
-          (missed.length && !sponsor ? '<button class="btn gold lg" id="drillMiss"><svg class=ic aria-hidden=true><use href=#i-refresh></use></svg> Drill the ' + missed.length + ' you didn\'t pass</button><div class="spacer"></div>' : '');
-        if (sponsor) html += '<h2 class="section">Your notes for the Soldier (optional)</h2><textarea class="input" id="sbNote" rows="3" maxlength="300" placeholder="e.g. Good bearing. Rambled on the intro; slow down on SHARP answers."></textarea>' +
+          (missed.length && (!sponsor || handheld) ? '<button class="btn gold lg" id="drillMiss"><svg class=ic aria-hidden=true><use href=#i-refresh></use></svg> Drill the ' + missed.length + ' you didn\'t pass</button><div class="spacer"></div>' : '');
+        if (handheld) html += '<div class="intro-note">Hand the phone back to the Soldier. Their score is saved here.</div>';
+        if (sponsor && !handheld) html += '<h2 class="section">Your notes for the Soldier (optional)</h2><textarea class="input" id="sbNote" rows="3" maxlength="300" placeholder="e.g. Good bearing. Rambled on the intro; slow down on SHARP answers."></textarea>' +
           '<div class="spacer"></div><button class="btn gold lg" id="sendBack"><svg class=ic aria-hidden=true><use href=#i-send></use></svg> Send results to the Soldier</button>' +
           '<div class="muted center" style="font-size:.85rem;margin-top:6px;">They open the link on their phone: the score goes into their history and the questions they missed come back sooner.</div>';
         if (bearing.length) {

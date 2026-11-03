@@ -449,11 +449,8 @@
       '<div class="hero">' + (p.title !== p.code ? '<div style="font-size:1.15rem;font-weight:700;margin:0 0 4px;">' + esc(p.title) + '</div>' : '') +
         '<div class="sub">' + pc.length + ' cards • ' + m + '% mastered</div>' +
         '<div class="bar"><span style="width:' + m + '%"></span></div></div>' +
-      '<div class="btn-row">' +
-        '<a class="btn gold lg" href="#/flash/' + id + '">Flashcards</a>' +
-        (pc.filter(function (c) { return !c.flashOnly && ((c.choices && c.choices.length >= 2) || (c.a && String(c.a).length <= 90)); }).length >= 4 ? '<a class="btn ghost lg" href="#/quiz/' + id + '">Quiz</a>' : '<a class="btn green lg" href="#/board/' + id + '">Practice out loud</a>') + '</div>' +
-      '<div class="spacer"></div><a class="btn ghost" href="#/board/' + id + '"><svg class=ic aria-hidden=true><use href=#i-users></use></svg> Mock Board on this subject</a>' +
-      '<div class="spacer"></div><a class="btn ghost" href="#/read/' + id + '"><svg class=ic aria-hidden=true><use href=#i-book></use></svg> Read all ' + pc.length + ' cards in a list</a>' +
+      '<a class="btn gold lg" href="#/flash/' + id + '"><svg class=ic aria-hidden=true><use href=#i-cards></use></svg> Study with flashcards</a>' +
+      group("", [(pc.filter(function (c) { return !c.flashOnly && ((c.choices && c.choices.length >= 2) || (c.a && String(c.a).length <= 90)); }).length >= 4 ? li("#/quiz/" + id, "<svg class=ic aria-hidden=true><use href=#i-check></use></svg>", "Quiz", "Multiple choice on this subject") : ''), li("#/board/" + id, "<svg class=ic aria-hidden=true><use href=#i-users></use></svg>", "Mock Board", "Answer out loud, like the real board"), li("#/read/" + id, "<svg class=ic aria-hidden=true><use href=#i-book></use></svg>", "Read all " + pc.length + " cards", "One long list, Board Core first")].filter(Boolean)) +
       '<h2 class="section">Your progress here</h2><div class="stat3"><div><b>' + counts.known + '</b><span>known</span></div><div><b>' + counts.review + '</b><span>to review</span></div><div><b>' + counts.new + '</b><span>new</span></div></div>';
   }
 
@@ -483,7 +480,7 @@
     if (mode === "drive")
       html += '<div class="card"><div class="muted">Hands-free: the app reads each question, pauses for you to answer aloud, then reads the answer. Great for PT or the drive in — keep the screen on.</div></div>';
     var quizOk = function (c) { return !c.flashOnly && ((c.choices && c.choices.length >= 2) || (c.a && String(c.a).length <= 90)); };
-    var cnt = function (cs) { return mode === "quiz" ? cs.filter(quizOk).length : mode === "drive" ? (Store.buildQueue(cs).length || cs.length) : cs.length; };
+    var cnt = function (cs) { var n = mode === "quiz" ? cs.filter(quizOk).length : mode === "drive" ? (Store.buildQueue(cs).length || cs.length) : cs.length; return n ? n + (mode === "quiz" ? " Qs" : mode === "drive" ? " to play" : "") : 0; };
     html += '<div class="muted" style="font-size:.85rem;margin:0 4px 8px;">' + (mode === "quiz" ? "Numbers are quiz questions (cards with a short answer)." : mode === "drive" ? "Numbers are cards due or new for you today." : "Numbers are cards in each set.") + '</div>';
     html += '<div class="lg pick-top">' + liDeck(route + "core", "<svg class=ic aria-hidden=true><use href=#i-star></use></svg> Board Core", "Recommended: the must-know questions boards ask most", cnt(cardsForDeck("core")), "core") +
       liDeck(route + "all", "Everything", "All subjects, including deep detail", cnt(cardsForDeck("all")), "all") + '</div>';
@@ -551,13 +548,12 @@
         '<a class="li" href="#/settings/timer"><span class="grow"><span class="t">Timer: ' + (timer > 0 ? timer + ' seconds a question' : 'off') + '</span><span class="s">' + (timer > 0 ? 'Double for long answers and scenarios' : 'Answer at your own pace') + '</span></span><span class="pill">Change</span></a>' +
         '<label class="switch li"><input type="checkbox" id="fullBoard"' + (Store.settings().fullBoard !== false ? " checked" : "") + '> <span class="grow"><span class="t">Full board</span><span class="s">Report in, drill, introduce yourself</span></span></label>' +
         (window.speechSynthesis ? '<label class="switch li"><input type="checkbox" id="listenOnly"' + (Store.settings().listenOnly ? " checked" : "") + '> <span class="grow"><span class="t">Listen-only</span><span class="s">Hear each question, don\u2019t read it</span></span></label>' : '') +
-        (/^(core|top|final)$/.test(deck) ? '' : '<label class="switch li"><input type="checkbox" id="sponsorMode"> <span class="grow"><span class="t">Sponsor holds the phone</span><span class="s">They read, see the answer, and grade you</span></span></label>') +
+        '<label class="switch li"><input type="checkbox" id="sponsorMode"> <span class="grow"><span class="t">Sponsor holds this phone</span><span class="s">They read, see the answer, and grade you</span></span></label>' +
       '</div>' +
       '<button class="btn gold lg" data-n="10"><svg class=ic aria-hidden=true><use href=#i-play></use></svg> Start a 10-question board</button>' +
       '<div class="muted center" style="font-size:.85rem;margin:6px 0 10px;" id="lenNote"></div>' +
       '<div class="lg-h" style="margin-top:2px;">Other lengths</div><div class="len-row"><button class="chip" data-n="5" data-quick="1"><b>5</b><small>quick</small></button><button class="chip" data-n="15"><b>15</b><small>longer</small></button><button class="chip" data-n="25"><b>25</b><small>full-length</small></button></div>' +
-      (/^(core|top|final)$/.test(deck) ? '<details class="set-fold" style="margin-top:14px;"><summary>Practice with your sponsor</summary>' +
-        '<div class="lg opts" style="margin-top:4px;"><label class="switch li"><input type="checkbox" id="sponsorMode"> <span class="grow"><span class="t">Sponsor holds this phone</span><span class="s">They read, see the answer, and grade you. Then tap Start.</span></span></label></div>' +
+      (/^(core|top|final)$/.test(deck) ? '<details class="set-fold" style="margin-top:14px;"><summary>Send or print a board for your sponsor</summary>' +
         '<button class="btn ghost" id="sendSponsor" style="margin-top:8px;"><svg class=ic aria-hidden=true><use href=#i-send></use></svg> Send a board to my sponsor</button>' +
         '<div class="muted center" style="font-size:.85rem;margin:6px 0;">They open the link and run the same board on their phone, with the answers and checklists.</div>' +
         '<button class="btn ghost" id="printSheet"><svg class=ic aria-hidden=true><use href=#i-print></use></svg> Print a paper board instead</button></details>' : '');
@@ -586,7 +582,7 @@
 
   function screenSearch() {
     setTitle("Search", true);
-    mount.innerHTML = '<div class="search-wrap"><input class="input" id="q" type="search" aria-label="Search questions and answers" placeholder="Search questions & answers..." autocomplete="off" /><button class="search-x" id="qx" aria-label="Clear search" hidden>&#10005;</button></div><div id="results" class="spacer" aria-live="polite"></div>';
+    mount.innerHTML = '<div class="search-wrap"><span class="search-ic" aria-hidden="true"><svg class=ic aria-hidden=true><use href=#i-search></use></svg></span><input class="input" id="q" type="search" aria-label="Search questions and answers" placeholder="Search questions & answers..." autocomplete="off" /><button class="search-x" id="qx" aria-label="Clear search" hidden>&#10005;</button></div><div id="results" class="spacer" aria-live="polite"></div>';
     var input = mount.querySelector("#q"), results = mount.querySelector("#results");
     function run() {
       var term = input.value.trim().toLowerCase();
@@ -606,7 +602,7 @@
       results.innerHTML = hits.length ? '<div class="muted" style="font-size:.85rem;margin:4px 4px 8px;">' + all.length + ' result' + (all.length === 1 ? '' : 's') + '</div>' + note + hits.map(function (c) {
         var p = STUDY.pubsById[c.pub];
         return '<a class="card" style="display:block;text-decoration:none;color:inherit;" href="#/read/' + escAttr(c.pub) + '/' + escAttr(c.id) + '"><div class="flash-tag tag-row">' + esc(p ? p.code : "") + (c.topic ? " • " + esc(c.topic) : "") + (c.core ? '<span class="pill core-pill inline">Core</span>' : '') + '</div>' +
-          '<div style="font-weight:600;margin-bottom:6px;">' + hl(c.q) + '</div><div class="muted">' + hl(c.a) + '</div></a>';
+          '<div style="font-weight:600;margin-bottom:6px;">' + hl(c.q) + '</div><div class="muted">' + hl(c.a) + '</div><div class="open-hint">Open in ' + esc(p ? p.code : "its subject") + ' <svg class=ic aria-hidden=true><use href=#i-chev></use></svg></div></a>';
       }).join("") : '<div class="empty">No matches. Try a shorter word, or one of these:</div>' + tryChips();
     }
     try { var q0 = sessionStorage.getItem("ncob-q"); if (q0) input.value = q0; } catch (e) {}
@@ -1663,7 +1659,8 @@
   function setTitle(t, showBack) {
     titleEl.textContent = SHORT[t] || t;
     var h = (location.hash || "#/").replace(/^#\//, "").split("/")[0];
-    backBtn.hidden = !showBack || /^(|learn|browse|search|more)$/.test(h);   // tab screens: the tab bar is the way back
+    var inApp = false; try { if (!document.body.classList.contains("guest")) sessionStorage.setItem("ncob-inapp", "1"); inApp = !!sessionStorage.getItem("ncob-inapp"); } catch (e) {}
+    backBtn.hidden = !showBack || /^(|learn|browse|search|more)$/.test(h) || (document.body.classList.contains("guest") && !inApp);   // tab screens: the tab bar is the way back
   }
 
   // Calendar file with a daily study reminder (until the board date, if set) and a weekly sponsor-board reminder.
