@@ -173,7 +173,7 @@
           (misses.length ? '<button class="btn gold lg" id="drillQ"><svg class=ic aria-hidden=true><use href=#i-refresh></use></svg> Drill your ' + misses.length + ' miss' + (misses.length === 1 ? '' : 'es') + ' now</button>' : '') +
           weakHtml + missHtml + '<div class="spacer"></div><button class="btn ' + (misses.length ? 'ghost' : 'gold') + ' lg" id="again">Try another quiz</button>' +
           '<div class="spacer"></div>' +
-          '<button class="btn ghost lg" id="home">Back to Home</button>';
+          '<button class="home-link" id="home">Back to Home</button>';
         container.querySelector("#again").addEventListener("click", function () {
           Quiz.render(container, cards, title, length);
         });

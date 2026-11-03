@@ -96,13 +96,13 @@
         container.querySelector("#fBar").style.width = Math.round(100 * passed / Math.max(1, passed + left)) + "%";
         container.querySelector("#fProg").innerHTML = '<span>' + passed + ' done' + (reviewed > passed ? ' \u2022 misses come back' : '') + '</span><span class="pill">' + left + ' to go \u2022 ~' + mins + ' min</span>';
         container.querySelector("#fTagF").textContent = pubCode(c) + (c.adv ? " \u2022 Advanced" : "");   // topic only on the back: it can give the answer away
-        container.querySelector("#fTagB").textContent = "Answer" + (c.topic ? " • " + c.topic : "");
+        container.querySelector("#fTagB").textContent = pubCode(c) || "Answer";
         container.querySelector("#fQ").textContent = c.q;
         // Wait for the flip-back animation before swapping in the next answer, so it never flashes.
         var fill = function () {
           // the question stays visible on the back, and the card grows to fit long answers instead of clipping them
           container.querySelector("#fA").style.fontSize = String(c.a).length > 220 ? "1rem" : "";   // long answers: calmer size
-          container.querySelector("#fA").innerHTML = '<div class="muted" style="font-size:.85rem;margin-bottom:8px;">' + esc(c.q) + '</div>' +
+          container.querySelector("#fA").innerHTML = '<div class="back-q">' + esc(c.q) + '</div>' +
             esc(c.a).replace(/\n/g, "<br>") +
             (c.changed ? '<div class="flash-ref" style="color:var(--gold);margin-top:10px;"><svg class=ic aria-hidden=true><use href=#i-alert></use></svg> ' + esc(c.changed) + '</div>' : "") +
             (c.why ? '<div class="flash-ref" style="color:var(--text);margin-top:12px;"><b>Why it matters:</b> ' + esc(c.why) + '</div>' : "") +
@@ -149,8 +149,8 @@
         if (opts && opts.onDone) return opts.onDone(reviewed);
         container.innerHTML =
           finishHtml(first) + '<div class="spacer"></div>' + (window.App && App.sessionNextHtml ? App.sessionNextHtml() : '') +
-          '<button class="btn ' + (hasMiss(first) ? 'ghost' : 'gold') + ' lg" id="again">Study more</button>' + nextStep() + '<div class="spacer"></div>' +
-          '<button class="btn ghost lg" id="home">Back to Home</button>';
+          (hasMiss(first) && nextStep() ? '<button id="again" hidden></button>' : '<button class="btn ' + (hasMiss(first) ? 'ghost' : 'gold') + ' lg" id="again">Study more</button>') + nextStep() + '<div class="spacer"></div>' +
+          '<button class="home-link" id="home">Back to Home</button>';
         container.querySelector("#again").addEventListener("click", function () { Flashcards.render(container, cards, title, opts); });
         container.querySelector("#home").addEventListener("click", function () { App.go("#/"); });
       }
@@ -229,7 +229,7 @@
         i++;
         if (i >= queue.length) {
           container.innerHTML = finishHtml(first) + '<div class="spacer"></div>' +
-            '<button class="btn ' + (hasMiss(first) ? 'ghost' : 'gold') + ' lg" id="again">Study more</button>' + nextStep() + '<div class="spacer"></div><button class="btn ghost lg" id="home">Back to Home</button>';
+            (hasMiss(first) && nextStep() ? '<button id="again" hidden></button>' : '<button class="btn ' + (hasMiss(first) ? 'ghost' : 'gold') + ' lg" id="again">Study more</button>') + nextStep() + '<div class="spacer"></div><button class="home-link" id="home">Back to Home</button>';
           container.querySelector("#again").addEventListener("click", function () { Flashcards.renderTyped(container, cards, title); });
           container.querySelector("#home").addEventListener("click", function () { App.go("#/"); });
           return;

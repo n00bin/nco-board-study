@@ -813,3 +813,16 @@ details.set-fold.score-how { max-width: none; margin: 8px 0 12px; }
 
 .mb-head + .progress-bar:has(+ .timer-big) { display: none; }
 #ptSticky { width: calc(100% - 32px); max-width: calc(var(--maxw) - 32px); }
+
+/* ---------- v3.40 polish round 13 ---------- */
+.btn.result-flash.warn:disabled { color: var(--gold); border-color: var(--gold); }
+.lg-h, [id^="cat"] { scroll-margin-top: 72px; }
+.toast { border-radius: 14px !important; max-width: 300px; }
+.home-link { display: block; width: 100%; min-height: 48px; margin: 4px 0 0; background: none; border: none; color: var(--text-dim); font: inherit; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; text-align: center; }
+a.home-link { line-height: 48px; }
+.dot-legend { gap: 10px; font-size: .85rem; }
+.back-q { font-size: 1rem; color: var(--text); font-weight: 600; margin-bottom: 10px; line-height: 1.35; }
+.stop-ic { display: grid; place-items: center; width: 84px; height: 84px; margin: 28px auto 8px; border-radius: 50%; background: var(--surface-2); color: var(--gold); }
+.stop-ic svg.ic { width: 40px; height: 40px; }
+#ptSticky.typing { opacity: 0; pointer-events: none; }
+.rv-row > [hidden] { display: none !important; }

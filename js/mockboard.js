@@ -276,8 +276,8 @@
       function header(label) {
         var localN = deck.filter(function (c) { return c.local; }).length, totalQ = deck.length - localN;
         var kind = steps[s] && steps[s].kind, KL = { reportIn: "Reporting in", drill: "Facing movements", intro: "Tell us about yourself", member: "Next board member", reportOut: "Reporting out", follow: "Follow-up to question " + qNum };
-        var txt = label ? label : (kind && kind !== "q" && KL[kind]) ? KL[kind] : curLocal ? "About your unit" : qNum ? "Question " + qNum + " of " + totalQ : "";
-        return '<div class="q-count mb-head"><span>' + txt + '</span>' + (asked >= 3 ? '<span class="pill score-pill">Score ' + Math.round(100 * got / asked) + '%</span>' : '') + '</div>' +
+        var txt = label ? label : (kind && kind !== "q" && KL[kind]) ? KL[kind] : curLocal ? "About your unit" : qNum ? "Question " + qNum : "";
+        return '<div class="q-count mb-head"><span>' + txt + '</span>' + (asked >= 3 ? '<span class="pill score-pill">Score ' + Math.round(100 * got / asked) + '%</span>' : qNum ? '<span class="pill">' + Math.min(qNum, totalQ) + ' / ' + totalQ + '</span>' : '') + '</div>' +
           '<div class="progress-bar"><span style="width:' + Math.round(100 * Math.min(1, qNum / Math.max(1, totalQ))) + '%"></span></div>';
       }
       function timerHtml(t, why) {
@@ -306,7 +306,7 @@
         container.querySelector("#got").addEventListener("click", function () { fn(true); });
         container.querySelector("#miss").addEventListener("click", function () { fn(false); });
       }
-      function next() { stopMirror(); s++; if (s >= steps.length) return results(); show(); }
+      function next() { stopMirror(); s++; window.scrollTo(0, 0); if (s >= steps.length) return results(); show(); }
 
       // Key-point rubric (scenario cards with `points`): tick what the answer actually covered; partial credit.
       function rubricHtml(c, who) {
@@ -321,10 +321,11 @@
       function onRubric(fn, c) {
         // if the checklist is still below the fold, the first tap takes you to it instead of scoring an unticked answer
         var btn = container.querySelector("#rubricDone"), rc = btn.previousElementSibling, gate = false;
-        if (window.IntersectionObserver && rc && rc.getBoundingClientRect().top > window.innerHeight - 140) {
+        var firstBox = rc && rc.querySelector("label.switch");
+        if (window.IntersectionObserver && firstBox && firstBox.getBoundingClientRect().bottom > window.innerHeight - 110) {
           gate = true; btn.textContent = sponsor ? "Tick what they said \u2193" : "Tick what you said \u2193";
-          var io = new IntersectionObserver(function (es) { if (es.some(function (e) { return e.isIntersecting; })) { gate = false; btn.textContent = "Score this answer"; io.disconnect(); } }, { rootMargin: "0px 0px -100px 0px" });
-          io.observe(rc);
+          var io = new IntersectionObserver(function (es) { if (es.some(function (e) { return e.isIntersecting; })) { gate = false; btn.textContent = "Score this answer"; io.disconnect(); } }, { rootMargin: "0px 0px -110px 0px" });
+          io.observe(firstBox);
         }
         btn.addEventListener("click", function () {
           if (gate) { gate = false; btn.textContent = "Score this answer"; rc.scrollIntoView({ behavior: "smooth", block: "center" }); return; }
@@ -340,7 +341,7 @@
       function fmt(x) { return (Math.round(x * 10) / 10).toString(); }
 
       function show() {
-        clearTimer(); document.querySelectorAll(".toast").forEach(function (t) { t.remove(); });
+        clearTimer(); window.scrollTo(0, 0); document.querySelectorAll(".toast").forEach(function (t) { t.remove(); });
         if (window.App) App.busy = function () { return container.isConnected; };
         var st = steps[s];
         if (st.kind === "q") { curLocal = !!st.c.local; curStyle = st.style || "standard"; curVoice = VOICES[st.mi || 0] || VOICES[0]; return question(st.c); }
@@ -431,7 +432,7 @@
           else container.querySelector("#introDone").addEventListener("click", function () {
             var n = 0; container.querySelectorAll(".ip").forEach(function (b) { if (b.checked) n++; });
             bearing.push({ label: "Tell us about yourself", ok: n >= 3 });
-            var bt = container.querySelector("#introDone"); bt.disabled = true; bt.classList.add("result-flash");
+            var bt = container.querySelector("#introDone"); bt.disabled = true; bt.classList.add("result-flash"); if (n < 3) bt.classList.add("warn");
             bt.textContent = n >= 3 ? "\u2713 Good intro: " + n + " of 4 covered" : n + " of 4 covered. Add the rest next time";
             setTimeout(next, 1300);
           });
@@ -497,7 +498,7 @@
         voice.text = ""; voice.paused = false; voice.started = false;
         var b = container.querySelector("#voiceBtn"); if (!b) return;
         if (c && (c.local || c.pub === "personal")) {   // your unit, your leaders, your life: keep it off the speech service
-          b.textContent = "No voice check here"; b.disabled = true; b.title = "Off for personal and your-unit questions"; return;
+          b.hidden = true; b.disabled = true; var sp0 = b.nextElementSibling; if (sp0 && sp0.classList.contains("spacer")) sp0.hidden = true; return;
         }
         var start = function () {
           Store.setSetting("voiceAuto", true); voice.started = true;
@@ -549,7 +550,7 @@
           (c.sample && c.pub === "personal" ? '<div class="flash-ref" style="color:var(--text);margin-top:10px;"><b>Example answer (fictional Soldier):</b> ' + esc(c.sample) + '</div>' : '');
       }
       function reveal(c) {
-        clearTimer();
+        clearTimer(); window.scrollTo(0, 0);
         if (autoRead) Speech.speak(c.a);
         var listened = SR && voice.started && !voice.paused && !c.unfilled;
         container.innerHTML = header() +
@@ -693,7 +694,7 @@
         var countLine = nQ + " question" + (nQ === 1 ? "" : "s") + (nF ? ", " + nF + " follow-up" + (nF === 1 ? "" : "s") + " or second tries" : "");
         var strongB = pct >= 75 && !notReady && V.level !== "work" && deck.length >= 8;
         var vTitle = strongB ? "Strong board" : V.title, vLine = strongB ? (missed.length ? (sponsor ? "Have them tighten the " : "Tighten the ") + missed.length + " miss" + (missed.length === 1 ? "" : "es") + ", then run another." : "Keep it sharp with a board every few days.")
-          : (msg.indexOf(V.title + ".") === 0 ? msg.slice(V.title.length + 1).trim() : msg);
+          : (msg.indexOf(V.title + ".") === 0 ? msg.slice(V.title.length + 1).trim() : msg).replace(/^(Your|Their) answers scored \d+%\. /, "");
         var html = '<div class="ring-wrap"><div class="ring ' + (pct >= 75 ? 'good' : pct >= 50 ? 'mid' : 'bad') + '" style="--p:' + pct + ';"><div class="ring-in">' + pct + '%</div></div><small>' + (extras.length ? 'score, incl. second tries &amp; follow-ups' : 'score') + '</small></div>' +
           '<div class="done-h">' + (strongB ? '<svg class=ic aria-hidden=true><use href=#i-trophy></use></svg> ' : '') + esc(vTitle) + '</div><p class="center muted" style="margin-top:0;">' + esc(vLine) + '</p>' +
           (function () {
@@ -734,7 +735,7 @@
           });
           html += '</details>';
         }
-        html += (window.App && App.sessionNextHtml ? App.sessionNextHtml() : '') + '<div class="spacer"></div><button class="btn ' + (missed.length || sponsor ? 'ghost' : 'gold') + ' lg" id="again">Run another board</button><div class="spacer"></div><button class="btn ghost lg" id="home">Back to Home</button>';
+        html += (window.App && App.sessionNextHtml ? App.sessionNextHtml() : '') + '<div class="spacer"></div><button class="btn ' + (missed.length || sponsor ? 'ghost' : 'gold') + ' lg" id="again">Run another board</button><div class="spacer"></div><button class="home-link" id="home">Back to Home</button>';
         container.innerHTML = html;
         container.querySelector("#again").addEventListener("click", function () { MockBoard.render(container, cards, length, opts); });
         container.querySelector("#home").addEventListener("click", function () { App.go("#/"); });

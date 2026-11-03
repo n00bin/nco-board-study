@@ -146,7 +146,7 @@
         var td = doneCount(t.lessons);
         var tp = t.lessons.length ? Math.round((td / t.lessons.length) * 100) : 0;
         html += '<a class="row" href="#/track/' + t.id + '"><div class="grow"><div class="code">' + esc(t.title) + '</div>' +
-          '<div class="meta">' + td + ' / ' + t.lessons.length + ' lessons' + (t.id === "sit" || t.id === "personal" ? ' \u2022 asked at every board' : '') + '</div>' +
+          '<div class="meta">' + td + ' / ' + t.lessons.length + (t.lessons.length === 1 ? ' lesson' : ' lessons') + (t.id === "sit" || t.id === "personal" ? ' \u2022 asked at every board' : '') + '</div>' +
           '<div class="bar"><span style="width:' + tp + '%"></span></div></div><div class="chev" aria-hidden="true"><svg class=ic aria-hidden=true><use href=#i-chev></use></svg></div></a>';
       });
       if (shownExtra) html += '</details>';
@@ -168,7 +168,7 @@
       var t = tracks.filter(function (x) { return x.id === trackId; })[0];
       if (!t) return Learn.hub(container);
       var tdn = doneCount(t.lessons);
-      var html = '<div class="track-prog"><span>' + tdn + ' of ' + t.lessons.length + ' lessons done</span><div class="bar"><span style="width:' + Math.round(100 * tdn / Math.max(1, t.lessons.length)) + '%"></span></div></div>' +
+      var html = '<div class="track-prog"><span>' + tdn + ' of ' + t.lessons.length + (t.lessons.length === 1 ? ' lesson' : ' lessons') + ' done</span><div class="bar"><span style="width:' + Math.round(100 * tdn / Math.max(1, t.lessons.length)) + '%"></span></div></div>' +
         (t.overview ? '<div class="muted" style="margin:2px 4px 10px;">' + esc(t.overview) + '</div>' : '');
       var nx = t.lessons.filter(function (l) { return !isDone(l); })[0];
       if (nx) html += '<a class="btn gold lg" href="#/lesson/' + nx.id + '" style="margin-bottom:12px;"><svg class=ic aria-hidden=true><use href=#i-play></use></svg> ' + (t.lessons.indexOf(nx) ? 'Continue: lesson ' + (t.lessons.indexOf(nx) + 1) : 'Start lesson 1') + '</a>';
@@ -213,7 +213,7 @@
             (c.sample ? '<div class="flash-ref" style="color:var(--text);margin-top:12px;"><b>Example answer (fictional Soldier, make it yours):</b> ' + esc(c.sample) + '</div>' : '') +
             (c.ref ? '<div class="flash-ref">' + esc(c.ref) + '</div>' : '') + '</div>' +
           '<div class="btn-row lesson-nav">' +
-            (i > 0 ? '<button class="btn ghost" id="lPrev">&#8592; Back</button>' : '') +
+            (i > 0 ? '<button class="btn ghost" id="lPrev"><svg class=ic aria-hidden=true><use href=#i-back></use></svg> Back</button>' : '') +
             '<button class="btn gold" id="lNext">' + (i + 1 >= lesson.cards.length ? "Practice <svg class=ic aria-hidden=true><use href=#i-chev></use></svg>" : "Next <svg class=ic aria-hidden=true><use href=#i-chev></use></svg>") + '</button></div>';
         container.querySelector("#lSpeak").addEventListener("click", function () { Speech.speak(c.q + ". " + c.a); });
         if (container.querySelector("#lPrev")) container.querySelector("#lPrev").addEventListener("click", function () { i--; teach(); });
@@ -226,7 +226,7 @@
         var quizzable = lesson.cards.filter(function (c) { return !c.flashOnly && ((c.choices && c.choices.length >= 2 && typeof c.answer === "number") || (c.a && String(c.a).length <= 90)); });
         window.scrollTo(0, 0);
         var at = document.getElementById("appTitle"); if (at) at.textContent = "Practice";
-        if (window.App && App.toast) App.toast("Now practice: " + lesson.title, 1800);
+        if (window.App && App.toast) App.toast("Now practice it", 1600);
         if (quizzable.length >= 4) Quiz.render(container, lesson.cards, lesson.title, quizzable.length, { onDone: complete });
         else Flashcards.render(container, lesson.cards, lesson.title, { onDone: function () { complete(null, null); } });
       }
@@ -234,15 +234,16 @@
       function complete(score, total) {
         Store.markLessonDone(lesson.id, score == null ? null : Math.round((score / total) * 100));
         var p = score == null ? 100 : Math.round(100 * score / Math.max(1, total));
+        var at0 = document.getElementById("appTitle"); if (at0) at0.textContent = "Lesson complete";
         var line = (score == null) ? "Practice done. Missed cards come back sooner in your reviews." : "You got " + score + " of " + total + " in practice.";
         container.innerHTML =
           '<div class="ring-wrap"><div class="ring ' + (p >= 75 ? 'good' : p >= 50 ? 'mid' : 'bad') + '" style="--p:' + p + ';"><div class="ring-in">' + (score == null ? '&#10003;' : p + '%') + '</div></div><small>' + esc(lesson.title) + '</small></div>' +
           '<div class="done-h">Lesson complete</div>' +
           (function () { var tr = tracks.filter(function (t) { return t.lessons.indexOf(lesson) >= 0; })[0]; if (!tr) return ''; var d = doneCount(tr.lessons);
-            return '<div class="track-prog"><span>' + esc(tr.title.replace(/:.*$/, "")) + ': ' + d + ' of ' + tr.lessons.length + ' lessons</span><div class="bar"><span style="width:' + Math.round(100 * d / tr.lessons.length) + '%"></span></div></div>'; })() +
+            return '<div class="track-prog"><span>' + esc(tr.title.replace(/:.*$/, "")) + ': ' + d + ' of ' + tr.lessons.length + (tr.lessons.length === 1 ? ' lesson' : ' lessons') + '</span><div class="bar"><span style="width:' + Math.round(100 * d / tr.lessons.length) + '%"></span></div></div>'; })() +
           '<p class="center muted">' + line + '</p><div class="spacer"></div>' + (window.App && App.sessionNextHtml ? App.sessionNextHtml() : '') +
           (nextLesson ? '<button class="btn gold lg" id="next">Next lesson <svg class=ic aria-hidden=true><use href=#i-chev></use></svg></button><div class="spacer"></div>' : '') +
-          '<button class="btn ghost lg" id="path">Back to Learn</button>';
+          '<button class="home-link" id="path">Back to Learn</button>';
         if (nextLesson) container.querySelector("#next").addEventListener("click", function () { App.go("#/lesson/" + nextLesson.id); });
         container.querySelector("#path").addEventListener("click", function () { App.go("#/learn"); });
       }

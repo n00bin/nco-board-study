@@ -1101,8 +1101,8 @@
       (note ? '<div class="card" style="border-color:var(--gold);"><div class="flash-tag">Your sponsor\'s notes</div><div style="white-space:pre-wrap;">' + esc(note) + '</div></div>' : '') +
       '<p class="center muted">' + (fresh ? "Saved to your history. " : "Already saved. ") + (ids.length ? "The questions you missed will come back sooner in your reviews:" : "No misses. Nice work.") + '</p>' +
       ids.map(function (id) { var c = byId[id]; return c ? '<details class="set-fold"><summary>' + esc(c.q) + '</summary><div style="padding:0 2px 10px;">' + esc(c.a) + '</div></details>' : ""; }).join("") +
-      (ids.length ? (Store.setChainRole("last-misses", ids.join(",")), '<div class="spacer"></div><a class="btn gold lg" href="#/flash/misses"><svg class=ic aria-hidden=true><use href=#i-refresh></use></svg> Drill your ' + ids.length + ' miss' + (ids.length === 1 ? '' : 'es') + ' now</a><div class="spacer"></div><a class="btn ghost lg" href="#/">Back to Home</a>')
-        : '<div class="spacer"></div><a class="btn gold lg" href="#/board/core">Run a Mock Board on your own</a><div class="spacer"></div><a class="btn ghost lg" href="#/">Back to Home</a>');
+      (ids.length ? (Store.setChainRole("last-misses", ids.join(",")), '<div class="spacer"></div><a class="btn gold lg" href="#/flash/misses"><svg class=ic aria-hidden=true><use href=#i-refresh></use></svg> Drill your ' + ids.length + ' miss' + (ids.length === 1 ? '' : 'es') + ' now</a><div class="spacer"></div><a class="home-link" href="#/">Back to Home</a>')
+        : '<div class="spacer"></div><a class="btn gold lg" href="#/board/core">Run a Mock Board on your own</a><div class="spacer"></div><a class="home-link" href="#/">Back to Home</a>');
   }
 
 
@@ -1416,6 +1416,8 @@
       var calm = (rank === "SGT" && !mount.querySelector("#ptxschool").checked) ? '<div class="muted" style="font-size:.85rem;margin-top:6px;">Don\u2019t panic if you\u2019re well short: that\u2019s normal before BLC. You don’t need BLC to pin on SGT (AR 600-8-19, para 1-34a), but graduating adds 150 points, the biggest single jump.</div>' : '';
       var stk = document.getElementById("ptSticky");
       if (!stk && window.IntersectionObserver) { new IntersectionObserver(function (es) { var b = document.getElementById("ptSticky"); if (b) b.classList.toggle("off", es[0].isIntersecting); }).observe(mount.querySelector("#ptTotal")); }
+      if (!stk) { mount.addEventListener("focusin", function (e) { if (/INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) { var b = document.getElementById("ptSticky"); if (b) b.classList.add("typing"); } });
+        mount.addEventListener("focusout", function () { var b = document.getElementById("ptSticky"); if (b) b.classList.remove("typing"); }); }
       if (!stk) { stk = document.createElement("a"); stk.id = "ptSticky"; stk.href = "#"; stk.addEventListener("click", function (e) { e.preventDefault(); var t = mount.querySelector("#ptTotal"); if (t) t.scrollIntoView({ behavior: "smooth", block: "center" }); }); mount.appendChild(stk); }
       stk.innerHTML = '<span>Your estimate</span><b>' + total + ' <small>of 800</small></b>' + (cut != null && !blank ? '<span class="' + (total >= cut ? 'badge-good' : 'badge-bad') + '">' + (total >= cut ? 'at or above' : (cut - total) + ' below') + ' the ' + cut + ' cutoff</span>' : '');
       mount.querySelector("#ptTotal").innerHTML = '<div class="flash-tag">Your estimate for ' + rank + '</div><div style="font-size:1.6rem;font-weight:800;">' + total + ' <span class="muted" style="font-size:1rem;">of 800</span></div>' + gap +
