@@ -91,7 +91,7 @@
           if (!lastC || !window.IntersectionObserver || lastC.getBoundingClientRect().bottom <= window.innerHeight - 100) return;
           var sbt = container.querySelector("#submitBtn"); if (!sbt || !sbt.disabled) return;
           sbt.textContent = "More choices below ↓";
-          var io = new IntersectionObserver(function (es) { if (es.some(function (e) { return e.isIntersecting; })) { if (sbt.isConnected && /More choices/.test(sbt.textContent)) sbt.textContent = "Submit answer"; io.disconnect(); } }, { rootMargin: "0px 0px -100px 0px" });
+          var io = new IntersectionObserver(function (es) { if (es.some(function (e) { return e.isIntersecting; })) { if (sbt.isConnected && /More choices/.test(sbt.textContent)) sbt.textContent = "Submit answer"; io.disconnect(); } }, { rootMargin: "0px 0px -96px 0px", threshold: 1 });
           io.observe(lastC);
         }, 60);
         var qsp = container.querySelector("#qSpeak"); if (qsp) qsp.addEventListener("click", function () { if (window.Speech) Speech.speak(item.q); });
@@ -172,7 +172,7 @@
         var pct = Math.round((score / questions.length) * 100);
         var missHtml = misses.length ? '<details class="set-fold"><summary>Review your ' + misses.length + ' miss' + (misses.length === 1 ? '' : 'es') + '</summary>' + misses.map(function (c) { return '<div class="chg"><div style="font-weight:600;margin-bottom:4px;">' + esc(c.q) + '</div><div>' + esc(c.a) + '</div></div>'; }).join("") + '</details>' : '';
         var dots = '<div class="dots" aria-hidden="true">' + res.map(function (x) { return '<span class="dot ' + (x ? 'g' : 'r') + '"></span>'; }).join("") + '</div>' +
-          '<div class="dot-legend"><span><span class="dot g"></span>right</span><span><span class="dot r"></span>missed</span></div>';
+          '<div class="dot-legend">' + (res.some(function (x) { return x; }) ? '<span><span class="dot g"></span>right</span>' : '') + (res.some(function (x) { return !x; }) ? '<span><span class="dot r"></span>missed</span>' : '') + '</div>';
         var nOfK = {}; questions.forEach(function (it) { var c = it.card, p = window.STUDY && STUDY.pubsById[c.pub]; var k = c.label || (p ? p.code + (p.title && p.title !== p.code ? " \u2014 " + p.title : "") : c.pub || "Your cards"); nOfK[k] = (nOfK[k] || 0) + 1; });
         var byPub = {}, pubOfK = {}; misses.forEach(function (c) { var p = window.STUDY && STUDY.pubsById[c.pub]; var k = c.label || (p ? p.code + (p.title && p.title !== p.code ? " \u2014 " + p.title : "") : c.pub || "Your cards"); byPub[k] = (byPub[k] || 0) + 1; pubOfK[k] = c.pub; });
         var weakK = Object.keys(byPub).sort(function (x, y) { return byPub[y] - byPub[x]; }).slice(0, 4);

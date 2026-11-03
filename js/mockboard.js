@@ -124,7 +124,7 @@
   function verdict(pct, bearingMiss, sitMiss) {
     bearingMiss = bearingMiss || []; sitMiss = sitMiss || 0;
     var fix = bearingMiss.map(function (b) { return /^tell us/i.test(b) ? "\u201cTell us about yourself\u201d" : b; }).concat(sitMiss ? [sitMiss + " situational question" + (sitMiss > 1 ? "s" : "")] : []);
-    if (pct >= 75 && fix.length) return { level: "almost", title: "Almost board-ready", msg: "Your answers scored " + pct + "%. A real board also grades bearing and the situational questions, so tighten up " + listJoin2(fix) + " and run it again." };
+    if (pct >= 75 && fix.length) return { level: "almost", title: "Strong answers", msg: "Your answers scored " + pct + "%. A real board also grades bearing and the situational questions, so tighten up " + listJoin2(fix) + " and run it again." };
     if (pct >= 90) return { level: "ready", title: "Board-ready", msg: "Board-ready. Keep it sharp with a board every few days." };
     if (pct >= 75) return { level: "ready", title: "Strong", msg: "Strong. Tighten what you missed." };
     if (pct >= 60) return { level: "work", title: "Getting there", msg: "A board doesn't pass you on a percentage: it wants confident, complete answers. Drill what you missed" + (fix.length ? ", work on " + listJoin2(fix) : "") + ", and run it again." };
@@ -375,8 +375,8 @@
             '<div class="q-text" style="margin-top:8px;">\u201cBefore you sit, let\u2019s see some drill.\u201d</div>' +
             '<div class="muted">' + (sponsor ? 'Call each command out loud. Watch for a sharp movement on the command of execution, then they hold the position until your next command.' : 'Stand up and do each command, sharply, on the command of execution. Hold each position until the next command.') + '</div></div>' +
           '<div class="card">' + cmds.map(function (t, k) { return '<div class="row cmd-row" style="margin-bottom:6px;"><div class="numbubble">' + (k + 1) + '</div><div class="grow"><div class="ttl" style="font-size:1.15rem;font-weight:700;">' + esc(t) + '</div></div></div>'; }).join("") +
-            (sponsor ? '' : '<div class="btn-pair" style="margin-top:6px;"><button class="btn ghost" id="sayIt"><svg class=ic aria-hidden=true><use href=#i-speaker></use></svg> Call them</button>' + mirrorButton(true) + '</div><div id="mirrorBox"></div>') +
             '<div class="honest-line">' + (sponsor ? 'Grade it: crisp, on the command of execution, back to attention each time?' : 'Grade yourself: crisp, on the command of execution, back to attention each time?') + '</div><details class="fb-fold"><summary>How to do these</summary><div class="muted" style="font-size:.92rem;">' + drillHints(cmds) + 'Then ' + (sponsor ? 'tell the Soldier to take their seat.' : 'wait for the president to tell you to take your seat.') + '</div></details></div>' +
+            (sponsor ? '' : '<div class="btn-pair" style="margin-top:6px;"><button class="btn ghost" id="sayIt"><svg class=ic aria-hidden=true><use href=#i-speaker></use></svg> Call them</button>' + mirrorButton(true) + '</div><div id="mirrorBox"></div>') +
                     gradeButtons("Needs work", "Clean");
         setTimeout(wireMirror, 0);
         var say = container.querySelector("#sayIt");
@@ -709,7 +709,7 @@
         var nFu = extras.filter(function (x) { return x.k === "fu"; }).length, nCb = extras.filter(function (x) { return x.k === "cb"; }).length;
         var countLine = nQ + " question" + (nQ === 1 ? "" : "s") + (nFu ? ", " + nFu + " follow-up" + (nFu === 1 ? "" : "s") : "") + (nCb ? ", " + nCb + " second " + (nCb === 1 ? "try" : "tries") : "");
         var strongB = pct >= 75 && !notReady && V.level !== "work" && deck.length >= 8;
-        var vTitle = strongB ? "Strong board" : V.title, vLine = strongB ? (missed.length ? (sponsor && !handheld ? "They get " + pl(drillN || missed.length, "card") + " to tighten when they open your link." : "Drill " + ((drillN || missed.length) === 1 ? "it" : "them") + " now, then run another.") : "Keep it sharp with a board every few days.")
+        var vTitle = strongB ? "Strong board" : V.title, vLine = strongB ? (drillN ? (sponsor && !handheld ? "They get " + pl(drillN, "card") + " to tighten when they open your link." : "Drill " + (drillN === 1 ? "it" : "them") + " now, then run another.") : "Keep it sharp with a board every few days.")
           : notReady && missed.length ? (sponsor && !handheld ? (drillN ? "Your link gives them " + pl(drillN, "card") + " to drill. " : "") : "Drill " + (drillN === 1 ? "it" : "them") + " now, then run it again. ") + (msg.match(/tighten up (.*?) and run it again/) ? "Watch " + msg.match(/tighten up (.*?) and run it again/)[1] + "." : "")
           : (msg.indexOf(V.title + ".") === 0 ? msg.slice(V.title.length + 1).trim() : msg).replace(/^(Your|Their) answers scored \d+%\. /, "").replace(/^A real board also grades bearing and the situational questions, so /, "").replace(/^A board doesn\'t pass you on a percentage: it wants confident, complete answers\. /, "").replace(/^./, function (ch) { return ch.toUpperCase(); });
         if (bearing.length) vLine = vLine.replace(/, work on .+?(, and run it again\.)$/, "$1").replace(/, and practice .+\.$/, ".");
@@ -720,7 +720,7 @@
             var full = qScores.filter(function (x) { return x >= 0.99; }).length, part = qScores.filter(function (x) { return x >= 0.66 && x < 0.99; }).length, thin = qScores.filter(function (x) { return x > 0 && x < 0.66; }).length, miss = qScores.length - full - part - thin;
             var cb = extras.filter(function (x) { return x.k === "cb"; }), fu = extras.filter(function (x) { return x.k === "fu"; });
             var cbOk = cb.filter(function (x) { return x.ok; }).length, fuOk = fu.filter(function (x) { return x.ok; }).length;
-            var legend = '<div class="dot-legend">' + (full ? '<span><span class="dot g"></span>full</span>' : '') + (part || thin ? '<span><span class="dot a"></span>part credit</span>' : '') + (miss ? '<span><span class="dot r"></span>missed</span>' : '') + '</div>'; var legendB = '<div class="dot-legend">' + (extras.some(function (x) { return x.ok; }) ? '<span><span class="dot sq g"></span>recovered</span>' : '') + (extras.some(function (x) { return !x.ok; }) ? '<span><span class="dot sq r"></span>still missed</span>' : '') + '' + '</div>';
+            var legend = '<div class="dot-legend">' + (full ? '<span><span class="dot g"></span>full</span>' : '') + (part || thin ? '<span><span class="dot a"></span>part credit</span>' : '') + (miss ? '<span><span class="dot r"></span>missed</span>' : '') + '</div>'; var legendB = '<div class="dot-legend">' + (extras.some(function (x) { return x.ok; }) ? '<span><span class="dot sq g"></span>right</span>' : '') + (extras.some(function (x) { return !x.ok; }) ? '<span><span class="dot sq r"></span>missed</span>' : '') + '' + '</div>';
             return (extras.length ? '<div class="dots-sub">First answers</div>' : '') + '<div class="dots" aria-hidden="true">' + qScores.map(function (x) { return '<span class="dot ' + (x >= 0.99 ? 'g' : x > 0 ? 'a' : 'r') + '"></span>'; }).join("") +
                 '</div>' + legend + (extras.length ? '<div class="dots-sub">Second tries &amp; follow-ups</div><div class="dots">' + extras.map(function (x) { return '<span class="dot sq ' + (x.ok ? 'g' : 'r') + '"></span>'; }).join("") + '</div>' + legendB : '') +
               '<p class="center muted" style="font-size:.92rem;margin:4px 0 12px;">' + countLine + '</p>' + (howFold = '<details class="set-fold score-how"><summary>How this was scored</summary><p class="muted" style="font-size:.92rem;margin:0 0 8px;">First answers: ' + full + ' full \u2022 ' + part + ' passed with gaps \u2022 ' + (thin + miss) + ' not passed' + (thin ? ' (' + thin + ' with part credit)' : '') +
@@ -755,7 +755,7 @@
           });
           html += '</details>';
         }
-        html += (window.App && App.sessionNextHtml ? App.sessionNextHtml() : '') + '<div class="spacer"></div><button class="btn ' + (drillN || sponsor ? 'ghost' : 'gold') + ' lg" id="again">Run another board</button><div class="spacer"></div>' + (document.body.classList.contains("guest") ? '' : '<button class="home-link" id="home">Back to Home</button>') + '';
+        html += (window.App && App.sessionNextHtml ? App.sessionNextHtml() : '') + '<div class="spacer"></div><button class="btn ' + ((drillN && (!sponsor || handheld)) || (sponsor && !handheld) ? 'ghost' : 'gold') + ' lg" id="again">Run another board</button><div class="spacer"></div>' + (document.body.classList.contains("guest") ? '' : '<button class="home-link" id="home">Back to Home</button>') + '';
         container.innerHTML = html;
         container.querySelector("#again").addEventListener("click", function () { MockBoard.render(container, cards, length, opts); });
         var hm0 = container.querySelector("#home"); if (hm0) hm0.addEventListener("click", function () { App.go("#/"); });
