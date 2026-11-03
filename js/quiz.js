@@ -150,8 +150,9 @@
           if (sb) container.insertBefore(ref, sb); else container.appendChild(ref);
         }
         if (sb) sb.replaceWith(nav); else container.appendChild(nav);
+        setTimeout(function () { if (verdict && verdict.getBoundingClientRect().bottom > window.innerHeight - 100 && !nav.querySelector(".nv")) nav.insertAdjacentHTML("afterbegin", '<span class="nv">' + (/\u2713/.test(verdict.textContent) ? '\u2713 Correct' : '\u2717 Not quite') + ' \u00b7 </span>'); }, 450);
         var last = container.querySelector(".flash-ref") || verdict;
-        if (last) setTimeout(function () { var why = container.querySelector(".verdict-why"), tgt = why || last, over = tgt.getBoundingClientRect().bottom - (window.innerHeight - 112), cd = container.querySelector(".card"), hd = container.querySelector(".mb-head"), room = cd ? cd.getBoundingClientRect().top - ((hd ? hd.getBoundingClientRect().bottom : 66) + 10) : over; if (!why) { var vb = verdict ? verdict.getBoundingClientRect().bottom - (window.innerHeight - 112) : 0; over = Math.max(Math.min(over, Math.max(0, room)), vb); } if (over > 0) window.scrollBy({ top: over, behavior: "smooth" }); }, 30);
+        if (last) setTimeout(function () { var why = container.querySelector(".verdict-why"), tgt = why || last, over = tgt.getBoundingClientRect().bottom - (window.innerHeight - 112), cd = container.querySelector(".card"), hd = container.querySelector(".mb-head"), room = cd ? cd.getBoundingClientRect().top - ((hd ? hd.getBoundingClientRect().bottom : 66) + 10) : over; if (!why) over = Math.min(over, Math.max(0, room)); if (over > 0) window.scrollBy({ top: over, behavior: "smooth" }); }, 30);
       }
 
       function showResults() {

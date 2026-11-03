@@ -21,6 +21,9 @@
     mount.innerHTML = '<div class="empty">The study cards did not load. Check your connection, then close and reopen the app.</div>';
     return;
   }
+  // publication codes never break at their hyphen ("ATP 6-" / "22.1")
+  var NBH = /\b([A-Z]{1,5} ?\d{1,4})-(\d)/g;
+  STUDY.cards.forEach(function (c) { ["q", "a", "ref"].forEach(function (k) { if (typeof c[k] === "string" && c[k].indexOf("-") >= 0) c[k] = c[k].replace(NBH, "$1\u2011$2"); }); });
   var backBtn = document.getElementById("backBtn");
 
   // index publications by id; add synthetic publications for user + chain-of-command content
@@ -213,7 +216,7 @@
     s.i++; try { sessionStorage.setItem("ncob-sess", JSON.stringify(s)); } catch (e) {}
     if (s.i >= s.items.length) { try { sessionStorage.removeItem("ncob-sess"); } catch (e) {} return '<div class="card center" style="border-color:var(--gold);"><b>&#10003; Today&#39;s session is done.</b> <span class="muted">Nice work. Come back tomorrow.</span></div><div class="spacer"></div>'; }
     var nx = s.items[s.i];
-    return '<div class="center muted" style="font-size:.85rem;margin-bottom:6px;">Next in today&#39;s session (' + (s.i + 1) + ' of ' + s.items.length + ')</div><button class="btn gold lg" data-sessnext="' + escAttr(nx.href) + '">' + esc(nx.label.charAt(0).toUpperCase() + nx.label.slice(1)) + '&nbsp;&#8594;</button><div class="spacer"></div>';
+    return '<div class="center muted" style="font-size:.85rem;margin-bottom:6px;">Next in today&#39;s session (' + (s.i + 1) + ' of ' + s.items.length + ')</div><button class="btn gold lg" data-sessnext="' + escAttr(nx.href) + '">' + (function () { var L = nx.label.replace(/ of \d+ cards? due today$/, " cards due").replace(/ due today$/, " due"); L = L.charAt(0).toUpperCase() + L.slice(1); var k = L.lastIndexOf(" "); return esc(L.slice(0, k + 1)) + '<span style="white-space:nowrap;">' + esc(L.slice(k + 1)) + ' <svg class=ic aria-hidden=true><use href=#i-chev></use></svg></span>'; })() + '</button><div class="spacer"></div>';
   }
   // while today's session runs, each step shows where you are in it
   function sessionBanner() {
@@ -230,7 +233,7 @@
     var nx = mount.querySelector("[data-sessnext]");
     if (nx) mount.querySelectorAll(".btn.gold").forEach(function (b) { if (b !== nx) { b.classList.remove("gold"); b.classList.add("ghost"); } });
   }).observe(mount, { childList: true, subtree: true });
-  document.addEventListener("click", function (e) { var b = e.target.closest && e.target.closest("[data-sessnext]"); if (b) App.go(b.getAttribute("data-sessnext")); });
+  document.addEventListener("click", function (e) { var b = e.target.closest && e.target.closest("[data-sessnext]"); if (b) location.replace(b.getAttribute("data-sessnext")); });
   // New cards a day to see all of Board Core a week before the board, capped at 20 so a late start stays doable.
   var NEW_CAP = 20;
   function pacePlan(unseen, days) {
@@ -604,10 +607,10 @@
       try { sessionStorage.setItem("ncob-q", input.value); } catch (e) {}
       if (term.length < 2) { results.innerHTML = '<div class="muted" style="font-size:.85rem;margin:10px 4px 6px;">Try one of these:</div>' + tryChips(); return; }
       var all = allCards().filter(function (c) {
-        return (c.q + " " + c.a + " " + (c.topic || "")).toLowerCase().indexOf(term) >= 0;
+        return (c.q + " " + c.a + " " + (c.topic || "")).toLowerCase().replace(/\u2011/g, "-").indexOf(term) >= 0;
       });
       // best matches first: the word in the topic or subject name, then in the question, then Board Core
-      var safe = term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), rx = new RegExp("\\b" + safe, "i");
+      var safe = term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&").replace(/-/g, "[-\\u2011]"), rx = new RegExp("\\b" + safe, "i");
       var rank = function (c) { var p = STUDY.pubsById[c.pub] || {}; return (rx.test((c.topic || "") + " " + (p.code || "") + " " + (p.title || "")) ? 4 : 0) + (rx.test(c.q) ? 2 : 0) + (c.core ? 1 : 0); };
       var wx = new RegExp("\\b" + safe + "\\b", "i"), whole = function (c) { return wx.test(c.q + " " + c.a + " " + (c.topic || "")); };
       all.forEach(function (c) { c._w = whole(c) ? 1 : 0; });
@@ -633,7 +636,7 @@
     results.addEventListener("click", function (e) { if (e.target.closest("a.card")) try { sessionStorage.setItem("ncob-qy", String(window.scrollY)); } catch (x) {} });
     input.addEventListener("input", run); run();
     var y0 = 0; try { y0 = +sessionStorage.getItem("ncob-qy") || 0; sessionStorage.removeItem("ncob-qy"); } catch (e) {}
-    if (y0 && input.value) setTimeout(function () { window.scrollTo(0, y0); }, 30); else input.focus();
+    if (y0 && input.value) { if ("scrollRestoration" in history) history.scrollRestoration = "manual"; [30, 200, 450].forEach(function (ms) { setTimeout(function () { if (Math.abs(window.scrollY - y0) > 40) window.scrollTo(0, y0); }, ms); }); } else input.focus();
   }
 
   // ---- More menu (stats + links) ----
@@ -1488,7 +1491,7 @@
       if (!stk) { mount.addEventListener("focusin", function (e) { if (/INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) { var b = document.getElementById("ptSticky"); if (b) b.classList.add("typing"); } });
         mount.addEventListener("focusout", function () { var b = document.getElementById("ptSticky"); if (b) b.classList.remove("typing"); }); }
       if (!stk) { stk = document.createElement("a"); stk.id = "ptSticky"; stk.href = "#"; stk.addEventListener("click", function (e) { e.preventDefault(); var t = mount.querySelector("#ptTotal"); if (t) t.scrollIntoView({ behavior: "smooth", block: "center" }); }); mount.appendChild(stk); }
-      stk.classList.toggle("empty", !total);
+      stk.classList.toggle("empty", !total && cut == null);
       stk.innerHTML = '<span>Your estimate</span><b>' + total + ' <small>of 800</small></b>' + (cut != null && !blank ? '<span class="' + (total >= cut ? 'badge-good' : 'badge-bad') + '">' + (total >= cut ? (total - cut) + ' over' : (cut - total) + ' short of') + ' ' + cut + '</span>' : cut != null ? '<span class="muted">Cutoff ' + cut + '</span>' : '');
       mount.querySelector("#ptTotal").innerHTML = '<div class="flash-tag">Your estimate for ' + rank + '</div><div style="font-size:1.6rem;font-weight:800;">' + total + ' <span class="muted" style="font-size:1rem;">of 800</span></div>' + gap +
         '<div class="muted" style="font-size:.85rem;margin-top:6px;">Most room left: ' + room.map(function (r) { return esc(r.t.toLowerCase()) + ' (' + r.left + ')'; }).join(", ") + '.</div>' +

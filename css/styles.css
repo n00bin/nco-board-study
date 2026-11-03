@@ -1123,3 +1123,11 @@ details.more-changes > summary { color: var(--text) !important; }
 .seg3 { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
 .seg3 .chip, .chip-row.seg4 .chip, .chip-row.seg5 .chip { min-width: 0; overflow-wrap: anywhere; white-space: normal; }
 .seg3 .chip { border-radius: 14px; }
+
+/* ---------- v3.64 polish round 36 ---------- */
+/* jumps land flush under the sticky chip bar (no extra page padding stacked on top) */
+html { scroll-padding-top: 0 !important; }
+[id^="cat"] { scroll-margin-top: calc(118px + env(safe-area-inset-top)) !important; }
+/* today's steps are links: give them a chevron like every other row */
+.plan-steps .btn.plan-item::after { content: "\203A"; margin-left: auto; padding-left: 10px; font-size: 1.35rem; line-height: 1; color: var(--text-dim); }
+.plan-steps .btn.plan-item { display: flex; align-items: center; }

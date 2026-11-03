@@ -18,7 +18,7 @@
   var Speech = {
     supported: function () { return !!synth; },
     speak: function (text, opts) {
-      opts = opts || {};
+      opts = opts || {}; text = String(text == null ? "" : text).replace(/\u2011/g, "-");
       killCurrent(); // silently retire the previous utterance (no stale callback)
 
       var fired = false, timer = null, token = {};
