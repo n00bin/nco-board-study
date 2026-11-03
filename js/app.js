@@ -11,7 +11,7 @@
   var titleEl = document.getElementById("appTitle");
   var splash = document.getElementById("splash");
   // test/screenshot helper: ?nosplash skips the launch screen (timers are frozen in headless frames)
-  if (splash && /[?&]nosplash/.test(location.search)) { splash.remove(); splash = null; }
+  if (splash && /[?&]nosplash\b/.test(location.search)) { splash.remove(); splash = null; }
   function hideSplash(delay) {
     if (!splash) return;
     setTimeout(function () { splash.classList.add("hide"); setTimeout(function () { if (splash) { splash.remove(); splash = null; } }, 400); }, delay || 0);
@@ -72,7 +72,7 @@
   // turn the filled-in roster into study cards (with sensible quiz distractors)
   var EXAMPLE_NAME = { teamleader: "e.g. SGT Diaz", squadleader: "e.g. SSG Lee", pltsgt: "e.g. SFC Moore", pltldr: "e.g. 2LT Patel", firstsgt: "e.g. 1SG Grant",
     cocdr: "e.g. CPT Ortiz", bncsm: "e.g. CSM Hall", bncdr: "e.g. LTC Brooks", bdecsm: "e.g. CSM Reed", bdecdr: "e.g. COL Kim", divcsm: "e.g. CSM Ward", divcdr: "e.g. MG Price",
-    sma: "SGM of the Army", csa: "GEN ...", secarmy: "Secretary ...", secdef: "Secretary ...", cjcs: "GEN ...", potus: "President ..." };
+    sma: "e.g. SMA (last name)", csa: "e.g. GEN (last name)", secarmy: "e.g. the Hon. (full name)", secdef: "e.g. the Hon. (full name)", cjcs: "e.g. GEN (last name)", potus: "e.g. President (last name)" };
   function chainCards() {
     var chain = Store.chain();
     var filled = CHAIN_ROLES.filter(function (r) { return chain[r.k]; });
@@ -182,7 +182,7 @@
     if (deck === "core") return "Board Core";
     if (deck === "final") return "Final-Week Review";
     if (deck === "top") return "Top 100 cards";
-    if (deck === "misses") return "Your Mock Board misses";
+    if (deck === "misses") return "Your misses";
     if (deck === "ten") return "10-minute review";
     if (deck === "due") return "Due for review";
     if (deck === "leeches") return "Cards you keep missing";
@@ -514,7 +514,7 @@
   function screenLesson(id) { var tr = String(id).split("-")[0]; var TT = { board101: "Board 101", fundamentals: "Fundamentals", core: "Board Core", sit: "Scenarios", personal: "Personal Questions" }; var p = STUDY.pubsById[tr]; setTitle(TT[tr] || (p ? p.code : "Lesson"), true); Learn.lesson(mount, id); }
 
   function screenFlash(deck) {
-    setTitle(deckTitle(deck), true);
+    setTitle("Flashcards", true);
     // Top 100 and Final-Week Review are meant to be done whole: no 30-new-card session cap
     Flashcards.render(mount, cardsForDeck(deck), deckTitle(deck), (deck === "top" || deck === "final" || deck === "ten") ? { noCap: true } : undefined);
   }
@@ -610,7 +610,7 @@
         var div = (!c._w && nWhole && !divDone) ? (divDone = true, '<div class="lg-h" style="margin-top:14px;">Inside longer words</div>') : '';
         return div + '<a class="card" style="display:block;text-decoration:none;color:inherit;" href="#/read/' + escAttr(c.pub) + '/' + escAttr(c.id) + '"><div class="flash-tag tag-row">' + esc(p ? p.code : "") + (c.topic ? " • " + esc(c.topic) : "") + (c.core ? '<span class="pill core-pill inline">Core</span>' : '') + '</div>' +
           '<div style="font-weight:600;margin-bottom:6px;">' + hl(c.q) + '</div><div class="muted">' + hl(c.a) + '</div><div class="open-hint">Open in ' + esc(p ? p.code : "its subject") + ' <svg class=ic aria-hidden=true><use href=#i-chev></use></svg></div></a>';
-      }).join("") : '<div class="empty">No matches. Try a shorter word, or one of these:</div>' + tryChips();
+      }).join("") + '<div class="muted center end-line">' + (all.length > hits.length ? 'Showing the top ' + hits.length + '. Type more to narrow it down.' : 'End of results') + '</div>' : '<div class="empty">No matches. Try a shorter word, or one of these:</div>' + tryChips();
     }
     try { var q0 = sessionStorage.getItem("ncob-q"); if (q0) input.value = q0; } catch (e) {}
     function tryChips() { return '<div class="chip-row">' + ["SHARP", "AFT", "hazing", "counseling", "NCOER", "Article 15", "waist-to-height", "kratom", "land navigation", "Army Values"].map(function (w) { return '<button class="chip" data-try="' + w + '">' + w + '</button>'; }).join("") + '</div>'; }
@@ -869,7 +869,7 @@
       ["t1", "An individual critical task from your STP (task name, then its standard)", "e.g. (task name): (its standard, copied from your STP)"], ["t2", "Another critical task and its standard", "e.g. (task name): (its standard)"], ["t3", "One more (optional)", "e.g. (task name): (its standard)"],
       ["eq", "The main equipment you work on", "e.g. the radios, vehicles, or systems you operate or maintain"]];
     mount.innerHTML = '<div class="card"><div class="muted">Boards can check your job. Fill in what you know and the app turns it into study cards.</div></div>' +
-      F.map(function (f) { return '<label class="lbl" for="mos-' + f[0] + '">' + esc(f[1]) + '</label><textarea class="input" id="mos-' + f[0] + '" rows="2" placeholder="' + escAttr(f[2]) + '"></textarea>'; }).join("") +
+      F.map(function (f) { return '<label class="lbl" for="mos-' + f[0] + '">' + esc(f[1]) + '</label><textarea class="input" id="mos-' + f[0] + '" rows="2" placeholder="' + escAttr(f[2]) + '">' + (f[0] === "code" && Store.settings().mos ? esc(Store.settings().mos) : '') + '</textarea>'; }).join("") +
       '<div class="spacer"></div><button class="btn gold lg" id="mosGo">Make my MOS cards</button>';
     mount.querySelector("#mosGo").addEventListener("click", function () {
       var v = {}; F.forEach(function (f) { v[f[0]] = (mount.querySelector("#mos-" + f[0]).value || "").trim().slice(0, 600); });
@@ -1094,7 +1094,7 @@
     var cards = want.map(function (id) { return byId[id]; }).filter(Boolean);
     if (cards.length < 3) { mount.innerHTML = badLink('The board link is incomplete. Ask the Soldier to send it again.'); return; }
     mount.innerHTML = '<div class="card"><div class="flash-tag">You are the board</div><div class="muted">A Soldier asked you to run a practice board. Read each question aloud, listen, then tick what they actually said.</div></div>' +
-      '<label class="switch card"><input type="checkbox" id="sbFull" checked> <span><b>Full board</b>: reporting in, drill, \u201ctell us about yourself,\u201d then the questions</span></label>' +
+      '<div class="lg opts"><label class="switch li"><input type="checkbox" id="sbFull" checked> <span class="grow"><span class="t">Full board</span><span class="s">Reporting in, drill, \u201ctell us about yourself,\u201d then the questions</span></span></label></div><div class="spacer"></div>' +
       '<button class="btn gold lg" id="sbGo"><svg class=ic aria-hidden=true><use href=#i-play></use></svg> Start the board</button><div class="muted center" style="font-size:.85rem;margin:-4px 0 8px;">' + cards.length + ' questions</div>' +
       '<div class="spacer"></div><a class="btn ghost" href="#/sheet/' + escAttr(want.join(",")) + '"><svg class=ic aria-hidden=true><use href=#i-print></use></svg> Print a paper board</a>';
     mount.querySelector("#sbGo").addEventListener("click", function () {
@@ -1559,7 +1559,7 @@
       '<div class="btn-row" style="margin-top:10px;"><button class="btn ghost" id="tmpl">Fill-in template</button><button class="btn ghost" id="ex">See an example</button></div>' +
       '<div id="exBox" hidden><div class="card" style="margin-top:10px;"><div class="flash-tag">Example (fictional Soldier: write your own)</div><div style="white-space:pre-wrap;margin-top:6px;">' +
         esc(SAMPLE_STATEMENT) + '</div><div class="muted" style="font-size:.85rem;margin-top:8px;">Keep yours about a minute. Say it, don\'t read it. Be specific: real duties, real accomplishments, real goals.</div></div></div>' +
-      '<div class="spacer"></div><button class="btn ghost lg" id="save">Done</button>';
+      '<div class="spacer"></div><button class="btn gold lg" id="save">Done</button>';
     mount.querySelector("#save").addEventListener("click", function () { Store.setStatement(mount.querySelector("#stmt").value); App.toast("Saved"); App.go("#/boardday"); });
     mount.querySelector("#stmt").addEventListener("input", function () { Store.setStatement(this.value); flashSaved(); });
     mount.querySelector("#ex").addEventListener("click", function () { var b = mount.querySelector("#exBox"); b.hidden = !b.hidden; });
@@ -1596,7 +1596,7 @@
       html += '</details>';
     });
     html += '<div class="spacer"></div><a class="btn gold lg" href="#/reporting">How to report to the board</a><div class="spacer"></div>' +
-      '<a class="btn ghost lg" href="#/pick/board">Rehearse in a Mock Board</a>';
+      group("", [li("#/board/core", "<svg class=ic aria-hidden=true><use href=#i-users></use></svg>", "Rehearse in a Mock Board", "Full board: report in, drill, then the questions")]);
     mount.innerHTML = html;
   }
 
@@ -1657,7 +1657,7 @@
     var head = parts[0] || "";
     window.scrollTo(0, 0);
     // practice screens get the whole phone (no tab bar; the main button pins to the bottom); sponsor pages get a guest shell
-    document.body.classList.toggle("session", /^(flash|type|quiz|drive|board|lesson|sheetin|sponsor)$/.test(head));
+    document.body.classList.toggle("session", /^(flash|type|drive|lesson|sheetin|sponsor)$/.test(head));
     document.body.classList.toggle("guest", /^(sponsor|sheet|sbresult|progress|takecards)$/.test(head));
     setTimeout(sessionBanner, 0);
 

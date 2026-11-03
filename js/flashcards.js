@@ -95,7 +95,7 @@
         conf = undefined;
         var left = queue.length - i, mins = Math.max(1, Math.round(left * 15 / 60));
         container.querySelector("#fBar").style.width = Math.round(100 * passed / Math.max(1, passed + left)) + "%";
-        container.querySelector("#fProg").innerHTML = '<span>' + (opts && opts.onDone ? 'Practice \u2022 ' : '') + passed + ' done</span><span class="pills"><span class="pill" title="about ' + mins + ' min">' + left + ' left</span>' + (reviewed >= 3 && left > 3 ? '<button class="pill pill-btn" id="fDone">Finish</button>' : '') + '</span>';
+        container.querySelector("#fProg").innerHTML = '<span>' + (opts && opts.onDone ? 'Practice' : esc(title)) + ' \u2022 ' + passed + ' done</span><span class="pills"><span class="pill" title="about ' + mins + ' min">' + left + ' left</span>' + (reviewed >= 3 && left > 3 ? '<button class="pill pill-btn" id="fDone">Finish</button>' : '') + '</span>';
         container.querySelector("#fTagF").textContent = (/\b(regulation|publication|pamphlet|field manual|doctrine)\b|\b(which|what) (AR|FM|ADP|ATP|TC|DA PAM)\b/i.test(c.q) ? "Name the publication" : pubCode(c)) + (c.adv ? " \u2022 Advanced" : "");   // topic only on the back: it can give the answer away
         container.querySelector("#fTagB").textContent = pubCode(c) || "Answer";
         container.querySelector("#fQ").textContent = c.q;
@@ -209,7 +209,11 @@
         var close = nt.length >= 2 && (nt === na ||
           (nt.length >= 4 && nt.length >= 0.5 * na.length && na.indexOf(nt) >= 0) ||
           (na.length >= 3 && nt.indexOf(na) >= 0));
-        var verdict = !typed ? "" : close ? '<div class="badge-good" style="font-weight:700;">&#10003; Looks right</div>' : '<div class="badge-bad" style="font-weight:700;">&#10007; Compare carefully</div>';
+        var STOP = { "the": 1, "and": 1, "that": 1, "with": 1, "from": 1, "this": 1, "your": 1, "their": 1, "they": 1, "them": 1, "have": 1, "will": 1, "into": 1, "when": 1, "what": 1, "which": 1, "about": 1, "over": 1, "also": 1, "each": 1, "than": 1, "then": 1, "only": 1 };
+        var words = function (s) { var o = {}; String(s).toLowerCase().replace(/[^a-z0-9 ]+/g, " ").split(/\s+/).forEach(function (w) { if (w.length > 3 && !STOP[w]) o[w.replace(/(ing|ed|es|s)$/, "")] = 1; }); return Object.keys(o); };
+        var aw = words(c.a), tw = words(typed), hit = aw.filter(function (w) { return tw.indexOf(w) >= 0; }).length, share = aw.length ? hit / aw.length : 0;
+        var good = close || (aw.length >= 2 && share >= 0.6), near = !good && share >= 0.3;
+        var verdict = !typed ? "" : good ? '<div class="badge-good" style="font-weight:700;">&#10003; Looks right</div>' : near ? '<div class="verdict-near">Close: compare with the answer</div>' : '<div class="verdict-near">Compare with the answer</div>';
         container.innerHTML =
           '<div class="q-count mb-head"><span>' + reviewed + ' reviewed</span><span class="pill">' + (queue.length - i) + ' to go</span></div><div class="progress-bar"><span style="width:' + Math.round(100 * i / Math.max(1, queue.length)) + '%"></span></div>' +
           '<div class="card"><div class="flash-tag">' + esc(pubCode(c)) + '</div>' +

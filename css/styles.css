@@ -984,3 +984,12 @@ body.session:has(#tShow)::after { content: ""; position: fixed; left: 0; right: 
 /* points helpers: full-width inputs, standard panel */
 details.pt-help .input { max-width: none !important; }
 details.pt-help[open] { border-left: 1px solid var(--line); border: 1px solid var(--line); border-radius: var(--radius); }
+
+.dot.p { background: #e5726e !important; box-shadow: none !important; }
+
+/* ---------- v3.52 polish round 24 ---------- */
+.verdict-near { font-weight: 700; color: var(--gold); }
+.lg .li .s.badge-bad { color: #ff9b96; font-weight: 600; }
+.end-line { font-size: .85rem; margin: 14px 0 6px; }
+/* print preview: one sheet of paper, not two cards with a gutter */
+@media screen { .sheet:has(+ .sheet) { border-radius: 10px 10px 0 0; margin-bottom: 0; } .sheet + .sheet { margin-top: 0; border-radius: 0 0 10px 10px; border-top: 1px dashed #cfc9b4; } }

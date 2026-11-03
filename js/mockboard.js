@@ -137,6 +137,7 @@
     drawIds: function (cards, length) { return drawDeck(cards.filter(function (c) { return c.q && c.a; }), length).map(function (c) { return c.id; }); },
 
     render: function (container, cards, length, opts) {
+      document.body.classList.add("session");
       opts = opts || {};
       askPick = {};
       var pool = cards.filter(function (c) { return c.q && c.a && !(opts.full && c.id === "personal-11"); });
@@ -738,7 +739,7 @@
         if (weak.length) {
           html += '<h2 class="section">Weakest subjects</h2><div class="lg">';
           var gst = document.body.classList.contains("guest");
-          weak.forEach(function (p) { var inner = '<span class="grow">' + subjHtml(p.code) + '</span><b class="badge-bad" style="white-space:nowrap;">not passed ' + p.miss + ' of ' + p.n + '</b>'; html += gst ? '<div class="li">' + inner + '</div>' : '<a class="li" href="#/flash/' + encodeURIComponent(p.id || "") + '">' + inner + '<span class="chev" aria-hidden="true"><svg class=ic aria-hidden=true><use href=#i-chev></use></svg></span></a>'; });
+          weak.forEach(function (p) { var inner = '<span class="grow">' + subjHtml(p.code) + '<span class="s badge-bad">Not passed ' + p.miss + ' of ' + p.n + '</span></span>'; html += gst ? '<div class="li">' + inner + '</div>' : '<a class="li" href="#/flash/' + encodeURIComponent(p.id || "") + '">' + inner + '<span class="chev" aria-hidden="true"><svg class=ic aria-hidden=true><use href=#i-chev></use></svg></span></a>'; });
           html += '</div>';
         }
         if (missed.length) {

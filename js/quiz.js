@@ -52,6 +52,7 @@
   var Quiz = {
     // cards = candidate pool, length = how many questions, opts.onDone(score,total) for lesson practice
     render: function (container, cards, title, length, opts) {
+      document.body.classList.add("session");
       // Only quiz on discrete answers: curated multiple-choice, or short answers.
       // Long prose (creeds, the Code of Conduct, etc.) stays flashcard-only.
       var usable = cards.filter(function (c) {
@@ -164,7 +165,7 @@
         var nOfK = {}; questions.forEach(function (it) { var c = it.card, p = window.STUDY && STUDY.pubsById[c.pub]; var k = c.label || (p ? p.code + (p.title && p.title !== p.code ? " \u2014 " + p.title : "") : c.pub || "Your cards"); nOfK[k] = (nOfK[k] || 0) + 1; });
         var byPub = {}, pubOfK = {}; misses.forEach(function (c) { var p = window.STUDY && STUDY.pubsById[c.pub]; var k = c.label || (p ? p.code + (p.title && p.title !== p.code ? " \u2014 " + p.title : "") : c.pub || "Your cards"); byPub[k] = (byPub[k] || 0) + 1; pubOfK[k] = c.pub; });
         var weakK = Object.keys(byPub).sort(function (x, y) { return byPub[y] - byPub[x]; }).slice(0, 4);
-        var weakHtml = weakK.length ? '<h2 class="section">Weakest subjects</h2><div class="lg">' + weakK.map(function (k) { return '<a class="li" href="#/flash/' + encodeURIComponent(pubOfK[k] || "") + '"><span class="grow">' + (function () { var x = k.split(" \u2014 "); return '<span class="t" style="font-weight:700;">' + esc(x[0]) + '</span>' + (x.length > 1 ? '<span class="s">' + esc(x.slice(1).join(" \u2014 ")) + '</span>' : ''); })() + '</span><b class="badge-bad" style="white-space:nowrap;">missed ' + byPub[k] + ' of ' + (nOfK[k] || byPub[k]) + '</b><span class="chev" aria-hidden="true"><svg class=ic aria-hidden=true><use href=#i-chev></use></svg></span></a>'; }).join("") + '</div>' : '';
+        var weakHtml = weakK.length ? '<h2 class="section">Weakest subjects</h2><div class="lg">' + weakK.map(function (k) { return '<a class="li" href="#/flash/' + encodeURIComponent(pubOfK[k] || "") + '"><span class="grow">' + (function () { var x = k.split(" \u2014 "); return '<span class="t" style="font-weight:700;">' + esc(x[0]) + '</span>' + (x.length > 1 ? '<span class="s">' + esc(x.slice(1).join(" \u2014 ")) + '</span>' : ''); })() + '<span class="s badge-bad">Missed ' + byPub[k] + ' of ' + (nOfK[k] || byPub[k]) + '</span></span><span class="chev" aria-hidden="true"><svg class=ic aria-hidden=true><use href=#i-chev></use></svg></span></a>'; }).join("") + '</div>' : '';
         var msg = pct >= 90 ? "Outstanding. You know this set cold." : pct >= 75 ? "Solid. Drill the few misses and it sticks." :
                   pct >= 60 ? "Passing. Review the misses below, then go again." : "Needs work. Drill the misses, then take another quiz.";
         container.innerHTML =
