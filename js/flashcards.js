@@ -27,7 +27,7 @@
       '<div class="done-h">Session complete</div>' +
       '<p class="center muted" style="margin-top:0;">' + n + ' card' + (n === 1 ? '' : 's') + ' \u2022 ' + (known - easy) + ' got it' + (easy ? ' \u2022 ' + easy + ' easy' : '') + ' \u2022 ' + miss + ' missed</p>' +
       '<div class="dots" aria-hidden="true">' + ids.slice(0, 80).map(function (k) { return '<span class="dot ' + (first[k] === "again" ? 'r' : 'g') + '"></span>'; }).join("") + '</div>' +
-      '<div class="dot-legend"><span><span class="dot g"></span>knew it</span><span><span class="dot r"></span>missed</span></div>' +
+      '<div class="dot-legend">' + (known ? '<span><span class="dot g"></span>knew it</span>' : '') + (miss ? '<span><span class="dot r"></span>missed</span>' : '') + '</div>' +
       (miss ? (Store.setChainRole("last-misses", ids.filter(function (k) { return first[k] === "again"; }).slice(0, 40).join(",")), '<a class="btn gold lg" href="#/flash/misses"><svg class=ic aria-hidden=true><use href=#i-refresh></use></svg> Drill your ' + miss + ' miss' + (miss === 1 ? '' : 'es') + ' now</a>') : '');
   }
   function nextStep() {
@@ -189,7 +189,7 @@
       function ask() {
         var c = queue[i];
         container.innerHTML =
-          '<div class="q-count mb-head"><span>' + reviewed + ' reviewed</span><span class="pill">' + (queue.length - i) + ' to go</span></div><div class="progress-bar"><span style="width:' + Math.round(100 * i / Math.max(1, queue.length)) + '%"></span></div>' +
+          '<div class="q-count mb-head"><span>' + esc(title) + ' \u2022 ' + reviewed + ' done</span><span class="pill">' + (queue.length - i) + ' left</span></div><div class="progress-bar"><span style="width:' + Math.round(100 * i / Math.max(1, queue.length)) + '%"></span></div>' +
           '<div class="card"><div class="flash-toprow"><span class="flash-tag">' + esc(/\b(regulation|publication|pamphlet|field manual|doctrine)\b|\b(which|what) (AR|FM|ADP|ATP|TC|DA PAM)\b/i.test(c.q) ? "Name the publication" : pubCode(c)) + '</span></div>' +
             '<div class="flash-q" style="margin-bottom:14px;">' + esc(c.q) + '</div>' +
             '<textarea class="input" id="tIn" rows="2" placeholder="Type your answer…"></textarea></div>' +
@@ -215,14 +215,14 @@
         var good = close || (aw.length >= 2 && share >= 0.6), near = !good && share >= 0.3;
         var verdict = !typed ? "" : good ? '<div class="badge-good" style="font-weight:700;">&#10003; Looks right</div>' : near ? '<div class="verdict-near">Close: compare with the answer</div>' : '<div class="verdict-near">Compare with the answer</div>';
         container.innerHTML =
-          '<div class="q-count mb-head"><span>' + reviewed + ' reviewed</span><span class="pill">' + (queue.length - i) + ' to go</span></div><div class="progress-bar"><span style="width:' + Math.round(100 * i / Math.max(1, queue.length)) + '%"></span></div>' +
+          '<div class="q-count mb-head"><span>' + esc(title) + ' \u2022 ' + reviewed + ' done</span><span class="pill">' + (queue.length - i) + ' left</span></div><div class="progress-bar"><span style="width:' + Math.round(100 * i / Math.max(1, queue.length)) + '%"></span></div>' +
           '<div class="card"><div class="flash-tag">' + esc(pubCode(c)) + '</div>' +
             '<div class="flash-q" style="margin:6px 0 10px;">' + esc(c.q) + '</div>' +
             (typed ? '<div class="muted">You wrote: ' + esc(typed) + '</div>' + verdict + '<hr class="div">' : '') +
             '<div class="flash-tag">Answer</div><div class="flash-a">' + esc(c.a).replace(/\n/g, "<br>") + '</div>' +
             (c.ref ? '<div class="flash-ref">Reference: ' + esc(c.ref) + '</div>' : '') + '</div>' +
           '<div class="flash-hint">' + GRADE_HINT + '</div>' +
-          '<div class="grade-row">' + GRADE_BTNS + '</div>';
+          '<div class="grade-row' + (good ? '' : (!typed || share < 0.15) ? ' neutral miss-em' : ' neutral') + '">' + GRADE_BTNS + '</div>';
         container.querySelector("#gAgain").addEventListener("click", function () { grade("again"); });
         container.querySelector("#gGood").addEventListener("click", function () { grade("good"); });
         container.querySelector("#gEasy").addEventListener("click", function () { grade("easy"); });

@@ -993,3 +993,11 @@ details.pt-help[open] { border-left: 1px solid var(--line); border: 1px solid va
 .end-line { font-size: .85rem; margin: 14px 0 6px; }
 /* print preview: one sheet of paper, not two cards with a gutter */
 @media screen { .sheet:has(+ .sheet) { border-radius: 10px 10px 0 0; margin-bottom: 0; } .sheet + .sheet { margin-top: 0; border-radius: 0 0 10px 10px; border-top: 1px dashed #cfc9b4; } }
+
+/* ---------- v3.53 polish round 25 ---------- */
+.grade-row.neutral .grade-good { background: none !important; border: 1.5px solid var(--line) !important; color: var(--text) !important; }
+.grade-row.miss-em .grade-again { background: #b3322e !important; color: #fff !important; border-color: #b3322e !important; }
+/* the Points estimate docks flush on the tab bar */
+#ptSticky { left: 50% !important; transform: translateX(-50%) !important; width: 100% !important; max-width: var(--maxw) !important; bottom: calc(61px + env(safe-area-inset-bottom)) !important; border-radius: 0 !important; border: none !important; border-top: 1px solid var(--gold) !important; box-shadow: 0 -10px 16px rgba(0,0,0,.45) !important; padding: 10px 16px !important; }
+#ptSticky.off { transform: translateX(-50%) translateY(12px) !important; }
+.sponsor-ans { border-color: var(--line) !important; background: var(--surface-2); }

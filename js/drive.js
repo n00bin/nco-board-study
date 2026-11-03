@@ -46,7 +46,7 @@
     stop: function () { playing = false; gen++; clearTimer(); if (window.Speech) Speech.stop(); releaseWake(); },
 
     render: function (container, cards, title) {
-      var deck = Store.buildQueue(cards);
+      var deck = Store.buildQueue(cards), t0 = Date.now();
       if (!deck.length) deck = cards.slice();
       // mix the order so a hands-free session doesn't open on the same card every time (due cards still come first)
       var dueN = Store.isDue ? deck.filter(function (c) { return Store.isDue(c.id); }).length : 0;
@@ -69,7 +69,7 @@
         var p = STUDY.pubsById[c.pub];
         var phaseLabel = !playing ? "<svg class=ic aria-hidden=true><use href=#i-pause></use></svg> Paused" : phase === "q" ? "<svg class=ic aria-hidden=true><use href=#i-speaker></use></svg> Question…" : phase === "listen" ? "<svg class=ic aria-hidden=true><use href=#i-mic></use></svg> Your turn — answer aloud" : "<svg class=ic aria-hidden=true><use href=#i-check></use></svg> Answer";
         container.innerHTML =
-          '<div class="q-count mb-head"><span>' + esc(title) + '</span><span class="pill">' + (i + 1) + ' / ' + deck.length + '</span></div>' +
+          '<div class="q-count mb-head"><span>' + esc(title) + '</span><span class="pill">' + (i + 1) + ' of ' + deck.length + '</span></div>' +
           '<div class="card drive-card"><div class="flash-tag">' + esc(p ? p.code : "") + '</div>' +
             '<div class="phase" id="phase">' + phaseLabel + '</div>' +
             '<div class="flash-q" style="margin:10px 0;font-size:1.3em;line-height:1.4;">' + esc(c.oral || c.q) + '</div>' +
@@ -120,7 +120,7 @@
         container.innerHTML =
           (upTo == null ? '<div class="ring-wrap"><div class="ring good" style="--p:100;"><div class="ring-in">' + n + '</div></div><small>cards played</small></div>'
             : '<div class="stop-ic"><svg class=ic aria-hidden=true><use href=#i-headphones></use></svg></div>') +
-          '<div class="done-h">' + (upTo == null ? 'Drive Mode done' : 'Stopped') + '</div><p class="center muted" style="margin-top:0;">' + (upTo == null ? 'You heard every card in this set.' : 'Stopped on card ' + (n + 1) + ' of ' + deck.length + '. Pick up again any time; due cards come first.') + '</p>' +
+          '<div class="done-h">' + (upTo == null ? 'Drive Mode done' : 'Stopped') + '</div><p class="center muted" style="margin-top:0;">' + (upTo == null ? 'You heard every card in this set.' : 'Stopped on card ' + (n + 1) + ' of ' + deck.length + ' after about ' + Math.max(1, Math.round((Date.now() - t0) / 60000)) + ' min. Pick up again any time; due cards come first.') + '</p>' +
           '<div class="spacer"></div>' +
           '<button class="btn gold lg" id="again">' + (upTo == null ? 'Play again' : 'Pick up again') + '</button><div class="spacer"></div>' +
           '<button class="home-link" id="home">Back to Home</button>';

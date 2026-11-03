@@ -183,7 +183,7 @@
         var short = lead, parts = [lead].concat(tp && tp.length && !l.pubName ? ["also " + tp[0] + (tp.length > 1 ? " and more" : "")] : []);
         if (l.pubName) parts.splice(1, 0, l.pubName);
         html += (k ? '' : '<div class="lg">') + '<a class="li" href="#/lesson/' + l.id + '"><span class="numbubble' + (done ? ' done' : '') + '">' + (done ? "&#10003;" : (k + 1)) + '</span>' +
-          '<span class="grow"><span class="t" style="font-weight:600;">' + esc(short) + '</span><span class="s">' + l.cards.length + (l.cards[0] && l.cards[0].pub === "sit" ? " scenarios" : " facts") + (parts.length > 1 ? ' \u2022 ' + esc(parts.slice(1).join(" \u2022 ")) : '') + '</span></span><span class="chev">&#8250;</span></a>';
+          '<span class="grow"><span class="t" style="font-weight:600;">' + esc(short) + '</span><span class="s">' + l.cards.length + (l.cards[0] && l.cards[0].pub === "sit" ? " scenarios" : " facts") + (parts.length > 1 ? ' \u2022 ' + esc(parts.slice(1).join(" \u2022 ")) : '') + '</span></span><span class="chev" aria-hidden="true"><svg class=ic aria-hidden=true><use href=#i-chev></use></svg></span></a>';
       });
       if (t.lessons.length) html += '</div>';
       if (t.lessons.length > 15) {   // long track: the next few up front, the whole list in a fold

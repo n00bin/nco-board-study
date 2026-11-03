@@ -545,7 +545,7 @@
     mount.innerHTML =
       '<div class="setup-head"><div class="t"><svg class=ic aria-hidden=true><use href=#i-users></use></svg> ' + esc(title) + '</div><div class="muted">Answer out loud, like the real board</div><a href="#/pick/board" class="sub-link" style="display:inline-block;margin-top:4px;">Change subject</a></div>' +
       '<div class="lg opts">' +
-        '<button type="button" class="li li-btn" id="tChange"><span class="grow"><span class="t">Timer: ' + (timer > 0 ? timer + ' seconds a question' : 'off') + '</span><span class="s">' + (timer > 0 ? 'Double for long answers and scenarios' : 'Answer at your own pace') + '</span></span><span class="pill">Change</span></button>' +
+        '<button type="button" class="li li-btn" id="tChange"><span class="grow"><span class="t">Timer: ' + (timer > 0 ? timer + 's per question' : 'off') + '</span><span class="s">' + (timer > 0 ? 'Double for long answers and scenarios' : 'Answer at your own pace') + '</span></span><span class="pill">Change</span></button>' +
         '<div class="tchips" id="tChips" hidden><div class="chip-row seg5">' + [0, 20, 30, 45, 60].map(function (t) { return '<button type="button" class="chip' + (t === timer ? ' on' : '') + '" data-tt="' + t + '">' + (t ? t + 's' : 'Off') + '</button>'; }).join("") + '</div></div>' +
         '<label class="switch li"><input type="checkbox" id="fullBoard"' + (Store.settings().fullBoard !== false ? " checked" : "") + '> <span class="grow"><span class="t">Full board</span><span class="s">Report in, drill, introduce yourself</span></span></label>' +
         (window.speechSynthesis ? '<label class="switch li"><input type="checkbox" id="listenOnly"' + (Store.settings().listenOnly ? " checked" : "") + '> <span class="grow"><span class="t">Listen-only</span><span class="s">Hear each question, don\u2019t read it</span></span></label>' : '') +
@@ -986,8 +986,10 @@
     "When dismissed, stand at attention, render the hand salute, hold until returned, face about, and march out."
   ];
   // grouped list: one card, divided rows (icon, title, one short line)
+  // "AD 2026-07", "TC 3-22.249": keep publication codes on one line
+  function nbCode(h) { return String(h).replace(/\b(AD|AR|TC|FM|ADP|ATP|STP|GTA|DA PAM|PAM)\s(\d[\d.-]*\d)/g, function (m0, a1, a2) { return a1 + "\u00a0" + a2.replace(/-/g, "\u2011"); }); }
   function li(href, ic, t, s) { return '<a class="li" href="' + href + '"><span class="li-ic" aria-hidden="true">' + ic + '</span><span class="grow"><span class="t">' + t + '</span>' + (s ? '<span class="s">' + s + '</span>' : '') + '</span><span class="chev" aria-hidden="true"><svg class=ic aria-hidden=true><use href=#i-chev></use></svg></span></a>'; }
-  function liDeck(href, code, title, n, deck, extra) { return '<a class="li deck" ' + (deck ? 'data-deck="' + deck + '" ' : '') + 'href="' + href + '"' + (extra || '') + '><span class="grow"><span class="t" style="color:var(--gold);">' + code + '</span>' + (title ? '<span class="s">' + title + '</span>' : '') + '</span><span class="pill">' + n + '</span><span class="chev" aria-hidden="true"><svg class=ic aria-hidden=true><use href=#i-chev></use></svg></span></a>'; }
+  function liDeck(href, code, title, n, deck, extra) { return '<a class="li deck" ' + (deck ? 'data-deck="' + deck + '" ' : '') + 'href="' + href + '"' + (extra || '') + '><span class="grow"><span class="t" style="color:var(--gold);">' + code + '</span>' + (title ? '<span class="s">' + nbCode(title) + '</span>' : '') + '</span><span class="pill">' + n + '</span><span class="chev" aria-hidden="true"><svg class=ic aria-hidden=true><use href=#i-chev></use></svg></span></a>'; }
   // autosave feedback: a small "Saved" line that fades
   function flashSaved() { var s = document.getElementById("savedTick"); if (!s) { s = document.createElement("div"); s.id = "savedTick"; s.className = "saved-tick"; document.body.appendChild(s); } s.textContent = "Saved \u2713"; s.classList.add("on"); clearTimeout(flashSaved.t); flashSaved.t = setTimeout(function () { s.classList.remove("on"); }, 1200); }
   // "Haircut neat; clean-shaven..." -> bold first clause, the rest smaller
@@ -1017,7 +1019,7 @@
       '<div class="muted" style="font-size:.85rem;margin:2px 4px 6px;">Your board memo and local SOP always come first.</div>' +
       group("The board itself", [li("#/room", "<svg class=ic aria-hidden=true><use href=#i-building></use></svg>", "Board Room", "What it&#39;s like, who sits on it, how they decide"), li("#/reporting", "<svg class=ic aria-hidden=true><use href=#i-flag></use></svg>", "Report to the Board", "The sequence and your bearing"), li("#/statement", "<svg class=ic aria-hidden=true><use href=#i-quote></use></svg>", "Opening Statement", "Draft your “tell us about yourself”"), li("#/pub/boardskills", "<svg class=ic aria-hidden=true><use href=#i-brain></use></svg>", "Board Know-How", "If you freeze, how to answer")]) +
       group("Get ready", [li("#/memo", "<svg class=ic aria-hidden=true><use href=#i-doc></use></svg>", "My Board Memo", "Reporting wording, uniform, time"), li("#/uniform", "<svg class=ic aria-hidden=true><use href=#i-shirt></use></svg>", "Uniform Inspection", "Check it before you walk in"), li("#/records", "<svg class=ic aria-hidden=true><use href=#i-folder></use></svg>", "Records", "What to bring: SRB, points, pockets"), li("#/points", "<svg class=ic aria-hidden=true><use href=#i-chart></use></svg>", "Points", "Where you stand on promotion points")]) +
-      group("Know your Army", [li("#/chain", "<svg class=ic aria-hidden=true><use href=#i-sitemap></use></svg>", "Chain of Command", "Fill it in, then quiz yourself"), li("#/knowledge", "<svg class=ic aria-hidden=true><use href=#i-globe></use></svg>", "Know Your Army", "Notes for the questions about you"), li("#/changes", "<svg class=ic aria-hidden=true><use href=#i-spark></use></svg>", "What's new", "AFT, waist-to-height, grooming")]);
+      group("Know your Army", [li("#/chain", "<svg class=ic aria-hidden=true><use href=#i-sitemap></use></svg>", "Chain of Command", "Fill it in, then quiz yourself"), li("#/knowledge", "<svg class=ic aria-hidden=true><use href=#i-globe></use></svg>", "Know Your Army", "Notes for the questions about you"), li("#/changes", "<svg class=ic aria-hidden=true><use href=#i-spark></use></svg>", "What's New", "AFT, waist-to-height, grooming")]);
   }
 
   // ---- What changed recently: built from the cards, so the page and the cards always agree ----
@@ -1073,8 +1075,8 @@
     if (cards.length < 3) { mount.innerHTML = badLink('The link is incomplete.'); return; }
     var B = [["R", "Reporting in"], ["D", "Facing movements"], ["I", "Tell us about yourself"], ["O", "Reporting out"]];
     mount.innerHTML = '<div class="card"><div class="muted">Copy what your sponsor marked on the paper sheet. Tap each question you got right.</div></div>' +
-      cards.map(function (c, k) { return '<label class="switch card"><input type="checkbox" class="pq" data-id="' + escAttr(c.id) + '"> <span>' + (k + 1) + '. ' + esc(c.oral || c.q) + '</span></label>'; }).join("") +
-      '<h2 class="section">Bearing (tick if clean)</h2>' + B.map(function (b) { return '<label class="switch card"><input type="checkbox" class="pb" data-b="' + b[0] + '"> <span>' + esc(b[1]) + '</span></label>'; }).join("") +
+      '<div class="lg">' + cards.map(function (c, k) { return '<label class="switch li"><input type="checkbox" class="pq" data-id="' + escAttr(c.id) + '"> <span>' + (k + 1) + '. ' + esc(c.oral || c.q) + '</span></label>'; }).join("") + '</div>' +
+      '<h2 class="section">Bearing (tick if clean)</h2>' + '<div class="lg">' + B.map(function (b) { return '<label class="switch li"><input type="checkbox" class="pb" data-b="' + b[0] + '"> <span>' + esc(b[1]) + '</span></label>'; }).join("") + '</div>' +
       '<label class="lbl" for="pNote">Your sponsor\'s notes (optional)</label><textarea class="input" id="pNote" rows="3" maxlength="300"></textarea>' +
       '<div class="spacer"></div><button class="btn gold lg" id="pSave">Save these results</button>';
     mount.querySelector("#pSave").addEventListener("click", function () {
@@ -1301,7 +1303,7 @@
     CHANGES.forEach(function (sec) {
       var cs = all.filter(sec.test); if (!cs.length) return;
       if (shownC++ === 6) html += '<details class="set-fold more-changes"><summary><span class="grow">More changes</span></summary>';
-      html += '<details class="set-fold"><summary><span class="grow">' + esc(sec.h) + '</span><span class="pill">' + cs.length + '</span></summary>';
+      html += '<details class="set-fold"><summary><span class="grow">' + nbCode(esc(sec.h)) + '</span><span class="pill">' + cs.length + '</span></summary>';
       first = false;
       cs.forEach(function (c) {
         html += '<div class="chg"><div style="font-weight:600;margin-bottom:4px;">' + esc(c.q) + '</div><div>' + esc(c.a) + '</div>' + (c.ref ? '<div class="flash-ref">' + esc(c.ref) + '</div>' : '') + '</div>';
@@ -1624,7 +1626,7 @@
         }, '') +
         '<div class="muted" style="font-size:.85rem;margin:8px 2px 10px;">Names change: check army.mil, your unit\'s page, or your chain of command. Don\'t trust an old smart book.</div></details>'
         : '<div class="card"><div class="badge-good" style="font-weight:700;">&#10003; Everything filled in. Re-check names the week of your board.</div></div>') +
-      group("", [li("#/chain", "<svg class=ic aria-hidden=true><use href=#i-sitemap></use></svg>", "Chain of Command roster", "Your leaders, up to the President"), li("#/changes", "<svg class=ic aria-hidden=true><use href=#i-spark></use></svg>", "What's new", "AFT, waist-to-height, grooming")]);
+      group("", [li("#/chain", "<svg class=ic aria-hidden=true><use href=#i-sitemap></use></svg>", "Chain of Command roster", "Your leaders, up to the President"), li("#/changes", "<svg class=ic aria-hidden=true><use href=#i-spark></use></svg>", "What's New", "AFT, waist-to-height, grooming")]);
     html += '<div class="lg-h">Your notes</div>';
     KNOW_PROMPTS.forEach(function (k) {
       var done = !!notes["know-" + k.id];
@@ -1695,8 +1697,8 @@
     if (head === "sendprogress" || head === "squad") return screenSendProgress(), tab("more");
     if (head === "progress") return screenProgress(parts[1] || ""), tab("home");
     if (head === "sponsor") return screenSponsorBoard(parts[1] || ""), tab("home");
-    if (head === "sheet") return screenSheet(parts[1] || ""), tab("home");
-    if (head === "sheetin") return screenSheetIn(parts[1] || ""), tab("home");
+    if (head === "sheet") return screenSheet(parts[1] || ""), modeTab();
+    if (head === "sheetin") return screenSheetIn(parts[1] || ""), modeTab();
     if (head === "sbresult") return screenSponsorResult(parts.slice(1)), tab("home");
     if (head === "pub") return screenPub(parts[1]), tab(curTab === "search" ? "search" : "browse");
     if (head === "read") return screenRead(parts[1], parts[2]), tab(curTab === "search" ? "search" : "browse");
