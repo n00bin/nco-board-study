@@ -452,6 +452,9 @@
       html += group(esc(cat), cats[cat].map(function (p) { return liDeck("#/pub/" + p.id, esc(p.code), p.code === p.title ? "" : esc(p.title), cardsForDeck(p.id).length, ""); }), "cat" + k);
     });
     mount.innerHTML = html; wireJumps();
+    if (!mount._byWired) mount._byWired = true, mount.addEventListener("click", function (e) { if (e.target.closest && e.target.closest("a.li") && location.hash === "#/browse") try { sessionStorage.setItem("ncob-by", String(window.scrollY)); } catch (x) {} });
+    var by0 = 0; try { by0 = +sessionStorage.getItem("ncob-by") || 0; sessionStorage.removeItem("ncob-by"); } catch (e) {}
+    if (by0) [30, 200, 450].forEach(function (ms) { setTimeout(function () { if (location.hash === "#/browse" && Math.abs(window.scrollY - by0) > 40) window.scrollTo(0, by0); }, ms); });
   }
 
   function screenPub(id) {
@@ -642,9 +645,9 @@
           '<div style="font-weight:600;margin-bottom:6px;">' + hl(c.q) + '</div><div class="muted sr-a">' + hl(c.a) + '</div><div class="open-hint">Open in ' + esc(p ? p.code : "its subject") + ' <svg class=ic aria-hidden=true><use href=#i-chev></use></svg></div></a>';
       }).join("") + '<div class="muted center end-line">' + (all.length > hits.length && hits.length === 20 ? '<button class="btn ghost" id="showAll">Show all ' + Math.min(all.length, 80) + ' results</button></div>' : hidePart ? '<button class="btn ghost" id="showPart">Show ' + nPart + ' more inside longer words</button></div>' : (all.length > hits.length ? 'Showing the top ' + hits.length + '. Type more to narrow it down.' : 'End of results') + '</div>') : '<div class="empty-state" style="padding:28px 0 12px;"><svg class=ic aria-hidden=true><use href=#i-search></use></svg><div class="t">No matches for \u201c' + esc(input.value.trim()) + '\u201d</div><div class="muted" style="margin-bottom:6px;">Try a shorter word, or one of these:</div></div>' + tryChips();
     }
-    try { var q0 = sessionStorage.getItem("ncob-q"); if (q0) input.value = q0; } catch (e) {}
+    try { var q0 = sessionStorage.getItem("ncob-q"); if (q0) input.value = q0; if (q0 && sessionStorage.getItem("ncob-qall") === q0.trim().toLowerCase()) allTerm = q0.trim().toLowerCase(); } catch (e) {}
     function tryChips() { return '<div class="chip-row">' + ["SHARP", "AFT", "hazing", "counseling", "NCOER", "Article 15", "waist-to-height", "kratom", "land navigation", "Army Values"].map(function (w) { return '<button class="chip" data-try="' + w + '">' + w + '</button>'; }).join("") + '</div>'; }
-    results.addEventListener("click", function (e) { var b = e.target.closest("[data-try]"); if (b) { input.value = b.getAttribute("data-try"); run(); } if (e.target.closest("#showPart")) { partTerm = input.value.trim().toLowerCase(); run(); } if (e.target.closest("#showAll")) { var y = window.scrollY; allTerm = input.value.trim().toLowerCase(); run(); window.scrollTo(0, y); } });
+    results.addEventListener("click", function (e) { var b = e.target.closest("[data-try]"); if (b) { input.value = b.getAttribute("data-try"); run(); } if (e.target.closest("#showPart")) { partTerm = input.value.trim().toLowerCase(); run(); } if (e.target.closest("#showAll")) { var y = window.scrollY; allTerm = input.value.trim().toLowerCase(); try { sessionStorage.setItem("ncob-qall", allTerm); } catch (x) {} run(); window.scrollTo(0, y); } });
     mount.querySelector("#qx").addEventListener("click", function () { input.value = ""; run(); input.focus(); });
     results.addEventListener("click", function (e) { if (e.target.closest("a.card")) try { sessionStorage.setItem("ncob-qy", String(window.scrollY)); } catch (x) {} });
     input.addEventListener("input", run); run();

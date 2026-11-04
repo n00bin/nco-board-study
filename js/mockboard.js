@@ -282,7 +282,7 @@
         var kind = steps[s] && steps[s].kind, KL = { reportIn: "Reporting in", drill: "Facing movements", intro: "Tell us about yourself", member: "Next board member", reportOut: "Reporting out", follow: "Follow-up to question " + qNum };
         var txt = label ? label : (kind && kind !== "q" && KL[kind]) ? KL[kind] : curLocal ? "Your leaders & unit (" + Math.min(unitAt, localN) + " of " + localN + ")" : qNum ? "Question " + qNum : "";
         return '<div class="q-count mb-head"><span>' + txt + '</span>' + '<span class="pills">' + (asked >= 2 ? '<span class="pill score-pill">Score ' + Math.round(100 * got / asked) + '%</span>' : qNum ? '<span class="pill score-pill" style="visibility:hidden;">Score 0%</span>' : '')  + (qNum || kind === "member" ? '<span class="pill">' + Math.min(qNum, totalQ) + ' / ' + totalQ + '</span>' : (function () { var op = steps.filter(function (x) { return x.kind === "reportIn" || x.kind === "drill" || x.kind === "intro"; }); var at = op.indexOf(steps[s]); return at >= 0 ? '<span class="pill">Opening ' + (at + 1) + ' of ' + op.length + '</span>' : ''; })())+ '</span>' + '</div>' +
-          '<div class="progress-bar"><span style="width:' + (qNum ? Math.round(100 * Math.min(1, Math.max(0, qNum - (kind === "q" ? 1 : 0)) / Math.max(1, totalQ))) : (function () { var op = steps.filter(function (x) { return x.kind === "reportIn" || x.kind === "drill" || x.kind === "intro"; }), at = op.indexOf(steps[s]); return at >= 0 ? Math.round(8 * (at + 1) / op.length) : 0; })()) + '%"></span></div>';
+          '<div class="progress-bar"><span style="width:' + (qNum || kind === "member" ? (function () { var hasOp = steps.some(function (x) { return x.kind === "reportIn" || x.kind === "drill" || x.kind === "intro"; }); return Math.round((hasOp ? 8 : 0) + (hasOp ? 92 : 100) * Math.min(1, Math.max(0, qNum - (kind === "q" ? 1 : 0)) / Math.max(1, totalQ))); })() : (function () { var op = steps.filter(function (x) { return x.kind === "reportIn" || x.kind === "drill" || x.kind === "intro"; }), at = op.indexOf(steps[s]); return at >= 0 ? Math.round(8 * (at + 1) / op.length) : 0; })()) + '%"></span></div>';
       }
       function timerHtml(t, why) {
         // say why the clock isn't the Settings value (long answers and scenarios get double time; the intro gets 90 s)
@@ -745,7 +745,7 @@
         if (weak.length && weak.some(function (p) { return p.miss >= 2; })) {
           html += '<h2 class="section">Weakest subjects</h2><div class="lg">';
           var gst = document.body.classList.contains("guest");
-          weak.forEach(function (p) { var inner = '<span class="grow">' + subjHtml(p.code) + '<span class="s badge-bad">Missed ' + p.miss + ' of ' + p.n + ' question' + (p.n === 1 ? '' : 's') + '</span></span>'; html += gst ? '<div class="li">' + inner + '</div>' : '<a class="li" href="#/flash/' + encodeURIComponent(p.id || "") + '">' + inner + '<span class="chev" aria-hidden="true"><svg class=ic aria-hidden=true><use href=#i-chev></use></svg></span></a>'; });
+          weak.forEach(function (p) { var inner = '<span class="grow">' + subjHtml(p.code) + '<span class="s badge-bad">Lost points on ' + p.miss + ' of ' + p.n + ' question' + (p.n === 1 ? '' : 's') + '</span></span>'; html += gst ? '<div class="li">' + inner + '</div>' : '<a class="li" href="#/flash/' + encodeURIComponent(p.id || "") + '">' + inner + '<span class="chev" aria-hidden="true"><svg class=ic aria-hidden=true><use href=#i-chev></use></svg></span></a>'; });
           html += '</div>';
         }
         if (missed.length) {
