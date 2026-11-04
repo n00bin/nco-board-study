@@ -100,6 +100,9 @@
       // your MOS and component, for this month's cutoff scores
       s.settings.mos = /^[0-9]{2}[A-Z0-9]$/.test(String(d.settings.mos || "").toUpperCase()) ? String(d.settings.mos).toUpperCase() : "";
       s.settings.comp = d.settings.comp === "agr" ? "agr" : "ac";
+      // first-run tour seen, and one-time tips already dismissed
+      s.settings.tourDone = !!d.settings.tourDone;
+      s.settings.tips = /^[a-z0-9,-]{0,200}$/.test(String(d.settings.tips || "")) ? String(d.settings.tips || "") : "";
     }
     return s;
   }

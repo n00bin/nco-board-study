@@ -371,6 +371,64 @@
   }
 
   // Home = five things: where you stand, what to do today, the four tools, board-day prep, your week.
+
+  // ---- first-run tour: four short cards, shown once to a new user; open it again from More ----
+  function tIc(n) { return "<svg class=ic aria-hidden=true><use href=#i-" + n + "></use></svg>"; }
+  var TOUR = [
+    { ic: "target", t: "Get ready for your board", b: ["This app prepares you for the E-5 and E-6 promotion board, a little every day.", "Every card comes from the regulations and manuals boards ask about."] },
+    { ic: "play", t: "Start today’s session", b: ["Home builds a plan for each day: new cards, reviews, and a Mock Board when it’s time.", "Tap one button and the app walks you through every step."], demo: true },
+    { ic: "mic", t: "Say it out loud", b: ["A board is spoken. Say each answer before you look, then tap how sure you were.", "The Mock Board runs it for real: report in, facing movements, questions and follow-ups."] },
+    { ic: "sliders", t: "Make it yours", b: ["Pick your board so the plan fits you. Add your board date and MOS if you know them."], form: true }
+  ];
+  function freshUser() { return !Store.quizzes().length && !STUDY.cards.some(function (c) { return seenOf(c.id); }); }
+  function screenTour() {
+    setTitle("Welcome", false);
+    var first = !Store.settings().tourDone, k = 0;
+    function finish() { Store.setSetting("tourDone", true); if (first) location.replace("#/"); else if (history.length > 1) history.back(); else App.go("#/"); }
+    function formHtml(s) {
+      return '<div class="card tour-form">' +
+        '<div class="lbl">Which board are you going to?</div><div class="chip-row seg3" id="tRank">' + [["SGT", "SGT (E-5)"], ["SSG", "SSG (E-6)"], ["BOTH", "Not sure"]].map(function (r) { return '<button type="button" class="chip' + (s.boardFor === r[0] ? ' on' : '') + '" data-r="' + r[0] + '">' + r[1] + '</button>'; }).join("") + '</div>' +
+        '<label class="lbl" for="tDate" style="margin-top:14px;">Board date, if you know it</label><input class="input" type="date" id="tDate" value="' + escAttr(s.boardDate || "") + '">' +
+        '<label class="lbl" for="tMos" style="margin-top:14px;">Your MOS, for this month’s cutoff score</label><input class="input" id="tMos" maxlength="3" autocapitalize="characters" placeholder="e.g. 25B" value="' + escAttr(s.mos || "") + '" style="max-width:140px;text-transform:uppercase;">' +
+        '<div class="chip-row seg2" id="tComp" style="margin-top:8px;"><button type="button" class="chip' + (s.comp !== "agr" ? ' on' : '') + '" data-c="ac">Active Duty</button><button type="button" class="chip' + (s.comp === "agr" ? ' on' : '') + '" data-c="agr">AGR</button></div>' +
+        '<div class="muted" style="font-size:.85rem;margin-top:12px;">All optional. You can change these anytime in Settings.</div></div>';
+    }
+    function paint() {
+      var c = TOUR[k], s = Store.settings(), last = k === TOUR.length - 1;
+      mount.innerHTML = '<div class="tour' + (c.form ? ' has-form' : '') + '">' +
+        '<div class="tour-top"><span class="tour-dots" aria-label="Step ' + (k + 1) + ' of ' + TOUR.length + '">' + TOUR.map(function (x, j) { return '<span class="' + (j === k ? 'on' : j < k ? 'done' : '') + '"></span>'; }).join("") + '</span>' +
+          (last ? '' : '<button type="button" class="home-link" id="tSkip">Skip</button>') + '</div>' +
+        '<div class="tour-ic">' + tIc(c.ic) + '</div><h1 class="tour-t">' + esc(c.t) + '</h1>' +
+        c.b.map(function (p) { return '<p class="tour-p">' + esc(p) + '</p>'; }).join("") +
+        (c.demo ? '<div class="tour-demo" aria-hidden="true"><div class="flash-tag">Today’s plan</div><span class="btn gold lg">' + tIc("play") + ' Start today’s session</span></div>' : '') +
+        (c.form ? formHtml(s) : '') + '</div>' +
+        '<div class="tour-nav">' + (k ? '<button type="button" class="btn ghost lg" id="tBack">Back</button>' : '') + '<button type="button" class="btn gold lg" id="tNext">' + (last ? (first ? 'Start' : 'Done') : 'Next') + '</button></div>';
+      window.scrollTo(0, 0);
+      var sk = mount.querySelector("#tSkip"); if (sk) sk.addEventListener("click", finish);
+      var bk = mount.querySelector("#tBack"); if (bk) bk.addEventListener("click", function () { k--; paint(); });
+      mount.querySelector("#tNext").addEventListener("click", function () { if (last) return finish(); k++; paint(); });
+      if (!c.form) return;
+      mount.querySelectorAll("#tRank .chip").forEach(function (b) { b.addEventListener("click", function () { Store.setSetting("boardFor", b.getAttribute("data-r")); mount.querySelectorAll("#tRank .chip").forEach(function (x) { x.classList.toggle("on", x === b); }); }); });
+      mount.querySelector("#tDate").addEventListener("change", function () { var v = this.value; if (/^\d{4}-\d{2}-\d{2}$/.test(v)) Store.setSetting("boardDate", v); else if (!v) Store.setSetting("boardDate", ""); });
+      mount.querySelector("#tMos").addEventListener("input", function () { var v = this.value.toUpperCase().replace(/[^0-9A-Z]/g, "").slice(0, 3); this.value = v; if (v.length === 3 || !v) Store.setSetting("mos", v); });
+      mount.querySelectorAll("#tComp .chip").forEach(function (b) { b.addEventListener("click", function () { Store.setSetting("comp", b.getAttribute("data-c")); mount.querySelectorAll("#tComp .chip").forEach(function (x) { x.classList.toggle("on", x === b); }); }); });
+    }
+    paint();
+  }
+  // one-time tips: a small card that goes away for good once you tap "Got it"
+  function tipCard(id, text) {
+    var seen = String(Store.settings().tips || "").split(",");
+    if (seen.indexOf(id) >= 0) return "";
+    return '<div class="card tip-card" data-tipcard="' + id + '"><div class="flash-tag">' + tIc("spark") + ' Tip</div><div style="margin-top:4px;">' + text + '</div><button type="button" class="home-link" data-tipok="' + id + '" style="margin-top:6px;">Got it</button></div>';
+  }
+  document.addEventListener("click", function (e) {
+    var b = e.target.closest && e.target.closest("[data-tipok]"); if (!b) return;
+    var id = b.getAttribute("data-tipok"), seen = String(Store.settings().tips || "").split(",").filter(Boolean);
+    if (seen.indexOf(id) < 0) seen.push(id);
+    Store.setSetting("tips", seen.join(","));
+    var card = document.querySelector('[data-tipcard="' + id + '"]'); if (card) card.remove();
+  });
+
   function screenHome() {
     setTitle("NCO Board", false);
     var all = allCards();
@@ -569,6 +627,7 @@
     var cards = cardsForDeck(deck), title = deckTitle(deck);
     var timer = Store.settings().timer;
     mount.innerHTML =
+      tipCard("board", "Answer each question out loud, like the real board. The timer runs, then the answer shows. Tick what you actually said and the app scores it.") +
       '<div class="setup-head"><div class="t"><svg class=ic aria-hidden=true><use href=#i-users></use></svg> ' + esc(title) + '</div><div class="muted">Answer out loud, like the real board</div><a href="#/pick/board" class="pill pill-link" style="display:inline-flex;margin-top:8px;">Change subject</a></div>' +
       '<div class="lg opts">' +
         '<button type="button" class="li li-btn" id="tChange"><span class="grow"><span class="t">Timer: ' + (timer > 0 ? timer + 's per question' : 'off') + '</span><span class="s">' + (timer > 0 ? 'Double for long answers and scenarios' : 'Answer at your own pace') + '</span></span><span class="pill">Change</span></button>' +
@@ -662,7 +721,7 @@
     var html =
       group("Study", [li("#/board/core", "<svg class=ic aria-hidden=true><use href=#i-users></use></svg>", "Mock Board", "Practice the oral board"), li("#/boardday", "<svg class=ic aria-hidden=true><use href=#i-clipboard></use></svg>", "Board Day Prep", "Room, uniform, reporting, memo")]) +
       group("You and your sponsor", [li("#/sendprogress", "<svg class=ic aria-hidden=true><use href=#i-send></use></svg>", "Send My Progress", "Your sponsor sees your weak spots"), li("#/mycards", "<svg class=ic aria-hidden=true><use href=#i-pen></use></svg>", "My Cards", "Your unit's smart book, your MOS"), li("#/badges", "<svg class=ic aria-hidden=true><use href=#i-medal></use></svg>", "Badges", "Milestones you've earned")]) +
-      group("App", (deferredPrompt ? ['<a class="li" href="#/more" id="installRow"><span class="li-ic" aria-hidden="true"><svg class=ic aria-hidden=true><use href=#i-install></use></svg></span><span class="grow"><span class="t">Install the app</span><span class="s">Opens like an app and works offline</span></span><span class="chev" aria-hidden="true"><svg class=ic aria-hidden=true><use href=#i-chev></use></svg></span></a>'] : []).concat([li("#/settings", "<svg class=ic aria-hidden=true><use href=#i-sliders></use></svg>", "Settings", "Board date, goal, timer, reminders"), li("#/share", "<svg class=ic aria-hidden=true><use href=#i-share></use></svg>", "Share &amp; QR code", "Send the app to a friend or your squad"), li("#/backup", "<svg class=ic aria-hidden=true><use href=#i-download></use></svg>", "Backup &amp; restore", "Save your progress to a file"), li("#/sources", "<svg class=ic aria-hidden=true><use href=#i-bookmark></use></svg>", "Sources &amp; editions", "Which regulation each card comes from")]));
+      group("App", (deferredPrompt ? ['<a class="li" href="#/more" id="installRow"><span class="li-ic" aria-hidden="true"><svg class=ic aria-hidden=true><use href=#i-install></use></svg></span><span class="grow"><span class="t">Install the app</span><span class="s">Opens like an app and works offline</span></span><span class="chev" aria-hidden="true"><svg class=ic aria-hidden=true><use href=#i-chev></use></svg></span></a>'] : []).concat([li("#/welcome", "<svg class=ic aria-hidden=true><use href=#i-spark></use></svg>", "How this app works", "The one-minute tour"), li("#/settings", "<svg class=ic aria-hidden=true><use href=#i-sliders></use></svg>", "Settings", "Board date, goal, timer, reminders"), li("#/share", "<svg class=ic aria-hidden=true><use href=#i-share></use></svg>", "Share &amp; QR code", "Send the app to a friend or your squad"), li("#/backup", "<svg class=ic aria-hidden=true><use href=#i-download></use></svg>", "Backup &amp; restore", "Save your progress to a file"), li("#/sources", "<svg class=ic aria-hidden=true><use href=#i-bookmark></use></svg>", "Sources &amp; editions", "Which regulation each card comes from")]));
     html += '<details class="set-fold"><summary>Recent quizzes &amp; boards (' + Math.min(10, quizzes.length) + ')</summary>' + (quizzes.length ? quizzes.slice(0, 10).map(function (q) {
       var pct = Math.round((q.score / q.total) * 100), cls = pct >= 75 ? "badge-good" : pct >= 60 ? "" : "badge-bad";
       var nm = STUDY.pubsById[q.deck] ? STUDY.pubsById[q.deck].code : q.deck === "core" ? "Board Core" : q.deck;
@@ -1700,12 +1759,14 @@
     var head = parts[0] || "";
     window.scrollTo(0, 0);
     // practice screens get the whole phone (no tab bar; the main button pins to the bottom); sponsor pages get a guest shell
-    document.body.classList.toggle("session", /^(flash|type|drive|lesson|sheetin|sponsor)$/.test(head));
+    document.body.classList.toggle("session", /^(flash|type|drive|lesson|sheetin|sponsor|welcome)$/.test(head));
     var landed = !window.__ncobRouted; window.__ncobRouted = true;
     document.body.classList.toggle("guest", /^(sponsor|progress|takecards)$/.test(head) || (landed && /^(sheet|sbresult)$/.test(head)));
     setTimeout(sessionBanner, 0);
 
+    if (head === "" && !Store.settings().tourDone && freshUser()) { location.replace("#/welcome"); return; }
     if (head === "") return screenHome(), tab("home");
+    if (head === "welcome") return screenTour(), tab("none");
     if (head === "learn") return screenLearn(), tab("learn");
     if (head === "track") return screenTrack(parts[1]), tab("learn");
     if (head === "lesson") return screenLesson(parts.slice(1).join("/")), tab("learn");

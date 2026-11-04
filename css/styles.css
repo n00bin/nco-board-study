@@ -1200,3 +1200,28 @@ details.pt-help[open] > summary::after { transform: rotate(180deg); }
 .pick-top .li:first-child .t svg.ic { color: var(--gold); }
 /* danger buttons share the button type */
 .btn.danger { font-size: 1rem; font-weight: 600; min-height: 56px; }
+
+/* ---------- v3.80 first-run tour ---------- */
+.tour { text-align: center; padding: 4px 4px 0; }
+.tour-top { display: flex; align-items: center; justify-content: space-between; min-height: 44px; margin-bottom: 8px; }
+.tour-top .home-link { margin: 0; min-height: 44px; padding: 0 4px; }
+.tour-dots { display: inline-flex; gap: 8px; }
+.tour-dots span { width: 8px; height: 8px; border-radius: 99px; background: var(--line); }
+.tour-dots span.done { background: rgba(255,204,51,.45); }
+.tour-dots span.on { background: var(--gold); width: 22px; }
+.tour-ic { width: 88px; height: 88px; margin: 6vh auto 18px; border-radius: 50%; background: rgba(255,204,51,.12); border: 1px solid rgba(255,204,51,.35); display: grid; place-items: center; color: var(--gold); }
+.tour-ic svg.ic { width: 42px; height: 42px; }
+.tour-t { font-size: 1.6rem; font-weight: 700; margin: 0 0 12px; line-height: 1.25; }
+.tour-p { color: var(--text-dim); font-size: 1rem; line-height: 1.5; margin: 0 auto 10px; max-width: 30ch; }
+.tour-demo { margin: 18px auto 0; max-width: 300px; text-align: left; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 12px; pointer-events: none; }
+.tour-demo .btn { margin-top: 8px; width: 100%; }
+.tour-form { text-align: left; margin-top: 16px; }
+.tour-nav { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(12px + env(safe-area-inset-bottom)); width: calc(100% - 32px); max-width: calc(var(--maxw) - 32px); display: flex; gap: 10px; z-index: 20; }
+.tour-nav .btn { flex: 1; margin: 0; }
+.tip-card { border-color: rgba(255,204,51,.45); }
+
+.tour-top .home-link { display: inline-flex !important; align-items: center; width: auto !important; margin: 0 0 0 auto !important; }
+.tour { padding-bottom: 96px; }
+.tour.has-form .tour-ic { width: 64px; height: 64px; margin: 1vh auto 10px; }
+.tour.has-form .tour-ic svg.ic { width: 30px; height: 30px; }
+#tMos::placeholder { text-transform: none; }
